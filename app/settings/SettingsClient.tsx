@@ -15,6 +15,7 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
+  const [syncingHistory, setSyncingHistory] = useState(false);
 
   useEffect(() => {
     if (params.get("fit") === "connected") setFit(true);
@@ -29,6 +30,16 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
       setSyncMsg(json.ok ? "Synchronisé !" : "Aucune donnée pour aujourd'hui");
     } catch { setSyncMsg("Erreur réseau"); }
     finally { setSyncing(false); }
+  };
+
+  const handleSyncHistory = async () => {
+    setSyncingHistory(true); setSyncMsg("");
+    try {
+      const res  = await fetch("/api/google-fit/sync-history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ days: 90 }) });
+      const json = await res.json() as { ok: boolean; days?: number };
+      setSyncMsg(json.ok ? `Historique synchronisé — ${json.days} jours` : "Erreur lors de la synchronisation");
+    } catch { setSyncMsg("Erreur réseau"); }
+    finally { setSyncingHistory(false); }
   };
 
   const handleDisconnect = async () => {
@@ -97,11 +108,16 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
                   disabled={syncing}
                   className="btn btn-ghost flex-1 gap-2 text-[12px]"
                 >
-                  {syncing
-                    ? <Spinner size={13} className="animate-spin" />
-                    : <ArrowsClockwise size={13} />
-                  }
-                  Synchroniser aujourd'hui
+                  {syncing ? <Spinner size={13} className="animate-spin" /> : <ArrowsClockwise size={13} />}
+                  Aujourd'hui
+                </button>
+                <button
+                  onClick={handleSyncHistory}
+                  disabled={syncingHistory}
+                  className="btn btn-ghost flex-1 gap-2 text-[12px]"
+                >
+                  {syncingHistory ? <Spinner size={13} className="animate-spin" /> : <ArrowsClockwise size={13} />}
+                  90 jours
                 </button>
                 <button
                   onClick={handleDisconnect}
