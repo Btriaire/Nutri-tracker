@@ -265,6 +265,28 @@ export interface OAuthTokens {
   updatedAt:    Timestamp;
 }
 
+// ─── Saved Meals ──────────────────────────────────────────────────────────────
+
+export interface SavedMealEntry {
+  foodId:       string;
+  source:       FoodSource;
+  name:         string;
+  brand?:       string;
+  servingLabel: string;
+  servingGrams: number;
+  nutrition:    FoodNutrition;
+}
+
+export interface SavedMeal {
+  id:             string;
+  name:           string;
+  icon:           string;
+  entries:        SavedMealEntry[];
+  totalNutrition: FoodNutrition;
+  createdAt:      Timestamp;
+  updatedAt:      Timestamp;
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export interface WeightPoint {
