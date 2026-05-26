@@ -24,6 +24,10 @@ export async function createSession(idToken: string) {
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
+  // Auth disabled — personal app, single owner
+  return { userId: "owner", email: process.env.ADMIN_EMAIL ?? "owner", name: "Bruno" };
+
+  // eslint-disable-next-line no-unreachable
   try {
     const store = await cookies();
     const cookie = store.get(COOKIE)?.value;
