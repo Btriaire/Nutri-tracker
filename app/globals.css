@@ -1,0 +1,260 @@
+@import "tailwindcss";
+
+/* ─── AuthKit-inspired design tokens ────────────────────────────────────────── */
+:root {
+  /* Base surfaces — near-black like AuthKit's #09090b */
+  --bg:              #09090b;
+  --bg-subtle:       #0d0d10;
+  --surface:         rgba(255, 255, 255, 0.03);
+  --surface-hover:   rgba(255, 255, 255, 0.055);
+  --surface-active:  rgba(255, 255, 255, 0.08);
+
+  /* Borders — super subtle white, AuthKit signature */
+  --border:          rgba(255, 255, 255, 0.06);
+  --border-strong:   rgba(255, 255, 255, 0.12);
+  --border-focus:    rgba(139, 92, 246, 0.5);
+
+  /* Text */
+  --text-primary:    #fafafa;
+  --text-secondary:  rgba(250, 250, 250, 0.6);
+  --text-muted:      rgba(250, 250, 250, 0.28);
+
+  /* Nutrition accents (preserved from plan, applied à l'AuthKit way) */
+  --calories:        #f97316;
+  --protein:         #a78bfa;   /* shifted to violet to match AuthKit feel */
+  --carbs:           #fbbf24;
+  --fat:             #60a5fa;
+  --fiber:           #34d399;
+  --steps:           #22d3ee;
+  --weight:          #f472b6;
+
+  /* Glow orbs (used in pseudo-elements) */
+  --glow-orange:     rgba(249, 115, 22, 0.12);
+  --glow-violet:     rgba(139, 92, 246, 0.1);
+  --glow-cyan:       rgba(34, 211, 238, 0.08);
+
+  /* Radius */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+/* ─── Glass card (AuthKit signature) ───────────────────────────────────────── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Inner card — slightly elevated */
+.card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.card-sm {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+/* ─── Inputs ────────────────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 13px;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+}
+.input::placeholder { color: var(--text-muted); }
+
+/* ─── Buttons ───────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, background 0.15s;
+  font-family: inherit;
+  text-decoration: none;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--text-primary);
+  color: var(--bg);
+  padding: 9px 18px;
+}
+.btn-primary:hover { opacity: 0.88; }
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+}
+.btn-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-icon {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+}
+.btn-icon:hover { background: var(--surface-hover); color: var(--text-primary); }
+
+/* ─── Accent text helpers ───────────────────────────────────────────────────── */
+.t-calories { color: var(--calories); }
+.t-protein  { color: var(--protein); }
+.t-carbs    { color: var(--carbs); }
+.t-fat      { color: var(--fat); }
+.t-fiber    { color: var(--fiber); }
+.t-steps    { color: var(--steps); }
+.t-weight   { color: var(--weight); }
+.t-secondary { color: var(--text-secondary); }
+.t-muted    { color: var(--text-muted); }
+
+/* ─── Background glow orbs (used via wrapper class) ────────────────────────── */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.bg-orbs::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, var(--glow-violet) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: orb-drift-a 20s ease-in-out infinite alternate;
+}
+.bg-orbs::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, var(--glow-orange) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: orb-drift-b 25s ease-in-out infinite alternate;
+}
+
+@keyframes orb-drift-a {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(4vw, 6vh) scale(1.08); }
+}
+@keyframes orb-drift-b {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-5vw, -4vh) scale(0.95); }
+}
+
+/* Optional grid overlay (very subtle, like AuthKit) */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* ─── Typography ────────────────────────────────────────────────────────────── */
+.label-xs {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ─── Divider ───────────────────────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Badge ─────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+}
