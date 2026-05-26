@@ -231,23 +231,21 @@ async function searchCiqual(query: string, limit = 15): Promise<FoodSearchResult
   }
 }
 
-async function searchOpenFoodFacts(query: string, lang: "fr" | "en", limit = 15): Promise<FoodSearchResult[]> {
+async function searchOpenFoodFacts(query: string, lang: "fr" | "en", limit = 20): Promise<FoodSearchResult[]> {
   try {
-    const base = lang === "fr"
-      ? "https://fr.openfoodfacts.org"
-      : "https://world.openfoodfacts.org";
-
+    // Use the Elasticsearch-backed endpoint for better relevance
     const fields = "code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size";
-    const url = `${base}/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&fields=${fields}&page_size=${limit}`;
+    const lc = lang === "fr" ? "fr" : "en";
+    const url = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(query)}&json=1&fields=${fields}&page_size=${limit}&lc=${lc}`;
 
     const res = await fetch(url, {
       headers: { "User-Agent": "NutriTracker/1.0 (personal use)" },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return [];
 
-    const json = await res.json() as { products?: unknown[] };
-    return (json.products ?? [])
+    const json = await res.json() as { hits?: unknown[] };
+    return (json.hits ?? [])
       .map((p) => offToResult(p as Record<string, unknown>))
       .filter((r): r is FoodSearchResult => r !== null)
       .slice(0, limit);
@@ -269,80 +267,6 @@ async function searchUSDA(query: string, limit = 15): Promise<FoodSearchResult[]
     return (json.foods ?? [])
       .map((item) => usdaToResult(item as Record<string, unknown>))
       .slice(0, limit);
-  } catch {
-    return [];
-  }
-}
-
-// ─── Edamam Food Database ─────────────────────────────────────────────────────
-
-interface EdamamFood {
-  foodId:        string;
-  label:         string;
-  brand?:        string;
-  category?:     string;
-  categoryLabel?: string;
-  nutrients: {
-    ENERC_KCAL?: number;
-    PROCNT?:     number;
-    FAT?:        number;
-    CHOCDF?:     number;
-    FIBTG?:      number;
-    SUGAR?:      number;
-    FASAT?:      number;
-    NA?:         number;
-  };
-}
-
-function edamamToResult(food: EdamamFood, measureWeight = 100): FoodSearchResult {
-  const n   = food.nutrients;
-  const ratio = measureWeight / 100;
-  const nutrition: FoodNutrition = {
-    calories:      Math.round((n.ENERC_KCAL ?? 0) * ratio),
-    proteinG:      Math.round((n.PROCNT ?? 0)     * ratio * 10) / 10,
-    carbsG:        Math.round((n.CHOCDF ?? 0)     * ratio * 10) / 10,
-    fatG:          Math.round((n.FAT ?? 0)        * ratio * 10) / 10,
-    fiberG:        Math.round((n.FIBTG ?? 0)      * ratio * 10) / 10,
-    sugarG:        n.SUGAR ? scaleN(n.SUGAR, ratio) : undefined,
-    saturatedFatG: n.FASAT ? scaleN(n.FASAT, ratio) : undefined,
-    sodiumMg:      n.NA    ? scaleMg(n.NA, ratio)   : undefined,
-  };
-
-  const servingOptions: ServingOption[] = [{ label: "100g", grams: 100, isDefault: measureWeight === 100 }];
-  if (measureWeight !== 100) {
-    servingOptions.unshift({ label: `${measureWeight}g`, grams: measureWeight, isDefault: true });
-  }
-
-  return {
-    id:           `edamam:${food.foodId}`,
-    source:       "edamam",
-    name:         food.label,
-    brand:        food.brand,
-    category:     food.categoryLabel ?? food.category,
-    servingSizeG: measureWeight,
-    servingLabel: `${measureWeight}g`,
-    servingOptions,
-    nutrition,
-  };
-}
-
-async function searchEdamam(query: string, limit = 20): Promise<FoodSearchResult[]> {
-  try {
-    const appId  = process.env.EDAMAM_APP_ID?.trim();
-    const appKey = process.env.EDAMAM_APP_KEY?.trim();
-    if (!appId || !appKey) return [];
-
-    const url = `https://api.edamam.com/api/food-database/v2/parser?app_id=${appId}&app_key=${appKey}&ingr=${encodeURIComponent(query)}&nutrition-type=logging`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return [];
-
-    const json = await res.json() as { hints?: { food: EdamamFood; measures?: { label: string; weight: number }[] }[] };
-    return (json.hints ?? [])
-      .slice(0, limit)
-      .map(({ food, measures }) => {
-        const serving = measures?.find((m) => m.label !== "Gram" && m.weight > 0);
-        return edamamToResult(food, serving?.weight ?? 100);
-      });
   } catch {
     return [];
   }
@@ -377,29 +301,20 @@ export async function searchFoods(
   const q = query.trim();
   if (!q) return [];
 
-  if (lang === "fr") {
-    const [ciqual, off, edamam] = await Promise.all([
-      searchCiqual(q),
-      searchOpenFoodFacts(q, "fr"),
-      searchEdamam(q),
-    ]);
-    const combined = dedup([...ciqual, ...off, ...edamam]);
-
-    if (combined.length < 5) {
-      const usda = await searchUSDA(q);
-      return dedup([...combined, ...usda]).slice(0, 30);
-    }
-
-    return combined.slice(0, 30);
-  }
-
-  const [usda, off, edamam] = await Promise.all([
+  // All sources run in parallel — Ciqual (FR aliments bruts), OFF (packaged FR/world), USDA (300k+ foods)
+  const [ciqual, off, usda] = await Promise.all([
+    searchCiqual(q),
+    searchOpenFoodFacts(q, lang === "fr" ? "fr" : "en"),
     searchUSDA(q),
-    searchOpenFoodFacts(q, "en"),
-    searchEdamam(q),
   ]);
 
-  return dedup([...usda, ...off, ...edamam]).slice(0, 30);
+  // FR: Ciqual first (most accurate for raw foods), then OFF, then USDA
+  // EN: USDA first, then OFF, then Ciqual
+  const ordered = lang === "fr"
+    ? [...ciqual, ...off, ...usda]
+    : [...usda, ...off, ...ciqual];
+
+  return dedup(ordered).slice(0, 30);
 }
 
 function dedup(results: FoodSearchResult[]): FoodSearchResult[] {

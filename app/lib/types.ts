@@ -6,7 +6,7 @@ export type WeeklyGoal    = "lose" | "maintain" | "gain";
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 export type Lang          = "fr" | "en";
 export type MealType      = "breakfast" | "lunch" | "dinner" | "snacks";
-export type FoodSource    = "ciqual" | "off" | "usda" | "edamam" | "custom" | "recipe";
+export type FoodSource    = "ciqual" | "off" | "usda" | "custom" | "recipe";
 export type HungerLevel   = 1 | 2 | 3 | 4 | 5; // 1=pas faim, 5=très faim
 
 // ─── Nutrition (full profile) ─────────────────────────────────────────────────
