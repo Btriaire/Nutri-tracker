@@ -274,6 +274,80 @@ async function searchUSDA(query: string, limit = 15): Promise<FoodSearchResult[]
   }
 }
 
+// ─── Edamam Food Database ─────────────────────────────────────────────────────
+
+interface EdamamFood {
+  foodId:        string;
+  label:         string;
+  brand?:        string;
+  category?:     string;
+  categoryLabel?: string;
+  nutrients: {
+    ENERC_KCAL?: number;
+    PROCNT?:     number;
+    FAT?:        number;
+    CHOCDF?:     number;
+    FIBTG?:      number;
+    SUGAR?:      number;
+    FASAT?:      number;
+    NA?:         number;
+  };
+}
+
+function edamamToResult(food: EdamamFood, measureWeight = 100): FoodSearchResult {
+  const n   = food.nutrients;
+  const ratio = measureWeight / 100;
+  const nutrition: FoodNutrition = {
+    calories:      Math.round((n.ENERC_KCAL ?? 0) * ratio),
+    proteinG:      Math.round((n.PROCNT ?? 0)     * ratio * 10) / 10,
+    carbsG:        Math.round((n.CHOCDF ?? 0)     * ratio * 10) / 10,
+    fatG:          Math.round((n.FAT ?? 0)        * ratio * 10) / 10,
+    fiberG:        Math.round((n.FIBTG ?? 0)      * ratio * 10) / 10,
+    sugarG:        n.SUGAR ? scaleN(n.SUGAR, ratio) : undefined,
+    saturatedFatG: n.FASAT ? scaleN(n.FASAT, ratio) : undefined,
+    sodiumMg:      n.NA    ? scaleMg(n.NA, ratio)   : undefined,
+  };
+
+  const servingOptions: ServingOption[] = [{ label: "100g", grams: 100, isDefault: measureWeight === 100 }];
+  if (measureWeight !== 100) {
+    servingOptions.unshift({ label: `${measureWeight}g`, grams: measureWeight, isDefault: true });
+  }
+
+  return {
+    id:           `edamam:${food.foodId}`,
+    source:       "edamam",
+    name:         food.label,
+    brand:        food.brand,
+    category:     food.categoryLabel ?? food.category,
+    servingSizeG: measureWeight,
+    servingLabel: `${measureWeight}g`,
+    servingOptions,
+    nutrition,
+  };
+}
+
+async function searchEdamam(query: string, limit = 20): Promise<FoodSearchResult[]> {
+  try {
+    const appId  = process.env.EDAMAM_APP_ID?.trim();
+    const appKey = process.env.EDAMAM_APP_KEY?.trim();
+    if (!appId || !appKey) return [];
+
+    const url = `https://api.edamam.com/api/food-database/v2/parser?app_id=${appId}&app_key=${appKey}&ingr=${encodeURIComponent(query)}&nutrition-type=logging`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+
+    const json = await res.json() as { hints?: { food: EdamamFood; measures?: { label: string; weight: number }[] }[] };
+    return (json.hints ?? [])
+      .slice(0, limit)
+      .map(({ food, measures }) => {
+        const serving = measures?.find((m) => m.label !== "Gram" && m.weight > 0);
+        return edamamToResult(food, serving?.weight ?? 100);
+      });
+  } catch {
+    return [];
+  }
+}
+
 // ─── Barcode lookup ───────────────────────────────────────────────────────────
 
 export async function lookupBarcode(barcode: string): Promise<FoodSearchResult | null> {
@@ -304,26 +378,28 @@ export async function searchFoods(
   if (!q) return [];
 
   if (lang === "fr") {
-    const [ciqual, off] = await Promise.all([
+    const [ciqual, off, edamam] = await Promise.all([
       searchCiqual(q),
       searchOpenFoodFacts(q, "fr"),
+      searchEdamam(q),
     ]);
-    const combined = dedup([...ciqual, ...off]);
+    const combined = dedup([...ciqual, ...off, ...edamam]);
 
     if (combined.length < 5) {
       const usda = await searchUSDA(q);
-      return dedup([...combined, ...usda]).slice(0, 25);
+      return dedup([...combined, ...usda]).slice(0, 30);
     }
 
-    return combined.slice(0, 25);
+    return combined.slice(0, 30);
   }
 
-  const [usda, off] = await Promise.all([
+  const [usda, off, edamam] = await Promise.all([
     searchUSDA(q),
     searchOpenFoodFacts(q, "en"),
+    searchEdamam(q),
   ]);
 
-  return dedup([...usda, ...off]).slice(0, 25);
+  return dedup([...usda, ...off, ...edamam]).slice(0, 30);
 }
 
 function dedup(results: FoodSearchResult[]): FoodSearchResult[] {
