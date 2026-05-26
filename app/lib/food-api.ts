@@ -128,6 +128,9 @@ function offToResult(product: Record<string, unknown>): FoodSearchResult | null 
   }
   servingOptions.push({ label: "100g", grams: 100, isDefault: servingG === 100 });
 
+  const rawImage = product.image_front_thumb_url as string | undefined;
+  const imageUrl = rawImage && rawImage.startsWith("http") ? rawImage : undefined;
+
   return {
     id:             `off:${product.code ?? product._id}`,
     source:         "off",
@@ -136,6 +139,7 @@ function offToResult(product: Record<string, unknown>): FoodSearchResult | null 
     category:       product.categories_tags
                       ? ((product.categories_tags as string[])[0] ?? undefined)
                       : undefined,
+    imageUrl,
     servingSizeG:   servingG,
     servingLabel:   servingSize ?? "100g",
     servingOptions: servingOptions.length > 1 ? servingOptions : undefined,
@@ -234,7 +238,7 @@ async function searchCiqual(query: string, limit = 15): Promise<FoodSearchResult
 async function searchOpenFoodFacts(query: string, lang: "fr" | "en", limit = 20): Promise<FoodSearchResult[]> {
   try {
     // Use the Elasticsearch-backed endpoint for better relevance
-    const fields = "code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size";
+    const fields = "code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size,image_front_thumb_url";
     const lc = lang === "fr" ? "fr" : "en";
     const url = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(query)}&json=1&fields=${fields}&page_size=${limit}&lc=${lc}`;
 

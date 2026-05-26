@@ -63,6 +63,49 @@ function getServingOptions(food: FoodSearchResult): ServingOption[] {
   return food.servingOptions?.length ? food.servingOptions : COMMON_SERVING_UNITS;
 }
 
+const CATEGORY_EMOJI: [RegExp, string][] = [
+  [/viande|bœuf|veau|porc|agneau|poulet|dinde|canard/i, "🥩"],
+  [/poisson|saumon|thon|cabillaud|sardine|truite/i,     "🐟"],
+  [/lait|yaourt|fromage|crème|beurre|dairy/i,           "🧀"],
+  [/œuf|egg/i,                                          "🥚"],
+  [/riz|pâte|pasta|céréale|avoine|quinoa|blé/i,         "🌾"],
+  [/pain|baguette|brioche|bread/i,                      "🥖"],
+  [/légume|carotte|brocoli|tomate|courgette|salade/i,   "🥦"],
+  [/fruit|pomme|banane|fraise|raisin|orange/i,          "🍎"],
+  [/chocolat|gâteau|biscuit|sucre|dessert/i,            "🍫"],
+  [/boisson|jus|soda|café|thé|drink/i,                  "🥤"],
+  [/noix|amande|noisette|cacahuète|nut/i,               "🥜"],
+  [/huile|oil/i,                                        "🫙"],
+  [/pizza|lasagne|plat/i,                               "🍕"],
+];
+
+function foodEmoji(name: string, category?: string): string {
+  const text = `${name} ${category ?? ""}`;
+  for (const [re, emoji] of CATEGORY_EMOJI) if (re.test(text)) return emoji;
+  return "🍽️";
+}
+
+function FoodImage({ food }: { food: { name: string; category?: string; imageUrl?: string; source: string } }) {
+  if (food.imageUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={food.imageUrl}
+        alt={food.name}
+        className="w-11 h-11 rounded-xl object-cover shrink-0"
+        style={{ border: "1px solid var(--border)" }}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
+  return (
+    <div className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-[22px]"
+      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+      {foodEmoji(food.name, food.category)}
+    </div>
+  );
+}
+
 function MacroPills({ n }: { n: FoodNutrition }) {
   return (
     <div className="flex gap-1.5">
@@ -539,22 +582,23 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             className="flex items-center gap-2 rounded-xl overflow-hidden"
                             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                             {/* Tap to configure */}
-                            <button onClick={() => selectFood(r)} className="flex-1 flex flex-col gap-1.5 p-3 text-left min-w-0">
-                              <div className="flex items-start gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[13px] font-medium leading-snug" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
-                                    {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                    <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                            <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                              <FoodImage food={r} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                  <div className="text-right flex-shrink-0">
+                                    <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                   </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
+                                  {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
+                                  {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
+                                  <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
                                 </div>
+                                <MacroPills n={r.nutrition} />
                               </div>
-                              <MacroPills n={r.nutrition} />
                             </button>
                             {/* Quick add */}
                             <button

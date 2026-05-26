@@ -88,6 +88,7 @@ export interface FoodSearchResult {
   name:         string;
   brand?:       string;
   category?:    string;
+  imageUrl?:    string;
   servingSizeG: number;
   servingLabel: string;
   servingOptions?: ServingOption[];
