@@ -8,8 +8,8 @@ const SCOPES = [
 
 export async function GET() {
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  url.searchParams.set("client_id",     process.env.GOOGLE_CLIENT_ID!);
-  url.searchParams.set("redirect_uri",  process.env.GOOGLE_REDIRECT_URI!);
+  url.searchParams.set("client_id",     process.env.GOOGLE_CLIENT_ID!.trim());
+  url.searchParams.set("redirect_uri",  process.env.GOOGLE_REDIRECT_URI!.trim());
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope",         SCOPES);
   url.searchParams.set("access_type",   "offline");
