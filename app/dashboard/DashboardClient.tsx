@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Moon, Heart, Lightning, Timer } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import MacroRings from "@/app/components/MacroRings";
 import StepsWidget from "@/app/components/StepsWidget";
@@ -13,17 +13,33 @@ import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import type { DayTotals, NutritionGoals, WeightPoint, Lang } from "@/app/lib/types";
 
+interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
+
 interface Props {
   date:           string;
   goals:          NutritionGoals;
   consumed:       DayTotals;
   burned:         number | null;
   steps:          number | null;
+  activeMinutes:  number | null;
+  heartRate:      number | null;
+  sleepMinutes:   number | null;
+  sessions:       Session[];
   weight:         WeightPoint | null;
   previousWeight: WeightPoint | null;
   recentWeight:   WeightPoint[];
   waterMl:        number;
   lang:           Lang;
+}
+
+function activityEmoji(type: number): string {
+  const map: Record<number, string> = {
+    1: "🏃", 3: "🏃", 7: "🚴", 8: "🚴", 9: "💪", 10: "⛷️", 17: "🏋️",
+    37: "🚣", 41: "🏃", 45: "⚽", 46: "🚶", 49: "🏂", 54: "🎾", 55: "🪜",
+    56: "🚴", 60: "💪", 72: "🎾", 74: "🏐", 75: "🚶", 82: "🧘", 83: "💃",
+    93: "🏊", 104: "🥊", 108: "🧘", 109: "🏉",
+  };
+  return map[type] ?? "🏅";
 }
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -34,7 +50,8 @@ const fade = (delay = 0) => ({
 });
 
 export default function DashboardClient({
-  date, goals, consumed, burned, steps, weight, previousWeight, waterMl: initialWaterMl, lang,
+  date, goals, consumed, burned, steps, activeMinutes, heartRate, sleepMinutes, sessions,
+  weight, previousWeight, waterMl: initialWaterMl, lang,
 }: Props) {
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -84,6 +101,76 @@ export default function DashboardClient({
           <StepsWidget steps={steps} goal={10000} />
           <WeightWidget weight={weight} previous={previousWeight} />
         </motion.div>
+
+        {/* Sleep + Heart rate + Active minutes */}
+        <motion.div {...fade(0.17)} className="grid grid-cols-3 gap-3 mb-4">
+          {/* Sleep */}
+          <div className="card flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Moon size={13} weight="fill" style={{ color: "#818cf8" }} />
+              <span className="label-xs">Sommeil</span>
+            </div>
+            <span className="text-[20px] font-bold leading-none" style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+              {sleepMinutes ? `${Math.floor(sleepMinutes / 60)}h${String(sleepMinutes % 60).padStart(2, "0")}` : "—"}
+            </span>
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              {sleepMinutes ? (sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant") : "Aucune donnée"}
+            </span>
+          </div>
+          {/* Heart rate */}
+          <div className="card flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Heart size={13} weight="fill" style={{ color: "#f87171" }} />
+              <span className="label-xs">Fréq. card.</span>
+            </div>
+            <span className="text-[20px] font-bold leading-none" style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
+              {heartRate ?? "—"}
+            </span>
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              {heartRate ? "bpm moy." : "Aucune donnée"}
+            </span>
+          </div>
+          {/* Active minutes */}
+          <div className="card flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Lightning size={13} weight="fill" style={{ color: "var(--calories)" }} />
+              <span className="label-xs">Min. actives</span>
+            </div>
+            <span className="text-[20px] font-bold leading-none" style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+              {activeMinutes ?? "—"}
+            </span>
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              {activeMinutes ? `/ 30 min objectif` : "Aucune donnée"}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Workout sessions */}
+        {sessions.length > 0 && (
+          <motion.div {...fade(0.19)} className="glass p-4 mb-4">
+            <p className="label-xs mb-3">Séances du jour</p>
+            <div className="space-y-2">
+              {sessions.map(s => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                    {activityEmoji(s.activityType)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Timer size={11} style={{ color: "var(--text-muted)" }} />
+                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.durationMin} min</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Water tracker */}
         <motion.div {...fade(0.18)} className="mb-4">

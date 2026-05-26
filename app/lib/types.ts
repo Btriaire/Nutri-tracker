@@ -226,11 +226,11 @@ export interface WorkoutSession {
 export interface GoogleFitDay {
   steps:                 number;
   activeCaloriesBurned:  number;
-  distanceMeters:        number;
+  activeMinutes:         number;
   heartRateAvg:          number | null;
-  heartRateMin:          number | null;
-  heartRateMax:          number | null;
-  workouts:              WorkoutSession[];
+  weightKg:              number | null;
+  sleepMinutes:          number | null;
+  sessions:              { id: string; name: string; activityType: number; durationMin: number; startMs: number }[];
   syncedAt:              Timestamp;
 }
 

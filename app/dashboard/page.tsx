@@ -32,7 +32,8 @@ export default async function DashboardPage() {
 
     for (const d of recentWeightSnap.docs) {
       const fd = d.data() as FitnessDay;
-      if (fd.withings?.weightKg) recentWeight.push({ kg: fd.withings.weightKg, date: fd.date });
+      const kg = fd.withings?.weightKg ?? fd.googleFit?.weightKg ?? null;
+      if (kg) recentWeight.push({ kg, date: fd.date });
       if (recentWeight.length >= 7) break;
     }
   } catch (e) {
@@ -46,6 +47,10 @@ export default async function DashboardPage() {
       consumed={dayLog?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }}
       burned={fitnessDay?.googleFit?.activeCaloriesBurned ?? null}
       steps={fitnessDay?.googleFit?.steps ?? null}
+      activeMinutes={fitnessDay?.googleFit?.activeMinutes ?? null}
+      heartRate={fitnessDay?.googleFit?.heartRateAvg ?? null}
+      sleepMinutes={fitnessDay?.googleFit?.sleepMinutes ?? null}
+      sessions={fitnessDay?.googleFit?.sessions ?? []}
       weight={recentWeight[0] ?? null}
       previousWeight={recentWeight[1] ?? null}
       recentWeight={[...recentWeight].reverse()}
