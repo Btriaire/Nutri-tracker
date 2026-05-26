@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       ? (snap.data() as DayLog)
       : { date: body.date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }, updatedAt: Timestamp.now() };
 
-    const entries = [...existing.entries, newEntry];
+    const entries = [...(existing.entries ?? []), newEntry];
     const totals = calcTotals(entries);
 
     tx.set(ref, { ...existing, entries, totals, updatedAt: Timestamp.now() });
@@ -75,4 +75,22 @@ export async function POST(req: NextRequest) {
   const snap = await ref.get();
   const day = snap.data() as DayLog;
   return NextResponse.json({ entry: newEntry, totals: day.totals }, { status: 201 });
+}
+
+// ─── PATCH /api/log — validate day ───────────────────────────────────────────
+
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json() as { date: string; validated: boolean };
+  try { dateKey(body.date); } catch {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
+
+  const db  = getAdminFirestore();
+  const ref = db.doc(`users/${session.userId}/foodLog/${body.date}`);
+  await ref.set({ validated: body.validated, updatedAt: Timestamp.now() }, { merge: true });
+
+  return NextResponse.json({ ok: true });
 }

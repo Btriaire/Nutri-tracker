@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CaretDown,
   Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
-  ForkKnife, BookBookmark, CookingPot, Trash, Check,
+  ForkKnife, BookBookmark, CookingPot, Trash, Check, Camera,
 } from "@phosphor-icons/react";
 import type {
   FoodNutrition, FoodSearchResult, HungerLevel, MealType, Lang,
@@ -106,18 +107,31 @@ function FoodImage({ food }: { food: { name: string; category?: string; imageUrl
   );
 }
 
-function NutrientGroup({ label, rows }: { label: string; rows: { l: string; v: number | null | undefined; u: string }[] }) {
+const GROUP_COLORS: Record<string, string> = {
+  "Glucides":  "var(--carbs)",
+  "Lipides":   "var(--fat)",
+  "Minéraux":  "#34d399",
+  "Vitamines": "#f472b6",
+  "Divers":    "var(--text-muted)",
+};
+
+function NutrientGroup({ label, rows, accent }: { label: string; rows: { l: string; v: number | null | undefined; u: string }[]; accent?: string }) {
   const visible = rows.filter((r) => r.v != null);
   if (!visible.length) return null;
+  const color = accent ?? GROUP_COLORS[label.split(" ")[0]] ?? "var(--protein)";
   return (
-    <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>{label}</p>
-      <div className="space-y-1">
-        {visible.map(({ l, v, u }) => (
-          <div key={l} className="flex justify-between">
-            <span style={{ color: "var(--text-secondary)" }}>{l}</span>
-            <span className="tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>
-              {u === "g" ? (Math.round((v ?? 0) * 10) / 10) : Math.round(v ?? 0)}{u}
+    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid var(--border)" }}>
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+        <span className="text-[11px] font-semibold" style={{ color }}>{label}</span>
+      </div>
+      <div>
+        {visible.map(({ l, v, u }, i) => (
+          <div key={l} className="flex justify-between items-center px-3 py-2"
+            style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)" }}>
+            <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{l}</span>
+            <span className="text-[12px] tabular-nums font-semibold" style={{ color: "var(--text-primary)" }}>
+              {u === "g" ? (Math.round((v ?? 0) * 10) / 10) : Math.round(v ?? 0)}<span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{u}</span>
             </span>
           </div>
         ))}
@@ -198,8 +212,28 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [recipeServings, setRecipeServings] = useState("1");
   const [addingRecipe, setAddingRecipe]   = useState(false);
 
+  // Camera / photo analysis
+  const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Portal mount (escape .glass backdrop-filter stacking context)
+  const [mounted, setMounted] = useState(false);
+
   const inputRef    = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const closeOverlay = () => {
+    setSelected(null);
+    setSelectedRecipe(null);
+    setStep("browse");
+    setShowDetails(false);
+    setNotes("");
+    setHunger(null);
+    setNewMealName("");
+    setNewMealIcon("🍽️");
+  };
 
   // Reset on open
   useEffect(() => {
@@ -276,6 +310,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     setSelectedUnit(opts.find((o) => o.isDefault) ?? opts[0]);
     setCustomQty("1"); setUseCustomG(false);
     setCustomGrams(String(food.servingSizeG));
+    setShowDetails(false);
     setStep("configure");
   };
 
@@ -301,7 +336,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       : `${customQty} ${selectedUnit?.label ?? "portion"} (${grams}g)`;
 
     try {
-      await fetch("/api/log", {
+      const res = await fetch("/api/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -316,6 +351,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
+      if (!res.ok) return;
       onAdded({ name: selected.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAdding(false); }
@@ -329,7 +365,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     const per100g = getNutritionPer100g(food);
     const nutrition = scaleNutrition(per100g, grams);
     try {
-      await fetch("/api/log", {
+      const res = await fetch("/api/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -345,8 +381,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
+      if (!res.ok) return;
       onAdded({ name: food.name, calories: Math.round(nutrition.calories) });
-      onClose();
     } finally { setQuickAddingId(null); }
   };
 
@@ -409,7 +445,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           }],
         }),
       });
-      setStep("browse"); setTab("repas");
+      closeOverlay();
+      setTab("repas");
       loadMeals();
     } finally { setSavingMeal(false); }
   };
@@ -430,7 +467,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     const nutrition = scaleNutrition(selectedRecipe.nutrition, servings);
 
     try {
-      await fetch("/api/log", {
+      const res = await fetch("/api/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -448,20 +485,50 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
+      if (!res.ok) return;
       onAdded({ name: selectedRecipe.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAddingRecipe(false); }
+  };
+
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setPhotoAnalyzing(true);
+    setResults([]);
+    setQuery("");
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res  = await fetch("/api/food/photo", { method: "POST", body: formData });
+      if (!res.ok) return;
+      const json = await res.json() as { results: FoodSearchResult[] };
+      setResults(json.results ?? []);
+    } finally { setPhotoAnalyzing(false); }
   };
 
   const cn = computedNutrition();
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
+          {/* Hidden camera input */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handlePhotoCapture}
+          />
+
+          {/* ── Backdrop ── */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
@@ -470,7 +537,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* ── Main search sheet (always shows browse) ── */}
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 32, stiffness: 320, mass: 0.8 }}
@@ -486,16 +553,11 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               <div className="w-8 h-1 rounded-full" style={{ background: "var(--border-strong)" }} />
             </div>
 
-            {/* Header */}
+            {/* Header — always search / tab title */}
             <div className="px-4 pb-0 pt-2 flex-shrink-0">
               <div className="flex items-center gap-2 mb-3">
-                {(step === "configure" || step === "configure-recipe" || step === "save-meal") && (
-                  <button onClick={() => setStep("browse")} className="btn-icon flex-shrink-0">
-                    <ArrowLeft size={13} />
-                  </button>
-                )}
                 <div className="flex-1 min-w-0">
-                  {step === "browse" && tab === "aliments" && (
+                  {tab === "aliments" ? (
                     <div className="relative">
                       {searching
                         ? <Spinner size={13} className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
@@ -509,551 +571,625 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         className="input pl-9 text-[13.5px]"
                       />
                     </div>
-                  )}
-                  {step === "configure" && selected && (
-                    <div>
-                      <p className="font-semibold text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{selected.name}</p>
-                      {selected.brand && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{selected.brand}</p>}
-                    </div>
-                  )}
-                  {step === "configure-recipe" && selectedRecipe && (
-                    <div>
-                      <p className="font-semibold text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{selectedRecipe.name}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{selectedRecipe.servings} portion{selectedRecipe.servings > 1 ? "s" : ""} · {selectedRecipe.totalGrams}g total</p>
-                    </div>
-                  )}
-                  {step === "save-meal" && (
-                    <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Sauvegarder comme repas</p>
-                  )}
-                  {step === "browse" && tab !== "aliments" && (
+                  ) : (
                     <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
                       {tab === "repas" ? "Mes repas" : "Mes recettes"}
                     </p>
                   )}
                 </div>
+                {tab === "aliments" && (
+                  <button
+                    onClick={() => !photoAnalyzing && cameraInputRef.current?.click()}
+                    className="btn-icon flex-shrink-0"
+                    title="Analyser un repas en photo"
+                    disabled={photoAnalyzing}
+                  >
+                    {photoAnalyzing
+                      ? <Spinner size={14} className="animate-spin" style={{ color: "var(--protein)" }} />
+                      : <Camera size={14} />
+                    }
+                  </button>
+                )}
                 <button onClick={onClose} className="btn-icon flex-shrink-0"><X size={13} /></button>
               </div>
 
-              {/* Tab bar — only shown on browse step */}
-              {step === "browse" && (
-                <div className="flex gap-1 p-1 rounded-xl mb-0"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                  {([
-                    { id: "aliments",  label: "Aliments",  Icon: ForkKnife },
-                    { id: "repas",     label: "Repas",     Icon: CookingPot },
-                    { id: "recettes",  label: "Recettes",  Icon: BookBookmark },
-                  ] as const).map(({ id, label, Icon }) => (
-                    <button key={id} onClick={() => setTab(id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
-                      style={{
-                        background: tab === id ? "rgba(167,139,250,0.15)" : "transparent",
-                        color:      tab === id ? "var(--protein)" : "var(--text-muted)",
-                        border:     tab === id ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
-                      }}>
-                      <Icon size={12} weight={tab === id ? "fill" : "regular"} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Tab bar — always visible */}
+              <div className="flex gap-1 p-1 rounded-xl mb-0"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                {([
+                  { id: "aliments",  label: "Aliments",  Icon: ForkKnife },
+                  { id: "repas",     label: "Repas",     Icon: CookingPot },
+                  { id: "recettes",  label: "Recettes",  Icon: BookBookmark },
+                ] as const).map(({ id, label, Icon }) => (
+                  <button key={id} onClick={() => setTab(id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                    style={{
+                      background: tab === id ? "rgba(167,139,250,0.15)" : "transparent",
+                      color:      tab === id ? "var(--protein)" : "var(--text-muted)",
+                      border:     tab === id ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
+                    }}>
+                    <Icon size={12} weight={tab === id ? "fill" : "regular"} />
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Divider */}
             <div className="h-px flex-shrink-0 mt-3" style={{ background: "var(--border)" }} />
 
-            {/* Content */}
+            {/* Browse content */}
             <div className="flex-1 overflow-y-auto overscroll-contain">
-              <AnimatePresence mode="wait">
 
-                {/* ── ALIMENTS browse ── */}
-                {step === "browse" && tab === "aliments" && (
-                  <motion.div key="aliments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }} className="px-4 py-3">
-                    {!query && (
-                      <>
-                        <p className="label-xs mb-3">Catégories</p>
-                        <div className="grid grid-cols-4 gap-2">
-                          {CATEGORIES.map((cat, i) => (
-                            <motion.button key={cat.emoji}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.15, delay: i * 0.018 }}
-                              onClick={() => browseCategory(cat)}
-                              className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all"
-                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
-                              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                              <span className="text-[22px] leading-none">{cat.emoji}</span>
-                              <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-muted)" }}>{cat.label}</span>
-                            </motion.button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                    {query && !searching && results.length === 0 && (
-                      <div className="flex flex-col items-center gap-2 py-14">
-                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Aucun résultat pour &ldquo;{query}&rdquo;</p>
-                      </div>
-                    )}
-                    <div className="space-y-1 mt-3">
-                      {results.map((r) => {
-                        const badge = SOURCE_BADGE[r.source];
-                        const isAdding = quickAddingId === r.id;
-                        return (
-                          <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-2 rounded-xl overflow-hidden"
-                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                            {/* Tap to configure */}
-                            <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
-                              <FoodImage food={r} />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                                  <div className="text-right flex-shrink-0">
-                                    <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
-                                  {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
-                                  {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                  <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
-                                </div>
-                                <MacroPills n={r.nutrition} />
-                              </div>
-                            </button>
-                            {/* Quick add */}
-                            <button
-                              onClick={() => handleQuickAdd(r)}
-                              disabled={isAdding}
-                              className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
-                              style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
-                            >
-                              {isAdding
-                                ? <Spinner size={15} className="animate-spin" style={{ color: "var(--protein)" }} />
-                                : <Plus size={17} weight="bold" style={{ color: "var(--protein)" }} />
-                              }
-                            </button>
-                          </motion.div>
-                        );
-                      })}
+              {/* ── ALIMENTS ── */}
+              {tab === "aliments" && (
+                <div className="px-4 py-3">
+                  {photoAnalyzing && (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      <Spinner size={24} className="animate-spin" style={{ color: "var(--protein)" }} />
+                      <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Analyse de la photo…</p>
                     </div>
-                  </motion.div>
-                )}
-
-                {/* ── REPAS browse ── */}
-                {step === "browse" && tab === "repas" && (
-                  <motion.div key="repas" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }} className="px-4 py-4">
-                    {loadingMeals && (
-                      <div className="flex justify-center py-12">
-                        <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                  )}
+                  {!query && !photoAnalyzing && (
+                    <>
+                      <p className="label-xs mb-3">Catégories</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {CATEGORIES.map((cat, i) => (
+                          <motion.button key={cat.emoji}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.15, delay: i * 0.018 }}
+                            onClick={() => browseCategory(cat)}
+                            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all"
+                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <span className="text-[22px] leading-none">{cat.emoji}</span>
+                            <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-muted)" }}>{cat.label}</span>
+                          </motion.button>
+                        ))}
                       </div>
-                    )}
-                    {!loadingMeals && savedMeals.length === 0 && (
-                      <div className="flex flex-col items-center gap-3 py-12">
-                        <span className="text-4xl">🍽️</span>
-                        <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
-                          Aucun repas sauvegardé.<br />Ajoutez un aliment, puis sauvegardez-le comme repas.
-                        </p>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {savedMeals.map((m) => (
-                        <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl"
+                    </>
+                  )}
+                  {query && !searching && results.length === 0 && (
+                    <div className="flex flex-col items-center gap-2 py-14">
+                      <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Aucun résultat pour &ldquo;{query}&rdquo;</p>
+                    </div>
+                  )}
+                  {!query && !photoAnalyzing && results.length > 0 && (
+                    <p className="label-xs mb-2">Aliments détectés</p>
+                  )}
+                  <div className="space-y-1 mt-3">
+                    {results.map((r) => {
+                      const badge = SOURCE_BADGE[r.source];
+                      const isAdding = quickAddingId === r.id;
+                      return (
+                        <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center gap-2 rounded-xl overflow-hidden"
                           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                          <span className="text-2xl flex-shrink-0">{m.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{m.name}</p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                              {m.entries.length} aliment{m.entries.length > 1 ? "s" : ""} · {Math.round(m.totalNutrition.calories)} kcal
-                            </p>
-                            <MacroPills n={m.totalNutrition} />
-                          </div>
-                          <div className="flex flex-col gap-1.5 flex-shrink-0">
-                            <button onClick={() => handleLogMeal(m)}
-                              disabled={addingMealId === m.id}
-                              className="btn btn-primary px-3 py-1 text-[11px]" style={{ height: "28px" }}>
-                              {addingMealId === m.id ? <Spinner size={11} className="animate-spin" /> : <><Plus size={11} /> Ajouter</>}
-                            </button>
-                            <button onClick={() => handleDeleteMeal(m.id)}
-                              disabled={deletingMealId === m.id}
-                              className="btn btn-ghost px-2 py-1 text-[11px]"
-                              style={{ height: "24px", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
-                              {deletingMealId === m.id ? <Spinner size={10} className="animate-spin" /> : <Trash size={11} />}
-                            </button>
-                          </div>
+                          {/* Tap to configure */}
+                          <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                            <FoodImage food={r} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
+                                {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
+                                {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
+                                <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                              </div>
+                              <MacroPills n={r.nutrition} />
+                            </div>
+                          </button>
+                          {/* Quick add */}
+                          <button
+                            onClick={() => handleQuickAdd(r)}
+                            disabled={isAdding}
+                            className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                            style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
+                          >
+                            {isAdding
+                              ? <Spinner size={15} className="animate-spin" style={{ color: "var(--protein)" }} />
+                              : <Plus size={17} weight="bold" style={{ color: "var(--protein)" }} />
+                            }
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── REPAS ── */}
+              {tab === "repas" && (
+                <div className="px-4 py-4">
+                  {loadingMeals && (
+                    <div className="flex justify-center py-12">
+                      <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                    </div>
+                  )}
+                  {!loadingMeals && savedMeals.length === 0 && (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      <span className="text-4xl">🍽️</span>
+                      <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+                        Aucun repas sauvegardé.<br />Ajoutez un aliment, puis sauvegardez-le comme repas.
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {savedMeals.map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        <span className="text-2xl flex-shrink-0">{m.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{m.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            {m.entries.length} aliment{m.entries.length > 1 ? "s" : ""} · {Math.round(m.totalNutrition.calories)} kcal
+                          </p>
+                          <MacroPills n={m.totalNutrition} />
                         </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* ── RECETTES browse ── */}
-                {step === "browse" && tab === "recettes" && (
-                  <motion.div key="recettes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }} className="px-4 py-4">
-                    {loadingRecipes && (
-                      <div className="flex justify-center py-12">
-                        <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                        <div className="flex flex-col gap-1.5 flex-shrink-0">
+                          <button onClick={() => handleLogMeal(m)}
+                            disabled={addingMealId === m.id}
+                            className="btn btn-primary px-3 py-1 text-[11px]" style={{ height: "28px" }}>
+                            {addingMealId === m.id ? <Spinner size={11} className="animate-spin" /> : <><Plus size={11} /> Ajouter</>}
+                          </button>
+                          <button onClick={() => handleDeleteMeal(m.id)}
+                            disabled={deletingMealId === m.id}
+                            className="btn btn-ghost px-2 py-1 text-[11px]"
+                            style={{ height: "24px", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                            {deletingMealId === m.id ? <Spinner size={10} className="animate-spin" /> : <Trash size={11} />}
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    {!loadingRecipes && recipes.length === 0 && (
-                      <div className="flex flex-col items-center gap-3 py-12">
-                        <span className="text-4xl">📖</span>
-                        <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
-                          Aucune recette créée.<br />Créez vos recettes dans la bibliothèque.
-                        </p>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {recipes.map((r) => (
-                        <motion.button key={r.id} onClick={() => selectRecipe(r)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
-                          whileHover={{ background: "rgba(255,255,255,0.055)" }}>
-                          <span className="text-2xl flex-shrink-0">🍳</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                              {r.servings} portion{r.servings > 1 ? "s" : ""} · {r.ingredients.length} ingrédient{r.ingredients.length > 1 ? "s" : ""}
-                            </p>
-                            <p className="text-[12px] font-medium mt-0.5" style={{ color: "var(--calories)" }}>
-                              {Math.round(r.nutrition.calories)} kcal / portion
-                            </p>
-                          </div>
-                          <Plus size={14} style={{ color: "var(--text-muted)" }} />
-                        </motion.button>
-                      ))}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── RECETTES ── */}
+              {tab === "recettes" && (
+                <div className="px-4 py-4">
+                  {loadingRecipes && (
+                    <div className="flex justify-center py-12">
+                      <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                     </div>
-                  </motion.div>
-                )}
+                  )}
+                  {!loadingRecipes && recipes.length === 0 && (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      <span className="text-4xl">📖</span>
+                      <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+                        Aucune recette créée.<br />Créez vos recettes dans la bibliothèque.
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {recipes.map((r) => (
+                      <motion.button key={r.id} onClick={() => selectRecipe(r)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl text-left"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
+                        whileHover={{ background: "rgba(255,255,255,0.055)" }}>
+                        <span className="text-2xl flex-shrink-0">🍳</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            {r.servings} portion{r.servings > 1 ? "s" : ""} · {r.ingredients.length} ingrédient{r.ingredients.length > 1 ? "s" : ""}
+                          </p>
+                          <p className="text-[12px] font-medium mt-0.5" style={{ color: "var(--calories)" }}>
+                            {Math.round(r.nutrition.calories)} kcal / portion
+                          </p>
+                        </div>
+                        <Plus size={14} style={{ color: "var(--text-muted)" }} />
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                {/* ── CONFIGURE food ── */}
-                {step === "configure" && selected && (
-                  <motion.div key="configure" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.18 }}
-                    className="px-4 py-4 space-y-5 pb-8">
+            </div>
+          </motion.div>
 
-                    {/* Source badge */}
-                    <div className="flex items-center gap-2">
-                      <span className="badge"
+          {/* ── Configure overlay panel (popup over search) ── */}
+
+          {/* Dim — separate AnimatePresence to avoid fragment issue */}
+          <AnimatePresence>
+            {step !== "browse" && (
+              <motion.div
+                key="cfg-dim"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="fixed inset-0"
+                style={{ zIndex: 55, background: "rgba(0,0,0,0.45)" }}
+                onClick={closeOverlay}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Configure panel */}
+          <AnimatePresence>
+            {step !== "browse" && (
+              <motion.div
+                key="cfg-panel"
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 36, stiffness: 400, mass: 0.8 }}
+                className="fixed inset-x-0 bottom-0 flex flex-col rounded-t-2xl overflow-hidden"
+                style={{
+                  zIndex: 60,
+                    background: "rgba(15,15,22,0.99)",
+                    border: "1px solid var(--border-strong)", borderBottom: "none",
+                    backdropFilter: "blur(28px)",
+                    maxHeight: "88vh",
+                  }}
+                >
+                  {/* Drag handle */}
+                  <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                    <div className="w-8 h-1 rounded-full" style={{ background: "var(--border-strong)" }} />
+                  </div>
+
+                  {/* Panel header */}
+                  <div className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0"
+                    style={{ borderBottom: "1px solid var(--border)" }}>
+                    {step === "save-meal" ? (
+                      <button onClick={() => setStep("configure")} className="btn-icon flex-shrink-0">
+                        <ArrowLeft size={13} />
+                      </button>
+                    ) : (
+                      <button onClick={closeOverlay} className="btn-icon flex-shrink-0">
+                        <X size={13} />
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      {step === "configure" && selected && (
+                        <div>
+                          <p className="font-semibold text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{selected.name}</p>
+                          {selected.brand && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{selected.brand}</p>}
+                        </div>
+                      )}
+                      {step === "configure-recipe" && selectedRecipe && (
+                        <div>
+                          <p className="font-semibold text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{selectedRecipe.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{selectedRecipe.servings} portion{selectedRecipe.servings > 1 ? "s" : ""} · {selectedRecipe.totalGrams}g total</p>
+                        </div>
+                      )}
+                      {step === "save-meal" && (
+                        <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Sauvegarder comme repas</p>
+                      )}
+                    </div>
+                    {step === "configure" && selected && (
+                      <span className="badge flex-shrink-0"
                         style={{ borderColor: `${SOURCE_BADGE[selected.source]?.color}40`, color: SOURCE_BADGE[selected.source]?.color }}>
                         {SOURCE_BADGE[selected.source]?.label ?? selected.source}
                       </span>
-                      {selected.category && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{selected.category}</span>}
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Serving */}
-                    <div>
-                      <p className="label-xs mb-2">Portion</p>
-                      {!useCustomG ? (
-                        <>
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            {getServingOptions(selected).map((opt) => (
-                              <button key={opt.label} onClick={() => setSelectedUnit(opt)}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                  {/* Panel content */}
+                  <div className="flex-1 overflow-y-auto overscroll-contain">
+
+                    {/* ── CONFIGURE food ── */}
+                    {step === "configure" && selected && (
+                      <div className="px-4 py-4 space-y-5 pb-8">
+
+                        {/* Serving */}
+                        <div>
+                          <p className="label-xs mb-2">Portion</p>
+                          {!useCustomG ? (
+                            <>
+                              <div className="flex gap-2 overflow-x-auto pb-2 mb-1"
+                                style={{ scrollbarWidth: "none" }}>
+                                {getServingOptions(selected).map((opt) => (
+                                  <button key={opt.label} onClick={() => setSelectedUnit(opt)}
+                                    className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors"
+                                    style={{
+                                      background: selectedUnit?.label === opt.label ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                                      border: `1px solid ${selectedUnit?.label === opt.label ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
+                                      color: selectedUnit?.label === opt.label ? "var(--protein)" : "var(--text-secondary)",
+                                    }}>
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <button onClick={() => setCustomQty((v) => String(Math.max(0.5, (parseFloat(v)||1) - ((selectedUnit?.grams ?? 0) >= 50 ? 1 : 0.5))))}
+                                    className="btn-icon w-8 h-8 text-lg">−</button>
+                                  <input type="number" value={customQty} min="0.5" step="0.5"
+                                    onChange={(e) => setCustomQty(e.target.value)}
+                                    className="input text-center w-16 tabular-nums" />
+                                  <button onClick={() => setCustomQty((v) => String((parseFloat(v)||1) + ((selectedUnit?.grams ?? 0) >= 50 ? 1 : 0.5)))}
+                                    className="btn-icon w-8 h-8 text-lg">+</button>
+                                </div>
+                                <span className="text-[12px] flex-1" style={{ color: "var(--text-muted)" }}>
+                                  = {Math.round(effectiveGrams())}g
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <input type="number" value={customGrams} min="1"
+                                onChange={(e) => setCustomGrams(e.target.value)}
+                                className="input w-24 tabular-nums" />
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>grammes</span>
+                            </div>
+                          )}
+                          <button onClick={() => setUseCustomG((v) => !v)}
+                            className="mt-2 text-[11px] transition-colors"
+                            style={{ color: "var(--text-muted)" }}>
+                            {useCustomG ? "← Utiliser les unités" : "Saisir en grammes →"}
+                          </button>
+                        </div>
+
+                        {/* Nutrition preview */}
+                        {cn && (
+                          <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                            {/* Calorie hero */}
+                            <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-[34px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
+                                  {Math.round(cn.calories)}
+                                </span>
+                                <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>kcal</span>
+                              </div>
+                              <div className="px-2.5 py-1 rounded-lg"
+                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                                <span className="text-[12px] tabular-nums font-medium" style={{ color: "var(--text-secondary)" }}>
+                                  {Math.round(effectiveGrams())} g
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Macro ratio bar */}
+                            {(() => {
+                              const total = cn.proteinG + cn.carbsG + cn.fatG;
+                              if (total === 0) return null;
+                              return (
+                                <div className="mx-4 mb-3 h-2 rounded-full overflow-hidden flex">
+                                  <div style={{ width: `${cn.proteinG / total * 100}%`, background: "var(--protein)" }} />
+                                  <div style={{ width: `${cn.carbsG   / total * 100}%`, background: "var(--carbs)" }} />
+                                  <div style={{ width: `${cn.fatG     / total * 100}%`, background: "var(--fat)" }} />
+                                </div>
+                              );
+                            })()}
+
+                            {/* Macro values */}
+                            <div className="grid grid-cols-4" style={{ borderTop: "1px solid var(--border)" }}>
+                              {[
+                                { l: "Protéines", v: cn.proteinG, c: "var(--protein)" },
+                                { l: "Glucides",  v: cn.carbsG,   c: "var(--carbs)" },
+                                { l: "Lipides",   v: cn.fatG,     c: "var(--fat)" },
+                                { l: "Fibres",    v: cn.fiberG,   c: "var(--fiber)" },
+                              ].map(({ l, v, c }, i) => (
+                                <div key={l} className="flex flex-col items-center py-3"
+                                  style={{ borderLeft: i > 0 ? "1px solid var(--border)" : "none" }}>
+                                  <span className="text-[14px] font-bold tabular-nums" style={{ color: c }}>
+                                    {Math.round(v * 10) / 10}<span className="text-[10px] font-normal ml-px" style={{ color: "var(--text-muted)" }}>g</span>
+                                  </span>
+                                  <span className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{l}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Toggle details */}
+                            <button
+                              onClick={() => setShowDetails(v => !v)}
+                              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[11px] transition-colors"
+                              style={{ color: showDetails ? "var(--protein)" : "var(--text-muted)", borderTop: "1px solid var(--border)" }}
+                            >
+                              <motion.span animate={{ rotate: showDetails ? 180 : 0 }} transition={{ duration: 0.2 }}
+                                style={{ display: "inline-flex" }}>
+                                <CaretDown size={10} />
+                              </motion.span>
+                              {showDetails ? "Masquer les détails" : "Voir les détails nutritionnels"}
+                            </button>
+
+                            <AnimatePresence initial={false}>
+                              {showDetails && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                                  style={{ overflow: "hidden", borderTop: "1px solid var(--border)" }}
+                                >
+                                  <div className="p-3 space-y-3 text-[12px]">
+                                    {(cn.sugarG != null || cn.starchG != null) && (
+                                      <NutrientGroup label="Glucides détail" rows={[
+                                        { l: "dont Sucres", v: cn.sugarG,  u: "g" },
+                                        { l: "dont Amidon", v: cn.starchG, u: "g" },
+                                      ]} />
+                                    )}
+                                    {(cn.saturatedFatG != null || cn.monounsatFatG != null || cn.polyunsatFatG != null || cn.transFatG != null || cn.cholesterolMg != null) && (
+                                      <NutrientGroup label="Lipides détail" rows={[
+                                        { l: "Saturés",        v: cn.saturatedFatG, u: "g" },
+                                        { l: "Mono-insaturés", v: cn.monounsatFatG, u: "g" },
+                                        { l: "Poly-insaturés", v: cn.polyunsatFatG, u: "g" },
+                                        { l: "Trans",          v: cn.transFatG,     u: "g" },
+                                        { l: "Cholestérol",    v: cn.cholesterolMg, u: "mg" },
+                                      ]} />
+                                    )}
+                                    {(cn.sodiumMg != null || cn.potassiumMg != null || cn.calciumMg != null || cn.magneziumMg != null || cn.ironMg != null || cn.zincMg != null) && (
+                                      <NutrientGroup label="Minéraux" rows={[
+                                        { l: "Sodium",    v: cn.sodiumMg,    u: "mg" },
+                                        { l: "Potassium", v: cn.potassiumMg, u: "mg" },
+                                        { l: "Calcium",   v: cn.calciumMg,   u: "mg" },
+                                        { l: "Magnésium", v: cn.magneziumMg, u: "mg" },
+                                        { l: "Fer",       v: cn.ironMg,      u: "mg" },
+                                        { l: "Zinc",      v: cn.zincMg,      u: "mg" },
+                                      ]} />
+                                    )}
+                                    {(cn.vitaminCMg != null || cn.vitaminDUg != null || cn.vitaminAUg != null || cn.vitaminB12Ug != null || cn.vitaminB9Ug != null) && (
+                                      <NutrientGroup label="Vitamines" rows={[
+                                        { l: "Vitamine C",   v: cn.vitaminCMg,   u: "mg" },
+                                        { l: "Vitamine D",   v: cn.vitaminDUg,   u: "µg" },
+                                        { l: "Vitamine A",   v: cn.vitaminAUg,   u: "µg" },
+                                        { l: "Vitamine B12", v: cn.vitaminB12Ug, u: "µg" },
+                                        { l: "Folate (B9)",  v: cn.vitaminB9Ug,  u: "µg" },
+                                      ]} />
+                                    )}
+                                    {(cn.waterG != null || cn.saltG != null || cn.alcoholG != null) && (
+                                      <NutrientGroup label="Divers" rows={[
+                                        { l: "Eau",    v: cn.waterG,   u: "g" },
+                                        { l: "Sel",    v: cn.saltG,    u: "g" },
+                                        { l: "Alcool", v: cn.alcoholG, u: "g" },
+                                      ]} />
+                                    )}
+                                    {cn.sugarG == null && cn.saturatedFatG == null && cn.sodiumMg == null && cn.vitaminCMg == null && (
+                                      <p className="text-center py-2" style={{ color: "var(--text-muted)" }}>
+                                        Micronutriments non disponibles pour cette source
+                                      </p>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Notes */}
+                        <div>
+                          <p className="label-xs mb-1.5">Note (optionnel)</p>
+                          <input value={notes} onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Ex : avec vinaigrette…"
+                            className="input text-[13px]" />
+                        </div>
+
+                        {/* Hunger */}
+                        <div>
+                          <p className="label-xs mb-2">Niveau de faim</p>
+                          <div className="flex gap-2">
+                            {HUNGER_ICONS.map(({ level, Icon, label }) => (
+                              <button key={level} onClick={() => setHunger(hunger === level ? null : level)}
+                                title={label}
+                                className="flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all"
                                 style={{
-                                  background: selectedUnit?.label === opt.label ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
-                                  border: `1px solid ${selectedUnit?.label === opt.label ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
-                                  color: selectedUnit?.label === opt.label ? "var(--protein)" : "var(--text-secondary)",
+                                  background: hunger === level ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.03)",
+                                  border: `1px solid ${hunger === level ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                                 }}>
-                                {opt.label}
+                                <Icon size={20} weight={hunger === level ? "fill" : "regular"}
+                                  style={{ color: hunger === level ? "var(--protein)" : "var(--text-muted)" }} />
+                                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                               </button>
                             ))}
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 flex-1">
-                              <button onClick={() => setCustomQty((v) => String(Math.max(0.5, (parseFloat(v)||1) - ((selectedUnit?.grams ?? 0) >= 50 ? 1 : 0.5))))}
-                                className="btn-icon w-8 h-8 text-lg">−</button>
-                              <input type="number" value={customQty} min="0.5" step="0.5"
-                                onChange={(e) => setCustomQty(e.target.value)}
-                                className="input text-center w-16 tabular-nums" />
-                              <button onClick={() => setCustomQty((v) => String((parseFloat(v)||1) + ((selectedUnit?.grams ?? 0) >= 50 ? 1 : 0.5)))}
-                                className="btn-icon w-8 h-8 text-lg">+</button>
-                            </div>
-                            <span className="text-[12px] flex-1" style={{ color: "var(--text-muted)" }}>
-                              = {Math.round(effectiveGrams())}g
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <input type="number" value={customGrams} min="1"
-                            onChange={(e) => setCustomGrams(e.target.value)}
-                            className="input w-24 tabular-nums" />
-                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>grammes</span>
                         </div>
-                      )}
-                      <button onClick={() => setUseCustomG((v) => !v)}
-                        className="mt-2 text-[11px] transition-colors"
-                        style={{ color: "var(--text-muted)" }}>
-                        {useCustomG ? "← Utiliser les unités" : "Saisir en grammes →"}
-                      </button>
-                    </div>
 
-                    {/* Nutrition preview */}
-                    {cn && (
-                      <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                        <div className="p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                              {Math.round(cn.calories)} kcal
-                            </span>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>pour {Math.round(effectiveGrams())}g</span>
-                          </div>
-                          {/* Main macros row */}
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {[
-                              { l: "Protéines", v: cn.proteinG,  c: "var(--protein)", u: "g" },
-                              { l: "Glucides",  v: cn.carbsG,    c: "var(--carbs)",   u: "g" },
-                              { l: "Lipides",   v: cn.fatG,      c: "var(--fat)",     u: "g" },
-                              { l: "Fibres",    v: cn.fiberG,    c: "var(--fiber)",   u: "g" },
-                            ].map(({ l, v, c, u }) => (
-                              <div key={l} className="flex flex-col items-center p-1.5 rounded-lg"
-                                style={{ background: "rgba(255,255,255,0.03)" }}>
-                                <span className="text-[13px] font-bold tabular-nums" style={{ color: c }}>{Math.round(v)}{u}</span>
-                                <span className="text-[9px] mt-0.5 text-center leading-tight" style={{ color: "var(--text-muted)" }}>{l}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Toggle details */}
-                          <button
-                            onClick={() => setShowDetails(v => !v)}
-                            className="w-full flex items-center justify-center gap-1.5 py-1 text-[11px] transition-colors"
-                            style={{ color: showDetails ? "var(--protein)" : "var(--text-muted)" }}
-                          >
-                            <motion.span animate={{ rotate: showDetails ? 180 : 0 }} transition={{ duration: 0.2 }}
-                              style={{ display: "inline-flex" }}>
-                              <CaretDown size={10} />
-                            </motion.span>
-                            {showDetails ? "Masquer les détails" : "Voir les détails nutritionnels"}
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <button onClick={handleAddFood} disabled={adding}
+                            className="btn btn-primary flex-1 gap-2">
+                            {adding ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
+                            Ajouter au journal
+                          </button>
+                          <button onClick={() => setStep("save-meal")}
+                            className="btn btn-ghost gap-1.5 text-[12px] px-3"
+                            title="Sauvegarder comme repas">
+                            <CookingPot size={14} />
+                            Sauver
                           </button>
                         </div>
-
-                        {/* Expanded details */}
-                        <AnimatePresence initial={false}>
-                          {showDetails && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-                              style={{ overflow: "hidden", borderTop: "1px solid var(--border)" }}
-                            >
-                              <div className="p-3 space-y-3 text-[12px]">
-                                {/* Glucides */}
-                                {(cn.sugarG != null || cn.starchG != null) && (
-                                  <NutrientGroup label="Glucides détail" rows={[
-                                    { l: "dont Sucres",  v: cn.sugarG,  u: "g" },
-                                    { l: "dont Amidon",  v: cn.starchG, u: "g" },
-                                  ]} />
-                                )}
-                                {/* Lipides */}
-                                {(cn.saturatedFatG != null || cn.monounsatFatG != null || cn.polyunsatFatG != null || cn.transFatG != null || cn.cholesterolMg != null) && (
-                                  <NutrientGroup label="Lipides détail" rows={[
-                                    { l: "Saturés",        v: cn.saturatedFatG,  u: "g" },
-                                    { l: "Mono-insaturés", v: cn.monounsatFatG,  u: "g" },
-                                    { l: "Poly-insaturés", v: cn.polyunsatFatG,  u: "g" },
-                                    { l: "Trans",          v: cn.transFatG,       u: "g" },
-                                    { l: "Cholestérol",    v: cn.cholesterolMg,   u: "mg" },
-                                  ]} />
-                                )}
-                                {/* Minéraux */}
-                                {(cn.sodiumMg != null || cn.potassiumMg != null || cn.calciumMg != null || cn.magneziumMg != null || cn.ironMg != null || cn.zincMg != null) && (
-                                  <NutrientGroup label="Minéraux" rows={[
-                                    { l: "Sodium",    v: cn.sodiumMg,    u: "mg" },
-                                    { l: "Potassium", v: cn.potassiumMg, u: "mg" },
-                                    { l: "Calcium",   v: cn.calciumMg,   u: "mg" },
-                                    { l: "Magnésium", v: cn.magneziumMg, u: "mg" },
-                                    { l: "Fer",       v: cn.ironMg,      u: "mg" },
-                                    { l: "Zinc",      v: cn.zincMg,      u: "mg" },
-                                  ]} />
-                                )}
-                                {/* Vitamines */}
-                                {(cn.vitaminCMg != null || cn.vitaminDUg != null || cn.vitaminAUg != null || cn.vitaminB12Ug != null || cn.vitaminB9Ug != null) && (
-                                  <NutrientGroup label="Vitamines" rows={[
-                                    { l: "Vitamine C",   v: cn.vitaminCMg,  u: "mg" },
-                                    { l: "Vitamine D",   v: cn.vitaminDUg,  u: "µg" },
-                                    { l: "Vitamine A",   v: cn.vitaminAUg,  u: "µg" },
-                                    { l: "Vitamine B12", v: cn.vitaminB12Ug,u: "µg" },
-                                    { l: "Folate (B9)",  v: cn.vitaminB9Ug, u: "µg" },
-                                  ]} />
-                                )}
-                                {/* Divers */}
-                                {(cn.waterG != null || cn.saltG != null || cn.alcoholG != null) && (
-                                  <NutrientGroup label="Divers" rows={[
-                                    { l: "Eau",   v: cn.waterG,   u: "g" },
-                                    { l: "Sel",   v: cn.saltG,    u: "g" },
-                                    { l: "Alcool",v: cn.alcoholG, u: "g" },
-                                  ]} />
-                                )}
-                                {/* fallback si aucun micronutriment disponible */}
-                                {cn.sugarG == null && cn.saturatedFatG == null && cn.sodiumMg == null && cn.vitaminCMg == null && (
-                                  <p className="text-center py-2" style={{ color: "var(--text-muted)" }}>
-                                    Micronutriments non disponibles pour cette source
-                                  </p>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     )}
 
-                    {/* Notes */}
-                    <div>
-                      <p className="label-xs mb-1.5">Note (optionnel)</p>
-                      <input value={notes} onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Ex : avec vinaigrette…"
-                        className="input text-[13px]" />
-                    </div>
-
-                    {/* Hunger */}
-                    <div>
-                      <p className="label-xs mb-2">Niveau de faim</p>
-                      <div className="flex gap-2">
-                        {HUNGER_ICONS.map(({ level, Icon, label }) => (
-                          <button key={level} onClick={() => setHunger(hunger === level ? null : level)}
-                            title={label}
-                            className="flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all"
-                            style={{
-                              background: hunger === level ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.03)",
-                              border: `1px solid ${hunger === level ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
-                            }}>
-                            <Icon size={20} weight={hunger === level ? "fill" : "regular"}
-                              style={{ color: hunger === level ? "var(--protein)" : "var(--text-muted)" }} />
-                            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <button onClick={handleAddFood} disabled={adding}
-                        className="btn btn-primary flex-1 gap-2">
-                        {adding ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
-                        Ajouter au journal
-                      </button>
-                      <button onClick={() => setStep("save-meal")}
-                        className="btn btn-ghost gap-1.5 text-[12px] px-3"
-                        title="Sauvegarder comme repas">
-                        <CookingPot size={14} />
-                        Sauver
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* ── SAVE MEAL ── */}
-                {step === "save-meal" && selected && (
-                  <motion.div key="save-meal" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
-                    className="px-4 py-4 space-y-4 pb-8">
-
-                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                      Sauvegarder <strong style={{ color: "var(--text-primary)" }}>{selected.name}</strong> comme modèle de repas réutilisable.
-                    </p>
-
-                    <div>
-                      <p className="label-xs mb-1.5">Nom du repas</p>
-                      <input value={newMealName} onChange={(e) => setNewMealName(e.target.value)}
-                        placeholder="Ex : Petit-déj habituel…"
-                        className="input" />
-                    </div>
-
-                    <div>
-                      <p className="label-xs mb-2">Icône</p>
-                      <div className="flex flex-wrap gap-2">
-                        {MEAL_ICONS.map((icon) => (
-                          <button key={icon} onClick={() => setNewMealIcon(icon)}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition-all"
-                            style={{
-                              background: newMealIcon === icon ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
-                              border: `1px solid ${newMealIcon === icon ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
-                            }}>
-                            {icon}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button onClick={handleSaveMeal} disabled={savingMeal || !newMealName.trim()}
-                      className="btn btn-primary w-full gap-2">
-                      {savingMeal ? <Spinner size={14} className="animate-spin" /> : <Check size={14} weight="bold" />}
-                      Sauvegarder le repas
-                    </button>
-                  </motion.div>
-                )}
-
-                {/* ── CONFIGURE recipe ── */}
-                {step === "configure-recipe" && selectedRecipe && (
-                  <motion.div key="configure-recipe" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
-                    className="px-4 py-4 space-y-5 pb-8">
-
-                    {/* Ingredients */}
-                    <div>
-                      <p className="label-xs mb-2">Ingrédients ({selectedRecipe.ingredients.length})</p>
-                      <div className="space-y-1">
-                        {selectedRecipe.ingredients.map((ing, i) => (
-                          <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg"
-                            style={{ background: "rgba(255,255,255,0.03)" }}>
-                            <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{ing.name}</span>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{ing.grams}g</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Servings */}
-                    <div>
-                      <p className="label-xs mb-2">Nombre de portions</p>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setRecipeServings((v) => String(Math.max(0.5, (parseFloat(v)||1) - 0.5)))}
-                          className="btn-icon w-9 h-9 text-lg">−</button>
-                        <input type="number" value={recipeServings} min="0.5" step="0.5"
-                          onChange={(e) => setRecipeServings(e.target.value)}
-                          className="input text-center w-20 tabular-nums" />
-                        <button onClick={() => setRecipeServings((v) => String((parseFloat(v)||1) + 0.5))}
-                          className="btn-icon w-9 h-9 text-lg">+</button>
-                      </div>
-                    </div>
-
-                    {/* Nutrition preview */}
-                    {(() => {
-                      const servings = Math.max(0.1, parseFloat(recipeServings) || 1);
-                      const n = scaleNutrition(selectedRecipe.nutrition, servings);
-                      return (
-                        <div className="p-3 rounded-xl space-y-2"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                              {Math.round(n.calories)} kcal
-                            </span>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                              {Math.round(selectedRecipe.gramsPerServing * servings)}g
-                            </span>
-                          </div>
-                          <MacroPills n={n} />
+                    {/* ── SAVE MEAL ── */}
+                    {step === "save-meal" && selected && (
+                      <div className="px-4 py-4 space-y-4 pb-8">
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                          Sauvegarder <strong style={{ color: "var(--text-primary)" }}>{selected.name}</strong> comme modèle de repas réutilisable.
+                        </p>
+                        <div>
+                          <p className="label-xs mb-1.5">Nom du repas</p>
+                          <input value={newMealName} onChange={(e) => setNewMealName(e.target.value)}
+                            placeholder="Ex : Petit-déj habituel…"
+                            className="input" />
                         </div>
-                      );
-                    })()}
+                        <div>
+                          <p className="label-xs mb-2">Icône</p>
+                          <div className="flex flex-wrap gap-2">
+                            {MEAL_ICONS.map((icon) => (
+                              <button key={icon} onClick={() => setNewMealIcon(icon)}
+                                className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition-all"
+                                style={{
+                                  background: newMealIcon === icon ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                                  border: `1px solid ${newMealIcon === icon ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
+                                }}>
+                                {icon}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <button onClick={handleSaveMeal} disabled={savingMeal || !newMealName.trim()}
+                          className="btn btn-primary w-full gap-2">
+                          {savingMeal ? <Spinner size={14} className="animate-spin" /> : <Check size={14} weight="bold" />}
+                          Sauvegarder le repas
+                        </button>
+                      </div>
+                    )}
 
-                    <button onClick={handleAddRecipe} disabled={addingRecipe}
-                      className="btn btn-primary w-full gap-2">
-                      {addingRecipe ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
-                      Ajouter au journal
-                    </button>
-                  </motion.div>
-                )}
+                    {/* ── CONFIGURE recipe ── */}
+                    {step === "configure-recipe" && selectedRecipe && (
+                      <div className="px-4 py-4 space-y-5 pb-8">
+                        <div>
+                          <p className="label-xs mb-2">Ingrédients ({selectedRecipe.ingredients.length})</p>
+                          <div className="space-y-1">
+                            {selectedRecipe.ingredients.map((ing, i) => (
+                              <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg"
+                                style={{ background: "rgba(255,255,255,0.03)" }}>
+                                <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{ing.name}</span>
+                                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{ing.grams}g</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="label-xs mb-2">Nombre de portions</p>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => setRecipeServings((v) => String(Math.max(0.5, (parseFloat(v)||1) - 0.5)))}
+                              className="btn-icon w-9 h-9 text-lg">−</button>
+                            <input type="number" value={recipeServings} min="0.5" step="0.5"
+                              onChange={(e) => setRecipeServings(e.target.value)}
+                              className="input text-center w-20 tabular-nums" />
+                            <button onClick={() => setRecipeServings((v) => String((parseFloat(v)||1) + 0.5))}
+                              className="btn-icon w-9 h-9 text-lg">+</button>
+                          </div>
+                        </div>
+                        {(() => {
+                          const servings = Math.max(0.1, parseFloat(recipeServings) || 1);
+                          const n = scaleNutrition(selectedRecipe.nutrition, servings);
+                          return (
+                            <div className="p-3 rounded-xl space-y-2"
+                              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                                  {Math.round(n.calories)} kcal
+                                </span>
+                                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                                  {Math.round(selectedRecipe.gramsPerServing * servings)}g
+                                </span>
+                              </div>
+                              <MacroPills n={n} />
+                            </div>
+                          );
+                        })()}
+                        <button onClick={handleAddRecipe} disabled={addingRecipe}
+                          className="btn btn-primary w-full gap-2">
+                          {addingRecipe ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
+                          Ajouter au journal
+                        </button>
+                      </div>
+                    )}
 
-              </AnimatePresence>
-            </div>
-          </motion.div>
+                  </div>
+                </motion.div>
+            )}
+          </AnimatePresence>
+
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

@@ -23,12 +23,29 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
   const [entries, setEntries] = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl, setWaterMl] = useState(initialLog?.waterMl ?? 0);
   const [toast, setToast]     = useState<AddedInfo | null>(null);
+  const [validated, setValidated]   = useState((initialLog as { validated?: boolean } | null)?.validated ?? false);
+  const [validating, setValidating] = useState(false);
+  const [showValidateModal, setShowValidateModal] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
     setWaterMl(initialLog?.waterMl ?? 0);
+    setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
   }, [date, initialLog]);
+
+  const handleValidate = async () => {
+    setValidating(true);
+    try {
+      await fetch("/api/log", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, validated: true }),
+      });
+      setValidated(true);
+      setShowValidateModal(false);
+    } finally { setValidating(false); }
+  };
 
   const totals: DayTotals = entries.reduce(
     (acc, e) => ({
@@ -75,7 +92,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
           transition={{ duration: 0.35, delay: 0.05 }}
           className="glass p-5 mb-5"
         >
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-start mb-4">
             <div className="text-center">
               <p className="text-[20px] font-bold t-calories tabular-nums leading-tight">
                 {Math.round(totals.calories)}
@@ -135,6 +152,23 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
               </div>
             ))}
           </div>
+
+          {/* Validate day button */}
+          <button
+            onClick={() => validated ? undefined : setShowValidateModal(true)}
+            className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+            style={{
+              background: validated
+                ? "rgba(34,197,94,0.12)"
+                : "rgba(255,255,255,0.04)",
+              border: `1px solid ${validated ? "rgba(34,197,94,0.4)" : "var(--border)"}`,
+              color: validated ? "#22c55e" : "var(--text-secondary)",
+              cursor: validated ? "default" : "pointer",
+            }}
+          >
+            <Check size={14} weight={validated ? "fill" : "regular"} />
+            {validated ? "Journée validée" : "Valider la journée"}
+          </button>
         </motion.div>
 
         {/* Water tracker */}
@@ -173,6 +207,72 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
           ))}
         </div>
       </div>
+
+      {/* Validate modal */}
+      <AnimatePresence>
+        {showValidateModal && (
+          <>
+            <motion.div
+              key="validate-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+              onClick={() => setShowValidateModal(false)}
+            />
+            <motion.div
+              key="validate-sheet"
+              initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 32 }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl p-6 pb-10"
+              style={{
+                background: "rgba(13,13,17,0.98)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderBottom: "none",
+                backdropFilter: "blur(24px)",
+              }}
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+              </div>
+              <div className="flex flex-col items-center gap-1 mb-6">
+                <span className="text-4xl mb-1">🎯</span>
+                <h2 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Valider la journée</h2>
+                <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+                  Confirmez que vous avez terminé de saisir vos repas du jour.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                  { label: "Calories", val: `${Math.round(totals.calories)} / ${goals.dailyCalories}`, color: "var(--calories)" },
+                  { label: "Protéines", val: `${Math.round(totals.proteinG)}g / ${goals.proteinGrams}g`, color: "var(--protein)" },
+                  { label: "Glucides",  val: `${Math.round(totals.carbsG)}g / ${goals.carbsGrams}g`,    color: "var(--carbs)" },
+                  { label: "Lipides",   val: `${Math.round(totals.fatG)}g / ${goals.fatGrams}g`,        color: "var(--fat)" },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className="p-3 rounded-xl text-center"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                    <p className="text-[12px] tabular-nums font-bold" style={{ color }}>{val}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowValidateModal(false)}
+                  className="flex-1 btn btn-ghost">
+                  Annuler
+                </button>
+                <button onClick={handleValidate} disabled={validating}
+                  className="flex-1 btn btn-primary gap-2">
+                  {validating
+                    ? <span className="animate-spin">⏳</span>
+                    : <Check size={14} weight="bold" />
+                  }
+                  Valider
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Toast */}
       <AnimatePresence>

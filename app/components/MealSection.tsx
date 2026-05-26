@@ -36,8 +36,8 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
 
   const handleAdded = async (info: AddedInfo) => {
     const res = await fetch(`/api/log?date=${date}`);
-    const { dayLog } = await res.json() as { dayLog: { entries: FoodEntry[] } | null };
-    if (dayLog) onEntriesChange(meal, dayLog.entries.filter((e: FoodEntry) => e.meal === meal));
+    const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
+    if (dayLog) onEntriesChange(meal, (dayLog.entries ?? []).filter((e: FoodEntry) => e.meal === meal));
     onFoodAdded?.(info);
   };
 
