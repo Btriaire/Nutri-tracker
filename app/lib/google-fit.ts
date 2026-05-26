@@ -79,7 +79,6 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
 interface DayFitnessData {
   steps:               number;
   activeCaloriesBurned: number;
-  distanceMeters:      number;
   heartRateAvg:        number | null;
 }
 
@@ -93,10 +92,9 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
 
   const body = {
     aggregateBy: [
-      { dataTypeName: "com.google.step_count.delta" },
-      { dataTypeName: "com.google.calories.expended" },
-      { dataTypeName: "com.google.distance.delta" },
-      { dataTypeName: "com.google.heart_rate.bpm" },
+      { dataTypeName: "com.google.step_count.delta" },    // 0
+      { dataTypeName: "com.google.calories.expended" },   // 1
+      { dataTypeName: "com.google.heart_rate.bpm" },      // 2
     ],
     bucketByTime:    { durationMillis: 86_400_000 },
     startTimeMillis: start,
@@ -136,8 +134,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   return {
     steps:               getInt(0),
     activeCaloriesBurned: Math.round(getFp(1)),
-    distanceMeters:      Math.round(getFp(2)),
-    heartRateAvg:        getAvgFp(3) ? Math.round(getAvgFp(3)!) : null,
+    heartRateAvg:        getAvgFp(2) ? Math.round(getAvgFp(2)!) : null,
   };
 }
 
@@ -153,7 +150,6 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
     googleFit: {
       steps:               data.steps,
       activeCaloriesBurned: data.activeCaloriesBurned,
-      distanceMeters:      data.distanceMeters,
       heartRateAvg:        data.heartRateAvg,
       heartRateMin:        null,
       heartRateMax:        null,
