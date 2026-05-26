@@ -114,6 +114,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [notes, setNotes]   = useState("");
   const [hunger, setHunger] = useState<HungerLevel | null>(null);
   const [adding, setAdding] = useState(false);
+  const [quickAddingId, setQuickAddingId] = useState<string | null>(null);
 
   // Repas state
   const [savedMeals, setSavedMeals]       = useState<SavedMeal[]>([]);
@@ -252,6 +253,35 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       onAdded();
       onClose();
     } finally { setAdding(false); }
+  };
+
+  const handleQuickAdd = async (food: FoodSearchResult) => {
+    setQuickAddingId(food.id);
+    const opts    = getServingOptions(food);
+    const unit    = opts.find((o) => o.isDefault) ?? opts[0];
+    const grams   = unit?.grams ?? 100;
+    const per100g = getNutritionPer100g(food);
+    const nutrition = scaleNutrition(per100g, grams);
+    try {
+      await fetch("/api/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          entry: {
+            meal, foodId: food.id, source: food.source,
+            name: food.name, brand: food.brand,
+            servingLabel: unit?.label ?? `${grams}g`,
+            servingGrams: grams,
+            servingQty: 1,
+            servingUnit: unit?.label ?? "g",
+            nutrition,
+          },
+        }),
+      });
+      onAdded();
+      onClose();
+    } finally { setQuickAddingId(null); }
   };
 
   // ── Repas ─────────────────────────────────────────────────────────────────
@@ -501,31 +531,42 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     <div className="space-y-1 mt-3">
                       {results.map((r) => {
                         const badge = SOURCE_BADGE[r.source];
+                        const isAdding = quickAddingId === r.id;
                         return (
-                          <motion.button key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                            onClick={() => selectFood(r)}
-                            className="w-full flex flex-col gap-2 p-3 rounded-xl text-left"
-                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
-                            whileHover={{ background: "rgba(255,255,255,0.055)" }}>
-                            <div className="flex items-start gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium leading-snug" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
-                                  {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                  <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                          <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-2 rounded-xl overflow-hidden"
+                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                            {/* Tap to configure */}
+                            <button onClick={() => selectFood(r)} className="flex-1 flex flex-col gap-1.5 p-3 text-left min-w-0">
+                              <div className="flex items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-medium leading-snug" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
+                                    {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
+                                    <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="text-right flex-shrink-0 flex items-center gap-1.5">
-                                <div>
+                                <div className="text-right flex-shrink-0">
                                   <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
                                   <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                 </div>
-                                <Plus size={12} style={{ color: "var(--text-muted)" }} />
                               </div>
-                            </div>
-                            <MacroPills n={r.nutrition} />
-                          </motion.button>
+                              <MacroPills n={r.nutrition} />
+                            </button>
+                            {/* Quick add */}
+                            <button
+                              onClick={() => handleQuickAdd(r)}
+                              disabled={isAdding}
+                              className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                              style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
+                            >
+                              {isAdding
+                                ? <Spinner size={15} className="animate-spin" style={{ color: "var(--protein)" }} />
+                                : <Plus size={17} weight="bold" style={{ color: "var(--protein)" }} />
+                              }
+                            </button>
+                          </motion.div>
                         );
                       })}
                     </div>
