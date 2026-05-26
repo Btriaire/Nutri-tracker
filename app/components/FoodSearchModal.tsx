@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, MagnifyingGlass, Plus, ArrowLeft, Spinner,
+  X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CaretDown,
   Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
   ForkKnife, BookBookmark, CookingPot, Trash, Check,
 } from "@phosphor-icons/react";
@@ -106,6 +106,26 @@ function FoodImage({ food }: { food: { name: string; category?: string; imageUrl
   );
 }
 
+function NutrientGroup({ label, rows }: { label: string; rows: { l: string; v: number | null | undefined; u: string }[] }) {
+  const visible = rows.filter((r) => r.v != null);
+  if (!visible.length) return null;
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+      <div className="space-y-1">
+        {visible.map(({ l, v, u }) => (
+          <div key={l} className="flex justify-between">
+            <span style={{ color: "var(--text-secondary)" }}>{l}</span>
+            <span className="tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>
+              {u === "g" ? (Math.round((v ?? 0) * 10) / 10) : Math.round(v ?? 0)}{u}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MacroPills({ n }: { n: FoodNutrition }) {
   return (
     <div className="flex gap-1.5">
@@ -160,6 +180,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [hunger, setHunger] = useState<HungerLevel | null>(null);
   const [adding, setAdding] = useState(false);
   const [quickAddingId, setQuickAddingId] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Repas state
   const [savedMeals, setSavedMeals]       = useState<SavedMeal[]>([]);
@@ -772,14 +793,111 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
                     {/* Nutrition preview */}
                     {cn && (
-                      <div className="p-3 rounded-xl space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                            {Math.round(cn.calories)} kcal
-                          </span>
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>pour {Math.round(effectiveGrams())}g</span>
+                      <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {Math.round(cn.calories)} kcal
+                            </span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>pour {Math.round(effectiveGrams())}g</span>
+                          </div>
+                          {/* Main macros row */}
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[
+                              { l: "Protéines", v: cn.proteinG,  c: "var(--protein)", u: "g" },
+                              { l: "Glucides",  v: cn.carbsG,    c: "var(--carbs)",   u: "g" },
+                              { l: "Lipides",   v: cn.fatG,      c: "var(--fat)",     u: "g" },
+                              { l: "Fibres",    v: cn.fiberG,    c: "var(--fiber)",   u: "g" },
+                            ].map(({ l, v, c, u }) => (
+                              <div key={l} className="flex flex-col items-center p-1.5 rounded-lg"
+                                style={{ background: "rgba(255,255,255,0.03)" }}>
+                                <span className="text-[13px] font-bold tabular-nums" style={{ color: c }}>{Math.round(v)}{u}</span>
+                                <span className="text-[9px] mt-0.5 text-center leading-tight" style={{ color: "var(--text-muted)" }}>{l}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Toggle details */}
+                          <button
+                            onClick={() => setShowDetails(v => !v)}
+                            className="w-full flex items-center justify-center gap-1.5 py-1 text-[11px] transition-colors"
+                            style={{ color: showDetails ? "var(--protein)" : "var(--text-muted)" }}
+                          >
+                            <motion.span animate={{ rotate: showDetails ? 180 : 0 }} transition={{ duration: 0.2 }}
+                              style={{ display: "inline-flex" }}>
+                              <CaretDown size={10} />
+                            </motion.span>
+                            {showDetails ? "Masquer les détails" : "Voir les détails nutritionnels"}
+                          </button>
                         </div>
-                        <MacroPills n={cn} />
+
+                        {/* Expanded details */}
+                        <AnimatePresence initial={false}>
+                          {showDetails && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                              style={{ overflow: "hidden", borderTop: "1px solid var(--border)" }}
+                            >
+                              <div className="p-3 space-y-3 text-[12px]">
+                                {/* Glucides */}
+                                {(cn.sugarG != null || cn.starchG != null) && (
+                                  <NutrientGroup label="Glucides détail" rows={[
+                                    { l: "dont Sucres",  v: cn.sugarG,  u: "g" },
+                                    { l: "dont Amidon",  v: cn.starchG, u: "g" },
+                                  ]} />
+                                )}
+                                {/* Lipides */}
+                                {(cn.saturatedFatG != null || cn.monounsatFatG != null || cn.polyunsatFatG != null || cn.transFatG != null || cn.cholesterolMg != null) && (
+                                  <NutrientGroup label="Lipides détail" rows={[
+                                    { l: "Saturés",        v: cn.saturatedFatG,  u: "g" },
+                                    { l: "Mono-insaturés", v: cn.monounsatFatG,  u: "g" },
+                                    { l: "Poly-insaturés", v: cn.polyunsatFatG,  u: "g" },
+                                    { l: "Trans",          v: cn.transFatG,       u: "g" },
+                                    { l: "Cholestérol",    v: cn.cholesterolMg,   u: "mg" },
+                                  ]} />
+                                )}
+                                {/* Minéraux */}
+                                {(cn.sodiumMg != null || cn.potassiumMg != null || cn.calciumMg != null || cn.magneziumMg != null || cn.ironMg != null || cn.zincMg != null) && (
+                                  <NutrientGroup label="Minéraux" rows={[
+                                    { l: "Sodium",    v: cn.sodiumMg,    u: "mg" },
+                                    { l: "Potassium", v: cn.potassiumMg, u: "mg" },
+                                    { l: "Calcium",   v: cn.calciumMg,   u: "mg" },
+                                    { l: "Magnésium", v: cn.magneziumMg, u: "mg" },
+                                    { l: "Fer",       v: cn.ironMg,      u: "mg" },
+                                    { l: "Zinc",      v: cn.zincMg,      u: "mg" },
+                                  ]} />
+                                )}
+                                {/* Vitamines */}
+                                {(cn.vitaminCMg != null || cn.vitaminDUg != null || cn.vitaminAUg != null || cn.vitaminB12Ug != null || cn.vitaminB9Ug != null) && (
+                                  <NutrientGroup label="Vitamines" rows={[
+                                    { l: "Vitamine C",   v: cn.vitaminCMg,  u: "mg" },
+                                    { l: "Vitamine D",   v: cn.vitaminDUg,  u: "µg" },
+                                    { l: "Vitamine A",   v: cn.vitaminAUg,  u: "µg" },
+                                    { l: "Vitamine B12", v: cn.vitaminB12Ug,u: "µg" },
+                                    { l: "Folate (B9)",  v: cn.vitaminB9Ug, u: "µg" },
+                                  ]} />
+                                )}
+                                {/* Divers */}
+                                {(cn.waterG != null || cn.saltG != null || cn.alcoholG != null) && (
+                                  <NutrientGroup label="Divers" rows={[
+                                    { l: "Eau",   v: cn.waterG,   u: "g" },
+                                    { l: "Sel",   v: cn.saltG,    u: "g" },
+                                    { l: "Alcool",v: cn.alcoholG, u: "g" },
+                                  ]} />
+                                )}
+                                {/* fallback si aucun micronutriment disponible */}
+                                {cn.sugarG == null && cn.saturatedFatG == null && cn.sodiumMg == null && cn.vitaminCMg == null && (
+                                  <p className="text-center py-2" style={{ color: "var(--text-muted)" }}>
+                                    Micronutriments non disponibles pour cette source
+                                  </p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
 
