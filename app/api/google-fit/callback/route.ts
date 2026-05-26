@@ -36,14 +36,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/settings?fit=error", req.url));
   }
 
-  await saveTokens("owner", {
-    accessToken:  json.access_token,
-    refreshToken: json.refresh_token,
-    expiresAt:    Date.now() + (json.expires_in ?? 3600) * 1000,
-  });
+  try {
+    await saveTokens("owner", {
+      accessToken:  json.access_token,
+      refreshToken: json.refresh_token,
+      expiresAt:    Date.now() + (json.expires_in ?? 3600) * 1000,
+    });
+  } catch (e) {
+    console.error("saveTokens failed:", e);
+    return NextResponse.redirect(new URL("/settings?fit=error", req.url));
+  }
 
-  // Sync today immediately
-  await syncDay("owner", format(new Date(), "yyyy-MM-dd"));
+  // Sync today in background (don't fail the redirect if it errors)
+  syncDay("owner", format(new Date(), "yyyy-MM-dd")).catch(console.error);
 
   return NextResponse.redirect(new URL("/settings?fit=connected", req.url));
 }
