@@ -3,12 +3,31 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CircleDashed,
+  X, MagnifyingGlass, Plus, ArrowLeft, Spinner,
   Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
 } from "@phosphor-icons/react";
 import type { FoodNutrition, FoodSearchResult, HungerLevel, MealType, Lang, ServingOption } from "@/app/lib/types";
 import { COMMON_SERVING_UNITS } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
+
+const CATEGORIES = [
+  { emoji: "🥩", label: "Viandes",         query: "viande bœuf poulet porc" },
+  { emoji: "🐟", label: "Poissons",        query: "poisson saumon thon" },
+  { emoji: "🥚", label: "Œufs",            query: "œuf" },
+  { emoji: "🧀", label: "Laitages",        query: "lait yaourt fromage" },
+  { emoji: "🌾", label: "Céréales",        query: "riz pâtes avoine quinoa" },
+  { emoji: "🥖", label: "Pain",            query: "pain baguette brioche" },
+  { emoji: "🥦", label: "Légumes",         query: "carotte brocoli courgette tomate" },
+  { emoji: "🍎", label: "Fruits",          query: "pomme banane fraise raisin" },
+  { emoji: "🫘", label: "Légumineuses",    query: "lentilles pois chiche haricots" },
+  { emoji: "🥜", label: "Noix",            query: "amandes noix noisettes" },
+  { emoji: "🧈", label: "Corps gras",      query: "beurre huile" },
+  { emoji: "🍫", label: "Sucreries",       query: "chocolat gâteau biscuit" },
+  { emoji: "🥤", label: "Boissons",        query: "jus soda café thé" },
+  { emoji: "🍿", label: "Snacks",          query: "chips crackers barre céréales" },
+  { emoji: "🍲", label: "Plats cuisinés",  query: "plat cuisiné lasagne pizza" },
+  { emoji: "🌿", label: "Épices",          query: "herbe épice sel ail" },
+];
 
 interface Props {
   open:    boolean;
@@ -35,7 +54,7 @@ const HUNGER_ICONS = [
   { level: 5 as HungerLevel, Icon: SmileyXEyes, label: "Très faim" },
 ];
 
-type Step = "search" | "configure";
+type Step = "search" | "configure" | "browse";
 
 function getNutritionPer100g(food: FoodSearchResult): FoodNutrition {
   const ratio = 100 / food.servingSizeG;
@@ -76,6 +95,22 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       setTimeout(() => inputRef.current?.focus(), 120);
     }
   }, [open]);
+
+  const browseCategory = (cat: typeof CATEGORIES[number]) => {
+    setQuery(cat.label);
+    setStep("search");
+    setResults([]);
+    setTimeout(() => inputRef.current?.focus(), 50);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res  = await fetch(`/api/food/search?q=${encodeURIComponent(cat.query)}&lang=${lang}`);
+        const json = await res.json() as { results: FoodSearchResult[] };
+        setResults(json.results ?? []);
+      } finally { setSearching(false); }
+    }, 50);
+  };
 
   const doSearch = (value: string) => {
     setQuery(value);
@@ -233,11 +268,28 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     className="px-4 py-3"
                   >
                     {!query && (
-                      <div className="flex flex-col items-center gap-2 py-14">
-                        <CircleDashed size={28} style={{ color: "var(--text-muted)" }} />
-                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                          {lang === "fr" ? "Tapez un aliment pour commencer" : "Type to search foods"}
-                        </p>
+                      <div>
+                        <p className="label-xs mb-3">Catégories</p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {CATEGORIES.map((cat, i) => (
+                            <motion.button
+                              key={cat.emoji}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.15, delay: i * 0.02 }}
+                              onClick={() => browseCategory(cat)}
+                              className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all"
+                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
+                              whileHover={{ scale: 1.05, background: "rgba(255,255,255,0.07)" }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <span className="text-[22px] leading-none">{cat.emoji}</span>
+                              <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-muted)" }}>
+                                {cat.label}
+                              </span>
+                            </motion.button>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {query && !searching && results.length === 0 && (
@@ -256,23 +308,42 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             initial={{ opacity: 0, y: 4 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => selectFood(r)}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl text-left"
+                            className="w-full flex flex-col gap-2 p-3 rounded-xl text-left"
                             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
                             whileHover={{ background: "rgba(255,255,255,0.055)" }}
                           >
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                {r.brand && <span className="text-[11px] t-secondary truncate max-w-[100px]">{r.brand}</span>}
-                                {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                            {/* Row 1 — name + calorie */}
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium leading-snug" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
+                                  {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
+                                  <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 flex items-center gap-1.5">
+                                <div>
+                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                </div>
+                                <Plus size={12} style={{ color: "var(--text-muted)" }} />
                               </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                              <p className="text-[10px] t-muted">/{r.servingSizeG}g</p>
+                            {/* Row 2 — macro pills */}
+                            <div className="flex gap-2">
+                              {[
+                                { label: "P", value: r.nutrition.proteinG, color: "var(--protein)" },
+                                { label: "G", value: r.nutrition.carbsG,   color: "var(--carbs)" },
+                                { label: "L", value: r.nutrition.fatG,     color: "var(--fat)" },
+                                { label: "F", value: r.nutrition.fiberG,   color: "var(--fiber)" },
+                              ].map(({ label, value, color }) => (
+                                <div key={label} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.04)" }}>
+                                  <span className="text-[9px] font-bold" style={{ color }}>{label}</span>
+                                  <span className="text-[10px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{Math.round(value)}g</span>
+                                </div>
+                              ))}
                             </div>
-                            <Plus size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                           </motion.button>
                         );
                       })}
