@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HouseSimple, Book, ChartLine, Gear } from "@phosphor-icons/react";
+import { HouseSimple, Book, ChartLine, Gear, Books } from "@phosphor-icons/react";
 
 const TABS = [
-  { href: "/dashboard", icon: HouseSimple, label: "Accueil" },
-  { href: "/log",       icon: Book,        label: "Journal" },
-  { href: "/progress",  icon: ChartLine,   label: "Progrès" },
-  { href: "/settings",  icon: Gear,        label: "Réglages" },
+  { href: "/dashboard", icon: HouseSimple, label: "Accueil"      },
+  { href: "/log",       icon: Book,        label: "Journal"      },
+  { href: "/library",   icon: Books,       label: "Aliments"     },
+  { href: "/progress",  icon: ChartLine,   label: "Progrès"      },
+  { href: "/settings",  icon: Gear,        label: "Réglages"     },
 ] as const;
 
 export default function Nav() {
