@@ -3,8 +3,19 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, UserProfile } from "@/app/lib/types";
+import type { DayLog, FoodEntry, UserProfile } from "@/app/lib/types";
 import LogClient from "../LogClient";
+
+function serializeDayLog(raw: DayLog): DayLog {
+  return {
+    ...raw,
+    updatedAt: { seconds: raw.updatedAt?.seconds ?? 0, nanoseconds: 0 } as DayLog["updatedAt"],
+    entries: (raw.entries ?? []).map((e: FoodEntry) => ({
+      ...e,
+      loggedAt: { seconds: e.loggedAt?.seconds ?? 0, nanoseconds: 0 } as FoodEntry["loggedAt"],
+    })),
+  };
+}
 
 interface Props {
   params: Promise<{ date: string }>;
@@ -25,7 +36,7 @@ export default async function LogDatePage({ params }: Props) {
       db.doc(`users/${userId}/foodLog/${date}`).get(),
       db.doc(`users/${userId}`).get(),
     ]);
-    dayLog = logSnap.exists ? logSnap.data() as DayLog : null;
+    if (logSnap.exists) dayLog = serializeDayLog(logSnap.data() as DayLog);
     if (profileSnap.exists) {
       const profile = profileSnap.data() as UserProfile;
       goals = profile.goals;
