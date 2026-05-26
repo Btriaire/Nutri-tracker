@@ -8,6 +8,7 @@ import {
   Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
   ForkKnife, BookBookmark, CookingPot, Trash, Check, Camera,
 } from "@phosphor-icons/react";
+import MealBuilderModal from "./MealBuilderModal";
 import type {
   FoodNutrition, FoodSearchResult, HungerLevel, MealType, Lang,
   ServingOption, SavedMeal, Recipe,
@@ -199,6 +200,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   // Repas state
   const [savedMeals, setSavedMeals]       = useState<SavedMeal[]>([]);
   const [loadingMeals, setLoadingMeals]   = useState(false);
+  const [showMealBuilder, setShowMealBuilder] = useState(false);
   const [savingMeal, setSavingMeal]       = useState(false);
   const [newMealName, setNewMealName]     = useState("");
   const [newMealIcon, setNewMealIcon]     = useState("🍽️");
@@ -514,7 +516,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
   if (!mounted) return null;
 
-  return createPortal(
+  const portal = createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -707,6 +709,20 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {/* ── REPAS ── */}
               {tab === "repas" && (
                 <div className="px-4 py-4">
+                  {/* Create meal button */}
+                  <button
+                    onClick={() => setShowMealBuilder(true)}
+                    className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+                    style={{
+                      background: "rgba(167,139,250,0.1)",
+                      border: "1px solid rgba(167,139,250,0.3)",
+                      color: "var(--protein)",
+                    }}
+                  >
+                    <Plus size={14} weight="bold" />
+                    Créer un repas personnalisé
+                  </button>
+
                   {loadingMeals && (
                     <div className="flex justify-center py-12">
                       <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
@@ -1179,5 +1195,17 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       )}
     </AnimatePresence>,
     document.body
+  );
+
+  return (
+    <>
+      {portal}
+      <MealBuilderModal
+        open={showMealBuilder}
+        lang={lang}
+        onClose={() => setShowMealBuilder(false)}
+        onSaved={() => { loadMeals(); setTab("repas"); }}
+      />
+    </>
   );
 }
