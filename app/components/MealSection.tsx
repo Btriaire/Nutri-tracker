@@ -42,29 +42,46 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
   return (
     <div className="glass overflow-hidden">
       {/* Header */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2.5 px-4 py-3 transition-colors"
+      <div
+        className="flex items-center gap-2.5 px-4"
         style={{ borderBottom: open && entries.length > 0 ? "1px solid var(--border)" : "none" }}
       >
-        <span className="text-base">{meta.icon}</span>
-        <span className="font-medium text-[13.5px] flex-1 text-left" style={{ color: "var(--text-primary)" }}>
-          {meta[lang]}
-        </span>
-        {cal > 0 && (
-          <span className="text-[12px] font-medium t-calories">{cal} kcal</span>
-        )}
-        {entries.length === 0 && (
-          <span className="label-xs">{lang === "fr" ? "Vide" : "Empty"}</span>
-        )}
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          style={{ display: "inline-flex", color: "var(--text-muted)" }}
+        {/* Left: toggle expand */}
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-2.5 flex-1 py-3 text-left transition-colors min-w-0"
         >
-          <CaretDown size={12} />
-        </motion.span>
-      </button>
+          <span className="text-base shrink-0">{meta.icon}</span>
+          <span className="font-medium text-[13.5px] truncate" style={{ color: "var(--text-primary)" }}>
+            {meta[lang]}
+          </span>
+          {cal > 0 ? (
+            <span className="text-[12px] font-medium t-calories shrink-0">{cal} kcal</span>
+          ) : (
+            <span className="label-xs shrink-0">{lang === "fr" ? "Vide" : "Empty"}</span>
+          )}
+          <motion.span
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ display: "inline-flex", color: "var(--text-muted)" }}
+            className="shrink-0"
+          >
+            <CaretDown size={12} />
+          </motion.span>
+        </button>
+
+        {/* Right: add button — always visible */}
+        <button
+          onClick={() => setModal(true)}
+          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+          style={{ background: "var(--protein)", color: "#fff" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+          aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}
+        >
+          <Plus size={15} weight="bold" />
+        </button>
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
@@ -76,24 +93,21 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
             style={{ overflow: "hidden" }}
           >
             <div className="px-4 pb-3">
-              {entries.length > 0 && (
+              {entries.length > 0 ? (
                 <div className="py-1">
                   {entries.map((entry) => (
                     <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} />
                   ))}
                 </div>
+              ) : (
+                <button
+                  onClick={() => setModal(true)}
+                  className="w-full py-4 text-[12.5px] transition-colors"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {lang === "fr" ? "Appuyer sur + pour ajouter un aliment" : "Tap + to add food"}
+                </button>
               )}
-
-              <button
-                onClick={() => setModal(true)}
-                className="mt-2 flex items-center gap-2 text-[12.5px] py-1.5 transition-colors"
-                style={{ color: "var(--text-muted)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--protein)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-              >
-                <Plus size={13} weight="bold" />
-                {lang === "fr" ? "Ajouter un aliment" : "Add food"}
-              </button>
             </div>
           </motion.div>
         )}
