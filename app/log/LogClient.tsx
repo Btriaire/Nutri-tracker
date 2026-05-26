@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang } from "@/app/lib/types";
+import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
+import { Check } from "@phosphor-icons/react";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
 
@@ -20,6 +22,8 @@ interface Props {
 export default function LogClient({ date, initialLog, goals, lang = "fr" }: Props) {
   const [entries, setEntries] = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl, setWaterMl] = useState(initialLog?.waterMl ?? 0);
+  const [toast, setToast]     = useState<AddedInfo | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
@@ -41,6 +45,12 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
+  };
+
+  const showToast = (info: AddedInfo) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(info);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
   };
 
   return (
@@ -157,11 +167,43 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
                 date={date}
                 lang={lang}
                 onEntriesChange={handleMealChange}
+                onFoodAdded={showToast}
               />
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key="toast"
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0,  scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl"
+            style={{
+              background: "rgba(30,30,40,0.92)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span className="flex items-center justify-center w-5 h-5 rounded-full"
+              style={{ background: "var(--protein)" }}>
+              <Check size={11} weight="bold" color="#fff" />
+            </span>
+            <span className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+              {toast.name}
+            </span>
+            <span className="text-[12px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
+              {toast.calories} kcal
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

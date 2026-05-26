@@ -87,13 +87,15 @@ function MacroPills({ n }: { n: FoodNutrition }) {
 type Tab  = "aliments" | "repas" | "recettes";
 type Step = "browse" | "configure" | "configure-recipe" | "save-meal";
 
+export interface AddedInfo { name: string; calories: number }
+
 interface Props {
   open:    boolean;
   meal:    MealType;
   date:    string;
   lang?:   Lang;
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (info: AddedInfo) => void;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -250,7 +252,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
-      onAdded();
+      onAdded({ name: selected.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAdding(false); }
   };
@@ -279,7 +281,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
-      onAdded();
+      onAdded({ name: food.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setQuickAddingId(null); }
   };
@@ -308,7 +310,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           })),
         }),
       });
-      onAdded();
+      onAdded({ name: m.name, calories: Math.round(m.totalNutrition.calories) });
       onClose();
     } finally { setAddingMealId(null); }
   };
@@ -382,7 +384,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
-      onAdded();
+      onAdded({ name: selectedRecipe.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAddingRecipe(false); }
   };

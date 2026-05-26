@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, CaretDown } from "@phosphor-icons/react";
 import FoodItem from "./FoodItem";
-import FoodSearchModal from "./FoodSearchModal";
+import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import type { FoodEntry, MealType, Lang } from "@/app/lib/types";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
@@ -20,9 +20,10 @@ interface Props {
   date: string;
   lang?: Lang;
   onEntriesChange: (meal: MealType, entries: FoodEntry[]) => void;
+  onFoodAdded?: (info: AddedInfo) => void;
 }
 
-export default function MealSection({ meal, entries, date, lang = "fr", onEntriesChange }: Props) {
+export default function MealSection({ meal, entries, date, lang = "fr", onEntriesChange, onFoodAdded }: Props) {
   const [open, setOpen]   = useState(true);
   const [modal, setModal] = useState(false);
 
@@ -33,10 +34,11 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
     onEntriesChange(meal, entries.filter((e) => e.id !== id));
   };
 
-  const handleAdded = async () => {
+  const handleAdded = async (info: AddedInfo) => {
     const res = await fetch(`/api/log?date=${date}`);
     const { dayLog } = await res.json() as { dayLog: { entries: FoodEntry[] } | null };
     if (dayLog) onEntriesChange(meal, dayLog.entries.filter((e: FoodEntry) => e.meal === meal));
+    onFoodAdded?.(info);
   };
 
   return (
