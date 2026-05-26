@@ -795,36 +795,25 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
           {/* ── Configure overlay panel (popup over search) ── */}
 
-          {/* Dim — separate AnimatePresence to avoid fragment issue */}
-          <AnimatePresence>
-            {step !== "browse" && (
-              <motion.div
-                key="cfg-dim"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="fixed inset-0"
-                style={{ zIndex: 55, background: "rgba(0,0,0,0.45)" }}
-                onClick={closeOverlay}
-              />
-            )}
-          </AnimatePresence>
+          {step !== "browse" && (
+            <div
+              className="fixed inset-0"
+              style={{ zIndex: 55, background: "rgba(0,0,0,0.45)" }}
+              onClick={closeOverlay}
+            />
+          )}
 
-          {/* Configure panel */}
-          <AnimatePresence>
-            {step !== "browse" && (
-              <motion.div
-                key="cfg-panel"
-                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 36, stiffness: 400, mass: 0.8 }}
-                className="fixed inset-x-0 bottom-0 flex flex-col rounded-t-2xl overflow-hidden"
-                style={{
-                  zIndex: 60,
-                    background: "rgba(15,15,22,0.99)",
-                    border: "1px solid var(--border-strong)", borderBottom: "none",
-                    backdropFilter: "blur(28px)",
-                    maxHeight: "88vh",
-                  }}
-                >
+          {step !== "browse" && (
+            <div
+              className="fixed inset-x-0 bottom-0 flex flex-col rounded-t-2xl overflow-hidden"
+              style={{
+                zIndex: 60,
+                background: "rgba(15,15,22,0.99)",
+                border: "1px solid var(--border-strong)", borderBottom: "none",
+                backdropFilter: "blur(28px)",
+                maxHeight: "88vh",
+              }}
+            >
                   {/* Drag handle */}
                   <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
                     <div className="w-8 h-1 rounded-full" style={{ background: "var(--border-strong)" }} />
@@ -1183,9 +1172,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     )}
 
                   </div>
-                </motion.div>
+                </div>
             )}
-          </AnimatePresence>
 
         </>
       )}
