@@ -19,8 +19,19 @@ export default async function ActivityPage() {
         .where("date", "==", today)
         .get(),
     ]);
-    fitnessDay = fitSnap.exists ? fitSnap.data() as FitnessDay : null;
-    manualActivities = actSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (fitSnap.exists) {
+      const raw = fitSnap.data() as FitnessDay;
+      // Strip Firestore Timestamp (syncedAt) — not serializable to Client Component
+      if (raw.googleFit) (raw.googleFit as unknown as Record<string, unknown>).syncedAt = null;
+      if (raw.withings)  (raw.withings  as unknown as Record<string, unknown>).syncedAt = null;
+      fitnessDay = raw;
+    }
+    manualActivities = actSnap.docs.map((d) => {
+      const data = d.data();
+      // Convert loggedAt Timestamp to plain { _seconds } so client can sort
+      const loggedAt = data.loggedAt as { seconds?: number } | null | undefined;
+      return { ...data, id: d.id, loggedAt: loggedAt ? { _seconds: loggedAt.seconds ?? 0 } : null };
+    });
   } catch (e) {
     console.error(e);
   }
