@@ -326,11 +326,15 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
               </div>
             </motion.div>
 
-            {/* Calories trend */}
+            {/* Calories & Activité — fused card */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
               className="glass p-5 mb-4">
+              {/* Header */}
               <div className="flex items-center justify-between mb-4">
-                <p className="label-xs">Calories journalières</p>
+                <div className="flex items-center gap-2">
+                  <Fire size={14} weight="fill" style={{ color: "var(--calories)" }} />
+                  <p className="label-xs">Calories &amp; Activité</p>
+                </div>
                 <div className="flex gap-1.5">
                   {(["area", "bar"] as CalChart[]).map((t) => (
                     <button key={t} onClick={() => setCalChart(t)} className="btn-icon w-7 h-7"
@@ -340,6 +344,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
                   ))}
                 </div>
               </div>
+
+              {/* Calorie chart */}
+              <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Calories consommées</p>
               {loading ? (
                 <div className="h-32 flex items-center justify-center">
                   <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</span>
@@ -377,55 +384,60 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
                   )}
                 </ResponsiveContainer>
               )}
-            </motion.div>
 
-            {/* Activity: steps + active minutes side-by-side */}
-            {activityPoints.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.09 }}
-                className="glass p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <PersonSimpleRun size={14} weight="fill" style={{ color: "var(--steps)" }} />
-                  <p className="label-xs">Activité sportive</p>
-                </div>
-                {/* Steps */}
-                {avgSteps > 0 && (
-                  <>
-                    <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
-                    <ResponsiveContainer width="100%" height={100}>
-                      <AreaChart data={chartData.filter((p) => (p.steps ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="stepsGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--steps)" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="var(--steps)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                        <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={(payload[0].value as number).toLocaleString("fr-FR")} unit="pas" color="var(--steps)" /> : null} />
-                        <ReferenceLine y={10000} stroke="rgba(56,189,248,0.3)" strokeDasharray="4 4" />
-                        <Area type="monotone" dataKey="steps" stroke="var(--steps)" strokeWidth={2} fill="url(#stepsGrad)" dot={false} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </>
-                )}
-                {/* Active minutes */}
-                {avgActiveMins > 0 && (
-                  <>
-                    <div className="h-px my-3" style={{ background: "var(--border)" }} />
-                    <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives</p>
-                    <ResponsiveContainer width="100%" height={90}>
-                      <BarChart data={chartData.filter((p) => (p.activeMinutes ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                        <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="var(--carbs)" /> : null} />
-                        <ReferenceLine y={30} stroke="rgba(251,191,36,0.3)" strokeDasharray="4 4" />
-                        <Bar dataKey="activeMinutes" fill="var(--carbs)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </>
-                )}
-              </motion.div>
-            )}
+              {/* Activity section — inside the same card */}
+              {activityPoints.length > 0 && (
+                <>
+                  <div className="h-px my-4" style={{ background: "var(--border)" }} />
+                  <div className="flex items-center gap-2 mb-3">
+                    <PersonSimpleRun size={13} weight="fill" style={{ color: "var(--steps)" }} />
+                    <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
+                    {avgSteps > 0 && (
+                      <span className="ml-auto text-[10px] tabular-nums" style={{ color: "var(--steps)" }}>
+                        ~{avgSteps.toLocaleString("fr-FR")} pas/j
+                      </span>
+                    )}
+                  </div>
+                  {/* Steps */}
+                  {avgSteps > 0 && (
+                    <>
+                      <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
+                      <ResponsiveContainer width="100%" height={90}>
+                        <AreaChart data={chartData.filter((p) => (p.steps ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="stepsGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--steps)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="var(--steps)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                          <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={(payload[0].value as number).toLocaleString("fr-FR")} unit="pas" color="var(--steps)" /> : null} />
+                          <ReferenceLine y={10000} stroke="rgba(56,189,248,0.3)" strokeDasharray="4 4" />
+                          <Area type="monotone" dataKey="steps" stroke="var(--steps)" strokeWidth={1.5} fill="url(#stepsGrad)" dot={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </>
+                  )}
+                  {/* Active minutes */}
+                  {avgActiveMins > 0 && (
+                    <>
+                      <div className="h-px my-3" style={{ background: "var(--border)" }} />
+                      <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives · moy. {avgActiveMins} min/j</p>
+                      <ResponsiveContainer width="100%" height={80}>
+                        <BarChart data={chartData.filter((p) => (p.activeMinutes ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
+                          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                          <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="var(--carbs)" /> : null} />
+                          <ReferenceLine y={30} stroke="rgba(251,191,36,0.3)" strokeDasharray="4 4" />
+                          <Bar dataKey="activeMinutes" fill="var(--carbs)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </>
+                  )}
+                </>
+              )}
+            </motion.div>
 
             {/* Weight trend */}
             {weightData.length > 0 && (

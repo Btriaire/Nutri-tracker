@@ -177,12 +177,12 @@ export default function DashboardClient({
           </div>
         </motion.div>
 
-        {/* Workout sessions */}
-        {sessions.length > 0 && (
+        {/* Workout sessions (sleep activity types 72/110-114 filtered out) */}
+        {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).length > 0 && (
           <motion.div {...fade(0.19)} className="glass p-4 mb-4">
             <p className="label-xs mb-3">Séances du jour</p>
             <div className="space-y-2">
-              {sessions.map(s => (
+              {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
                 <div key={s.id} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
                     style={{ background: "rgba(255,255,255,0.06)" }}>

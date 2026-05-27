@@ -106,15 +106,18 @@ export async function POST(req: NextRequest) {
       return pts.length ? (pts[pts.length - 1].value?.[0]?.fpVal ?? null) : null;
     };
 
-    const sessions = (sessionsByDate[date] ?? []).map(s => ({
-      id:          s.id,
-      name:        s.name || activityLabel(s.activityType ?? 0),
-      activityType: s.activityType ?? 0,
-      startMs:     Number(s.startTimeMillis),
-      endMs:       Number(s.endTimeMillis),
-      durationMin: Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000),
-      calories:    null,
-    }));
+    // Exclude sleep segments (72, 110-114) — stored separately in sleepMinutes
+    const sessions = (sessionsByDate[date] ?? [])
+      .filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType ?? 0))
+      .map(s => ({
+        id:          s.id,
+        name:        s.name || activityLabel(s.activityType ?? 0),
+        activityType: s.activityType ?? 0,
+        startMs:     Number(s.startTimeMillis),
+        endMs:       Number(s.endTimeMillis),
+        durationMin: Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000),
+        calories:    null,
+      }));
 
     const hrAvg  = getAvgFp(2);
     const weight = getLastFp(3);

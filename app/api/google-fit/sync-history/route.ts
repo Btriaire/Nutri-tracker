@@ -118,15 +118,18 @@ export async function POST(req: NextRequest) {
     const activeMins = getInt(4);
     const sleep    = sleepByDate[date] ?? null;
 
-    const sessions = (sessionsByDate[date] ?? []).map(s => ({
-      id:           s.id,
-      name:         s.name || activityLabel(s.activityType ?? 0),
-      activityType: s.activityType ?? 0,
-      startMs:      Number(s.startTimeMillis),
-      endMs:        Number(s.endTimeMillis),
-      durationMin:  Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000),
-      calories:     null,
-    }));
+    // Exclude sleep segments (72, 110-114) — stored separately in sleepMinutes
+    const sessions = (sessionsByDate[date] ?? [])
+      .filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType ?? 0))
+      .map(s => ({
+        id:           s.id,
+        name:         s.name || activityLabel(s.activityType ?? 0),
+        activityType: s.activityType ?? 0,
+        startMs:      Number(s.startTimeMillis),
+        endMs:        Number(s.endTimeMillis),
+        durationMin:  Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000),
+        calories:     null,
+      }));
 
     const ref = db.doc(`users/owner/fitnessData/${date}`);
     batch.set(ref, {
