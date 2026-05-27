@@ -212,9 +212,9 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         >
           {[
             { icon: Footprints, label: "Pas",         value: gf?.steps ? gf.steps.toLocaleString("fr-FR") : "—", color: "var(--steps)" },
-            { icon: Fire,       label: "Kcal brûlées", value: totalBurned || "—",                                   color: "var(--calories)" },
-            { icon: Lightning,  label: "Min. actives", value: gf?.activeMinutes ?? "—",                              color: "var(--carbs)" },
-            { icon: Heart,      label: "FC moy.",       value: gf?.heartRateAvg ? `${gf.heartRateAvg} bpm` : "—",  color: "#f87171" },
+            { icon: Fire,       label: "Kcal brûlées", value: totalBurned || "—",                                   color: "var(--fit-red)" },
+            { icon: Lightning,  label: "Min. actives", value: gf?.activeMinutes ?? "—",                              color: "var(--fit-green)" },
+            { icon: Heart,      label: "FC moy.",       value: gf?.heartRateAvg ? `${gf.heartRateAvg} bpm` : "—",  color: "var(--fit-red)" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2">
               <Icon size={18} weight="fill" style={{ color }} />

@@ -44,10 +44,10 @@ function fmtSleep(min?: number): string {
 }
 
 function hrZoneColor(bpm: number): string {
-  if (bpm < 60)  return "#818cf8";
-  if (bpm < 85)  return "#34d399";
+  if (bpm < 60)  return "var(--fit-indigo)";
+  if (bpm < 85)  return "var(--fit-green)";
   if (bpm < 100) return "#fbbf24";
-  return "#f87171";
+  return "var(--fit-red)";
 }
 
 interface Props {
@@ -226,9 +226,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { icon: Footprints,    label: "Pas",            val: todayPoint?.steps ? todayPoint.steps.toLocaleString("fr-FR") : "—",             color: "var(--steps)",    goal: "/ 10 000" },
-                      { icon: Lightning,     label: "Min. actives",   val: todayPoint?.activeMinutes ?? "—",                                                color: "var(--carbs)",    goal: "/ 30 min" },
-                      { icon: Fire,          label: "Kcal brûlées",   val: todayPoint?.burned ?? "—",                                                       color: "var(--calories)", goal: "actives" },
-                      { icon: Heart,         label: "FC moy.",         val: todayPoint?.heartRateAvg ? `${todayPoint.heartRateAvg} bpm` : "—",               color: "#f87171",         goal: todayPoint?.heartRateAvg ? (todayPoint.heartRateAvg < 60 ? "Repos" : todayPoint.heartRateAvg < 100 ? "Normal" : "Élevé") : "" },
+                      { icon: Lightning,     label: "Min. actives",   val: todayPoint?.activeMinutes ?? "—",                                                color: "var(--fit-green)", goal: "/ 30 min" },
+                      { icon: Fire,          label: "Kcal brûlées",   val: todayPoint?.burned ?? "—",                                                       color: "var(--fit-red)",   goal: "actives" },
+                      { icon: Heart,         label: "FC moy.",         val: todayPoint?.heartRateAvg ? `${todayPoint.heartRateAvg} bpm` : "—",               color: "var(--fit-red)",   goal: todayPoint?.heartRateAvg ? (todayPoint.heartRateAvg < 60 ? "Repos" : todayPoint.heartRateAvg < 100 ? "Normal" : "Élevé") : "" },
                     ].map(({ icon: Icon, label, val, color, goal }) => (
                       <div key={label} className="flex items-center gap-3 p-3 rounded-xl"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
@@ -246,20 +246,20 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
                 {/* Récupération */}
                 <div className="glass p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Moon size={16} weight="fill" style={{ color: "#818cf8" }} />
+                    <Moon size={16} weight="fill" style={{ color: "var(--fit-indigo)" }} />
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Récupération</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-3 p-3 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <Moon size={24} weight="fill" style={{ color: "#818cf8", flexShrink: 0 }} />
+                      <Moon size={24} weight="fill" style={{ color: "var(--fit-indigo)", flexShrink: 0 }} />
                       <div>
-                        <p className="text-[20px] font-bold leading-tight" style={{ color: "#818cf8" }}>
+                        <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--fit-indigo)" }}>
                           {fmtSleep(todayPoint?.sleepMinutes)}
                         </p>
                         <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
                         {todayPoint?.sleepMinutes && (
-                          <p className="text-[9px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "#34d399" : "#fbbf24" }}>
+                          <p className="text-[9px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "#fbbf24" }}>
                             {todayPoint.sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant"}
                           </p>
                         )}
@@ -321,7 +321,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
               </div>
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Min. actives</span>
-                <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--carbs)" }}>{avgActiveMins || "—"}</span>
+                <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--fit-green)" }}>{avgActiveMins || "—"}</span>
                 <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>min/j</span>
               </div>
             </motion.div>
@@ -428,9 +428,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
                         <BarChart data={chartData.filter((p) => (p.activeMinutes ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
                           <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                           <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                          <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="var(--carbs)" /> : null} />
-                          <ReferenceLine y={30} stroke="rgba(251,191,36,0.3)" strokeDasharray="4 4" />
-                          <Bar dataKey="activeMinutes" fill="var(--carbs)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                          <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="var(--fit-green)" /> : null} />
+                          <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 4" />
+                          <Bar dataKey="activeMinutes" fill="var(--fit-green)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </>

@@ -24,11 +24,11 @@ const RANGES = [
 ] as const;
 
 function hrZone(bpm: number): { label: string; color: string; desc: string } {
-  if (bpm < 60)  return { label: "Repos",    color: "#818cf8", desc: "Fréquence au repos" };
-  if (bpm < 70)  return { label: "Faible",   color: "#34d399", desc: "Zone de récupération" };
-  if (bpm < 85)  return { label: "Modéré",   color: "#fbbf24", desc: "Zone aérobie légère" };
-  if (bpm < 100) return { label: "Élevé",    color: "#f97316", desc: "Zone cardiovasculaire" };
-  return               { label: "Intense",  color: "#f87171", desc: "Effort intense" };
+  if (bpm < 60)  return { label: "Repos",    color: "var(--fit-indigo)", desc: "Fréquence au repos" };
+  if (bpm < 70)  return { label: "Faible",   color: "var(--fit-green)", desc: "Zone de récupération" };
+  if (bpm < 85)  return { label: "Modéré",   color: "#fbbf24",          desc: "Zone aérobie légère" };
+  if (bpm < 100) return { label: "Élevé",    color: "#f97316",          desc: "Zone cardiovasculaire" };
+  return               { label: "Intense",  color: "var(--fit-red)",   desc: "Effort intense" };
 }
 
 function fmtSleep(min: number | null): string {
@@ -133,8 +133,8 @@ export default function CardioClient({ points }: Props) {
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium"
                   style={{
-                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "rgba(52,211,153,0.1)" : "rgba(248,113,113,0.1)",
-                    color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "#34d399" : "#f87171",
+                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
+                    color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
                   {delta < 0 ? <ArrowDown size={12} weight="bold" /> : delta > 0 ? <ArrowUp size={12} weight="bold" /> : <Minus size={12} weight="bold" />}
                   {Math.abs(delta)} bpm
@@ -148,8 +148,8 @@ export default function CardioClient({ points }: Props) {
         {/* Stats strip */}
         <motion.div {...fade(0.08)} className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: "Moyenne",  value: avgHr ? `${avgHr} bpm` : "—", icon: <Heart size={14} weight="fill" style={{ color: "#f87171" }} /> },
-            { label: "Min",      value: minHr ? `${minHr} bpm` : "—", icon: <ArrowDown size={14} weight="bold" style={{ color: "#34d399" }} /> },
+            { label: "Moyenne",  value: avgHr ? `${avgHr} bpm` : "—", icon: <Heart size={14} weight="fill" style={{ color: "var(--fit-red)" }} /> },
+            { label: "Min",      value: minHr ? `${minHr} bpm` : "—", icon: <ArrowDown size={14} weight="bold" style={{ color: "var(--fit-green)" }} /> },
             { label: "Max",      value: maxHr ? `${maxHr} bpm` : "—", icon: <ArrowUp size={14} weight="bold" style={{ color: "#f97316" }} /> },
           ].map(({ label, value, icon }) => (
             <div key={label} className="card flex flex-col gap-1">
@@ -164,9 +164,9 @@ export default function CardioClient({ points }: Props) {
           <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
             {weekDelta === 0
-              ? <><CheckCircle size={15} style={{ color: "#34d399" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
+              ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta < 0
-                ? <><CheckCircle size={15} style={{ color: "#34d399" }} /><span style={{ color: "var(--text-secondary)" }}>En baisse de <strong style={{ color: "#34d399" }}>{Math.abs(weekDelta)} bpm</strong> cette semaine</span></>
+                ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>En baisse de <strong style={{ color: "var(--fit-green)" }}>{Math.abs(weekDelta)} bpm</strong> cette semaine</span></>
                 : <><Warning size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}>En hausse de <strong style={{ color: "#fbbf24" }}>{weekDelta} bpm</strong> cette semaine</span></>
             }
           </motion.div>
@@ -196,8 +196,8 @@ export default function CardioClient({ points }: Props) {
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#f87171" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--fit-red)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--fit-red)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -207,7 +207,7 @@ export default function CardioClient({ points }: Props) {
                 {/* Zone reference lines */}
                 <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" label={{ value: "60", fill: "rgba(129,140,248,0.5)", fontSize: 8, position: "right" }} />
                 <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" label={{ value: "100", fill: "rgba(248,113,113,0.5)", fontSize: 8, position: "right" }} />
-                <Area type="monotone" dataKey="hrAvg" stroke="#f87171" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "#f87171" }} />
+                <Area type="monotone" dataKey="hrAvg" stroke="var(--fit-red)" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "var(--fit-red)" }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -218,9 +218,9 @@ export default function CardioClient({ points }: Props) {
           {/* Zone legend */}
           <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
             {[
-              { label: "Repos < 60",  color: "#818cf8" },
-              { label: "Normal 60–100", color: "#34d399" },
-              { label: "Élevé > 100",  color: "#f87171" },
+              { label: "Repos < 60",  color: "var(--fit-indigo)" },
+              { label: "Normal 60–100", color: "var(--fit-green)" },
+              { label: "Élevé > 100",  color: "var(--fit-red)" },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: color }} />
@@ -237,8 +237,8 @@ export default function CardioClient({ points }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--calories)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--calories)" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="var(--fit-green)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--fit-green)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -249,12 +249,12 @@ export default function CardioClient({ points }: Props) {
                   <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                    <p style={{ color: "var(--calories)" }} className="font-bold">{payload[0]?.value} min</p>
+                    <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
                   </div>
                 );
               }} />
-              <ReferenceLine y={30} stroke="rgba(249,115,22,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="activeMin" stroke="var(--calories)" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
+              <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 3" />
+              <Area type="monotone" dataKey="activeMin" stroke="var(--fit-green)" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -266,8 +266,8 @@ export default function CardioClient({ points }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#818cf8" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="var(--fit-indigo)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--fit-indigo)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -278,12 +278,12 @@ export default function CardioClient({ points }: Props) {
                   <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                    <p style={{ color: "#818cf8" }} className="font-bold">{fmtSleep(payload[0]?.value as number)}</p>
+                    <p style={{ color: "var(--fit-indigo)" }} className="font-bold">{fmtSleep(payload[0]?.value as number)}</p>
                   </div>
                 );
               }} />
-              <ReferenceLine y={420} stroke="rgba(129,140,248,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="sleepMinutes" stroke="#818cf8" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
+              <ReferenceLine y={420} stroke="rgba(121,134,203,0.3)" strokeDasharray="4 3" />
+              <Area type="monotone" dataKey="sleepMinutes" stroke="var(--fit-indigo)" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
           <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
@@ -311,12 +311,12 @@ export default function CardioClient({ points }: Props) {
                   </div>
                   {/* Active min */}
                   <div className="flex items-center gap-1 w-[52px]">
-                    <Lightning size={11} style={{ color: "var(--calories)" }} />
+                    <Lightning size={11} style={{ color: "var(--fit-green)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{p.activeMin}min</span>
                   </div>
                   {/* Sleep */}
                   <div className="flex items-center gap-1 flex-1">
-                    <Moon size={11} style={{ color: "#818cf8" }} />
+                    <Moon size={11} style={{ color: "var(--fit-indigo)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{fmtSleep(p.sleepMinutes)}</span>
                   </div>
                 </div>
