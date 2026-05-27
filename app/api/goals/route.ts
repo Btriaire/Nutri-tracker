@@ -19,7 +19,7 @@ export async function GET() {
   }
 
   const profile = doc.data() as UserProfile;
-  return NextResponse.json({ goals: profile.goals ?? defaultGoals() });
+  return NextResponse.json({ goals: profile.goals ?? defaultGoals(), chartPrefs: profile.chartPrefs ?? null });
 }
 
 // PATCH for top-level profile fields (e.g. chartPrefs)

@@ -139,7 +139,7 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
         onClick={() => hasMicros && setExpanded((x) => !x)}
       >
         {/* Food emoji */}
-        <span className="text-[18px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
+        <span className="text-[22px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
 
         {/* Food info */}
         <div className="flex-1 min-w-0">
@@ -170,7 +170,7 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
               transition={{ duration: 0.18 }}
               style={{ display: "inline-flex", color: "var(--text-muted)" }}
             >
-              <CaretDown size={11} />
+              <CaretDown size={13} />
             </motion.span>
           )}
           {/* Source dot */}
@@ -184,7 +184,7 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
             aria-label="Supprimer"
             style={{ color: "var(--text-muted)" }}
           >
-            <Trash size={12} />
+            <Trash size={14} />
           </button>
         </div>
       </div>

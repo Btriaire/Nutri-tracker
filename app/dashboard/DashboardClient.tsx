@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -60,6 +60,15 @@ export default function DashboardClient({
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
 
+  // Silent background sync on every dashboard open
+  useEffect(() => {
+    fetch("/api/google-fit/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }).catch(() => {});
+  }, [date]);
+
   const chartData = trendPoints.map((p) => ({
     ...p,
     label: format(new Date(p.date + "T12:00:00"), "dd/MM"),
@@ -91,7 +100,7 @@ export default function DashboardClient({
           />
           <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
             Ouvrir le journal
-            <ArrowRight size={12} weight="bold" />
+            <ArrowRight size={14} weight="bold" />
           </Link>
         </motion.div>
 
@@ -117,7 +126,7 @@ export default function DashboardClient({
           {/* Sleep */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Moon size={13} weight="fill" style={{ color: "#818cf8" }} />
+              <Moon size={16} weight="fill" style={{ color: "#818cf8" }} />
               <span className="label-xs">Sommeil</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
@@ -130,7 +139,7 @@ export default function DashboardClient({
           {/* Heart rate */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Heart size={13} weight="fill" style={{ color: "#f87171" }} />
+              <Heart size={16} weight="fill" style={{ color: "#f87171" }} />
               <span className="label-xs">Fréq. card.</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
@@ -143,7 +152,7 @@ export default function DashboardClient({
           {/* Active minutes */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Lightning size={13} weight="fill" style={{ color: "var(--calories)" }} />
+              <Lightning size={16} weight="fill" style={{ color: "var(--calories)" }} />
               <span className="label-xs">Min. actives</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
@@ -173,7 +182,7 @@ export default function DashboardClient({
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Timer size={11} style={{ color: "var(--text-muted)" }} />
+                    <Timer size={14} style={{ color: "var(--text-muted)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.durationMin} min</span>
                   </div>
                 </div>

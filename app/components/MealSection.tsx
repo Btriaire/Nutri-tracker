@@ -114,7 +114,7 @@ export default function MealSection({
             style={{ display: "inline-flex", color: "var(--text-muted)" }}
             className="shrink-0"
           >
-            <CaretDown size={12} />
+            <CaretDown size={14} />
           </motion.span>
         </button>
 
@@ -132,7 +132,7 @@ export default function MealSection({
         >
           {uploading
             ? <span className="animate-spin text-[10px]">⏳</span>
-            : <Camera size={13} weight={photoUrl ? "fill" : "regular"} />
+            : <Camera size={16} weight={photoUrl ? "fill" : "regular"} />
           }
         </button>
 
@@ -148,7 +148,7 @@ export default function MealSection({
             }}
             aria-label="Détail nutritionnel"
           >
-            <ChartBar size={13} weight={showNutrition ? "fill" : "regular"} />
+            <ChartBar size={16} weight={showNutrition ? "fill" : "regular"} />
           </button>
         )}
 
@@ -161,7 +161,7 @@ export default function MealSection({
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}
         >
-          <Plus size={15} weight="bold" />
+          <Plus size={17} weight="bold" />
         </button>
       </div>
 
@@ -191,7 +191,7 @@ export default function MealSection({
                   style={{ background: "rgba(0,0,0,0.55)", color: "#f87171" }}
                   aria-label="Supprimer la photo"
                 >
-                  <Trash size={12} />
+                  <Trash size={14} />
                 </button>
               </div>
             )}

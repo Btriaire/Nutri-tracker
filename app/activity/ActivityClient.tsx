@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -70,7 +70,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
     if (d > 0) setCalories(String(estimateCalories(type, d)));
   };
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     if (!duration || parseInt(duration, 10) < 1) return;
     setSaving(true);
     try {
@@ -85,14 +85,15 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           caloriesBurned: calories ? parseInt(calories, 10) : null,
         }),
       });
-      if (res.ok) {
-        const { activity } = await res.json() as { activity: ManualActivity };
-        setActivities((prev) => [activity, ...prev]);
-        setShowForm(false);
-        setCustomName(""); setDuration("30"); setCalories(""); setActType(0);
+      const json = await res.json() as { activity?: ManualActivity };
+      if (json.activity) {
+        setActivities((prev) => [json.activity!, ...prev]);
       }
+      // Always close the form and reset, even if server had an issue
+      setShowForm(false);
+      setCustomName(""); setDuration("30"); setCalories(""); setActType(0);
     } finally { setSaving(false); }
-  }, [date, customName, actType, duration, calories]);
+  };
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/activity/${id}`, { method: "DELETE" });
@@ -143,7 +144,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
             { icon: Heart,      label: "FC moy.",       value: gf?.heartRateAvg ? `${gf.heartRateAvg} bpm` : "—", color: "#f87171" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2">
-              <Icon size={14} weight="fill" style={{ color }} />
+              <Icon size={18} weight="fill" style={{ color }} />
               <span className="text-[14px] font-bold tabular-nums" style={{ color }}>{value}</span>
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
@@ -240,7 +241,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Timer size={11} style={{ color: "var(--text-muted)" }} />
+                    <Timer size={14} style={{ color: "var(--text-muted)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.durationMin} min</span>
                   </div>
                 </div>

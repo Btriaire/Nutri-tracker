@@ -37,7 +37,7 @@ export default function Nav() {
               style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
             >
               <Icon
-                size={20}
+                size={22}
                 weight={active ? "fill" : "regular"}
               />
               <span
@@ -95,7 +95,7 @@ export default function Nav() {
                 border: active ? "1px solid var(--border-strong)" : "1px solid transparent",
               }}
             >
-              <Icon size={16} weight={active ? "fill" : "regular"} />
+              <Icon size={18} weight={active ? "fill" : "regular"} />
               {label}
             </Link>
           );

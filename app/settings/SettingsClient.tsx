@@ -333,6 +333,20 @@ function ChartPrefsPanel() {
   const [saving,     setSaving]     = useState(false);
   const [saved,      setSaved]      = useState(false);
 
+  // Load current saved prefs on open
+  useEffect(() => {
+    fetch("/api/goals")
+      .then((r) => r.json())
+      .then((data: { chartPrefs?: { calorieTrend?: string; weightTrend?: string; macroDisplay?: string; showMicroNutrients?: boolean } | null }) => {
+        if (!data.chartPrefs) return;
+        if (data.chartPrefs.calorieTrend)  setCalType(data.chartPrefs.calorieTrend);
+        if (data.chartPrefs.weightTrend)   setWtType(data.chartPrefs.weightTrend);
+        if (data.chartPrefs.macroDisplay)  setMacroDisp(data.chartPrefs.macroDisplay);
+        if (data.chartPrefs.showMicroNutrients != null) setShowMicro(data.chartPrefs.showMicroNutrients);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     try {

@@ -73,6 +73,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg 
   const [points,     setPoints]     = useState<DayTrendPoint[]>([]);
   const [loading,    setLoading]    = useState(true);
 
+  // Load saved chart preferences on mount
+  useEffect(() => {
+    fetch("/api/goals")
+      .then((r) => r.json())
+      .then((data: { chartPrefs?: { calorieTrend?: string } | null }) => {
+        if (data.chartPrefs?.calorieTrend === "bar") setCalChart("bar");
+      })
+      .catch(() => {});
+  }, []);
+
   const loadData = useCallback(async (r: Range) => {
     setLoading(true);
     try {
