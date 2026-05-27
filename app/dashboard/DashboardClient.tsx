@@ -5,10 +5,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp } from "@phosphor-icons/react";
+import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
-import MacroRings from "@/app/components/MacroRings";
-import StepsWidget from "@/app/components/StepsWidget";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
@@ -23,6 +21,7 @@ interface Session { id: string; name: string; activityType: number; durationMin:
 
 interface Props {
   date:           string;
+  displayName?:   string;
   goals:          NutritionGoals;
   consumed:       DayTotals;
   burned:         number | null;
@@ -51,6 +50,21 @@ function activityEmoji(type: number): string {
   return map[type] ?? "🏅";
 }
 
+function fmtSleep(min: number): string {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+
+function hrZoneLabel(bpm: number, maxHr: number): { label: string; color: string } {
+  const pct = bpm / maxHr;
+  if (pct < 0.50) return { label: "Repos",        color: "#7986CB" };
+  if (pct < 0.60) return { label: "Échauffement", color: "#4285F4" };
+  if (pct < 0.70) return { label: "Aérobie",      color: "#34A853" };
+  if (pct < 0.85) return { label: "Seuil",        color: "#FBBC04" };
+  return               { label: "Maximal",       color: "#EA4335" };
+}
+
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -59,10 +73,11 @@ const fade = (delay = 0) => ({
 });
 
 export default function DashboardClient({
-  date, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate, sleepMinutes, sleepGoalMin,
-  sessions, weight, previousWeight, trendPoints, waterMl: initialWaterMl, lang,
+  date, displayName, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
+  sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
+  waterMl: initialWaterMl, lang,
 }: Props) {
-  const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
+  const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
 
   // Silent background sync on every dashboard open
@@ -73,6 +88,43 @@ export default function DashboardClient({
       body: JSON.stringify({}),
     }).catch(() => {});
   }, [date]);
+
+  // Greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? "Bonne nuit" : hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const greetingEmoji = hour < 5 ? "🌙" : hour < 12 ? "☀️" : hour < 18 ? "🌤️" : "🌆";
+
+  // Daily score (4 objectives)
+  const maxHr = goals.age ? 220 - goals.age : 190;
+  const objectives = [
+    consumed.calories >= goals.dailyCalories * 0.7,
+    consumed.proteinG >= goals.proteinGrams * 0.7,
+    steps !== null && steps >= stepsGoal * 0.7,
+    sleepMinutes !== null && sleepMinutes >= sleepGoalMin * 0.9,
+  ];
+  const score = objectives.filter(Boolean).length;
+
+  // Macro progress
+  const macros = [
+    { label: "Prot.",  value: consumed.proteinG, goal: goals.proteinGrams, color: "var(--protein)" },
+    { label: "Gluc.",  value: consumed.carbsG,   goal: goals.carbsGrams,   color: "var(--carbs)" },
+    { label: "Lip.",   value: consumed.fatG,      goal: goals.fatGrams,     color: "var(--fat)" },
+    { label: "Fibres", value: consumed.fiberG,    goal: goals.fiberGrams,   color: "var(--fiber)" },
+  ];
+
+  // Sleep
+  const sleepGoalH = Math.round(sleepGoalMin / 60 * 10) / 10;
+  const sleepPct   = sleepMinutes ? Math.min(sleepMinutes / sleepGoalMin, 1) * 100 : 0;
+  const sleepOk    = !!sleepMinutes && sleepMinutes >= sleepGoalMin;
+
+  // Heart rate zone
+  const zone = heartRate ? hrZoneLabel(heartRate, maxHr) : null;
+
+  // Active minutes (OMS recommends 30 min/day minimum)
+  const activePct = Math.min((activeMinutes ?? 0) / 30, 1) * 100;
+
+  // Steps
+  const stepsPct = Math.min((steps ?? 0) / stepsGoal, 1) * 100;
 
   const chartData = trendPoints.map((p) => ({
     ...p,
@@ -89,99 +141,218 @@ export default function DashboardClient({
         className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px] md:max-w-2xl"
         style={{ paddingBottom: "80px" }}
       >
-        {/* Header */}
+
+        {/* ── Header ── */}
         <motion.div {...fade(0)} className="mb-6">
-          <p className="label-xs mb-0.5 capitalize">{today}</p>
-          <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-            Tableau de bord
-          </h1>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[13px] font-medium mb-0.5" style={{ color: "var(--text-muted)" }}>
+                {greetingEmoji} {greeting}{displayName ? `, ${displayName.split(" ")[0]}` : ""}
+              </p>
+              <h1 className="text-[22px] font-semibold tracking-tight capitalize" style={{ color: "var(--text-primary)" }}>
+                {todayLabel}
+              </h1>
+            </div>
+            {/* Daily score */}
+            <div className="flex flex-col items-end gap-1.5 mt-0.5">
+              <div className="flex gap-1.5">
+                {objectives.map((ok, i) => (
+                  <motion.div key={i}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2 + i * 0.07, type: "spring", stiffness: 400 }}
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.1)" }}
+                  />
+                ))}
+              </div>
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                {score}/4 objectifs
+              </p>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Calorie ring */}
-        <motion.div {...fade(0.05)} className="glass p-6 mb-4 flex flex-col items-center gap-4">
-          <CalorieBudgetRing
-            consumed={consumed.calories}
-            goal={goals.dailyCalories}
-            burned={burned}
-          />
-          <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
-            Ouvrir le journal
-            <ArrowRight size={14} weight="bold" />
-          </Link>
+        {/* ── Hero card: ring + macros + journal ── */}
+        <motion.div {...fade(0.05)} className="glass p-5 mb-4">
+          {/* Calorie ring */}
+          <div className="flex flex-col items-center gap-4">
+            <CalorieBudgetRing
+              consumed={consumed.calories}
+              goal={goals.dailyCalories}
+              burned={burned}
+            />
+
+            {/* Macro progress bars */}
+            <div className="w-full grid grid-cols-4 gap-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+              {macros.map(({ label, value, goal, color }) => {
+                const pct = Math.min((value / goal) * 100, 100);
+                const over = value > goal;
+                return (
+                  <div key={label} className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+                      <span className="text-[10px] tabular-nums" style={{ color: over ? "#ef4444" : "var(--text-muted)" }}>
+                        {Math.round(value)}g
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: over ? "#ef4444" : color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                      />
+                    </div>
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/{goal}g</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Journal link */}
+            <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
+              Ouvrir le journal
+              <ArrowRight size={14} weight="bold" />
+            </Link>
+          </div>
         </motion.div>
 
-        {/* Macros rings */}
-        <motion.div {...fade(0.1)} className="glass p-5 mb-4">
-          <p className="label-xs mb-4">Macronutriments</p>
-          <MacroRings
-            proteinG={consumed.proteinG} proteinGoal={goals.proteinGrams}
-            carbsG={consumed.carbsG}     carbsGoal={goals.carbsGrams}
-            fatG={consumed.fatG}         fatGoal={goals.fatGrams}
-            fiberG={consumed.fiberG}     fiberGoal={goals.fiberGrams}
-          />
-        </motion.div>
+        {/* ── Steps + Weight ── */}
+        <motion.div {...fade(0.1)} className="grid grid-cols-2 gap-3 mb-4">
 
-        {/* Steps + Weight */}
-        <motion.div {...fade(0.15)} className="grid grid-cols-2 gap-3 mb-4">
-          <StepsWidget steps={steps} goal={stepsGoal} />
+          {/* Steps — redesigned inline */}
+          <div className="card flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Footprints size={13} style={{ color: "var(--steps)" }} />
+                <span className="label-xs">Pas</span>
+              </div>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                {stepsGoal.toLocaleString("fr-FR")}
+              </span>
+            </div>
+            <span className="text-[24px] font-bold tabular-nums leading-none"
+              style={{ color: steps !== null ? "var(--text-primary)" : "var(--text-muted)" }}>
+              {steps !== null ? steps.toLocaleString("fr-FR") : "—"}
+            </span>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, var(--steps), rgba(34,211,238,0.6))" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${stepsPct}%` }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              {steps !== null
+                ? stepsPct >= 100
+                  ? "🎉 Objectif atteint !"
+                  : `${Math.round((1 - stepsPct / 100) * stepsGoal).toLocaleString("fr-FR")} restants`
+                : "Sync Google Fit"}
+            </span>
+          </div>
+
           <WeightWidget weight={weight} previous={previousWeight} />
         </motion.div>
 
-        {/* Sleep + Heart rate + Active minutes */}
-        <motion.div {...fade(0.17)} className="grid grid-cols-3 gap-3 mb-4">
-          {/* Sleep */}
-          <div className="card flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <Moon size={16} weight="fill" style={{ color: "var(--fit-indigo)" }} />
-              <span className="label-xs">Sommeil</span>
-            </div>
-            <span className="text-[20px] font-bold leading-none" style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
-              {sleepMinutes
-                ? sleepMinutes < 60
-                  ? `${sleepMinutes} min`
-                  : sleepMinutes % 60 === 0
-                    ? `${Math.floor(sleepMinutes / 60)}h`
-                    : `${Math.floor(sleepMinutes / 60)}h${String(sleepMinutes % 60).padStart(2, "0")}`
-                : "—"}
-            </span>
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {sleepMinutes ? (sleepMinutes >= sleepGoalMin ? "✓ Récupéré" : "Insuffisant") : "Aucune donnée"}
-            </span>
-          </div>
-          {/* Heart rate — clickable → /cardio */}
-          <Link href="/cardio" className="card flex flex-col gap-1.5 transition-opacity active:opacity-70">
-            <div className="flex items-center justify-between gap-1.5">
+        {/* ── Stats strip: Sleep · HR · Active ── */}
+        <motion.div {...fade(0.13)} className="glass p-4 mb-4">
+          <div className="grid grid-cols-3 gap-0">
+
+            {/* Sleep */}
+            <div className="flex flex-col gap-2 pr-4" style={{ borderRight: "1px solid var(--border)" }}>
               <div className="flex items-center gap-1.5">
-                <Heart size={16} weight="fill" style={{ color: "var(--fit-red)" }} />
-                <span className="label-xs">Fréq. card.</span>
+                <Moon size={12} weight="fill" style={{ color: "#7986CB" }} />
+                <span className="label-xs">Sommeil</span>
               </div>
-              <ArrowRight size={11} style={{ color: "var(--text-muted)" }} />
+              <div className="flex items-end gap-1 leading-none">
+                <span className="text-[22px] font-bold"
+                  style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+                  {sleepMinutes ? fmtSleep(sleepMinutes) : "—"}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: sleepOk ? "#34A853" : "#7986CB" }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${sleepPct}%` }}
+                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+              <span className="text-[10px]" style={{ color: sleepOk ? "#34A853" : "var(--text-muted)" }}>
+                {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
+              </span>
             </div>
-            <span className="text-[20px] font-bold leading-none" style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
-              {heartRate ?? "—"}
-            </span>
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {heartRate ? "bpm moy." : "Voir historique"}
-            </span>
-          </Link>
-          {/* Active minutes */}
-          <div className="card flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <Lightning size={16} weight="fill" style={{ color: "var(--fit-green)" }} />
-              <span className="label-xs">Min. actives</span>
+
+            {/* Heart rate */}
+            <Link href="/cardio" className="flex flex-col gap-2 px-4 transition-opacity active:opacity-70"
+              style={{ borderRight: "1px solid var(--border)" }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Heart size={12} weight="fill" style={{ color: "#EA4335" }} />
+                  <span className="label-xs">FC moy.</span>
+                </div>
+                <ArrowRight size={9} style={{ color: "var(--text-muted)" }} />
+              </div>
+              <span className="text-[22px] font-bold leading-none"
+                style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
+                {heartRate ?? "—"}
+              </span>
+              {heartRate && zone ? (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md self-start"
+                  style={{ background: `${zone.color}20`, color: zone.color }}>
+                  {zone.label}
+                </span>
+              ) : (
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  {heartRate ? "bpm" : "Voir historique"}
+                </span>
+              )}
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                {heartRate ? "bpm · Cardio →" : ""}
+              </span>
+            </Link>
+
+            {/* Active minutes */}
+            <div className="flex flex-col gap-2 pl-4">
+              <div className="flex items-center gap-1.5">
+                <Lightning size={12} weight="fill" style={{ color: "#34A853" }} />
+                <span className="label-xs">Min. actives</span>
+              </div>
+              <div className="flex items-end gap-1 leading-none">
+                <span className="text-[22px] font-bold"
+                  style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+                  {activeMinutes ?? "—"}
+                </span>
+                {activeMinutes && (
+                  <span className="text-[11px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
+                )}
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: activePct >= 100 ? "#34A853" : "var(--fit-green)" }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${activePct}%` }}
+                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+              <span className="text-[10px]" style={{ color: activePct >= 100 ? "#34A853" : "var(--text-muted)" }}>
+                {activeMinutes
+                  ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
+                  : "Aucune donnée"}
+              </span>
             </div>
-            <span className="text-[20px] font-bold leading-none" style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
-              {activeMinutes ?? "—"}
-            </span>
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {activeMinutes ? `/ 30 min objectif` : "Aucune donnée"}
-            </span>
           </div>
         </motion.div>
 
-        {/* Workout sessions (sleep activity types 72/110-114 filtered out) */}
+        {/* ── Workout sessions ── */}
         {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).length > 0 && (
-          <motion.div {...fade(0.19)} className="glass p-4 mb-4">
+          <motion.div {...fade(0.15)} className="glass p-4 mb-4">
             <p className="label-xs mb-3">Séances du jour</p>
             <div className="space-y-2">
               {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
@@ -237,8 +408,8 @@ export default function DashboardClient({
               <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dbCalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="var(--calories)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="var(--calories)" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#f97316" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -254,7 +425,7 @@ export default function DashboardClient({
                   );
                 }} />
                 <ReferenceLine y={goals.dailyCalories} stroke="rgba(249,115,22,0.35)" strokeDasharray="4 3" />
-                <Area type="monotone" dataKey="calories" stroke="var(--calories)" strokeWidth={1.5} fill="url(#dbCalGrad)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={1.5} fill="url(#dbCalGrad)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
             {weightChartData.length > 1 && (

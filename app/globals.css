@@ -19,19 +19,26 @@
   --text-secondary:  rgba(250, 250, 250, 0.6);
   --text-muted:      rgba(250, 250, 250, 0.28);
 
-  /* Nutrition accents (preserved from plan, applied à l'AuthKit way) */
+  /* Nutrition accents */
   --calories:        #f97316;
-  --protein:         #a78bfa;   /* shifted to violet to match AuthKit feel */
+  --protein:         #a78bfa;
   --carbs:           #fbbf24;
   --fat:             #60a5fa;
   --fiber:           #34d399;
-  --steps:           #22d3ee;
   --weight:          #f472b6;
+
+  /* Google Fit brand palette — used for all fitness metrics */
+  --fit-blue:        #4285F4;   /* steps / activity */
+  --fit-red:         #EA4335;   /* heart rate / calories brûlées */
+  --fit-green:       #34A853;   /* minutes actives / objectifs */
+  --fit-yellow:      #FBBC04;   /* énergie */
+  --fit-indigo:      #7986CB;   /* sommeil */
+  --steps:           #4285F4;   /* alias → fit-blue */
 
   /* Glow orbs (used in pseudo-elements) */
   --glow-orange:     rgba(249, 115, 22, 0.12);
   --glow-violet:     rgba(139, 92, 246, 0.1);
-  --glow-cyan:       rgba(34, 211, 238, 0.08);
+  --glow-cyan:       rgba(66, 133, 244, 0.10);
 
   /* Nav */
   --nav-bg:      rgba(9, 9, 11, 0.85);
@@ -351,4 +358,37 @@ html, body, .glass, .card, .card-sm, .input, .btn, .btn-primary, .btn-ghost, .bt
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-secondary);
+}
+
+/* ─── Range sliders (Settings GoalsPanel) ───────────────────────────────────── */
+input[type="range"].nt-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].nt-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.45);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+input[type="range"].nt-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+input[type="range"].nt-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.45);
+  cursor: pointer;
 }

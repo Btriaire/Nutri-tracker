@@ -10,7 +10,8 @@ export default async function DashboardPage() {
   const today  = format(new Date(), "yyyy-MM-dd");
   const userId = "owner";
 
-  let goals      = defaultGoals();
+  let goals       = defaultGoals();
+  let displayName = "";
   let dayLog: DayLog | null         = null;
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
@@ -18,7 +19,6 @@ export default async function DashboardPage() {
 
   try {
     const db = getAdminFirestore();
-    // 14 days ago for trend charts
     const trendFrom = format(new Date(Date.now() - 13 * 86400000), "yyyy-MM-dd");
 
     const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap] = await Promise.all([
@@ -34,11 +34,11 @@ export default async function DashboardPage() {
     ]);
 
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
-    goals      = profile?.goals ?? defaultGoals();
-    dayLog     = logSnap.exists ? logSnap.data() as DayLog : null;
-    fitnessDay = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
+    goals       = profile?.goals ?? defaultGoals();
+    displayName = profile?.displayName ?? "";
+    dayLog      = logSnap.exists ? logSnap.data() as DayLog : null;
+    fitnessDay  = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
 
-    // Fitness map for trend
     const fitnessMap = new Map<string, FitnessDay>();
     for (const d of recentWeightSnap.docs) {
       fitnessMap.set(d.id, d.data() as FitnessDay);
@@ -69,6 +69,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       date={today}
+      displayName={displayName}
       goals={goals}
       consumed={dayLog?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }}
       burned={fitnessDay?.googleFit?.activeCaloriesBurned ?? null}

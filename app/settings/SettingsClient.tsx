@@ -367,6 +367,42 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals 
   );
 }
 
+// ─── Slider Field ─────────────────────────────────────────────────────────────
+
+function SliderField({ label, unit, value, min, max, step, color, onChange }: {
+  label: string; unit: string; value: string; min: number; max: number; step: number;
+  color: string; onChange: (v: string) => void;
+}) {
+  const num = parseFloat(value) || min;
+  const clamped = Math.max(min, Math.min(max, num));
+  const pct = ((clamped - min) / (max - min)) * 100;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-medium" style={{ color }}>{label}</p>
+        <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+          {step < 1 ? num.toFixed(1) : Math.round(num)}
+          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min} max={max} step={step}
+        value={clamped}
+        onChange={e => onChange(e.target.value)}
+        className="nt-slider"
+        style={{
+          background: `linear-gradient(to right, ${color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+        }}
+      />
+      <div className="flex justify-between text-[9px] mt-1" style={{ color: "var(--text-muted)" }}>
+        <span>{step < 1 ? min.toFixed(1) : min}{unit}</span>
+        <span>{step < 1 ? max.toFixed(1) : max}{unit}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Goals Panel ─────────────────────────────────────────────────────────────
 
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
@@ -616,72 +652,37 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
 
               {/* ── Calories & Macros ── */}
               <div>
-                <p className="label-xs mb-3 flex items-center gap-1.5">
+                <p className="label-xs mb-4 flex items-center gap-1.5">
                   <Heartbeat size={11} />
                   Calories & Macros
                 </p>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--calories)" }}>Calories (kcal)</p>
-                    <input type="number" value={calories} onChange={e => setCalories(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--protein)" }}>Protéines (g)</p>
-                    <input type="number" value={protein} onChange={e => setProtein(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--carbs)" }}>Glucides (g)</p>
-                    <input type="number" value={carbs} onChange={e => setCarbs(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--fat)" }}>Lipides (g)</p>
-                    <input type="number" value={fat} onChange={e => setFat(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--fiber)" }}>Fibres (g)</p>
-                    <input type="number" value={fiber} onChange={e => setFiber(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1" style={{ color: "var(--fit-indigo)" }}>Eau (ml)</p>
-                    <input type="number" value={water} onChange={e => setWater(e.target.value)}
-                      className={inputClass} style={inputStyle} />
-                  </div>
+                <div className="space-y-4">
+                  <SliderField label="Calories" unit=" kcal" value={calories} min={800} max={4000} step={50}
+                    color="var(--calories)" onChange={setCalories} />
+                  <SliderField label="Protéines" unit="g" value={protein} min={30} max={300} step={5}
+                    color="var(--protein)" onChange={setProtein} />
+                  <SliderField label="Glucides" unit="g" value={carbs} min={50} max={600} step={5}
+                    color="var(--carbs)" onChange={setCarbs} />
+                  <SliderField label="Lipides" unit="g" value={fat} min={20} max={200} step={5}
+                    color="var(--fat)" onChange={setFat} />
+                  <SliderField label="Fibres" unit="g" value={fiber} min={10} max={60} step={1}
+                    color="var(--fiber)" onChange={setFiber} />
+                  <SliderField label="Eau" unit=" ml" value={water} min={500} max={5000} step={250}
+                    color="var(--fit-indigo)" onChange={setWater} />
                 </div>
               </div>
 
               {/* ── Steps & Sleep ── */}
               <div>
-                <p className="label-xs mb-3 flex items-center gap-1.5">
+                <p className="label-xs mb-4 flex items-center gap-1.5">
                   <Footprints size={11} />
                   Activité & Récupération
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-[10px] mb-1 flex items-center gap-1" style={{ color: "var(--steps)" }}>
-                      <Footprints size={9} /> Objectif pas
-                    </p>
-                    <div className="relative">
-                      <input type="number" value={steps} onChange={e => setSteps(e.target.value)}
-                        className={inputClass} style={{ ...inputStyle, paddingRight: "32px" }} />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: "var(--text-muted)" }}>pas</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-1 flex items-center gap-1" style={{ color: "var(--fit-indigo)" }}>
-                      <Moon size={9} /> Objectif sommeil
-                    </p>
-                    <div className="relative">
-                      <input type="number" value={sleep} onChange={e => setSleep(e.target.value)}
-                        min="4" max="12" step="0.5"
-                        className={inputClass} style={{ ...inputStyle, paddingRight: "20px" }} />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: "var(--text-muted)" }}>h</span>
-                    </div>
-                  </div>
+                <div className="space-y-4">
+                  <SliderField label="Objectif pas" unit=" pas" value={steps} min={2000} max={20000} step={500}
+                    color="var(--steps)" onChange={setSteps} />
+                  <SliderField label="Objectif sommeil" unit="h" value={sleep} min={4} max={12} step={0.5}
+                    color="var(--fit-indigo)" onChange={setSleep} />
                 </div>
               </div>
 
