@@ -196,8 +196,8 @@ export default function CardioClient({ points }: Props) {
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="var(--fit-red)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--fit-red)" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#EA4335" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#EA4335" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -207,7 +207,7 @@ export default function CardioClient({ points }: Props) {
                 {/* Zone reference lines */}
                 <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" label={{ value: "60", fill: "rgba(129,140,248,0.5)", fontSize: 8, position: "right" }} />
                 <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" label={{ value: "100", fill: "rgba(248,113,113,0.5)", fontSize: 8, position: "right" }} />
-                <Area type="monotone" dataKey="hrAvg" stroke="var(--fit-red)" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "var(--fit-red)" }} />
+                <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "#EA4335" }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -237,8 +237,8 @@ export default function CardioClient({ points }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--fit-green)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--fit-green)" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#34A853" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -254,7 +254,7 @@ export default function CardioClient({ points }: Props) {
                 );
               }} />
               <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="activeMin" stroke="var(--fit-green)" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
+              <Area type="monotone" dataKey="activeMin" stroke="#34A853" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -266,8 +266,8 @@ export default function CardioClient({ points }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--fit-indigo)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--fit-indigo)" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#7986CB" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#7986CB" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -283,7 +283,7 @@ export default function CardioClient({ points }: Props) {
                 );
               }} />
               <ReferenceLine y={420} stroke="rgba(121,134,203,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="sleepMinutes" stroke="var(--fit-indigo)" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
+              <Area type="monotone" dataKey="sleepMinutes" stroke="#7986CB" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
           <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
