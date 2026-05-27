@@ -36,7 +36,7 @@ export default async function LogPage() {
     }
     if (profileSnap.exists) {
       const profile = profileSnap.data() as UserProfile;
-      goals = profile.goals;
+      goals = profile.goals ?? defaultGoals();
       lang  = profile.lang ?? "fr";
     }
   } catch (e) {

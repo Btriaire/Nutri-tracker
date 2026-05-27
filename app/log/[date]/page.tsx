@@ -39,7 +39,7 @@ export default async function LogDatePage({ params }: Props) {
     if (logSnap.exists) dayLog = serializeDayLog(logSnap.data() as DayLog);
     if (profileSnap.exists) {
       const profile = profileSnap.data() as UserProfile;
-      goals = profile.goals;
+      goals = profile.goals ?? defaultGoals();
       lang  = profile.lang ?? "fr";
     }
   } catch (e) {
