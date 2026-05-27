@@ -25,13 +25,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
 
   const db   = getAdminFirestore();
+  // No orderBy to avoid composite index requirement — sort in JS
   const snap = await db
     .collection(`users/${USER}/manualActivities`)
     .where("date", "==", date)
-    .orderBy("loggedAt", "desc")
     .get();
 
-  return NextResponse.json({ activities: snap.docs.map((d) => ({ id: d.id, ...d.data() })) });
+  const activities = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+      const aMs = (a.loggedAt as { _seconds?: number })?._seconds ?? 0;
+      const bMs = (b.loggedAt as { _seconds?: number })?._seconds ?? 0;
+      return bMs - aMs;
+    });
+
+  return NextResponse.json({ activities });
 }
 
 export async function POST(req: NextRequest) {

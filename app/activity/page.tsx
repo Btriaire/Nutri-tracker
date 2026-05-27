@@ -17,7 +17,6 @@ export default async function ActivityPage() {
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
       db.collection(`users/${userId}/manualActivities`)
         .where("date", "==", today)
-        .orderBy("loggedAt", "desc")
         .get(),
     ]);
     fitnessDay = fitSnap.exists ? fitSnap.data() as FitnessDay : null;

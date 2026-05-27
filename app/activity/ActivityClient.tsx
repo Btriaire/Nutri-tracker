@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Plus, Trash, Timer, Lightning, Heart, Moon, Footprints, Fire,
-  BookmarkSimple, Play, X, Check, Spinner,
+  BookmarkSimple, X, Check, Spinner,
 } from "@phosphor-icons/react";
 import type { FitnessDay, ManualActivity } from "@/app/lib/types";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
@@ -67,6 +67,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   // ── Log form
   const [showForm,  setShowForm]  = useState(false);
   const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [form,      setForm]      = useState<FormState>(EMPTY_FORM);
 
   // ── Template creation form
@@ -100,6 +101,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   const handleSave = async () => {
     if (!form.duration || parseInt(form.duration, 10) < 1) return;
     setSaving(true);
+    setSaveError(false);
     try {
       const res  = await fetch("/api/activity", {
         method: "POST",
@@ -112,13 +114,19 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           caloriesBurned: form.calories ? parseInt(form.calories, 10) : null,
         }),
       });
+      if (!res.ok) { setSaveError(true); return; }
       const json = await res.json() as { activity?: ManualActivity };
-      if (json.activity) setActivities((prev) => [json.activity!, ...prev]);
-    } catch { /* close form regardless */ }
-    finally {
+      if (json.activity) {
+        setActivities((prev) => [json.activity!, ...prev]);
+        setShowForm(false);
+        setForm(EMPTY_FORM);
+      } else {
+        setSaveError(true);
+      }
+    } catch {
+      setSaveError(true);
+    } finally {
       setSaving(false);
-      setShowForm(false);
-      setForm(EMPTY_FORM);
     }
   };
 
@@ -240,11 +248,16 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                 onTypeChange={(t) => updateFormType(t, form, setForm)}
               />
 
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} className="flex-1 btn btn-ghost">Annuler</button>
+              {saveError && (
+                <p className="text-[12px] mt-2 text-center" style={{ color: "#f87171" }}>
+                  Erreur lors de la sauvegarde — réessaye
+                </p>
+              )}
+              <div className="flex gap-3 mt-3">
+                <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); setSaveError(false); }} className="flex-1 btn btn-ghost">Annuler</button>
                 <button onClick={handleSave} disabled={saving || !form.duration}
                   className="flex-1 btn btn-primary gap-2">
-                  {saving ? <><Spinner size={13} className="animate-spin" /> Sauvegarde…</> : <><Plus size={13} weight="bold" />Ajouter</>}
+                  {saving ? <><Spinner size={13} className="animate-spin" /> Sauvegarde…</> : <><Check size={13} weight="bold" />Ajouter</>}
                 </button>
               </div>
             </motion.div>
