@@ -214,9 +214,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [recipeServings, setRecipeServings] = useState("1");
   const [addingRecipe, setAddingRecipe]   = useState(false);
 
-  // Camera / photo analysis
-  const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
-
   // Portal mount (escape .glass backdrop-filter stacking context)
   const [mounted, setMounted] = useState(false);
 
@@ -585,13 +582,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {/* ── ALIMENTS ── */}
               {tab === "aliments" && (
                 <div className="px-4 py-3">
-                  {photoAnalyzing && (
-                    <div className="flex flex-col items-center gap-3 py-12">
-                      <Spinner size={24} className="animate-spin" style={{ color: "var(--protein)" }} />
-                      <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Analyse de la photo…</p>
-                    </div>
-                  )}
-                  {!query && !photoAnalyzing && (
+                  {!query && (
                     <>
                       <p className="label-xs mb-3">Catégories</p>
                       <div className="grid grid-cols-4 gap-2">
@@ -616,7 +607,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Aucun résultat pour &ldquo;{query}&rdquo;</p>
                     </div>
                   )}
-                  {!query && !photoAnalyzing && results.length > 0 && (
+                  {!query && results.length > 0 && (
                     <p className="label-xs mb-2">Aliments détectés</p>
                   )}
                   <div className="space-y-1 mt-3">
