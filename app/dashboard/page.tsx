@@ -12,6 +12,7 @@ export default async function DashboardPage() {
 
   let goals       = defaultGoals();
   let displayName = "";
+  let photoUrl: string | undefined;
   let dayLog: DayLog | null         = null;
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
     goals       = profile?.goals ?? defaultGoals();
     displayName = profile?.displayName ?? "";
+    photoUrl    = profile?.photoUrl ?? undefined;
     dayLog      = logSnap.exists ? logSnap.data() as DayLog : null;
     fitnessDay  = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
 
@@ -70,6 +72,7 @@ export default async function DashboardPage() {
     <DashboardClient
       date={today}
       displayName={displayName}
+      photoUrl={photoUrl}
       goals={goals}
       consumed={dayLog?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }}
       burned={fitnessDay?.googleFit?.activeCaloriesBurned ?? null}

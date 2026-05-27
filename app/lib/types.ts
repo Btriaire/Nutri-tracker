@@ -220,6 +220,7 @@ export interface UserProfile {
     withings:  IntegrationStatus;
   };
   chartPrefs?:  ChartPrefs;
+  photoUrl?:    string;
 }
 
 // ─── Fitness Data ─────────────────────────────────────────────────────────────

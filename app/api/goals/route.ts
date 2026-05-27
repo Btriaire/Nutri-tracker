@@ -19,7 +19,12 @@ export async function GET() {
   }
 
   const profile = doc.data() as UserProfile;
-  return NextResponse.json({ goals: profile.goals ?? defaultGoals(), chartPrefs: profile.chartPrefs ?? null });
+  return NextResponse.json({
+    goals:       profile.goals       ?? defaultGoals(),
+    chartPrefs:  profile.chartPrefs  ?? null,
+    photoUrl:    profile.photoUrl    ?? null,
+    displayName: profile.displayName ?? null,
+  });
 }
 
 // PATCH for top-level profile fields (e.g. chartPrefs)
@@ -27,7 +32,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { chartPrefs?: ChartPrefs };
+  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string };
   const db = getAdminFirestore();
   await db.doc(`users/${session.userId}`).set(body, { merge: true });
   return NextResponse.json({ ok: true });

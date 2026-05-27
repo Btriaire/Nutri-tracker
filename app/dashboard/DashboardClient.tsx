@@ -22,6 +22,7 @@ interface Session { id: string; name: string; activityType: number; durationMin:
 interface Props {
   date:           string;
   displayName?:   string;
+  photoUrl?:      string;
   goals:          NutritionGoals;
   consumed:       DayTotals;
   burned:         number | null;
@@ -65,6 +66,32 @@ function hrZoneLabel(bpm: number, maxHr: number): { label: string; color: string
   return               { label: "Maximal",       color: "#EA4335" };
 }
 
+function pctColor(pct: number | null): string {
+  if (pct === null) return "var(--text-muted)";
+  if (pct >= 80) return "#34A853";
+  if (pct >= 50) return "#FBBC04";
+  return "#EA4335";
+}
+
+function ScoreRing({ score }: { score: number }) {
+  const SIZE = 56, R = 22, SW = 5;
+  const circ = 2 * Math.PI * R;
+  const dash = Math.min(score / 100, 1) * circ;
+  const color = pctColor(score);
+  return (
+    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+      <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={SW} />
+      <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke={color} strokeWidth={SW}
+        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+        transform={`rotate(-90 ${SIZE/2} ${SIZE/2})`} />
+      <text x={SIZE/2} y={SIZE/2 + 4.5} textAnchor="middle" fontSize="12" fontWeight="700"
+        fill={color} fontFamily="inherit">
+        {Math.round(score)}
+      </text>
+    </svg>
+  );
+}
+
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -73,7 +100,7 @@ const fade = (delay = 0) => ({
 });
 
 export default function DashboardClient({
-  date, displayName, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
+  date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
   waterMl: initialWaterMl, lang,
 }: Props) {
@@ -103,6 +130,22 @@ export default function DashboardClient({
     sleepMinutes !== null && sleepMinutes >= sleepGoalMin * 0.9,
   ];
   const score = objectives.filter(Boolean).length;
+
+  // Bilan du jour metrics
+  const bilanMetrics: { label: string; pct: number | null }[] = [
+    { label: "Calories",  pct: goals.dailyCalories > 0 ? Math.min(consumed.calories / goals.dailyCalories * 100, 100) : null },
+    { label: "Protéines", pct: goals.proteinGrams  > 0 ? Math.min(consumed.proteinG  / goals.proteinGrams  * 100, 100) : null },
+    { label: "Glucides",  pct: goals.carbsGrams    > 0 ? Math.min(consumed.carbsG    / goals.carbsGrams    * 100, 100) : null },
+    { label: "Lipides",   pct: goals.fatGrams      > 0 ? Math.min(consumed.fatG      / goals.fatGrams      * 100, 100) : null },
+    { label: "Fibres",    pct: goals.fiberGrams    > 0 ? Math.min(consumed.fiberG    / goals.fiberGrams    * 100, 100) : null },
+    { label: "Eau",       pct: (goals.waterMl ?? 2000) > 0 ? Math.min(initialWaterMl / (goals.waterMl ?? 2000) * 100, 100) : null },
+    { label: "Pas",       pct: steps !== null ? Math.min(steps / stepsGoal * 100, 100) : null },
+    { label: "Sommeil",   pct: sleepMinutes !== null ? Math.min(sleepMinutes / sleepGoalMin * 100, 100) : null },
+  ];
+  const knownPcts = bilanMetrics.filter(m => m.pct !== null).map(m => m.pct as number);
+  const overallScore = knownPcts.length > 0
+    ? Math.round(knownPcts.reduce((a, b) => a + b, 0) / knownPcts.length)
+    : 0;
 
   // Macro progress
   const macros = [
@@ -144,17 +187,31 @@ export default function DashboardClient({
 
         {/* ── Header ── */}
         <motion.div {...fade(0)} className="mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-medium mb-0.5" style={{ color: "var(--text-muted)" }}>
-                {greetingEmoji} {greeting}{displayName ? `, ${displayName.split(" ")[0]}` : ""}
-              </p>
-              <h1 className="text-[22px] font-semibold tracking-tight capitalize" style={{ color: "var(--text-primary)" }}>
-                {todayLabel}
-              </h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 mt-0.5"
+                style={{ border: "1.5px solid var(--border-strong)" }}>
+                {photoUrl ? (
+                  <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[15px] font-semibold"
+                    style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
+                    {displayName ? displayName[0].toUpperCase() : "N"}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium mb-0.5" style={{ color: "var(--text-muted)" }}>
+                  {greetingEmoji} {greeting}{displayName ? `, ${displayName.split(" ")[0]}` : ""}
+                </p>
+                <h1 className="text-[22px] font-semibold tracking-tight capitalize" style={{ color: "var(--text-primary)" }}>
+                  {todayLabel}
+                </h1>
+              </div>
             </div>
-            {/* Daily score */}
-            <div className="flex flex-col items-end gap-1.5 mt-0.5">
+            {/* Daily score dots */}
+            <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
               <div className="flex gap-1.5">
                 {objectives.map((ok, i) => (
                   <motion.div key={i}
@@ -216,6 +273,40 @@ export default function DashboardClient({
               Ouvrir le journal
               <ArrowRight size={14} weight="bold" />
             </Link>
+          </div>
+        </motion.div>
+
+        {/* ── Bilan du jour ── */}
+        <motion.div {...fade(0.08)} className="glass p-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="label-xs mb-0.5">Score journalier</p>
+              <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Bilan du jour</p>
+            </div>
+            <ScoreRing score={overallScore} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+            {bilanMetrics.map(({ label, pct }) => (
+              <div key={label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
+                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
+                    {pct !== null ? `${Math.round(pct)}%` : "—"}
+                  </span>
+                </div>
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                  {pct !== null && (
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: pctColor(pct) }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </motion.div>
 

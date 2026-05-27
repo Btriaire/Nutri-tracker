@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HouseSimple, Book, ChartLine, Gear, Books, PersonSimpleRun } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun } from "@phosphor-icons/react";
 
 const TABS = [
   { href: "/dashboard", icon: HouseSimple,      label: "Accueil"   },
@@ -14,6 +15,18 @@ const TABS = [
 
 export default function Nav() {
   const path = usePathname();
+  const [photoUrl,     setPhotoUrl]     = useState<string | null>(null);
+  const [displayName,  setDisplayName]  = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/goals")
+      .then(r => r.json())
+      .then((d: { photoUrl?: string; displayName?: string }) => {
+        if (d.photoUrl)    setPhotoUrl(d.photoUrl);
+        if (d.displayName) setDisplayName(d.displayName);
+      })
+      .catch(() => {});
+  }, [path]);
 
   return (
     <>
@@ -100,6 +113,33 @@ export default function Nav() {
             </Link>
           );
         })}
+
+        {/* Profile avatar at bottom */}
+        <div className="mt-auto pt-3" style={{ borderTop: "1px solid var(--nav-border)" }}>
+          <Link
+            href="/settings"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all"
+            style={{
+              background: path.startsWith("/settings") ? "var(--surface-active)" : "transparent",
+              border: "1px solid transparent",
+            }}
+          >
+            <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
+              style={{ border: "1.5px solid var(--border-strong)" }}>
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[11px] font-semibold"
+                  style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
+                  {displayName ? displayName[0].toUpperCase() : "N"}
+                </div>
+              )}
+            </div>
+            <span className="text-[12px] truncate" style={{ color: "var(--text-secondary)" }}>
+              {displayName ? displayName.split(" ")[0] : "Mon profil"}
+            </span>
+          </Link>
+        </div>
       </nav>
     </>
   );

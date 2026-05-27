@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk } from "@phosphor-icons/react";
@@ -10,13 +10,14 @@ import { calcTDEE } from "@/app/lib/nutrition";
 import type { NutritionGoals, ActivityLevel, Gender } from "@/app/lib/types";
 
 interface Props {
-  fitConnected:  boolean;
-  initialGoals:  NutritionGoals;
+  fitConnected:    boolean;
+  initialGoals:    NutritionGoals;
+  initialPhotoUrl?: string;
 }
 
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
-export default function SettingsClient({ fitConnected: initialFit, initialGoals }: Props) {
+export default function SettingsClient({ fitConnected: initialFit, initialGoals, initialPhotoUrl }: Props) {
   const { theme, toggle } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState(initialFit);
@@ -353,6 +354,9 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals 
           </div>
         </motion.div>
 
+        {/* Profile photo */}
+        <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
+
         {/* Nutrition & Profile Goals */}
         <GoalsPanel initialGoals={initialGoals} />
 
@@ -364,6 +368,112 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals 
 
       </div>
     </div>
+  );
+}
+
+// ─── Photo Panel ─────────────────────────────────────────────────────────────
+
+function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
+  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl ?? "");
+  const [saving,   setSaving]   = useState(false);
+  const [saved,    setSaved]    = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 128; canvas.height = 128;
+        const ctx = canvas.getContext("2d")!;
+        const size = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 128, 128);
+        setPhotoUrl(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!photoUrl) return;
+    setSaving(true);
+    try {
+      await fetch("/api/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.07 }}
+      className="glass p-5 mt-4"
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(249,115,22,0.12)" }}>
+          <Person size={18} style={{ color: "var(--calories)" }} />
+        </div>
+        <div>
+          <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Photo de profil</p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Visible sur l'accueil et la navigation</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-5">
+        {/* Avatar preview */}
+        <div className="relative flex-shrink-0">
+          <div className="w-20 h-20 rounded-full overflow-hidden"
+            style={{ border: "2px solid var(--border-strong)" }}>
+            {photoUrl ? (
+              <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[32px]"
+                style={{ background: "rgba(255,255,255,0.06)" }}>
+                👤
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-[13px]"
+            style={{ background: "var(--calories)", border: "2px solid var(--bg)" }}>
+            📷
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-2.5">
+          <button onClick={() => fileRef.current?.click()} className="btn btn-ghost w-full text-[12.5px]">
+            Choisir une photo
+          </button>
+          {photoUrl && (
+            <button onClick={handleSave} disabled={saving}
+              className="btn btn-primary w-full text-[12.5px]" style={{ height: "36px" }}>
+              {saved
+                ? <><CheckCircle size={13} weight="fill" /> Sauvegardée</>
+                : saving
+                  ? <><Spinner size={11} className="animate-spin" /> Sauvegarde…</>
+                  : <><FloppyDisk size={13} /> Sauvegarder</>}
+            </button>
+          )}
+          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+            Recadrée automatiquement à 128×128 px (JPEG)
+          </p>
+        </div>
+      </div>
+
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </motion.div>
   );
 }
 
