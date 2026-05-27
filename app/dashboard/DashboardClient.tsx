@@ -13,6 +13,7 @@ import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
+import WelcomeChime from "@/app/components/WelcomeChime";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -79,6 +80,7 @@ export default function DashboardClient({
 
   return (
     <div className="relative min-h-screen">
+      <WelcomeChime />
       <div className="bg-orbs" />
 
       <div
