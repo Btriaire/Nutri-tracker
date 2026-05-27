@@ -59,29 +59,20 @@ export async function POST(req: NextRequest) {
 
   const actJson = await activityRes.json() as { bucket: Bucket[] };
 
-  // Index sleep by date
-  const sleepByDate: Record<string, number> = {};
-  if (sleepRes.ok) {
-    const sj = await sleepRes.json() as { bucket: Bucket[] };
-    for (const b of sj.bucket ?? []) {
-      const d   = format(new Date(Number(b.startTimeMillis ?? 0)), "yyyy-MM-dd");
-      const pts = b.dataset?.[0]?.point ?? [];
-      const totalMs = pts
-        .filter((p: Point) => (p.value?.[1]?.intVal ?? 0) !== 4)
-        .reduce((s: number, p: SleepPoint) => {
-          return s + (Number(p.endTimeNanos ?? 0) - Number(p.startTimeNanos ?? 0)) / 1_000_000;
-        }, 0);
-      if (totalMs > 0) sleepByDate[d] = Math.round(totalMs / 60_000);
-    }
-  }
-
-  // Index sessions by date
+  // Index sessions + sleep by date — sleep extracted from session types
+  const SLEEP_TYPES = [72, 110, 111, 112, 113, 114];
   const sessionsByDate: Record<string, RawSession[]> = {};
+  const sleepByDate: Record<string, number> = {};
   if (sessionsRes.ok) {
     const sj = await sessionsRes.json() as { session?: RawSession[] };
     for (const s of sj.session ?? []) {
       const d = format(new Date(Number(s.startTimeMillis)), "yyyy-MM-dd");
-      (sessionsByDate[d] ??= []).push(s);
+      if (SLEEP_TYPES.includes(s.activityType ?? 0)) {
+        const durMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
+        sleepByDate[d] = (sleepByDate[d] ?? 0) + durMin;
+      } else {
+        (sessionsByDate[d] ??= []).push(s);
+      }
     }
   }
 
@@ -106,9 +97,7 @@ export async function POST(req: NextRequest) {
       return pts.length ? (pts[pts.length - 1].value?.[0]?.fpVal ?? null) : null;
     };
 
-    // Exclude sleep segments (72, 110-114) — stored separately in sleepMinutes
     const sessions = (sessionsByDate[date] ?? [])
-      .filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType ?? 0))
       .map(s => ({
         id:          s.id,
         name:        s.name || activityLabel(s.activityType ?? 0),

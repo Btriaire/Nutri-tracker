@@ -176,39 +176,31 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     return pts.length ? (pts[pts.length - 1].value?.[0]?.fpVal ?? null) : null;
   };
 
-  // Sleep: sum non-awake segments (awake = type 4)
+  // Sleep + sessions — calculated from session data (millisecond precision, no BigInt issues)
+  const SLEEP_TYPES = [72, 110, 111, 112, 113, 114];
   let sleepMinutes: number | null = null;
-  if (sleepRes.ok) {
-    const sleepJson   = await sleepRes.json() as { bucket: GoogleFitBucket[] };
-    const sleepPts    = sleepJson.bucket?.[0]?.dataset?.[0]?.point ?? [];
-    if (sleepPts.length) {
-      const totalMs = sleepPts
-        .filter((p: GoogleFitPoint) => (p.value?.[1]?.intVal ?? 0) !== 4)
-        .reduce((s: number, p: GoogleFitSleepPoint) => {
-          const dur = Number(p.endTimeNanos ?? 0) - Number(p.startTimeNanos ?? 0);
-          return s + dur / 1_000_000;
-        }, 0);
-      sleepMinutes = Math.round(totalMs / 60_000) || null;
-    }
-  }
-
-  // Sessions (workouts, sports)
   const sessions: WorkoutSession[] = [];
   if (sessionsRes.ok) {
     const sessJson = await sessionsRes.json() as { session?: RawSession[] };
+    let sleepMs = 0;
     for (const s of sessJson.session ?? []) {
       const durationMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
       if (durationMin < 1) continue;
-      sessions.push({
-        id:           s.id,
-        name:         s.name || activityLabel(s.activityType ?? 0),
-        activityType: s.activityType ?? 0,
-        startMs:      Number(s.startTimeMillis),
-        endMs:        Number(s.endTimeMillis),
-        durationMin,
-        calories:     null,
-      });
+      if (SLEEP_TYPES.includes(s.activityType ?? 0)) {
+        sleepMs += Number(s.endTimeMillis) - Number(s.startTimeMillis);
+      } else {
+        sessions.push({
+          id:           s.id,
+          name:         s.name || activityLabel(s.activityType ?? 0),
+          activityType: s.activityType ?? 0,
+          startMs:      Number(s.startTimeMillis),
+          endMs:        Number(s.endTimeMillis),
+          durationMin,
+          calories:     null,
+        });
+      }
     }
+    if (sleepMs > 0) sleepMinutes = Math.round(sleepMs / 60_000);
   }
 
   return {

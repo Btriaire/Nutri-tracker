@@ -66,28 +66,21 @@ export async function POST(req: NextRequest) {
     ? ((await sleepRes.json()) as { bucket: Bucket[] }).bucket ?? []
     : [];
 
-  // Index sessions by date
+  // Index sessions by date — separate sleep sessions for sleepByDate
+  const SLEEP_TYPES = [72, 110, 111, 112, 113, 114];
   const sessionsByDate: Record<string, RawSession[]> = {};
+  const sleepByDate: Record<string, number> = {};
   if (sessionsRes.ok) {
     const sj = await sessionsRes.json() as { session?: RawSession[] };
     for (const s of sj.session ?? []) {
       const d = format(new Date(Number(s.startTimeMillis)), "yyyy-MM-dd");
-      (sessionsByDate[d] ??= []).push(s);
+      if (SLEEP_TYPES.includes(s.activityType ?? 0)) {
+        const durMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
+        sleepByDate[d] = (sleepByDate[d] ?? 0) + durMin;
+      } else {
+        (sessionsByDate[d] ??= []).push(s);
+      }
     }
-  }
-
-  // Index sleep buckets by date
-  const sleepByDate: Record<string, number> = {};
-  for (const b of sleepBuckets) {
-    const d   = format(new Date(Number(b.startTimeMillis ?? 0)), "yyyy-MM-dd");
-    const pts = b.dataset?.[0]?.point ?? [];
-    if (!pts.length) continue;
-    const totalMs = pts
-      .filter((p: Point) => (p.value?.[1]?.intVal ?? 0) !== 4)
-      .reduce((s: number, p: SleepPoint) => {
-        return s + (Number(p.endTimeNanos ?? 0) - Number(p.startTimeNanos ?? 0)) / 1_000_000;
-      }, 0);
-    sleepByDate[d] = Math.round(totalMs / 60_000);
   }
 
   // Batch write — Firestore max 500 ops per batch
@@ -118,9 +111,7 @@ export async function POST(req: NextRequest) {
     const activeMins = getInt(4);
     const sleep    = sleepByDate[date] ?? null;
 
-    // Exclude sleep segments (72, 110-114) — stored separately in sleepMinutes
     const sessions = (sessionsByDate[date] ?? [])
-      .filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType ?? 0))
       .map(s => ({
         id:           s.id,
         name:         s.name || activityLabel(s.activityType ?? 0),
