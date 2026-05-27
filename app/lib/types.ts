@@ -347,6 +347,29 @@ export interface DayTrendPoint {
   heartRateAvg?:  number;
 }
 
+// ─── Health Vitals ────────────────────────────────────────────────────────────
+
+export type BPMoment = "morning" | "evening" | "other";
+
+export interface BloodPressureReading {
+  systolic:   number;   // mmHg
+  diastolic:  number;   // mmHg
+  pulse?:     number;   // bpm
+  time:       string;   // "HH:MM"
+  moment?:    BPMoment;
+}
+
+export interface HealthEntry {
+  date:           string;
+  bloodPressure:  BloodPressureReading[];
+  restingHR?:     number;   // bpm
+  bloodGlucose?:  number;   // mmol/L
+  spO2?:          number;   // %
+  temperatureC?:  number;   // °C
+  notes?:         string;
+  updatedAt?:     Timestamp;
+}
+
 // ─── Chart Preferences ────────────────────────────────────────────────────────
 
 export type ChartType = "area" | "bar" | "line";

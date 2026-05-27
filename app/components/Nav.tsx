@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun } from "@phosphor-icons/react";
+import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart } from "@phosphor-icons/react";
 
 const TABS = [
   { href: "/dashboard", icon: HouseSimple,      label: "Accueil"   },
   { href: "/log",       icon: Book,             label: "Journal"   },
+  { href: "/health",    icon: Heart,            label: "Santé"     },
   { href: "/activity",  icon: PersonSimpleRun,  label: "Activité"  },
   { href: "/progress",  icon: ChartLine,        label: "Progrès"   },
   { href: "/settings",  icon: Gear,             label: "Réglages"  },
