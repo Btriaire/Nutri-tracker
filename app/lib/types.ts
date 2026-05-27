@@ -325,15 +325,18 @@ export interface ManualActivity {
 // ─── Trend Data ───────────────────────────────────────────────────────────────
 
 export interface DayTrendPoint {
-  date:      string;
-  calories:  number;
-  proteinG:  number;
-  carbsG:    number;
-  fatG:      number;
-  waterMl?:  number;
-  steps?:    number;
-  weightKg?: number;
-  burned?:   number;
+  date:          string;
+  calories:      number;
+  proteinG:      number;
+  carbsG:        number;
+  fatG:          number;
+  waterMl?:      number;
+  steps?:        number;
+  weightKg?:     number;
+  burned?:       number;
+  activeMinutes?: number;
+  sleepMinutes?:  number;
+  heartRateAvg?:  number;
 }
 
 // ─── Chart Preferences ────────────────────────────────────────────────────────

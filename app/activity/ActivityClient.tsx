@@ -352,12 +352,12 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                   </div>
                   <button
                     onClick={() => launchTemplate(tpl)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex-shrink-0 transition-all"
-                    style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", color: "var(--protein)" }}>
-                    <Play size={11} weight="fill" /> Lancer
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
+                    style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}>
+                    <Plus size={12} weight="bold" /> Saisir
                   </button>
                   <button onClick={() => handleDeleteTemplate(tpl.id)}
-                    className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "#f87171" }}>
+                    className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                     <Trash size={12} />
                   </button>
                 </div>
