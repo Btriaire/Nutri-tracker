@@ -212,6 +212,7 @@ export interface UserProfile {
     googleFit: IntegrationStatus;
     withings:  IntegrationStatus;
   };
+  chartPrefs?:  ChartPrefs;
 }
 
 // ─── Fitness Data ─────────────────────────────────────────────────────────────
@@ -306,4 +307,44 @@ export interface DashboardData {
   weight:       WeightPoint | null;
   recentWeight: WeightPoint[];
   waterMl:      number;
+}
+
+// ─── Manual Activity ──────────────────────────────────────────────────────────
+
+export interface ManualActivity {
+  id:             string;
+  date:           string;     // YYYY-MM-DD
+  name:           string;
+  activityType:   number;     // matches Google Fit activity codes (1=running, 7=cycling, 9=aerobics, etc.)
+  durationMin:    number;
+  caloriesBurned: number | null;
+  notes?:         string;
+  loggedAt:       Timestamp;
+}
+
+// ─── Trend Data ───────────────────────────────────────────────────────────────
+
+export interface DayTrendPoint {
+  date:      string;
+  calories:  number;
+  proteinG:  number;
+  carbsG:    number;
+  fatG:      number;
+  waterMl?:  number;
+  steps?:    number;
+  weightKg?: number;
+  burned?:   number;
+}
+
+// ─── Chart Preferences ────────────────────────────────────────────────────────
+
+export type ChartType = "area" | "bar" | "line";
+
+export interface ChartPrefs {
+  calorieTrend:       ChartType;       // default "area"
+  macroDisplay:       "rings" | "bars" | "pie"; // default "rings"
+  weightTrend:        ChartType;       // default "line"
+  showMicroNutrients: boolean;         // default false
+  showSleepData:      boolean;         // default true
+  showHeartRate:      boolean;         // default true
 }

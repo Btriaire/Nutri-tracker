@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FitnessDay, UserProfile, WeightPoint } from "@/app/lib/types";
+import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint } from "@/app/lib/types";
 import { format } from "date-fns";
 import DashboardClient from "./DashboardClient";
 
@@ -11,18 +11,26 @@ export default async function DashboardPage() {
   const userId = "owner";
 
   let goals      = defaultGoals();
-  let dayLog: DayLog | null     = null;
+  let dayLog: DayLog | null         = null;
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
+  const trendPoints: DayTrendPoint[] = [];
 
   try {
     const db = getAdminFirestore();
+    // 14 days ago for trend charts
+    const trendFrom = format(new Date(Date.now() - 13 * 86400000), "yyyy-MM-dd");
 
-    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap] = await Promise.all([
+    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap] = await Promise.all([
       db.doc(`users/${userId}/foodLog/${today}`).get(),
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
       db.doc(`users/${userId}`).get(),
       db.collection(`users/${userId}/fitnessData`).orderBy("date", "desc").limit(14).get(),
+      db.collection(`users/${userId}/foodLog`)
+        .where("date", ">=", trendFrom)
+        .where("date", "<=", today)
+        .orderBy("date", "asc")
+        .get(),
     ]);
 
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
@@ -30,11 +38,29 @@ export default async function DashboardPage() {
     dayLog     = logSnap.exists ? logSnap.data() as DayLog : null;
     fitnessDay = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
 
+    // Fitness map for trend
+    const fitnessMap = new Map<string, FitnessDay>();
     for (const d of recentWeightSnap.docs) {
+      fitnessMap.set(d.id, d.data() as FitnessDay);
       const fd = d.data() as FitnessDay;
       const kg = fd.withings?.weightKg ?? fd.googleFit?.weightKg ?? null;
       if (kg) recentWeight.push({ kg, date: fd.date });
       if (recentWeight.length >= 7) break;
+    }
+
+    for (const d of trendLogSnap.docs) {
+      const log = d.data() as DayLog;
+      const fit = fitnessMap.get(log.date);
+      trendPoints.push({
+        date:      log.date,
+        calories:  Math.round(log.totals?.calories ?? 0),
+        proteinG:  Math.round(log.totals?.proteinG ?? 0),
+        carbsG:    Math.round(log.totals?.carbsG ?? 0),
+        fatG:      Math.round(log.totals?.fatG ?? 0),
+        steps:     fit?.googleFit?.steps ?? undefined,
+        weightKg:  fit?.withings?.weightKg ?? fit?.googleFit?.weightKg ?? undefined,
+        burned:    fit?.googleFit?.activeCaloriesBurned ?? undefined,
+      });
     }
   } catch (e) {
     console.error("Firestore error:", e);
@@ -54,6 +80,7 @@ export default async function DashboardPage() {
       weight={recentWeight[0] ?? null}
       previousWeight={recentWeight[1] ?? null}
       recentWeight={[...recentWeight].reverse()}
+      trendPoints={trendPoints}
       waterMl={dayLog?.waterMl ?? 0}
       lang="fr"
     />

@@ -6,6 +6,8 @@ import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang } from "@/app/lib/types";
+
+type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
 import { Check } from "@phosphor-icons/react";
@@ -20,18 +22,24 @@ interface Props {
 }
 
 export default function LogClient({ date, initialLog, goals, lang = "fr" }: Props) {
-  const [entries, setEntries] = useState<FoodEntry[]>(initialLog?.entries ?? []);
-  const [waterMl, setWaterMl] = useState(initialLog?.waterMl ?? 0);
-  const [toast, setToast]     = useState<AddedInfo | null>(null);
-  const [validated, setValidated]   = useState((initialLog as { validated?: boolean } | null)?.validated ?? false);
-  const [validating, setValidating] = useState(false);
+  const [entries,    setEntries]    = useState<FoodEntry[]>(initialLog?.entries ?? []);
+  const [waterMl,   setWaterMl]    = useState(initialLog?.waterMl ?? 0);
+  const [toast,     setToast]      = useState<AddedInfo | null>(null);
+  const [validated,      setValidated]      = useState((initialLog as { validated?: boolean } | null)?.validated ?? false);
+  const [validating,     setValidating]     = useState(false);
   const [showValidateModal, setShowValidateModal] = useState(false);
+  const [mealPhotos, setMealPhotos] = useState<MealPhotos>({});
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
     setWaterMl(initialLog?.waterMl ?? 0);
     setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
+    // Load meal photos for this date
+    fetch(`/api/log/photos?date=${date}`)
+      .then((r) => r.ok ? r.json() : {})
+      .then((data: { photos?: MealPhotos }) => setMealPhotos(data.photos ?? {}))
+      .catch(() => setMealPhotos({}));
   }, [date, initialLog]);
 
   const handleValidate = async () => {
@@ -62,6 +70,14 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
+  };
+
+  const handlePhotoChange = (meal: MealType, url: string | null) => {
+    setMealPhotos((prev) => {
+      const next = { ...prev };
+      if (url) next[meal] = url; else delete next[meal];
+      return next;
+    });
   };
 
   const showToast = (info: AddedInfo) => {
@@ -200,8 +216,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
                 entries={entries.filter((e) => e.meal === meal)}
                 date={date}
                 lang={lang}
+                photoUrl={mealPhotos[meal]}
                 onEntriesChange={handleMealChange}
                 onFoodAdded={showToast}
+                onPhotoChange={handlePhotoChange}
               />
             </motion.div>
           ))}

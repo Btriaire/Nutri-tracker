@@ -303,7 +303,144 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
           </div>
         </motion.div>
 
+        {/* Chart customization */}
+        <ChartPrefsPanel />
+
       </div>
     </div>
+  );
+}
+
+// ─── Chart Preferences Panel ─────────────────────────────────────────────────
+
+const CHART_TYPE_OPTIONS: { value: string; label: string; icon: string }[] = [
+  { value: "area", label: "Aire",     icon: "📈" },
+  { value: "bar",  label: "Barres",   icon: "📊" },
+  { value: "line", label: "Ligne",    icon: "〰️" },
+];
+
+const MACRO_DISPLAY_OPTIONS: { value: string; label: string; icon: string }[] = [
+  { value: "rings", label: "Anneaux", icon: "🔵" },
+  { value: "bars",  label: "Barres",  icon: "📊" },
+  { value: "pie",   label: "Camembert", icon: "🥧" },
+];
+
+function ChartPrefsPanel() {
+  const [calType,    setCalType]    = useState<string>("area");
+  const [wtType,     setWtType]     = useState<string>("line");
+  const [macroDisp,  setMacroDisp]  = useState<string>("rings");
+  const [showMicro,  setShowMicro]  = useState(false);
+  const [saving,     setSaving]     = useState(false);
+  const [saved,      setSaved]      = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chartPrefs: {
+            calorieTrend:       calType,
+            weightTrend:        wtType,
+            macroDisplay:       macroDisp,
+            showMicroNutrients: showMicro,
+            showSleepData:      true,
+            showHeartRate:      true,
+          },
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally { setSaving(false); }
+  };
+
+  const Toggle = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
+    <div className="flex items-center justify-between py-2.5"
+      style={{ borderBottom: "1px solid var(--border)" }}>
+      <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        className="w-10 h-6 rounded-full transition-all relative flex-shrink-0"
+        style={{ background: checked ? "var(--protein)" : "rgba(255,255,255,0.12)" }}
+      >
+        <span className="absolute top-0.5 w-5 h-5 rounded-full transition-all"
+          style={{ background: "#fff", left: checked ? "calc(100% - 22px)" : "2px" }} />
+      </button>
+    </div>
+  );
+
+  const RadioGroup = ({ label, value, options, onChange }: {
+    label: string;
+    value: string;
+    options: { value: string; label: string; icon: string }[];
+    onChange: (v: string) => void;
+  }) => (
+    <div className="mb-4">
+      <p className="label-xs mb-2">{label}</p>
+      <div className="flex gap-2">
+        {options.map((opt) => (
+          <button key={opt.value} onClick={() => onChange(opt.value)}
+            className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-[11px] font-medium transition-all"
+            style={{
+              background: value === opt.value ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${value === opt.value ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
+              color: value === opt.value ? "var(--protein)" : "var(--text-muted)",
+            }}>
+            <span className="text-[16px]">{opt.icon}</span>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.12 }}
+      className="glass p-5"
+    >
+      <div className="flex items-center gap-2 mb-5">
+        <span className="text-xl">🎨</span>
+        <div>
+          <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Personnalisation des graphiques</p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Apparence et données affichées</p>
+        </div>
+      </div>
+
+      <RadioGroup
+        label="Tendance calories"
+        value={calType}
+        options={CHART_TYPE_OPTIONS}
+        onChange={setCalType}
+      />
+      <RadioGroup
+        label="Courbe de poids"
+        value={wtType}
+        options={CHART_TYPE_OPTIONS.filter((o) => o.value !== "area" || true)}
+        onChange={setWtType}
+      />
+      <RadioGroup
+        label="Affichage macros"
+        value={macroDisp}
+        options={MACRO_DISPLAY_OPTIONS}
+        onChange={setMacroDisp}
+      />
+
+      <div className="mb-4">
+        <Toggle
+          label="Afficher les micro-nutriments"
+          checked={showMicro}
+          onChange={setShowMicro}
+        />
+      </div>
+
+      <button onClick={handleSave} disabled={saving}
+        className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
+        {saved ? "✓ Sauvegardé" : saving ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</> : "Sauvegarder les préférences"}
+      </button>
+    </motion.div>
   );
 }

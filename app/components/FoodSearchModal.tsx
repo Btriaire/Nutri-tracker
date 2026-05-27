@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CaretDown,
   Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
-  ForkKnife, BookBookmark, CookingPot, Trash, Check, Camera,
+  ForkKnife, BookBookmark, CookingPot, Trash, Check,
 } from "@phosphor-icons/react";
 import MealBuilderModal from "./MealBuilderModal";
 import type {
@@ -216,7 +216,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
   // Camera / photo analysis
   const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Portal mount (escape .glass backdrop-filter stacking context)
   const [mounted, setMounted] = useState(false);
@@ -493,23 +492,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     } finally { setAddingRecipe(false); }
   };
 
-  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setPhotoAnalyzing(true);
-    setResults([]);
-    setQuery("");
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res  = await fetch("/api/food/photo", { method: "POST", body: formData });
-      if (!res.ok) return;
-      const json = await res.json() as { results: FoodSearchResult[] };
-      setResults(json.results ?? []);
-    } finally { setPhotoAnalyzing(false); }
-  };
-
   const cn = computedNutrition();
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -520,16 +502,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     <AnimatePresence>
       {open && (
         <>
-          {/* Hidden camera input */}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handlePhotoCapture}
-          />
-
           {/* ── Backdrop ── */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -579,19 +551,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     </p>
                   )}
                 </div>
-                {tab === "aliments" && (
-                  <button
-                    onClick={() => !photoAnalyzing && cameraInputRef.current?.click()}
-                    className="btn-icon flex-shrink-0"
-                    title="Analyser un repas en photo"
-                    disabled={photoAnalyzing}
-                  >
-                    {photoAnalyzing
-                      ? <Spinner size={14} className="animate-spin" style={{ color: "var(--protein)" }} />
-                      : <Camera size={14} />
-                    }
-                  </button>
-                )}
                 <button onClick={onClose} className="btn-icon flex-shrink-0"><X size={13} /></button>
               </div>
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, CaretDown } from "@phosphor-icons/react";
+import { Plus, CaretDown, Camera, Trash, ChartBar } from "@phosphor-icons/react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import type { FoodEntry, MealType, Lang } from "@/app/lib/types";
@@ -15,17 +15,25 @@ const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
 };
 
 interface Props {
-  meal: MealType;
-  entries: FoodEntry[];
-  date: string;
-  lang?: Lang;
+  meal:            MealType;
+  entries:         FoodEntry[];
+  date:            string;
+  lang?:           Lang;
+  photoUrl?:       string;
   onEntriesChange: (meal: MealType, entries: FoodEntry[]) => void;
-  onFoodAdded?: (info: AddedInfo) => void;
+  onFoodAdded?:    (info: AddedInfo) => void;
+  onPhotoChange?:  (meal: MealType, url: string | null) => void;
 }
 
-export default function MealSection({ meal, entries, date, lang = "fr", onEntriesChange, onFoodAdded }: Props) {
-  const [open, setOpen]   = useState(true);
-  const [modal, setModal] = useState(false);
+export default function MealSection({
+  meal, entries, date, lang = "fr",
+  photoUrl, onEntriesChange, onFoodAdded, onPhotoChange,
+}: Props) {
+  const [open,          setOpen]          = useState(true);
+  const [modal,         setModal]         = useState(false);
+  const [uploading,     setUploading]     = useState(false);
+  const [showNutrition, setShowNutrition] = useState(false);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const meta = MEAL_META[meal];
   const cal  = Math.round(entries.reduce((s, e) => s + e.nutrition.calories, 0));
@@ -41,12 +49,50 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
     onFoodAdded?.(info);
   };
 
+  const handlePhotoFile = async (file: File) => {
+    setUploading(true);
+    try {
+      // Compress client-side before upload
+      const compressed = await compressImage(file, 800);
+      const form = new FormData();
+      form.append("image", compressed, "photo.jpg");
+      form.append("date", date);
+      form.append("meal", meal);
+      const res = await fetch("/api/log/photo", { method: "POST", body: form });
+      if (res.ok) {
+        const { photoUrl: url } = await res.json() as { photoUrl: string };
+        onPhotoChange?.(meal, url);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    await fetch(`/api/log/photo?date=${date}&meal=${meal}`, { method: "DELETE" });
+    onPhotoChange?.(meal, null);
+  };
+
   return (
     <div className="glass overflow-hidden">
+      {/* Hidden camera input */}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handlePhotoFile(f);
+          e.target.value = "";
+        }}
+      />
+
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-4"
-        style={{ borderBottom: open && entries.length > 0 ? "1px solid var(--border)" : "none" }}
+        style={{ borderBottom: open && (entries.length > 0 || photoUrl) ? "1px solid var(--border)" : "none" }}
       >
         {/* Left: toggle expand */}
         <button
@@ -72,7 +118,41 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
           </motion.span>
         </button>
 
-        {/* Right: add button — always visible */}
+        {/* Camera button */}
+        <button
+          onClick={() => !uploading && cameraRef.current?.click()}
+          disabled={uploading}
+          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+          style={{
+            background: uploading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
+            border: "1px solid var(--border)",
+            color: photoUrl ? "var(--protein)" : "var(--text-muted)",
+          }}
+          aria-label="Photo du repas"
+        >
+          {uploading
+            ? <span className="animate-spin text-[10px]">⏳</span>
+            : <Camera size={13} weight={photoUrl ? "fill" : "regular"} />
+          }
+        </button>
+
+        {/* Nutrition panel toggle */}
+        {entries.length > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowNutrition((x) => !x); }}
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+            style={{
+              background: showNutrition ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${showNutrition ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+              color: showNutrition ? "var(--calories)" : "var(--text-muted)",
+            }}
+            aria-label="Détail nutritionnel"
+          >
+            <ChartBar size={13} weight={showNutrition ? "fill" : "regular"} />
+          </button>
+        )}
+
+        {/* Add food button */}
         <button
           onClick={() => setModal(true)}
           className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
@@ -94,6 +174,28 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
             transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
+            {/* Photo illustration */}
+            {photoUrl && (
+              <div className="relative mx-4 mt-3 rounded-xl overflow-hidden"
+                style={{ border: "1px solid var(--border)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoUrl}
+                  alt="Photo du repas"
+                  className="w-full object-cover"
+                  style={{ maxHeight: "180px" }}
+                />
+                <button
+                  onClick={handleDeletePhoto}
+                  className="absolute top-2 right-2 flex items-center justify-center w-7 h-7 rounded-full"
+                  style={{ background: "rgba(0,0,0,0.55)", color: "#f87171" }}
+                  aria-label="Supprimer la photo"
+                >
+                  <Trash size={12} />
+                </button>
+              </div>
+            )}
+
             <div className="px-4 pb-3">
               {entries.length > 0 ? (
                 <div className="py-1">
@@ -111,6 +213,94 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
                 </button>
               )}
             </div>
+
+            {/* Nutrition breakdown panel */}
+            {showNutrition && entries.length > 0 && (
+              <div className="px-4 pb-3">
+                <div className="rounded-xl overflow-hidden"
+                  style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                  {/* Header row */}
+                  <div className="grid gap-1 px-3 py-2"
+                    style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", borderBottom: "1px solid var(--border)" }}>
+                    {["Aliment", "kcal", "P", "G", "L"].map((h) => (
+                      <span key={h} className="text-[10px] font-semibold uppercase"
+                        style={{ color: "var(--text-muted)" }}>{h}</span>
+                    ))}
+                  </div>
+                  {/* Entry rows */}
+                  {entries.map((e) => (
+                    <div key={e.id} className="grid gap-1 px-3 py-1.5"
+                      style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", borderBottom: "1px solid var(--border)" }}>
+                      <span className="text-[12px] truncate" style={{ color: "var(--text-secondary)" }}>{e.name}</span>
+                      <span className="text-[12px] tabular-nums font-medium" style={{ color: "var(--calories)" }}>
+                        {Math.round(e.nutrition.calories)}
+                      </span>
+                      <span className="text-[12px] tabular-nums" style={{ color: "var(--protein)" }}>
+                        {Math.round(e.nutrition.proteinG)}g
+                      </span>
+                      <span className="text-[12px] tabular-nums" style={{ color: "var(--carbs)" }}>
+                        {Math.round(e.nutrition.carbsG)}g
+                      </span>
+                      <span className="text-[12px] tabular-nums" style={{ color: "var(--fat)" }}>
+                        {Math.round(e.nutrition.fatG)}g
+                      </span>
+                    </div>
+                  ))}
+                  {/* Total row */}
+                  {(() => {
+                    const totCal  = entries.reduce((s, e) => s + e.nutrition.calories, 0);
+                    const totProt = entries.reduce((s, e) => s + e.nutrition.proteinG, 0);
+                    const totCarb = entries.reduce((s, e) => s + e.nutrition.carbsG, 0);
+                    const totFat  = entries.reduce((s, e) => s + e.nutrition.fatG, 0);
+                    return (
+                      <div className="grid gap-1 px-3 py-2"
+                        style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", background: "rgba(255,255,255,0.03)" }}>
+                        <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>TOTAL</span>
+                        <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--calories)" }}>
+                          {Math.round(totCal)}
+                        </span>
+                        <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--protein)" }}>
+                          {Math.round(totProt)}g
+                        </span>
+                        <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--carbs)" }}>
+                          {Math.round(totCarb)}g
+                        </span>
+                        <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--fat)" }}>
+                          {Math.round(totFat)}g
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  {/* Micro totals */}
+                  {(() => {
+                    const sodium  = entries.reduce((s, e) => s + (e.nutrition.sodiumMg ?? 0), 0);
+                    const calcium = entries.reduce((s, e) => s + (e.nutrition.calciumMg ?? 0), 0);
+                    const iron    = entries.reduce((s, e) => s + (e.nutrition.ironMg ?? 0), 0);
+                    const vitC    = entries.reduce((s, e) => s + (e.nutrition.vitaminCMg ?? 0), 0);
+                    const micros = [
+                      { l: "Sodium",  v: sodium,  u: "mg" },
+                      { l: "Calcium", v: calcium, u: "mg" },
+                      { l: "Fer",     v: iron,    u: "mg" },
+                      { l: "Vit. C",  v: vitC,    u: "mg" },
+                    ].filter((m) => m.v > 0);
+                    if (!micros.length) return null;
+                    return (
+                      <div className="px-3 py-2 flex flex-wrap gap-3"
+                        style={{ borderTop: "1px solid var(--border)" }}>
+                        {micros.map(({ l, v, u }) => (
+                          <div key={l} className="flex items-center gap-1">
+                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{l}</span>
+                            <span className="text-[11px] font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                              {Math.round(v)}{u}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -118,4 +308,25 @@ export default function MealSection({ meal, entries, date, lang = "fr", onEntrie
       <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded} />
     </div>
   );
+}
+
+// Compress image to max width, returning a JPEG Blob
+async function compressImage(file: File, maxWidth: number): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")?.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob ?? file), "image/jpeg", 0.75);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
 }

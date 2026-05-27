@@ -5,13 +5,16 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Moon, Heart, Lightning, Timer } from "@phosphor-icons/react";
+import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import MacroRings from "@/app/components/MacroRings";
 import StepsWidget from "@/app/components/StepsWidget";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
-import type { DayTotals, NutritionGoals, WeightPoint, Lang } from "@/app/lib/types";
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
+} from "recharts";
+import type { DayTotals, NutritionGoals, WeightPoint, DayTrendPoint, Lang } from "@/app/lib/types";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -28,6 +31,7 @@ interface Props {
   weight:         WeightPoint | null;
   previousWeight: WeightPoint | null;
   recentWeight:   WeightPoint[];
+  trendPoints:    DayTrendPoint[];
   waterMl:        number;
   lang:           Lang;
 }
@@ -51,10 +55,16 @@ const fade = (delay = 0) => ({
 
 export default function DashboardClient({
   date, goals, consumed, burned, steps, activeMinutes, heartRate, sleepMinutes, sessions,
-  weight, previousWeight, waterMl: initialWaterMl, lang,
+  weight, previousWeight, trendPoints, waterMl: initialWaterMl, lang,
 }: Props) {
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
+
+  const chartData = trendPoints.map((p) => ({
+    ...p,
+    label: format(new Date(p.date + "T12:00:00"), "dd/MM"),
+  }));
+  const weightChartData = chartData.filter((p) => (p.weightKg ?? 0) > 0);
 
   return (
     <div className="relative min-h-screen">
@@ -181,6 +191,69 @@ export default function DashboardClient({
             onUpdate={setWaterMl}
           />
         </motion.div>
+
+        {/* 14-day calorie trend */}
+        {chartData.filter((p) => p.calories > 0).length > 1 && (
+          <motion.div {...fade(0.19)} className="glass p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="label-xs">Tendance 14 jours</p>
+              <TrendUp size={13} style={{ color: "var(--calories)" }} />
+            </div>
+            <ResponsiveContainer width="100%" height={100}>
+              <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="dbCalGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="var(--calories)" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="var(--calories)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                <Tooltip content={({ active, payload, label: lbl }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                      style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                      <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                      <p style={{ color: "var(--calories)" }} className="font-bold">{payload[0]?.value} kcal</p>
+                    </div>
+                  );
+                }} />
+                <ReferenceLine y={goals.dailyCalories} stroke="rgba(249,115,22,0.35)" strokeDasharray="4 3" />
+                <Area type="monotone" dataKey="calories" stroke="var(--calories)" strokeWidth={1.5} fill="url(#dbCalGrad)" dot={false} connectNulls />
+              </AreaChart>
+            </ResponsiveContainer>
+            {weightChartData.length > 1 && (
+              <>
+                <div className="h-px my-3" style={{ background: "var(--border)" }} />
+                <p className="label-xs mb-2">Poids</p>
+                <ResponsiveContainer width="100%" height={70}>
+                  <AreaChart data={weightChartData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="dbWtGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="var(--steps)" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="var(--steps)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                    <Tooltip content={({ active, payload, label: lbl }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                          style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                          <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                          <p style={{ color: "var(--steps)" }} className="font-bold">{(payload[0]?.value as number)?.toFixed(1)} kg</p>
+                        </div>
+                      );
+                    }} />
+                    <Area type="monotone" dataKey="weightKg" stroke="var(--steps)" strokeWidth={1.5} fill="url(#dbWtGrad)" dot={false} connectNulls />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </>
+            )}
+          </motion.div>
+        )}
 
         {/* Macro detail bars */}
         <motion.div {...fade(0.2)} className="glass p-4 mb-4">
