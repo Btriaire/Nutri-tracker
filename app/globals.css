@@ -33,6 +33,10 @@
   --glow-violet:     rgba(139, 92, 246, 0.1);
   --glow-cyan:       rgba(34, 211, 238, 0.08);
 
+  /* Nav */
+  --nav-bg:      rgba(9, 9, 11, 0.85);
+  --nav-border:  var(--border);
+
   /* Radius */
   --radius-sm:   8px;
   --radius-md:   12px;
@@ -176,6 +180,96 @@ html, body {
 .t-weight   { color: var(--weight); }
 .t-secondary { color: var(--text-secondary); }
 .t-muted    { color: var(--text-muted); }
+
+/* ─── Light theme override ───────────────────────────────────────────────────── */
+html.light {
+  --bg:              #f4f4f8;
+  --bg-subtle:       #eeeef3;
+  --surface:         rgba(255, 255, 255, 0.72);
+  --surface-hover:   rgba(255, 255, 255, 0.90);
+  --surface-active:  rgba(0, 0, 0, 0.05);
+
+  --border:          rgba(0, 0, 0, 0.08);
+  --border-strong:   rgba(0, 0, 0, 0.14);
+  --border-focus:    rgba(139, 92, 246, 0.5);
+
+  --text-primary:    #0f0f12;
+  --text-secondary:  rgba(15, 15, 18, 0.58);
+  --text-muted:      rgba(15, 15, 18, 0.38);
+
+  --glow-orange:     rgba(249, 115, 22, 0.10);
+  --glow-violet:     rgba(139, 92, 246, 0.09);
+  --glow-cyan:       rgba(34, 211, 238, 0.06);
+
+  --nav-bg:          rgba(244, 244, 248, 0.88);
+  --nav-border:      rgba(0, 0, 0, 0.07);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+html.light .glass {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html.light .glass-strong {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+
+html.light .card {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+html.light .card-sm {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+html.light .input {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(0, 0, 0, 0.10);
+  color: var(--text-primary);
+}
+
+html.light .input:focus {
+  background: #fff;
+  border-color: var(--border-focus);
+}
+
+html.light .btn-primary {
+  background: #0f0f12;
+  color: #f4f4f8;
+}
+
+html.light .btn-ghost {
+  background: rgba(255, 255, 255, 0.70);
+  border-color: rgba(0, 0, 0, 0.10);
+}
+html.light .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+html.light .btn-icon {
+  background: rgba(255, 255, 255, 0.70);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html.light .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
+}
+
+/* Smooth transition when toggling */
+html, body, .glass, .card, .card-sm, .input, .btn, .btn-primary, .btn-ghost, .btn-icon {
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.12s ease, box-shadow 0.22s ease;
+}
 
 /* ─── Background glow orbs (used via wrapper class) ────────────────────────── */
 .bg-orbs {

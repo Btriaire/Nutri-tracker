@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon } from "@phosphor-icons/react";
+import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
 export default function SettingsClient({ fitConnected: initialFit }: Props) {
+  const { theme, toggle } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState(initialFit);
   const [syncing, setSyncing]           = useState(false);
@@ -117,6 +119,51 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
           <h1 className="text-[22px] font-semibold tracking-tight mb-6" style={{ color: "var(--text-primary)" }}>
             Réglages
           </h1>
+        </motion.div>
+
+        {/* Theme toggle */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
+          className="glass p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: theme === "light" ? "rgba(249,115,22,0.12)" : "rgba(139,92,246,0.12)" }}>
+                {theme === "light"
+                  ? <Sun size={18} weight="fill" style={{ color: "var(--calories)" }} />
+                  : <Moon size={18} weight="fill" style={{ color: "#818cf8" }} />
+                }
+              </div>
+              <div>
+                <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Apparence</p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  {theme === "light" ? "Interface claire" : "Interface sombre"}
+                </p>
+              </div>
+            </div>
+            {/* Toggle pill */}
+            <button
+              onClick={toggle}
+              className="relative flex-shrink-0 w-[52px] h-[28px] rounded-full transition-all"
+              style={{
+                background: theme === "light" ? "var(--calories)" : "rgba(255,255,255,0.12)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <span
+                className="absolute top-[3px] w-[20px] h-[20px] rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: "#fff",
+                  left: theme === "light" ? "calc(100% - 23px)" : "3px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                }}
+              >
+                {theme === "light"
+                  ? <Sun size={11} weight="fill" style={{ color: "var(--calories)" }} />
+                  : <Moon size={11} weight="fill" style={{ color: "#818cf8" }} />
+                }
+              </span>
+            </button>
+          </div>
         </motion.div>
 
         {/* Google Fit card */}

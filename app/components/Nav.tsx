@@ -21,8 +21,8 @@ export default function Nav() {
       <nav
         className="fixed bottom-0 inset-x-0 z-50 flex md:hidden"
         style={{
-          background: "rgba(9,9,11,0.85)",
-          borderTop: "1px solid var(--border)",
+          background: "var(--nav-bg)",
+          borderTop: "1px solid var(--nav-border)",
           backdropFilter: "blur(16px)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
@@ -61,8 +61,8 @@ export default function Nav() {
       <nav
         className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 flex-col w-[220px] py-6 px-3 gap-1"
         style={{
-          background: "rgba(9,9,11,0.6)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--nav-bg)",
+          borderRight: "1px solid var(--nav-border)",
           backdropFilter: "blur(20px)",
         }}
       >
