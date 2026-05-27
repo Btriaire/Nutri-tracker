@@ -11,6 +11,8 @@ import MacroRings from "@/app/components/MacroRings";
 import StepsWidget from "@/app/components/StepsWidget";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
+import MentalHealthWidget from "@/app/components/MentalHealthWidget";
+import FunFactsBanner from "@/app/components/FunFactsBanner";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -200,8 +202,18 @@ export default function DashboardClient({
           </motion.div>
         )}
 
-        {/* Water tracker */}
+        {/* Fun Facts banner */}
+        <motion.div {...fade(0.175)}>
+          <FunFactsBanner />
+        </motion.div>
+
+        {/* Mental Health */}
         <motion.div {...fade(0.18)} className="mb-4">
+          <MentalHealthWidget date={date} />
+        </motion.div>
+
+        {/* Water tracker */}
+        <motion.div {...fade(0.19)} className="mb-4">
           <WaterTracker
             date={date}
             waterMl={waterMl}
