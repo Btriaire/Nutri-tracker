@@ -73,9 +73,11 @@ export default async function DashboardPage() {
       consumed={dayLog?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }}
       burned={fitnessDay?.googleFit?.activeCaloriesBurned ?? null}
       steps={fitnessDay?.googleFit?.steps ?? null}
+      stepsGoal={goals.stepsGoal ?? 10000}
       activeMinutes={fitnessDay?.googleFit?.activeMinutes ?? null}
       heartRate={fitnessDay?.googleFit?.heartRateAvg ?? null}
       sleepMinutes={fitnessDay?.googleFit?.sleepMinutes ?? null}
+      sleepGoalMin={goals.sleepGoalMin ?? 420}
       sessions={fitnessDay?.googleFit?.sessions ?? []}
       weight={recentWeight[0] ?? null}
       previousWeight={recentWeight[1] ?? null}

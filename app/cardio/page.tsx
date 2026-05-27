@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
-import type { GoogleFitDay } from "@/app/lib/types";
+import type { GoogleFitDay, UserProfile } from "@/app/lib/types";
 import CardioClient from "./CardioClient";
 import type { CardioPoint } from "@/app/api/cardio/route";
 
@@ -14,9 +14,13 @@ export default async function CardioPage() {
   const dates: string[] = [];
   for (let i = 29; i >= 0; i--) dates.push(format(subDays(today, i), "yyyy-MM-dd"));
 
-  const snaps = await Promise.all(
-    dates.map((d) => db.doc(`users/${userId}/fitnessData/${d}`).get())
-  );
+  const [profileSnap, ...snaps] = await Promise.all([
+    db.doc(`users/${userId}`).get(),
+    ...dates.map((d) => db.doc(`users/${userId}/fitnessData/${d}`).get()),
+  ]);
+
+  const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
+  const age = profile?.goals?.age ?? undefined;
 
   const points: CardioPoint[] = snaps.map((snap, i) => {
     const gf = snap.exists
@@ -33,5 +37,5 @@ export default async function CardioPage() {
     };
   });
 
-  return <CardioClient points={points} />;
+  return <CardioClient points={points} age={age} />;
 }

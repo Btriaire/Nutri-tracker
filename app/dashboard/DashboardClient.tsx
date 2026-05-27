@@ -27,9 +27,11 @@ interface Props {
   consumed:       DayTotals;
   burned:         number | null;
   steps:          number | null;
+  stepsGoal:      number;
   activeMinutes:  number | null;
   heartRate:      number | null;
   sleepMinutes:   number | null;
+  sleepGoalMin:   number;
   sessions:       Session[];
   weight:         WeightPoint | null;
   previousWeight: WeightPoint | null;
@@ -57,8 +59,8 @@ const fade = (delay = 0) => ({
 });
 
 export default function DashboardClient({
-  date, goals, consumed, burned, steps, activeMinutes, heartRate, sleepMinutes, sessions,
-  weight, previousWeight, trendPoints, waterMl: initialWaterMl, lang,
+  date, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate, sleepMinutes, sleepGoalMin,
+  sessions, weight, previousWeight, trendPoints, waterMl: initialWaterMl, lang,
 }: Props) {
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -121,7 +123,7 @@ export default function DashboardClient({
 
         {/* Steps + Weight */}
         <motion.div {...fade(0.15)} className="grid grid-cols-2 gap-3 mb-4">
-          <StepsWidget steps={steps} goal={10000} />
+          <StepsWidget steps={steps} goal={stepsGoal} />
           <WeightWidget weight={weight} previous={previousWeight} />
         </motion.div>
 
@@ -130,7 +132,7 @@ export default function DashboardClient({
           {/* Sleep */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Moon size={16} weight="fill" style={{ color: "#818cf8" }} />
+              <Moon size={16} weight="fill" style={{ color: "var(--fit-indigo)" }} />
               <span className="label-xs">Sommeil</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
@@ -143,14 +145,14 @@ export default function DashboardClient({
                 : "—"}
             </span>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {sleepMinutes ? (sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant") : "Aucune donnée"}
+              {sleepMinutes ? (sleepMinutes >= sleepGoalMin ? "✓ Récupéré" : "Insuffisant") : "Aucune donnée"}
             </span>
           </div>
           {/* Heart rate — clickable → /cardio */}
           <Link href="/cardio" className="card flex flex-col gap-1.5 transition-opacity active:opacity-70">
             <div className="flex items-center justify-between gap-1.5">
               <div className="flex items-center gap-1.5">
-                <Heart size={16} weight="fill" style={{ color: "#f87171" }} />
+                <Heart size={16} weight="fill" style={{ color: "var(--fit-red)" }} />
                 <span className="label-xs">Fréq. card.</span>
               </div>
               <ArrowRight size={11} style={{ color: "var(--text-muted)" }} />
@@ -165,7 +167,7 @@ export default function DashboardClient({
           {/* Active minutes */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Lightning size={16} weight="fill" style={{ color: "var(--calories)" }} />
+              <Lightning size={16} weight="fill" style={{ color: "var(--fit-green)" }} />
               <span className="label-xs">Min. actives</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>

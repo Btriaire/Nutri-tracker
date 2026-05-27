@@ -43,10 +43,12 @@ function fmtSleep(min?: number): string {
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
 }
 
-function hrZoneColor(bpm: number): string {
-  if (bpm < 60)  return "var(--fit-indigo)";
-  if (bpm < 85)  return "var(--fit-green)";
-  if (bpm < 100) return "#fbbf24";
+function hrZoneColor(bpm: number, maxHr: number): string {
+  const pct = bpm / maxHr;
+  if (pct < 0.50) return "var(--fit-indigo)";
+  if (pct < 0.60) return "#4285F4";
+  if (pct < 0.70) return "var(--fit-green)";
+  if (pct < 0.85) return "#FBBC04";
   return "var(--fit-red)";
 }
 
@@ -54,6 +56,7 @@ interface Props {
   goals:           NutritionGoals;
   currentWeightKg: number | null;
   targetWeightKg:  number | null;
+  age?:            number;
 }
 
 const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; value: string | number | undefined; unit?: string; color?: string }) => (
@@ -64,7 +67,8 @@ const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; val
   </div>
 );
 
-export default function ProgressClient({ goals, currentWeightKg, targetWeightKg }: Props) {
+export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, age }: Props) {
+  const fcMax = age ? 220 - age : 190;
   const [range,    setRange]    = useState<Range>("30d");
   const [calChart, setCalChart] = useState<CalChart>("area");
   const [points,   setPoints]   = useState<DayTrendPoint[]>([]);

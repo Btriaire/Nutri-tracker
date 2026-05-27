@@ -1,4 +1,4 @@
-import type { DayTotals, FoodEntry, FoodNutrition, NutritionGoals } from "./types";
+import type { ActivityLevel, DayTotals, FoodEntry, FoodNutrition, Gender, NutritionGoals } from "./types";
 
 export function calcTotals(entries: FoodEntry[]): DayTotals {
   return entries.reduce(
@@ -73,5 +73,28 @@ export function defaultGoals(): NutritionGoals {
     targetWeightKg: null,
     weeklyGoal:     "maintain",
     activityLevel:  "moderate",
+    stepsGoal:      10000,
+    sleepGoalMin:   420,
   };
+}
+
+const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
+  sedentary:   1.2,
+  light:       1.375,
+  moderate:    1.55,
+  active:      1.725,
+  very_active: 1.9,
+};
+
+export function calcTDEE(
+  weightKg:      number,
+  heightCm:      number,
+  age:           number,
+  gender:        Gender,
+  activityLevel: ActivityLevel,
+): number {
+  const bmr = gender === "male"
+    ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
+    : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  return Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 }

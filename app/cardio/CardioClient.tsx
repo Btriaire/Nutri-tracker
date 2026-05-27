@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import type { CardioPoint } from "@/app/api/cardio/route";
 
-interface Props { points: CardioPoint[] }
+interface Props { points: CardioPoint[]; age?: number }
 
 const RANGES = [
   { label: "7J",  days: 7  },
@@ -23,12 +23,13 @@ const RANGES = [
   { label: "30J", days: 30 },
 ] as const;
 
-function hrZone(bpm: number): { label: string; color: string; desc: string } {
-  if (bpm < 60)  return { label: "Repos",    color: "var(--fit-indigo)", desc: "Fréquence au repos" };
-  if (bpm < 70)  return { label: "Faible",   color: "var(--fit-green)", desc: "Zone de récupération" };
-  if (bpm < 85)  return { label: "Modéré",   color: "#fbbf24",          desc: "Zone aérobie légère" };
-  if (bpm < 100) return { label: "Élevé",    color: "#f97316",          desc: "Zone cardiovasculaire" };
-  return               { label: "Intense",  color: "var(--fit-red)",   desc: "Effort intense" };
+function hrZone(bpm: number, maxHr: number): { label: string; color: string; desc: string } {
+  const pct = bpm / maxHr;
+  if (pct < 0.50) return { label: "Repos",        color: "var(--fit-indigo)", desc: "Récupération active" };
+  if (pct < 0.60) return { label: "Échauffement", color: "#4285F4",           desc: "Zone 1 · 50–60%" };
+  if (pct < 0.70) return { label: "Aérobie",      color: "var(--fit-green)",  desc: "Zone 2 · 60–70%" };
+  if (pct < 0.85) return { label: "Seuil",        color: "#FBBC04",           desc: "Zone 3 · 70–85%" };
+  return                 { label: "Maximal",      color: "var(--fit-red)",    desc: "Zone 4 · >85%" };
 }
 
 function fmtSleep(min: number | null): string {
@@ -46,8 +47,9 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.35, ease, delay },
 });
 
-export default function CardioClient({ points }: Props) {
+export default function CardioClient({ points, age }: Props) {
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
+  const fcMax = age ? 220 - age : 190;
 
   const visible = points.slice(-rangeDays);
   const hrPoints = visible.filter((p) => p.hrAvg !== null);
@@ -60,7 +62,7 @@ export default function CardioClient({ points }: Props) {
   const prev    = hrPoints[hrPoints.length - 2]?.hrAvg ?? null;
   const delta   = today !== null && prev !== null ? today - prev : null;
 
-  const zone = today ? hrZone(today) : null;
+  const zone = today ? hrZone(today, fcMax) : null;
 
   const chartData = visible.map((p) => ({
     ...p,
@@ -77,7 +79,7 @@ export default function CardioClient({ points }: Props) {
   const HrTooltip = ({ active, payload, label: lbl }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
     if (!active || !payload?.length || !payload[0]?.value) return null;
     const bpm = payload[0].value;
-    const z = hrZone(bpm);
+    const z = hrZone(bpm, fcMax);
     return (
       <div className="px-3 py-2 rounded-xl text-[11px] space-y-0.5"
         style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
@@ -294,7 +296,7 @@ export default function CardioClient({ points }: Props) {
           <p className="label-xs mb-3">Détail quotidien</p>
           <div className="space-y-1">
             {[...visible].reverse().slice(0, 14).map((p) => {
-              const z = p.hrAvg ? hrZone(p.hrAvg) : null;
+              const z = p.hrAvg ? hrZone(p.hrAvg, fcMax) : null;
               return (
                 <div key={p.date} className="flex items-center gap-3 py-1.5"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>

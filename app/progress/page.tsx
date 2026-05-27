@@ -34,6 +34,7 @@ export default async function ProgressPage() {
       goals={goals}
       currentWeightKg={currentWeightKg}
       targetWeightKg={targetWeightKg}
+      age={goals.age}
     />
   );
 }

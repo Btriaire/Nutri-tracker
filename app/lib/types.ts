@@ -183,6 +183,8 @@ export interface DayLog {
 
 // ─── User Profile ─────────────────────────────────────────────────────────────
 
+export type Gender = "male" | "female";
+
 export interface NutritionGoals {
   dailyCalories:    number;
   proteinGrams:     number;
@@ -195,6 +197,11 @@ export interface NutritionGoals {
   targetWeightKg:   number | null;
   weeklyGoal:       WeeklyGoal;
   activityLevel:    ActivityLevel;
+  stepsGoal:        number;
+  sleepGoalMin:     number;
+  age?:             number;
+  heightCm?:        number;
+  gender?:          Gender;
 }
 
 export interface IntegrationStatus {

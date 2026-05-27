@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk } from "@phosphor-icons/react";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
+import { calcTDEE } from "@/app/lib/nutrition";
+import type { NutritionGoals, ActivityLevel, Gender } from "@/app/lib/types";
 
 interface Props {
-  fitConnected: boolean;
+  fitConnected:  boolean;
+  initialGoals:  NutritionGoals;
 }
 
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
-export default function SettingsClient({ fitConnected: initialFit }: Props) {
+export default function SettingsClient({ fitConnected: initialFit, initialGoals }: Props) {
   const { theme, toggle } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState(initialFit);
@@ -350,6 +353,9 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
           </div>
         </motion.div>
 
+        {/* Nutrition & Profile Goals */}
+        <GoalsPanel initialGoals={initialGoals} />
+
         {/* Chart customization */}
         <ChartPrefsPanel />
 
@@ -358,6 +364,342 @@ export default function SettingsClient({ fitConnected: initialFit }: Props) {
 
       </div>
     </div>
+  );
+}
+
+// ─── Goals Panel ─────────────────────────────────────────────────────────────
+
+const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
+  sedentary:   "Sédentaire",
+  light:       "Légèrement actif",
+  moderate:    "Modérément actif",
+  active:      "Très actif",
+  very_active: "Extrêmement actif",
+};
+
+const ACTIVITY_DESCS: Record<ActivityLevel, string> = {
+  sedentary:   "Peu ou pas d'exercice",
+  light:       "1–3 fois/sem.",
+  moderate:    "3–5 fois/sem.",
+  active:      "6–7 fois/sem.",
+  very_active: "2× par jour",
+};
+
+function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
+  const [age,      setAge]      = useState(initialGoals.age?.toString()       ?? "");
+  const [height,   setHeight]   = useState(initialGoals.heightCm?.toString()  ?? "");
+  const [weight,   setWeight]   = useState(initialGoals.targetWeightKg?.toString() ?? "");
+  const [gender,   setGender]   = useState<Gender | "">(initialGoals.gender   ?? "");
+  const [activity, setActivity] = useState<ActivityLevel>(initialGoals.activityLevel ?? "moderate");
+  const [calories, setCalories] = useState(initialGoals.dailyCalories.toString());
+  const [protein,  setProtein]  = useState(initialGoals.proteinGrams.toString());
+  const [carbs,    setCarbs]    = useState(initialGoals.carbsGrams.toString());
+  const [fat,      setFat]      = useState(initialGoals.fatGrams.toString());
+  const [fiber,    setFiber]    = useState(initialGoals.fiberGrams.toString());
+  const [water,    setWater]    = useState(initialGoals.waterMl.toString());
+  const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
+  const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
+  const [weeklyGoal, setWeeklyGoal] = useState(initialGoals.weeklyGoal ?? "maintain");
+  const [tdeeCalc, setTdeeCalc] = useState<number | null>(null);
+  const [saving,   setSaving]   = useState(false);
+  const [saved,    setSaved]    = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const handleCalcTDEE = () => {
+    const a = parseInt(age);
+    const h = parseInt(height);
+    const w = parseFloat(weight) || 70;
+    if (!a || !h || !gender) return;
+    const tdee = calcTDEE(w, h, a, gender as Gender, activity);
+    setTdeeCalc(tdee);
+    setCalories(tdee.toString());
+    const p = Math.round(w * 2);
+    const f = Math.round((tdee * 0.25) / 9);
+    const c = Math.round((tdee - p * 4 - f * 9) / 4);
+    setProtein(p.toString());
+    setFat(f.toString());
+    setCarbs(Math.max(c, 0).toString());
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const goals: Partial<NutritionGoals> = {
+        dailyCalories:  parseInt(calories) || 2000,
+        proteinGrams:   parseInt(protein)  || 150,
+        carbsGrams:     parseInt(carbs)    || 220,
+        fatGrams:       parseInt(fat)      || 65,
+        fiberGrams:     parseInt(fiber)    || 30,
+        waterMl:        parseInt(water)    || 2000,
+        stepsGoal:      parseInt(steps)    || 10000,
+        sleepGoalMin:   (parseInt(sleep)   || 7) * 60,
+        activityLevel:  activity,
+        weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
+        targetWeightKg: parseFloat(weight) || null,
+      };
+      if (age)    goals.age       = parseInt(age);
+      if (height) goals.heightCm  = parseInt(height);
+      if (gender) goals.gender    = gender as Gender;
+
+      await fetch("/api/goals", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ goals }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally { setSaving(false); }
+  };
+
+  const inputClass = "w-full px-3 py-2 rounded-xl text-[13px] transition-colors outline-none";
+  const inputStyle = {
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid var(--border)",
+    color: "var(--text-primary)",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.08 }}
+      className="glass p-5 mt-4"
+    >
+      {/* Header */}
+      <button
+        className="w-full flex items-center justify-between mb-1"
+        onClick={() => setExpanded(v => !v)}
+      >
+        <div className="flex items-center gap-2">
+          <Person size={18} style={{ color: "var(--calories)" }} />
+          <div className="text-left">
+            <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Objectifs & Profil</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Calories, macros, pas, sommeil</p>
+          </div>
+        </div>
+        {expanded ? <CaretUp size={14} style={{ color: "var(--text-muted)" }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)" }} />}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="pt-4 space-y-5">
+
+              {/* ── Profil ── */}
+              <div>
+                <p className="label-xs mb-3 flex items-center gap-1.5">
+                  <Ruler size={11} />
+                  Profil corporel
+                </p>
+
+                {/* Gender */}
+                <div className="flex gap-2 mb-3">
+                  {(["male", "female"] as Gender[]).map(g => (
+                    <button key={g} onClick={() => setGender(g)}
+                      className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
+                      style={{
+                        background: gender === g ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${gender === g ? "var(--calories)" : "var(--border)"}`,
+                        color: gender === g ? "var(--calories)" : "var(--text-muted)",
+                      }}>
+                      {g === "male" ? "Homme" : "Femme"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Age / Height / Weight */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Âge",    unit: "ans", val: age,    set: setAge },
+                    { label: "Taille", unit: "cm",  val: height, set: setHeight },
+                    { label: "Poids",  unit: "kg",  val: weight, set: setWeight },
+                  ].map(({ label, unit, val, set }) => (
+                    <div key={label}>
+                      <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={val}
+                          onChange={e => set(e.target.value)}
+                          placeholder="—"
+                          className={inputClass}
+                          style={{ ...inputStyle, paddingRight: "28px" }}
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                          style={{ color: "var(--text-muted)" }}>{unit}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Niveau d'activité ── */}
+              <div>
+                <p className="label-xs mb-2">Niveau d'activité</p>
+                <div className="space-y-1.5">
+                  {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(level => (
+                    <button key={level} onClick={() => setActivity(level)}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
+                      style={{
+                        background: activity === level ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${activity === level ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
+                      }}>
+                      <div>
+                        <p className="text-[12px] font-medium" style={{ color: activity === level ? "var(--calories)" : "var(--text-primary)" }}>
+                          {ACTIVITY_LABELS[level]}
+                        </p>
+                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
+                      </div>
+                      {activity === level && <CheckCircle size={14} weight="fill" style={{ color: "var(--calories)" }} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Objectif poids ── */}
+              <div>
+                <p className="label-xs mb-2">Objectif</p>
+                <div className="flex gap-2">
+                  {(["lose", "maintain", "gain"] as const).map(g => (
+                    <button key={g} onClick={() => setWeeklyGoal(g)}
+                      className="flex-1 py-2 rounded-xl text-[11px] font-medium transition-all"
+                      style={{
+                        background: weeklyGoal === g ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${weeklyGoal === g ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
+                        color: weeklyGoal === g ? "var(--protein)" : "var(--text-muted)",
+                      }}>
+                      {g === "lose" ? "Perdre" : g === "maintain" ? "Maintenir" : "Prendre"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── TDEE Calculator ── */}
+              <div className="rounded-xl p-3 space-y-2"
+                style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calculator size={14} style={{ color: "var(--calories)" }} />
+                    <p className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>
+                      Calcul automatique TDEE
+                    </p>
+                  </div>
+                  {tdeeCalc && (
+                    <span className="text-[11px] font-bold" style={{ color: "var(--calories)" }}>
+                      {tdeeCalc} kcal
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Calcule les besoins caloriques via Mifflin-St Jeor et remplit les macros automatiquement.
+                </p>
+                <button onClick={handleCalcTDEE}
+                  disabled={!age || !height || !gender}
+                  className="w-full btn gap-2 text-[12px]"
+                  style={{
+                    height: "34px",
+                    background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                    color: age && height && gender ? "#fff" : "var(--text-muted)",
+                    border: "none",
+                    opacity: age && height && gender ? 1 : 0.5,
+                  }}>
+                  <Calculator size={12} />
+                  Calculer et remplir
+                </button>
+              </div>
+
+              {/* ── Calories & Macros ── */}
+              <div>
+                <p className="label-xs mb-3 flex items-center gap-1.5">
+                  <Heartbeat size={11} />
+                  Calories & Macros
+                </p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--calories)" }}>Calories (kcal)</p>
+                    <input type="number" value={calories} onChange={e => setCalories(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--protein)" }}>Protéines (g)</p>
+                    <input type="number" value={protein} onChange={e => setProtein(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--carbs)" }}>Glucides (g)</p>
+                    <input type="number" value={carbs} onChange={e => setCarbs(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--fat)" }}>Lipides (g)</p>
+                    <input type="number" value={fat} onChange={e => setFat(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--fiber)" }}>Fibres (g)</p>
+                    <input type="number" value={fiber} onChange={e => setFiber(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1" style={{ color: "var(--fit-indigo)" }}>Eau (ml)</p>
+                    <input type="number" value={water} onChange={e => setWater(e.target.value)}
+                      className={inputClass} style={inputStyle} />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Steps & Sleep ── */}
+              <div>
+                <p className="label-xs mb-3 flex items-center gap-1.5">
+                  <Footprints size={11} />
+                  Activité & Récupération
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[10px] mb-1 flex items-center gap-1" style={{ color: "var(--steps)" }}>
+                      <Footprints size={9} /> Objectif pas
+                    </p>
+                    <div className="relative">
+                      <input type="number" value={steps} onChange={e => setSteps(e.target.value)}
+                        className={inputClass} style={{ ...inputStyle, paddingRight: "32px" }} />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: "var(--text-muted)" }}>pas</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] mb-1 flex items-center gap-1" style={{ color: "var(--fit-indigo)" }}>
+                      <Moon size={9} /> Objectif sommeil
+                    </p>
+                    <div className="relative">
+                      <input type="number" value={sleep} onChange={e => setSleep(e.target.value)}
+                        min="4" max="12" step="0.5"
+                        className={inputClass} style={{ ...inputStyle, paddingRight: "20px" }} />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: "var(--text-muted)" }}>h</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Save ── */}
+              <button onClick={handleSave} disabled={saving}
+                className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
+                {saved
+                  ? <><CheckCircle size={14} weight="fill" /> Sauvegardé</>
+                  : saving
+                    ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</>
+                    : <><FloppyDisk size={14} /> Sauvegarder les objectifs</>
+                }
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
