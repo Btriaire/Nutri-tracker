@@ -130,25 +130,34 @@ export default function DashboardClient({
               <span className="label-xs">Sommeil</span>
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
-              {sleepMinutes ? `${Math.floor(sleepMinutes / 60)}h${String(sleepMinutes % 60).padStart(2, "0")}` : "—"}
+              {sleepMinutes
+                ? sleepMinutes < 60
+                  ? `${sleepMinutes} min`
+                  : sleepMinutes % 60 === 0
+                    ? `${Math.floor(sleepMinutes / 60)}h`
+                    : `${Math.floor(sleepMinutes / 60)}h${String(sleepMinutes % 60).padStart(2, "0")}`
+                : "—"}
             </span>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
               {sleepMinutes ? (sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant") : "Aucune donnée"}
             </span>
           </div>
-          {/* Heart rate */}
-          <div className="card flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <Heart size={16} weight="fill" style={{ color: "#f87171" }} />
-              <span className="label-xs">Fréq. card.</span>
+          {/* Heart rate — clickable → /cardio */}
+          <Link href="/cardio" className="card flex flex-col gap-1.5 transition-opacity active:opacity-70">
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <Heart size={16} weight="fill" style={{ color: "#f87171" }} />
+                <span className="label-xs">Fréq. card.</span>
+              </div>
+              <ArrowRight size={11} style={{ color: "var(--text-muted)" }} />
             </div>
             <span className="text-[20px] font-bold leading-none" style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
               {heartRate ?? "—"}
             </span>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {heartRate ? "bpm moy." : "Aucune donnée"}
+              {heartRate ? "bpm moy." : "Voir historique"}
             </span>
-          </div>
+          </Link>
           {/* Active minutes */}
           <div className="card flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
