@@ -381,6 +381,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       });
       if (!res.ok) return;
       onAdded({ name: food.name, calories: Math.round(nutrition.calories) });
+      onClose();
     } finally { setQuickAddingId(null); }
   };
 
