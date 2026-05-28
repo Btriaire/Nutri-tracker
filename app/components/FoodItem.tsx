@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Trash, CaretDown, X, Spinner } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
@@ -88,12 +88,20 @@ interface Props {
   onUpdate?: (id: string, updated: FoodEntry) => void;
 }
 
+const SNAP = 76; // px revealed when swiped open
+
 export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
   const [expanded,   setExpanded]   = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [editing,    setEditing]    = useState(false);
   const [editGrams,  setEditGrams]  = useState(String(Math.round(entry.servingGrams)));
   const [editSaving, setEditSaving] = useState(false);
+  const [swipeX,   setSwipeX]   = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sliderRef    = useRef<HTMLDivElement>(null);
+  const swipeXRef    = useRef(0);
+  const lockedRef    = useRef(false);
   const n = entry.nutrition;
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -104,10 +112,71 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
   };
 
   const toggleEdit = () => {
+    if (lockedRef.current) return;
+    if (swipeXRef.current > 0) { swipeXRef.current = 0; setSwipeX(0); return; }
     setEditGrams(String(Math.round(entry.servingGrams)));
     setEditing((x) => !x);
     setExpanded(false);
   };
+
+  useEffect(() => { swipeXRef.current = swipeX; }, [swipeX]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let startX = 0, startY = 0, baseX = 0;
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      startX = e.clientX;
+      startY = e.clientY;
+      baseX  = swipeXRef.current;
+      lockedRef.current = false;
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !e.isPrimary) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (!lockedRef.current) {
+        if (Math.hypot(dx, dy) < 6) return;          // dead zone
+        if (Math.abs(dy) >= Math.abs(dx)) return;     // vertical → let scroll happen
+        lockedRef.current = true;
+        setDragging(true);
+        try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+
+      const next = Math.min(SNAP, Math.max(0, baseX + dx));
+      swipeXRef.current = next;
+      // Direct DOM update — no React re-render during drag
+      if (sliderRef.current) {
+        sliderRef.current.style.transform  = `translateX(${next}px)`;
+        sliderRef.current.style.transition = "none";
+      }
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !e.isPrimary || !lockedRef.current) return;
+      lockedRef.current = false;
+      setDragging(false);
+      const final = swipeXRef.current > SNAP * 0.35 ? SNAP : 0;
+      swipeXRef.current = final;
+      setSwipeX(final); // sync React state → re-render with snapped position + transition
+    };
+
+    el.addEventListener("pointerdown",   onDown);
+    el.addEventListener("pointermove",   onMove);
+    el.addEventListener("pointerup",     onUp);
+    el.addEventListener("pointercancel", onUp);
+    return () => {
+      el.removeEventListener("pointerdown",   onDown);
+      el.removeEventListener("pointermove",   onMove);
+      el.removeEventListener("pointerup",     onUp);
+      el.removeEventListener("pointercancel", onUp);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveEdit = async () => {
     const grams = Math.max(1, parseFloat(editGrams) || 1);
@@ -163,60 +232,88 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
       className="border-b last:border-b-0"
       style={{ borderColor: "var(--border)" }}
     >
-      {/* Main row */}
-      <div className="flex items-center gap-2.5 py-2.5">
-        {/* Food emoji */}
-        <span className="text-[22px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
-
-        {/* Food info — click to toggle edit */}
-        <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
-          <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
-            {entry.name}
-          </p>
-          <p className="text-[11px]" style={{ color: editing ? "var(--protein)" : "var(--text-muted)" }}>
-            {editing
-              ? "✏️ Modifier la quantité"
-              : `${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`
-            }
-          </p>
-        </button>
-
-        {/* Calories */}
-        <div className="text-right flex-shrink-0">
-          <p className="text-[13px] font-semibold t-calories tabular-nums">
-            {Math.round(n.calories)} kcal
-          </p>
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            P{Math.round(n.proteinG)} · G{Math.round(n.carbsG)} · L{Math.round(n.fatG)}
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          {hasMicros && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded((x) => !x); setEditing(false); }}
-              className="p-1 rounded-lg transition-colors"
-              style={{ color: "var(--text-muted)" }}
-            >
-              <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.18 }}
-                style={{ display: "inline-flex" }}>
-                <CaretDown size={12} />
-              </motion.span>
-            </button>
-          )}
-          <div className="w-1.5 h-1.5 rounded-full mx-1"
-            style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }} />
+      {/* Swipe-to-delete container */}
+      <div ref={containerRef} className="relative overflow-hidden" style={{ touchAction: "pan-y" }}>
+        {/* Red delete zone revealed on left when swiped */}
+        <div
+          className="absolute inset-y-0 left-0 flex items-center justify-center"
+          style={{ width: SNAP, background: "rgba(239,68,68,0.18)" }}
+          aria-hidden="true"
+        >
           <button
             onClick={handleDelete}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-            aria-label="Supprimer"
+            className="flex flex-col items-center gap-0.5"
+            style={{ color: "#f87171" }}
           >
-            <Trash size={14} />
+            <Trash size={18} weight="fill" />
+            <span className="text-[10px] font-semibold">Supprimer</span>
           </button>
+        </div>
+
+        {/* Sliding main row */}
+        <div
+          ref={sliderRef}
+          style={{
+            transform: `translateX(${swipeX}px)`,
+            transition: dragging ? "none" : "transform 0.22s cubic-bezier(0.4,0,0.2,1)",
+            background: "var(--bg)",
+          }}
+        >
+          <div className="flex items-center gap-2.5 py-2.5">
+            {/* Food emoji */}
+            <span className="text-[22px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
+
+            {/* Food info — click to toggle edit */}
+            <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
+              <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                {entry.name}
+              </p>
+              <p className="text-[11px]" style={{ color: editing ? "var(--protein)" : "var(--text-muted)" }}>
+                {editing
+                  ? "✏️ Modifier la quantité"
+                  : `${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`
+                }
+              </p>
+            </button>
+
+            {/* Calories */}
+            <div className="text-right flex-shrink-0">
+              <p className="text-[13px] font-semibold t-calories tabular-nums">
+                {Math.round(n.calories)} kcal
+              </p>
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                P{Math.round(n.proteinG)} · G{Math.round(n.carbsG)} · L{Math.round(n.fatG)}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {hasMicros && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setExpanded((x) => !x); setEditing(false); }}
+                  className="p-1 rounded-lg transition-colors"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.18 }}
+                    style={{ display: "inline-flex" }}>
+                    <CaretDown size={12} />
+                  </motion.span>
+                </button>
+              )}
+              <div className="w-1.5 h-1.5 rounded-full mx-1"
+                style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }} />
+              <button
+                onClick={handleDelete}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+                aria-label="Supprimer"
+              >
+                <Trash size={14} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

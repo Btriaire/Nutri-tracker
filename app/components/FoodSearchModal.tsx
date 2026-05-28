@@ -527,32 +527,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               <button onClick={onClose} className="btn-icon w-6 h-6 flex-shrink-0"><X size={13} /></button>
             </div>
 
-            {/* Search input — full width, prominent */}
-            <div className="px-4 pb-0 pt-0.5 flex-shrink-0">
-              {tab === "aliments" ? (
-                <div className="relative">
-                  {searching
-                    ? <Spinner size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
-                    : <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-                  }
-                  <input
-                    ref={inputRef}
-                    value={query}
-                    onChange={(e) => doSearch(e.target.value)}
-                    placeholder="Rechercher un aliment…"
-                    className="input pl-10 text-[14px]"
-                    style={{ height: "44px" }}
-                  />
-                </div>
-              ) : (
-                <p className="font-semibold text-[16px] py-1.5" style={{ color: "var(--text-primary)" }}>
-                  {tab === "repas" ? "Mes repas" : "Mes recettes"}
-                </p>
-              )}
-            </div>
-
-            {/* Tab bar */}
-            <div className="px-4 pb-0 pt-2.5 flex-shrink-0">
+            {/* Tab bar — always at the top */}
+            <div className="px-4 pb-0 pt-0 flex-shrink-0">
               <div className="flex gap-1 p-1 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                 {([
@@ -573,6 +549,26 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 ))}
               </div>
             </div>
+
+            {/* Search input — only for Aliments tab */}
+            {tab === "aliments" && (
+              <div className="px-4 pb-0 pt-2.5 flex-shrink-0">
+                <div className="relative">
+                  {searching
+                    ? <Spinner size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
+                    : <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                  }
+                  <input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => doSearch(e.target.value)}
+                    placeholder="Rechercher un aliment…"
+                    className="input pl-10 text-[14px]"
+                    style={{ height: "44px" }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Divider */}
             <div className="h-px flex-shrink-0 mt-3" style={{ background: "var(--border)" }} />

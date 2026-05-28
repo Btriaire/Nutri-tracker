@@ -6,13 +6,14 @@ export default function WelcomeChime() {
   const played = useRef(false);
 
   useEffect(() => {
-    if (played.current) return;
-    played.current = true;
+    const play = async () => {
+      if (played.current) return;
+      played.current = true;
 
-    // Play only if user has interacted with the page before (autoplay policy)
-    const play = () => {
       try {
         const ctx = new AudioContext();
+        // Resume in case the context is suspended (autoplay policy)
+        if (ctx.state === "suspended") await ctx.resume();
 
         // A gentle two-note chime: C5 → E5
         const notes = [
@@ -35,7 +36,6 @@ export default function WelcomeChime() {
           osc.type = "sine";
           osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
 
-          // Bell-like envelope: fast attack, slow decay
           gain.gain.setValueAtTime(0, ctx.currentTime + start);
           gain.gain.linearRampToValueAtTime(0.13, ctx.currentTime + start + 0.015);
           gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
@@ -48,9 +48,18 @@ export default function WelcomeChime() {
       } catch { /* AudioContext not available */ }
     };
 
-    // Small delay so page paint happens first
+    // Try immediately (works after navigation from another page — context already unlocked)
     const timer = setTimeout(play, 300);
-    return () => clearTimeout(timer);
+
+    // Fallback: play on first user interaction (handles fresh page loads on iOS/Chrome)
+    document.addEventListener("click",      play, { once: true });
+    document.addEventListener("touchstart", play, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click",      play);
+      document.removeEventListener("touchstart", play);
+    };
   }, []);
 
   return null;
