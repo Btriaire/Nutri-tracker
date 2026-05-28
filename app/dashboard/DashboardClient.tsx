@@ -276,6 +276,8 @@ export default function DashboardClient({
               consumed={consumed.calories}
               goal={goals.dailyCalories}
               burned={burned}
+              activeMinutes={activeMinutes}
+              sessionCount={sessions.length}
             />
 
             {/* Macro progress bars */}

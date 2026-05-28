@@ -645,10 +645,22 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
   const [weeklyGoal, setWeeklyGoal] = useState(initialGoals.weeklyGoal ?? "maintain");
-  const [tdeeCalc, setTdeeCalc] = useState<number | null>(null);
-  const [saving,   setSaving]   = useState(false);
-  const [saved,    setSaved]    = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [tdeeCalc,        setTdeeCalc]        = useState<number | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [saving,          setSaving]          = useState(false);
+  const [saved,           setSaved]           = useState(false);
+  const [expanded,        setExpanded]        = useState(false);
+
+  const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number }> = {
+    balanced: { label: "Équilibré",       emoji: "⚖️",  desc: "50% G · 25% P · 25% L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
+    keto:     { label: "Cétogène",        emoji: "🥑",  desc: "5% G · 25% P · 70% L",    protPct: 0.25, carbPct: 0.05, fatPct: 0.70, fiber: 25 },
+    lowcarb:  { label: "Sans sucre",      emoji: "🚫🍬", desc: "20% G · 30% P · 50% L",   protPct: 0.30, carbPct: 0.20, fatPct: 0.50, fiber: 28 },
+    highprot: { label: "Hyperprotéiné",   emoji: "💪",  desc: "25% G · 40% P · 35% L",   protPct: 0.40, carbPct: 0.25, fatPct: 0.35, fiber: 30 },
+    mediter:  { label: "Méditerranéen",   emoji: "🫒",  desc: "45% G · 20% P · 35% L",   protPct: 0.20, carbPct: 0.45, fatPct: 0.35, fiber: 35 },
+    bulk:     { label: "Prise de masse",  emoji: "🏋️",  desc: "45% G · 30% P · 25% L",   protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, calorieBonus: 300 },
+  };
+
+  const WEEKLY_ADJUSTMENTS: Record<string, number> = { lose: -500, maintain: 0, gain: 300 };
 
   const handleCalcTDEE = () => {
     const a = parseInt(age);
@@ -664,6 +676,30 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     setProtein(p.toString());
     setFat(f.toString());
     setCarbs(Math.max(c, 0).toString());
+    setSelectedProgram(null);
+  };
+
+  const handleApplyProgram = (key: string) => {
+    const prog = PROGRAMS[key];
+    if (!prog) return;
+    const a = parseInt(age), h = parseInt(height), w = parseFloat(weight) || 70;
+    let base = parseInt(calories) || 2000;
+    if (a && h && gender) {
+      base = calcTDEE(w, h, a, gender as Gender, activity);
+      setTdeeCalc(base);
+    }
+    const adj = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
+    const bonus = prog.calorieBonus ?? 0;
+    const kcal = Math.max(800, base + adj + bonus);
+    const p = Math.round((kcal * prog.protPct) / 4);
+    const f = Math.round((kcal * prog.fatPct)  / 9);
+    const c = Math.round((kcal * prog.carbPct) / 4);
+    setCalories(kcal.toString());
+    setProtein(p.toString());
+    setFat(f.toString());
+    setCarbs(c.toString());
+    setFiber(prog.fiber.toString());
+    setSelectedProgram(key);
   };
 
   const handleSave = async () => {
@@ -823,6 +859,36 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* ── Programmes nutritionnels ── */}
+              <div>
+                <p className="label-xs mb-2 flex items-center gap-1.5">
+                  <Lightning size={11} />
+                  Programme nutritionnel
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(PROGRAMS).map(([key, prog]) => {
+                    const active = selectedProgram === key;
+                    return (
+                      <button key={key} onClick={() => handleApplyProgram(key)}
+                        className="flex flex-col items-start p-3 rounded-xl text-left transition-all"
+                        style={{
+                          background: active ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${active ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
+                        }}>
+                        <span className="text-base mb-1">{prog.emoji}</span>
+                        <p className="text-[12px] font-semibold leading-tight" style={{ color: active ? "var(--calories)" : "var(--text-primary)" }}>
+                          {prog.label}
+                        </p>
+                        <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                  Le programme calcule automatiquement les macros selon ton profil et l'objectif sélectionné.
+                </p>
               </div>
 
               {/* ── TDEE Calculator ── */}

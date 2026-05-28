@@ -3,13 +3,15 @@
 import { motion } from "framer-motion";
 
 interface Props {
-  consumed: number;
-  goal: number;
-  burned?: number | null;
-  size?: number;
+  consumed:      number;
+  goal:          number;
+  burned?:       number | null;
+  activeMinutes?: number | null;
+  sessionCount?:  number;
+  size?:         number;
 }
 
-export default function CalorieBudgetRing({ consumed, goal, burned, size = 168 }: Props) {
+export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, size = 168 }: Props) {
   const net = consumed - (burned ?? 0);
   const pct = Math.min(net / goal, 1);
   const over = net > goal;
@@ -96,6 +98,14 @@ export default function CalorieBudgetRing({ consumed, goal, burned, size = 168 }
           <div>
             <p className="text-[15px] font-semibold t-fiber tabular-nums">−{Math.round(burned)}</p>
             <p className="label-xs mt-0.5">Brûlées</p>
+            {(activeMinutes != null || sessionCount != null) && (
+              <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                {[
+                  activeMinutes != null && activeMinutes > 0 ? `${activeMinutes} min` : null,
+                  sessionCount != null && sessionCount > 0 ? `${sessionCount} séance${sessionCount > 1 ? "s" : ""}` : null,
+                ].filter(Boolean).join(" · ") || "activité"}
+              </p>
+            )}
           </div>
         )}
         <div

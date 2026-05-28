@@ -116,9 +116,11 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const tokens = await getTokens(userId);
   if (!tokens) return null;
 
-  const startMs = new Date(date + "T00:00:00").getTime();
-  const endMs   = new Date(date + "T23:59:59").getTime();
-  const startIso = new Date(startMs).toISOString();
+  const startMs     = new Date(date + "T00:00:00").getTime();
+  const endMs       = new Date(date + "T23:59:59").getTime();
+  // Sessions query starts 18h before midnight to capture previous-night sleep (which starts ~10 PM day-1)
+  const sessionStartMs  = startMs - 18 * 3600 * 1000;
+  const startIso = new Date(sessionStartMs).toISOString();
   const endIso   = new Date(endMs).toISOString();
   const auth = `Bearer ${tokens.accessToken}`;
 
@@ -186,7 +188,8 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     for (const s of sessJson.session ?? []) {
       const durationMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
       if (durationMin < 1) continue;
-      if (SLEEP_TYPES.includes(s.activityType ?? 0)) {
+      if (SLEEP_TYPES.includes(s.activityType ?? 0) && Number(s.endTimeMillis) >= startMs) {
+        // Only count sleep that ends on/after today's midnight (cross-midnight sessions included)
         sleepMs += Number(s.endTimeMillis) - Number(s.startTimeMillis);
       } else {
         sessions.push({
