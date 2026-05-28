@@ -229,7 +229,8 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
       nodes.forEach((n) => {
         try { (n as AudioScheduledSourceNode).stop?.(); } catch {}
       });
-      try { ctx.close(); } catch {}
+      // Do NOT close ctx — it stays open so the next sound reuses the unlocked context
+      try { gain.disconnect(); } catch {}
     },
     setVolume: (v) => {
       gain.gain.value = v;
