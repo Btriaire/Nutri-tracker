@@ -216,8 +216,9 @@ export interface UserProfile {
   createdAt:    Timestamp;
   goals:        NutritionGoals;
   integrations: {
-    googleFit: IntegrationStatus;
-    withings:  IntegrationStatus;
+    googleFit:   IntegrationStatus;
+    withings:    IntegrationStatus;
+    appleHealth?: IntegrationStatus & { token?: string };
   };
   chartPrefs?:  ChartPrefs;
   photoUrl?:    string;
@@ -254,10 +255,29 @@ export interface WithingsDay {
   syncedAt:     Timestamp;
 }
 
+export interface AppleHealthDay {
+  steps:            number;
+  activeCalories:   number;
+  activeMinutes:    number;
+  heartRateAvg:     number | null;
+  heartRateResting: number | null;
+  hrv:              number | null;
+  spO2:             number | null;
+  sleepMinutes:     number | null;
+  sleepDeepMinutes: number | null;
+  sleepRemMinutes:  number | null;
+  distanceKm:       number | null;
+  vo2Max:           number | null;
+  weightKg:         number | null;
+  workouts:         { type: string; durationMin: number; calories: number }[];
+  syncedAt:         Timestamp;
+}
+
 export interface FitnessDay {
-  date:       string;
-  googleFit?: GoogleFitDay;
-  withings?:  WithingsDay;
+  date:         string;
+  googleFit?:   GoogleFitDay;
+  withings?:    WithingsDay;
+  appleHealth?: AppleHealthDay;
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────
