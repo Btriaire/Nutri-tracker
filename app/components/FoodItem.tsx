@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trash, CaretDown, X, Spinner } from "@phosphor-icons/react";
+import { Trash, CaretDown, X, Spinner, Check } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
@@ -328,13 +328,13 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <div className="pb-3 pl-8 pr-2">
-              <div className="flex items-center gap-2 p-3 rounded-xl"
-                style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.2)" }}>
+            <div className="pb-2 pl-8 pr-2">
+              {/* Compact input row */}
+              <div className="flex items-center gap-1.5 mb-1.5">
                 <button
                   onClick={() => setEditGrams((v) => String(Math.max(1, (parseFloat(v) || 1) - 10)))}
-                  className="btn-icon w-7 h-7 flex-shrink-0"
-                  style={{ fontSize: "18px" }}>
+                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-primary)" }}>
                   −
                 </button>
                 <div className="relative flex-1">
@@ -343,39 +343,58 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                     value={editGrams}
                     onChange={(e) => setEditGrams(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false); }}
-                    className="input text-center text-[14px] tabular-nums pr-7"
+                    className="input text-center text-[13px] tabular-nums pr-5"
+                    style={{ height: "28px" }}
                     min="1"
                     autoFocus
                   />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]"
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
                     style={{ color: "var(--text-muted)" }}>g</span>
                 </div>
                 <button
                   onClick={() => setEditGrams((v) => String((parseFloat(v) || 0) + 10))}
-                  className="btn-icon w-7 h-7 flex-shrink-0"
-                  style={{ fontSize: "18px" }}>
+                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-primary)" }}>
                   +
                 </button>
                 {previewN && (
-                  <span className="text-[12px] font-semibold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
-                    → {Math.round(previewN.calories)} kcal
+                  <span className="text-[11px] font-semibold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
+                    {Math.round(previewN.calories)} kcal
                   </span>
                 )}
-              </div>
-              <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleSaveEdit}
                   disabled={editSaving}
-                  className="btn btn-primary flex-1 gap-1.5 text-[12px]"
-                  style={{ height: "32px" }}>
-                  {editSaving ? <Spinner size={11} className="animate-spin" /> : "Sauvegarder"}
+                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                  style={{ background: "var(--protein)", color: "#fff" }}>
+                  {editSaving ? <Spinner size={10} className="animate-spin" /> : <Check size={11} weight="bold" />}
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="btn btn-ghost px-3 text-[12px]"
-                  style={{ height: "32px" }}>
-                  <X size={12} />
+                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+                  <X size={11} />
                 </button>
+              </div>
+
+              {/* Quick-select portion chips */}
+              <div className="flex gap-1 flex-wrap pb-1">
+                {[25, 50, 75, 100, 150, 200, 250, 300].map((g) => {
+                  const active = editGrams === String(g);
+                  return (
+                    <button
+                      key={g}
+                      onClick={() => setEditGrams(String(g))}
+                      className="px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all"
+                      style={{
+                        background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
+                        color: active ? "var(--protein)" : "var(--text-muted)",
+                      }}>
+                      {g}g
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </motion.div>
