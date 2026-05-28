@@ -346,7 +346,6 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                     className="input text-center text-[13px] tabular-nums pr-5"
                     style={{ height: "28px" }}
                     min="1"
-                    autoFocus
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
                     style={{ color: "var(--text-muted)" }}>g</span>
