@@ -17,6 +17,7 @@ import {
 import type { BloodPressureReading, BPMoment, HealthEntry } from "@/app/lib/types";
 import type { CardioPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
+import RelaxationPlayer from "@/app/components/RelaxationPlayer";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
 type HealthTab = "vitaux" | "cardiaque" | "bienetre";
@@ -783,8 +784,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
         {/* ── TAB: BIEN-ÊTRE ── */}
         {activeTab === "bienetre" && (
-          <motion.div {...fade(0.05)}>
+          <motion.div {...fade(0.05)} className="space-y-4">
             <MentalHealthWidget date={date} />
+            <RelaxationPlayer />
           </motion.div>
         )}
 
