@@ -43,7 +43,7 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   usda:   { label: "USDA",            color: "var(--carbs)" },
   custom: { label: "Personnel",       color: "var(--protein)" },
   recipe: { label: "Recette",         color: "var(--calories)" },
-  ai:     { label: "IA Groq",         color: "#a855f7" },
+  ai:     { label: "Nutri-AI",         color: "#a855f7" },
 };
 
 const HUNGER_ICONS = [
@@ -189,6 +189,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [searching, setSearching] = useState(false);
   const [aiResults,   setAiResults]   = useState<FoodSearchResult[]>([]);
   const [aiSearching, setAiSearching] = useState(false);
+  const [savedAiIds,  setSavedAiIds]  = useState<Set<string>>(new Set());
+  const [savingAiId,  setSavingAiId]  = useState<string | null>(null);
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ServingOption | null>(null);
   const [customQty, setCustomQty]   = useState("1");
@@ -240,7 +242,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   useEffect(() => {
     if (open) {
       setTab("aliments"); setStep("browse");
-      setQuery(""); setResults([]); setAiResults([]); setSelected(null);
+      setQuery(""); setResults([]); setAiResults([]); setSavedAiIds(new Set()); setSelected(null);
       setSelectedUnit(null); setCustomQty("1"); setUseCustomG(false); setCustomGrams("100");
       setNotes(""); setHunger(null);
       setNewMealName(""); setNewMealIcon("🍽️");
@@ -315,6 +317,25 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       setAiResults(json.results ?? []);
     } catch { /* silent */ }
     finally { setAiSearching(false); }
+  };
+
+  const handleSaveAiToDb = async (r: FoodSearchResult) => {
+    if (savingAiId || savedAiIds.has(r.id)) return;
+    setSavingAiId(r.id);
+    try {
+      const res = await fetch("/api/custom-foods", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:         r.name,
+          servingSizeG: r.servingSizeG,
+          servingLabel: r.servingLabel,
+          nutrition:    r.nutrition,
+        }),
+      });
+      if (res.ok) setSavedAiIds(prev => new Set(prev).add(r.id));
+    } catch { /* silent */ }
+    finally { setSavingAiId(null); }
   };
 
   const selectFood = (food: FoodSearchResult) => {
@@ -643,7 +664,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     <div className="mb-3">
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[11px]">✨</span>
-                        <p className="label-xs" style={{ color: "#a855f7" }}>Résultats IA Groq</p>
+                        <p className="label-xs" style={{ color: "#a855f7" }}>Résultats Nutri-AI</p>
                         <p className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>— valeurs estimées</p>
                       </div>
                       <div className="space-y-1">
@@ -664,7 +685,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
-                                    <span className="text-[10px]" style={{ color: "#a855f7" }}>IA Groq</span>
+                                    <span className="text-[10px]" style={{ color: "#a855f7" }}>Nutri-AI</span>
                                   </div>
                                   <MacroPills n={r.nutrition} />
                                 </div>
@@ -675,11 +696,35 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
                                 style={{ background: isAdding ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.1)", borderLeft: "1px solid rgba(168,85,247,0.2)" }}
                               >
-                                {isAdding
+                                  {isAdding
                                   ? <Spinner size={14} className="animate-spin" style={{ color: "#a855f7" }} />
                                   : <Plus size={16} weight="bold" style={{ color: "#a855f7" }} />
                                 }
                               </button>
+                              {/* Save to custom foods */}
+                              {(() => {
+                                const saved   = savedAiIds.has(r.id);
+                                const saving  = savingAiId === r.id;
+                                return (
+                                  <button
+                                    onClick={() => handleSaveAiToDb(r)}
+                                    disabled={saved || saving}
+                                    title={saved ? "Déjà sauvegardé" : "Sauvegarder dans ma base"}
+                                    className="shrink-0 flex items-center justify-center w-9 self-stretch transition-all"
+                                    style={{
+                                      background: saved ? "rgba(52,211,153,0.1)" : "rgba(255,255,255,0.03)",
+                                      borderLeft: "1px solid rgba(168,85,247,0.15)",
+                                    }}
+                                  >
+                                    {saving
+                                      ? <Spinner size={12} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                                      : saved
+                                        ? <Check size={13} weight="bold" style={{ color: "#34d399" }} />
+                                        : <BookBookmark size={13} style={{ color: "var(--text-muted)" }} />
+                                    }
+                                  </button>
+                                );
+                              })()}
                             </motion.div>
                           );
                         })}
