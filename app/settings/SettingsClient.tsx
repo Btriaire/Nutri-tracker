@@ -14,14 +14,15 @@ import type { NutritionGoals, ActivityLevel, Gender } from "@/app/lib/types";
 import AppleHealthCard from "@/app/components/AppleHealthCard";
 
 interface Props {
-  fitConnected:    boolean;
-  initialGoals:    NutritionGoals;
-  initialPhotoUrl?: string;
+  fitConnected:      boolean;
+  withingsConnected: boolean;
+  initialGoals:      NutritionGoals;
+  initialPhotoUrl?:  string;
 }
 
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
-export default function SettingsClient({ fitConnected: initialFit, initialGoals, initialPhotoUrl }: Props) {
+export default function SettingsClient({ fitConnected: initialFit, withingsConnected: initialWithings, initialGoals, initialPhotoUrl }: Props) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -34,6 +35,12 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals,
   const [fit, setFit]                   = useState(initialFit);
   const [syncing, setSyncing]           = useState(false);
   const [syncMsg, setSyncMsg]           = useState("");
+
+  // Withings
+  const [withings, setWithings]         = useState(initialWithings);
+  const [wSyncing, setWSyncing]         = useState(false);
+  const [wSyncMsg, setWSyncMsg]         = useState("");
+  const [wDisconnecting, setWDisconnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncingHistory, setSyncingHistory] = useState(false);
 
@@ -45,8 +52,10 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals,
   const [fullSyncDone, setFullSyncDone] = useState(false);
 
   useEffect(() => {
-    if (params.get("fit") === "connected") setFit(true);
-    if (params.get("fit") === "error")     setSyncMsg("Erreur lors de la connexion");
+    if (params.get("fit")      === "connected") setFit(true);
+    if (params.get("fit")      === "error")     setSyncMsg("Erreur lors de la connexion");
+    if (params.get("withings") === "connected") setWithings(true);
+    if (params.get("withings") === "error")     setWSyncMsg("Erreur lors de la connexion");
   }, [params]);
 
   const handleSync = async () => {
@@ -120,6 +129,27 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals,
     await fetch("/api/google-fit/disconnect", { method: "POST" });
     setFit(false);
     setDisconnecting(false);
+  };
+
+  const handleWithingsSync = async (days?: number) => {
+    setWSyncing(true); setWSyncMsg("");
+    try {
+      const body = days ? { days } : {};
+      const res  = await fetch("/api/withings/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const json = await res.json() as { ok: boolean; days?: number };
+      setWSyncMsg(json.ok
+        ? days ? `${json.days} mesure${(json.days ?? 0) > 1 ? "s" : ""} synchronisée${(json.days ?? 0) > 1 ? "s" : ""}` : "Synchronisé !"
+        : "Aucune mesure trouvée");
+    } catch { setWSyncMsg("Erreur réseau"); }
+    finally { setWSyncing(false); }
+  };
+
+  const handleWithingsDisconnect = async () => {
+    setWDisconnecting(true);
+    await fetch("/api/withings/disconnect", { method: "POST" });
+    setWithings(false);
+    setWSyncMsg("");
+    setWDisconnecting(false);
   };
 
   const totalSynced = yearProgress.reduce((s, p) => s + (p.days ?? 0), 0);
@@ -356,23 +386,63 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals,
           <AppleHealthCard />
         </motion.div>
 
-        {/* Withings placeholder */}
+        {/* Withings card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="glass p-5 opacity-50"
+          className="glass p-5 mb-4"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}>
+              style={{ background: "linear-gradient(135deg, rgba(0,150,255,0.25) 0%, rgba(0,200,180,0.25) 100%)", border: "1px solid rgba(255,255,255,0.1)" }}>
               ⚖️
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Withings</p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · Composition corporelle — bientôt</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · % graisse · Masse musculaire</p>
             </div>
+            {withings
+              ? <CheckCircle size={20} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
+              : <XCircle    size={20} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            }
           </div>
+
+          {withings ? (
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                <CheckCircle size={13} style={{ color: "var(--fiber)" }} />
+                <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
+              </div>
+
+              {wSyncMsg && (
+                <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
+              )}
+
+              <div className="flex gap-2">
+                <button onClick={() => handleWithingsSync()} disabled={wSyncing}
+                  className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
+                  {wSyncing ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  Aujourd'hui
+                </button>
+                <button onClick={() => handleWithingsSync(90)} disabled={wSyncing}
+                  className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
+                  {wSyncing ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  90 jours
+                </button>
+                <button onClick={handleWithingsDisconnect} disabled={wDisconnecting}
+                  className="btn btn-ghost text-[12px] px-3"
+                  style={{ color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                  {wDisconnecting ? <Spinner size={12} className="animate-spin" /> : "Déconnecter"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <a href="/api/withings/auth" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
+              ⚖️ Connecter Withings
+            </a>
+          )}
         </motion.div>
 
         {/* Profile photo */}

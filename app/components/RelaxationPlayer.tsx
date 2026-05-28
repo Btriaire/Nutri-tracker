@@ -262,14 +262,21 @@ export default function RelaxationPlayer() {
   // Pre-create + pre-unlock the AudioContext on first user interaction
   useEffect(() => {
     const unlock = () => {
-      if (ctxRef.current) { ctxRef.current.resume().catch(() => {}); return; }
+      if (ctxRef.current) {
+        if (ctxRef.current.state !== "running") ctxRef.current.resume().catch(() => {});
+        return;
+      }
       try {
         const ctx = getAudioContext();
         ctxRef.current = ctx;
+        // Silent 1-sample buffer — forces iOS to open the audio output
+        const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
         ctx.resume().catch(() => {});
       } catch {}
-      document.removeEventListener("touchstart", unlock);
-      document.removeEventListener("click",      unlock);
     };
     document.addEventListener("touchstart", unlock, { once: true, passive: true });
     document.addEventListener("click",      unlock, { once: true });
@@ -293,22 +300,28 @@ export default function RelaxationPlayer() {
 
   const play = useCallback((id: string) => {
     stopAll();
-    try {
-      // Reuse or create context
-      if (!ctxRef.current) ctxRef.current = getAudioContext();
-      const ctx = ctxRef.current;
-      ctx.resume().catch(() => {});
+    if (!ctxRef.current) {
+      try { ctxRef.current = getAudioContext(); } catch (e) { console.error("RelaxationPlayer: no AudioContext", e); return; }
+    }
+    const ctx = ctxRef.current;
 
-      // Recreate destination chain on each play
-      const master = ctx.createGain();
-      master.gain.value = volume;
-      master.connect(ctx.destination);
+    const startEngine = () => {
+      try {
+        const master = ctx.createGain();
+        master.gain.value = volume;
+        master.connect(ctx.destination);
+        engineRef.current = buildEngine(ctx, id, master);
+        setPlaying(id);
+        setElapsed(0);
+      } catch (e) { console.error("RelaxationPlayer:", e); }
+    };
 
-      engineRef.current = buildEngine(ctx, id, master);
-      setPlaying(id);
-      setElapsed(0);
-    } catch (e) {
-      console.error("RelaxationPlayer:", e);
+    // On iOS, nodes started while ctx is 'suspended' won't play.
+    // Wait for resume() to resolve before starting nodes.
+    if (ctx.state === "running") {
+      startEngine();
+    } else {
+      ctx.resume().then(startEngine).catch(() => startEngine());
     }
   }, [stopAll, volume]);
 
