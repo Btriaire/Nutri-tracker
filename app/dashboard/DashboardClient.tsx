@@ -9,7 +9,6 @@ import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
-import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
 import WelcomeChime from "@/app/components/WelcomeChime";
 import {
@@ -471,11 +470,6 @@ export default function DashboardClient({
         {/* Fun Facts banner */}
         <motion.div {...fade(0.175)}>
           <FunFactsBanner />
-        </motion.div>
-
-        {/* Mental Health */}
-        <motion.div {...fade(0.18)} className="mb-4">
-          <MentalHealthWidget date={date} />
         </motion.div>
 
         {/* Water tracker */}

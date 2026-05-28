@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Trash, CaretDown } from "@phosphor-icons/react";
+import { Trash, CaretDown, X, Spinner } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
+import { scaleNutrition } from "@/app/lib/nutrition";
 
 const SOURCE_DOT: Record<string, string> = {
   ciqual: "var(--fiber)",
@@ -81,14 +82,18 @@ function formatMicro(v: number | undefined, unit: string): string {
 }
 
 interface Props {
-  entry:    FoodEntry;
-  date:     string;
-  onDelete: (id: string) => void;
+  entry:     FoodEntry;
+  date:      string;
+  onDelete:  (id: string) => void;
+  onUpdate?: (id: string, updated: FoodEntry) => void;
 }
 
-export default function FoodItem({ entry, date, onDelete }: Props) {
-  const [expanded, setExpanded] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
+  const [expanded,   setExpanded]   = useState(false);
+  const [deleting,   setDeleting]   = useState(false);
+  const [editing,    setEditing]    = useState(false);
+  const [editGrams,  setEditGrams]  = useState(String(Math.round(entry.servingGrams)));
+  const [editSaving, setEditSaving] = useState(false);
   const n = entry.nutrition;
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -98,26 +103,51 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
     onDelete(entry.id);
   };
 
+  const toggleEdit = () => {
+    setEditGrams(String(Math.round(entry.servingGrams)));
+    setEditing((x) => !x);
+    setExpanded(false);
+  };
+
+  const handleSaveEdit = async () => {
+    const grams = Math.max(1, parseFloat(editGrams) || 1);
+    setEditSaving(true);
+    try {
+      // Scale per-100g first, then to new grams
+      const n100 = scaleNutrition(entry.nutrition, 10000 / entry.servingGrams);
+      const nutrition = scaleNutrition(n100, grams);
+      const servingLabel = `${Math.round(grams)}g`;
+      await fetch(`/api/log/${entry.id}?date=${date}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servingGrams: grams, nutrition, servingLabel }),
+      });
+      onUpdate?.(entry.id, { ...entry, servingGrams: grams, nutrition, servingLabel });
+      setEditing(false);
+    } finally { setEditSaving(false); }
+  };
+
+  const previewGrams = Math.max(1, parseFloat(editGrams) || 1);
+  const previewN = editing
+    ? scaleNutrition(scaleNutrition(entry.nutrition, 10000 / entry.servingGrams), previewGrams)
+    : null;
+
   const microRows: MicroRow[] = [
-    // Detailed carbs
-    { label: "Sucres",           value: n.sugarG,         unit: "g",  color: "var(--carbs)" },
-    // Detailed fats
-    { label: "Sat. grasses",     value: n.saturatedFatG,  unit: "g",  color: "var(--fat)" },
-    { label: "Trans",            value: n.transFatG,       unit: "g" },
-    { label: "Cholestérol",      value: n.cholesterolMg,   unit: "mg" },
-    // Minerals
-    { label: "Sodium",           value: n.sodiumMg,        unit: "mg" },
-    { label: "Potassium",        value: n.potassiumMg,     unit: "mg" },
-    { label: "Calcium",          value: n.calciumMg,       unit: "mg", color: "#94a3b8" },
-    { label: "Magnésium",        value: n.magneziumMg,     unit: "mg" },
-    { label: "Fer",              value: n.ironMg,          unit: "mg", color: "#f87171" },
-    { label: "Zinc",             value: n.zincMg,          unit: "mg" },
-    // Vitamins
-    { label: "Vit. C",           value: n.vitaminCMg,      unit: "mg", color: "#fb923c" },
-    { label: "Vit. D",           value: n.vitaminDUg,      unit: "µg", color: "#fbbf24" },
-    { label: "Vit. B12",         value: n.vitaminB12Ug,    unit: "µg" },
-    { label: "Folate (B9)",      value: n.vitaminB9Ug,     unit: "µg" },
-    { label: "Alcool",           value: n.alcoholG,        unit: "g" },
+    { label: "Sucres",       value: n.sugarG,        unit: "g",  color: "var(--carbs)" },
+    { label: "Sat. grasses", value: n.saturatedFatG,  unit: "g",  color: "var(--fat)" },
+    { label: "Trans",        value: n.transFatG,       unit: "g" },
+    { label: "Cholestérol",  value: n.cholesterolMg,   unit: "mg" },
+    { label: "Sodium",       value: n.sodiumMg,        unit: "mg" },
+    { label: "Potassium",    value: n.potassiumMg,     unit: "mg" },
+    { label: "Calcium",      value: n.calciumMg,       unit: "mg", color: "#94a3b8" },
+    { label: "Magnésium",    value: n.magneziumMg,     unit: "mg" },
+    { label: "Fer",          value: n.ironMg,          unit: "mg", color: "#f87171" },
+    { label: "Zinc",         value: n.zincMg,          unit: "mg" },
+    { label: "Vit. C",       value: n.vitaminCMg,      unit: "mg", color: "#fb923c" },
+    { label: "Vit. D",       value: n.vitaminDUg,      unit: "µg", color: "#fbbf24" },
+    { label: "Vit. B12",     value: n.vitaminB12Ug,    unit: "µg" },
+    { label: "Folate (B9)",  value: n.vitaminB9Ug,     unit: "µg" },
+    { label: "Alcool",       value: n.alcoholG,        unit: "g" },
   ].filter((r) => r.value != null && r.value > 0);
 
   const hasMicros = microRows.length > 0;
@@ -134,25 +164,24 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
       style={{ borderColor: "var(--border)" }}
     >
       {/* Main row */}
-      <div
-        className="flex items-center gap-2.5 py-2.5 cursor-pointer"
-        onClick={() => hasMicros && setExpanded((x) => !x)}
-      >
+      <div className="flex items-center gap-2.5 py-2.5">
         {/* Food emoji */}
         <span className="text-[22px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
 
-        {/* Food info */}
-        <div className="flex-1 min-w-0">
+        {/* Food info — click to toggle edit */}
+        <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
           <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
             {entry.name}
           </p>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-            {entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}
-            {entry.brand ? ` · ${entry.brand}` : ""}
+          <p className="text-[11px]" style={{ color: editing ? "var(--protein)" : "var(--text-muted)" }}>
+            {editing
+              ? "✏️ Modifier la quantité"
+              : `${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`
+            }
           </p>
-        </div>
+        </button>
 
-        {/* Nutrition + actions */}
+        {/* Calories */}
         <div className="text-right flex-shrink-0">
           <p className="text-[13px] font-semibold t-calories tabular-nums">
             {Math.round(n.calories)} kcal
@@ -162,32 +191,99 @@ export default function FoodItem({ entry, date, onDelete }: Props) {
           </p>
         </div>
 
-        {/* Expand arrow (only if micros exist) + delete */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           {hasMicros && (
-            <motion.span
-              animate={{ rotate: expanded ? 180 : 0 }}
-              transition={{ duration: 0.18 }}
-              style={{ display: "inline-flex", color: "var(--text-muted)" }}
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded((x) => !x); setEditing(false); }}
+              className="p-1 rounded-lg transition-colors"
+              style={{ color: "var(--text-muted)" }}
             >
-              <CaretDown size={13} />
-            </motion.span>
+              <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.18 }}
+                style={{ display: "inline-flex" }}>
+                <CaretDown size={12} />
+              </motion.span>
+            </button>
           )}
-          {/* Source dot */}
-          <div
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }}
-          />
+          <div className="w-1.5 h-1.5 rounded-full mx-1"
+            style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }} />
           <button
             onClick={handleDelete}
-            className="btn-icon w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Supprimer"
+            className="p-1.5 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+            aria-label="Supprimer"
           >
             <Trash size={14} />
           </button>
         </div>
       </div>
+
+      {/* Inline quantity edit panel */}
+      <AnimatePresence initial={false}>
+        {editing && (
+          <motion.div
+            key="edit"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="pb-3 pl-8 pr-2">
+              <div className="flex items-center gap-2 p-3 rounded-xl"
+                style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.2)" }}>
+                <button
+                  onClick={() => setEditGrams((v) => String(Math.max(1, (parseFloat(v) || 1) - 10)))}
+                  className="btn-icon w-7 h-7 flex-shrink-0"
+                  style={{ fontSize: "18px" }}>
+                  −
+                </button>
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    value={editGrams}
+                    onChange={(e) => setEditGrams(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false); }}
+                    className="input text-center text-[14px] tabular-nums pr-7"
+                    min="1"
+                    autoFocus
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]"
+                    style={{ color: "var(--text-muted)" }}>g</span>
+                </div>
+                <button
+                  onClick={() => setEditGrams((v) => String((parseFloat(v) || 0) + 10))}
+                  className="btn-icon w-7 h-7 flex-shrink-0"
+                  style={{ fontSize: "18px" }}>
+                  +
+                </button>
+                {previewN && (
+                  <span className="text-[12px] font-semibold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
+                    → {Math.round(previewN.calories)} kcal
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={editSaving}
+                  className="btn btn-primary flex-1 gap-1.5 text-[12px]"
+                  style={{ height: "32px" }}>
+                  {editSaving ? <Spinner size={11} className="animate-spin" /> : "Sauvegarder"}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="btn btn-ghost px-3 text-[12px]"
+                  style={{ height: "32px" }}>
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Micro-nutrient panel */}
       <AnimatePresence initial={false}>

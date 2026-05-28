@@ -42,6 +42,10 @@ export default function MealSection({
     onEntriesChange(meal, entries.filter((e) => e.id !== id));
   };
 
+  const handleUpdate = (id: string, updated: FoodEntry) => {
+    onEntriesChange(meal, entries.map((e) => (e.id === id ? updated : e)));
+  };
+
   const handleAdded = async (info: AddedInfo) => {
     const res = await fetch(`/api/log?date=${date}`);
     const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
@@ -200,7 +204,7 @@ export default function MealSection({
               {entries.length > 0 ? (
                 <div className="py-1">
                   {entries.map((entry) => (
-                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} />
+                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate} />
                   ))}
                 </div>
               ) : (
