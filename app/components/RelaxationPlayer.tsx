@@ -242,10 +242,11 @@ export default function RelaxationPlayer() {
     setElapsed(0);
   }, []);
 
-  const play = useCallback((id: string) => {
+  const play = useCallback(async (id: string) => {
     stopAll();
     try {
-      const ctx    = new AudioContext();
+      const ctx = new AudioContext();
+      if (ctx.state === "suspended") await ctx.resume();
       const master = ctx.createGain();
       master.gain.value = volume;
       master.connect(ctx.destination);
