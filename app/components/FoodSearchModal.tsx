@@ -517,7 +517,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             style={{
               background: "rgba(13,13,17,0.97)",
               border: "1px solid var(--border-strong)", borderBottom: "none",
-              backdropFilter: "blur(24px)", maxHeight: "92vh",
+              backdropFilter: "blur(24px)", height: "82vh",
             }}
           >
             {/* Drag handle + close button */}
