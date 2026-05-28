@@ -43,6 +43,7 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   usda:   { label: "USDA",            color: "var(--carbs)" },
   custom: { label: "Personnel",       color: "var(--protein)" },
   recipe: { label: "Recette",         color: "var(--calories)" },
+  ai:     { label: "IA Groq",         color: "#a855f7" },
 };
 
 const HUNGER_ICONS = [
@@ -186,6 +187,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [query, setQuery]       = useState("");
   const [results, setResults]   = useState<FoodSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [aiResults,   setAiResults]   = useState<FoodSearchResult[]>([]);
+  const [aiSearching, setAiSearching] = useState(false);
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ServingOption | null>(null);
   const [customQty, setCustomQty]   = useState("1");
@@ -237,7 +240,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   useEffect(() => {
     if (open) {
       setTab("aliments"); setStep("browse");
-      setQuery(""); setResults([]); setSelected(null);
+      setQuery(""); setResults([]); setAiResults([]); setSelected(null);
       setSelectedUnit(null); setCustomQty("1"); setUseCustomG(false); setCustomGrams("100");
       setNotes(""); setHunger(null);
       setNewMealName(""); setNewMealIcon("🍽️");
@@ -275,7 +278,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
   const browseCategory = (cat: typeof CATEGORIES[number]) => {
     setQuery(cat.label);
-    setResults([]);
+    setResults([]); setAiResults([]);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
@@ -291,7 +294,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const doSearch = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) { setResults([]); return; }
+    if (!value.trim()) { setResults([]); setAiResults([]); return; }
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
@@ -300,6 +303,18 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
         setResults(json.results ?? []);
       } finally { setSearching(false); }
     }, 320);
+  };
+
+  const handleAiSearch = async () => {
+    if (!query.trim() || aiSearching) return;
+    setAiResults([]);
+    setAiSearching(true);
+    try {
+      const res  = await fetch(`/api/food/ai-search?q=${encodeURIComponent(query)}`);
+      const json = await res.json() as { results?: FoodSearchResult[] };
+      setAiResults(json.results ?? []);
+    } catch { /* silent */ }
+    finally { setAiSearching(false); }
   };
 
   const selectFood = (food: FoodSearchResult) => {
@@ -600,8 +615,75 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     </>
                   )}
                   {query && !searching && results.length === 0 && (
-                    <div className="flex flex-col items-center gap-2 py-14">
-                      <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Aucun résultat pour &ldquo;{query}&rdquo;</p>
+                    <div className="flex flex-col items-center gap-3 py-10">
+                      <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                        Aucun résultat pour &ldquo;{query}&rdquo;
+                      </p>
+                      {aiResults.length === 0 && (
+                        <button
+                          onClick={handleAiSearch}
+                          disabled={aiSearching}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
+                          style={{
+                            background: "rgba(168,85,247,0.12)",
+                            border: "1px solid rgba(168,85,247,0.35)",
+                            color: "#a855f7",
+                          }}
+                        >
+                          {aiSearching
+                            ? <Spinner size={13} className="animate-spin" />
+                            : <span>✨</span>
+                          }
+                          {aiSearching ? "Recherche IA…" : "Rechercher avec l'IA"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {aiResults.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-[11px]">✨</span>
+                        <p className="label-xs" style={{ color: "#a855f7" }}>Résultats IA Groq</p>
+                        <p className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>— valeurs estimées</p>
+                      </div>
+                      <div className="space-y-1">
+                        {aiResults.map((r) => {
+                          const isAdding = quickAddingId === r.id;
+                          return (
+                            <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                              className="flex items-center gap-2 rounded-xl overflow-hidden"
+                              style={{ background: "rgba(168,85,247,0.05)", border: "1px solid rgba(168,85,247,0.2)" }}>
+                              <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                                <FoodImage food={r} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                    <div className="text-right flex-shrink-0">
+                                      <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
+                                    <span className="text-[10px]" style={{ color: "#a855f7" }}>IA Groq</span>
+                                  </div>
+                                  <MacroPills n={r.nutrition} />
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleQuickAdd(r)}
+                                disabled={isAdding}
+                                className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                                style={{ background: isAdding ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.1)", borderLeft: "1px solid rgba(168,85,247,0.2)" }}
+                              >
+                                {isAdding
+                                  ? <Spinner size={14} className="animate-spin" style={{ color: "#a855f7" }} />
+                                  : <Plus size={16} weight="bold" style={{ color: "#a855f7" }} />
+                                }
+                              </button>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   {!query && results.length > 0 && (
