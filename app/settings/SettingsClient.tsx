@@ -3,7 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk, SignOut } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { getClientAuth } from "@/app/lib/firebase-client";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE } from "@/app/lib/nutrition";
@@ -18,6 +21,13 @@ interface Props {
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
 export default function SettingsClient({ fitConnected: initialFit, initialGoals, initialPhotoUrl }: Props) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    try { await signOut(getClientAuth()); } catch {}
+    router.push("/login");
+  };
   const { theme, toggle } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState(initialFit);
@@ -365,6 +375,25 @@ export default function SettingsClient({ fitConnected: initialFit, initialGoals,
 
         {/* Reset stats */}
         <ResetPanel />
+
+        {/* Logout */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium transition-all"
+            style={{
+              background: "rgba(248,113,113,0.06)",
+              border: "1px solid rgba(248,113,113,0.2)",
+              color: "#f87171",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.12)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.06)")}
+          >
+            <SignOut size={15} />
+            Se déconnecter / Changer de compte
+          </button>
+        </motion.div>
 
       </div>
     </div>

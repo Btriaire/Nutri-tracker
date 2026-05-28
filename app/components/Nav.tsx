@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart } from "@phosphor-icons/react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { getClientAuth } from "@/app/lib/firebase-client";
+import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart, SignOut } from "@phosphor-icons/react";
 
 const TABS = [
   { href: "/dashboard", icon: HouseSimple,      label: "Accueil"   },
@@ -15,9 +18,16 @@ const TABS = [
 ] as const;
 
 export default function Nav() {
-  const path = usePathname();
-  const [photoUrl,     setPhotoUrl]     = useState<string | null>(null);
-  const [displayName,  setDisplayName]  = useState<string>("");
+  const path   = usePathname();
+  const router = useRouter();
+  const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
+
+  const handleLogout = useCallback(async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    try { await signOut(getClientAuth()); } catch {}
+    router.push("/login");
+  }, [router]);
 
   useEffect(() => {
     fetch("/api/goals")
@@ -115,31 +125,43 @@ export default function Nav() {
           );
         })}
 
-        {/* Profile avatar at bottom */}
+        {/* Profile + logout at bottom */}
         <div className="mt-auto pt-3" style={{ borderTop: "1px solid var(--nav-border)" }}>
-          <Link
-            href="/settings"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all"
-            style={{
-              background: path.startsWith("/settings") ? "var(--surface-active)" : "transparent",
-              border: "1px solid transparent",
-            }}
-          >
-            <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-              style={{ border: "1.5px solid var(--border-strong)" }}>
-              {photoUrl ? (
-                <img src={photoUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[11px] font-semibold"
-                  style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
-                  {displayName ? displayName[0].toUpperCase() : "N"}
-                </div>
-              )}
-            </div>
-            <span className="text-[12px] truncate" style={{ color: "var(--text-secondary)" }}>
-              {displayName ? displayName.split(" ")[0] : "Mon profil"}
-            </span>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/settings"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all flex-1 min-w-0"
+              style={{
+                background: path.startsWith("/settings") ? "var(--surface-active)" : "transparent",
+                border: "1px solid transparent",
+              }}
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
+                style={{ border: "1.5px solid var(--border-strong)" }}>
+                {photoUrl ? (
+                  <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[11px] font-semibold"
+                    style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
+                    {displayName ? displayName[0].toUpperCase() : "N"}
+                  </div>
+                )}
+              </div>
+              <span className="text-[12px] truncate" style={{ color: "var(--text-secondary)" }}>
+                {displayName ? displayName.split(" ")[0] : "Mon profil"}
+              </span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              title="Se déconnecter"
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors flex-shrink-0"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+            >
+              <SignOut size={16} />
+            </button>
+          </div>
         </div>
       </nav>
     </>
