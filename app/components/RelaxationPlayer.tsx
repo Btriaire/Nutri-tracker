@@ -38,9 +38,10 @@ interface AudioEngine {
   setVolume: (v: number) => void;
 }
 
+// Small 1-second loop buffer — avoids heavy computation on mobile
 function makeNoiseBuffer(ctx: AudioContext, kind: "white" | "pink" | "brown"): AudioBuffer {
-  const sr  = ctx.sampleRate;
-  const len = sr * 4; // 4-second looping buffer
+  const sr  = ctx.sampleRate || 44100;
+  const len = Math.ceil(sr * 1); // 1 second
   const buf = ctx.createBuffer(1, len, sr);
   const d   = buf.getChannelData(0);
 
@@ -68,7 +69,7 @@ function makeNoiseBuffer(ctx: AudioContext, kind: "white" | "pink" | "brown"): A
 
 function noiseSource(ctx: AudioContext, kind: "white" | "pink" | "brown"): AudioBufferSourceNode {
   const src = ctx.createBufferSource();
-  src.buffer = src.buffer = makeNoiseBuffer(ctx, kind);
+  src.buffer = makeNoiseBuffer(ctx, kind);
   src.loop = true;
   return src;
 }
@@ -77,7 +78,7 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
   const gain = ctx.createGain();
   gain.connect(master);
 
-  const nodes: (AudioScheduledSourceNode | AudioNode)[] = [];
+  const nodes: AudioNode[] = [];
   const intervals: ReturnType<typeof setInterval>[] = [];
 
   const osc = (freq: number, type: OscillatorType = "sine"): OscillatorNode => {
@@ -114,11 +115,15 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
       const s = ns("pink");
       const lp = bq("lowpass", 550);
       const wg = g(0.65);
-      const lfoO = osc(0.14);
-      const lfoG = g(0.32);
-      lfoO.connect(lfoG); lfoG.connect(wg.gain);
       s.connect(lp); lp.connect(wg); wg.connect(gain);
-      s.start(); lfoO.start();
+      s.start();
+      // JS-based LFO (more compatible than AudioParam connection)
+      let t = 0;
+      const iv = setInterval(() => {
+        t += 0.05;
+        wg.gain.value = 0.45 + 0.35 * Math.sin(t * 0.14 * 2 * Math.PI);
+      }, 50);
+      intervals.push(iv);
       break;
     }
 
@@ -129,7 +134,6 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
       s.connect(bp); bp.connect(wg); wg.connect(gain);
       s.start();
 
-      // Bird chirps
       const chirp = () => {
         const o = ctx.createOscillator();
         const og = ctx.createGain();
@@ -152,58 +156,69 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
     case "fire": {
       const s = ns("brown");
       const lp = bq("lowpass", 900);
-      const cg = g(0.7);
-      const cOsc = osc(9, "sawtooth");
-      const cOscG = g(0.22);
-      cOsc.connect(cOscG); cOscG.connect(cg.gain);
-      s.connect(lp); lp.connect(cg); cg.connect(gain);
-      s.start(); cOsc.start();
+      const wg = g(0.7);
+      s.connect(lp); lp.connect(wg); wg.connect(gain);
+      s.start();
+      // JS crackle LFO
+      let t = 0;
+      const iv = setInterval(() => {
+        t += 0.05;
+        wg.gain.value = 0.5 + 0.25 * Math.sin(t * 9 * 2 * Math.PI) + 0.15 * (Math.random() - 0.5);
+      }, 50);
+      intervals.push(iv);
       break;
     }
 
     case "tibetan": {
       [432, 864, 1296].forEach((freq, i) => {
         const o = osc(freq);
-        const og = g(0);
-        og.gain.linearRampToValueAtTime(0.14/(i+1), ctx.currentTime + 2.5);
+        const og = g(0.01);
+        og.gain.linearRampToValueAtTime(0.14/(i+1), ctx.currentTime + 0.8);
         o.connect(og); og.connect(gain);
         o.start();
       });
-      const lfoO = osc(0.4);
-      const lfoG = g(0.03);
-      lfoO.connect(lfoG); lfoG.connect(gain.gain);
-      lfoO.start();
+      // Slow breath modulation via JS
+      let t = 0;
+      const iv = setInterval(() => {
+        t += 0.05;
+        gain.gain.value = 0.85 + 0.15 * Math.sin(t * 0.4 * 2 * Math.PI);
+      }, 50);
+      intervals.push(iv);
       break;
     }
 
     case "wind": {
       const s = ns("brown");
       const bp = bq("bandpass", 300, 3.5);
-      const lfoO = osc(0.07);
-      const lfoG = g(180);
-      lfoO.connect(lfoG); lfoG.connect(bp.frequency);
       s.connect(bp); bp.connect(gain);
-      s.start(); lfoO.start();
+      s.start();
+      // JS-based sweeping filter
+      let t = 0;
+      const iv = setInterval(() => {
+        t += 0.05;
+        bp.frequency.value = 200 + 200 * Math.sin(t * 0.07 * 2 * Math.PI);
+      }, 50);
+      intervals.push(iv);
       break;
     }
 
     case "binaural": {
-      // Merge stereo: left=200Hz, right=210Hz → 10Hz alpha beat
       const merger = ctx.createChannelMerger(2);
 
-      const left = osc(200); const lg = g(0.12);
+      const left = osc(200); const lg = g(0.15);
       left.connect(lg); lg.connect(merger, 0, 0);
 
-      const right = osc(210); const rg = g(0.12);
+      const right = osc(210); const rg = g(0.15);
       right.connect(rg); rg.connect(merger, 0, 1);
+
+      merger.connect(gain);
+      left.start(); right.start();
 
       const s = ns("pink");
       const lp = bq("lowpass", 320);
-      const ng = g(0.18);
+      const ng = g(0.12);
       s.connect(lp); lp.connect(ng); ng.connect(gain);
-
-      merger.connect(gain);
-      left.start(); right.start(); s.start();
+      s.start();
       break;
     }
   }
@@ -217,7 +232,7 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
       try { ctx.close(); } catch {}
     },
     setVolume: (v) => {
-      gain.gain.linearRampToValueAtTime(v, ctx.currentTime + 0.15);
+      gain.gain.value = v;
     },
   };
 }
@@ -242,18 +257,21 @@ export default function RelaxationPlayer() {
     setElapsed(0);
   }, []);
 
-  const play = useCallback(async (id: string) => {
+  const play = useCallback((id: string) => {
     stopAll();
     try {
       const ctx = new AudioContext();
-      if (ctx.state === "suspended") await ctx.resume();
+      // resume() called synchronously inside the user-gesture handler (required on iOS)
+      ctx.resume().catch(() => {});
       const master = ctx.createGain();
       master.gain.value = volume;
       master.connect(ctx.destination);
       engineRef.current = buildEngine(ctx, id, master);
       setPlaying(id);
       setElapsed(0);
-    } catch { /* AudioContext unavailable */ }
+    } catch (e) {
+      console.error("RelaxationPlayer:", e);
+    }
   }, [stopAll, volume]);
 
   const handleTimer = useCallback((minutes: number) => {
