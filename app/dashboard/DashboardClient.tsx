@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp } from "@phosphor-icons/react";
+import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp, ArrowsClockwise } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
@@ -106,6 +106,8 @@ export default function DashboardClient({
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
   const [bilanMode, setBilanMode] = useState<"%" | "g">("%");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
 
   // Silent background sync on every dashboard open
   useEffect(() => {
@@ -115,6 +117,22 @@ export default function DashboardClient({
       body: JSON.stringify({}),
     }).catch(() => {});
   }, [date]);
+
+  const handleForceSync = async () => {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      await Promise.all([
+        fetch("/api/google-fit/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }),
+        fetch("/api/withings/sync",   { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date }) }),
+      ]);
+      setSyncMsg("✓");
+      setTimeout(() => { window.location.reload(); }, 600);
+    } catch {
+      setSyncMsg("!");
+      setSyncing(false);
+    }
+  };
 
   // Greeting
   const hour = new Date().getHours();
@@ -210,18 +228,33 @@ export default function DashboardClient({
                 </h1>
               </div>
             </div>
-            {/* Daily score dots */}
+            {/* Daily score dots + sync */}
             <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
-              <div className="flex gap-1.5">
-                {objectives.map((ok, i) => (
-                  <motion.div key={i}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2 + i * 0.07, type: "spring", stiffness: 400 }}
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.1)" }}
-                  />
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  {objectives.map((ok, i) => (
+                    <motion.div key={i}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2 + i * 0.07, type: "spring", stiffness: 400 }}
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.1)" }}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={handleForceSync}
+                  disabled={syncing}
+                  title="Synchroniser maintenant"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: syncMsg === "✓" ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)" }}>
+                  {syncing
+                    ? <ArrowsClockwise size={13} className="animate-spin" />
+                    : syncMsg
+                      ? <span className="text-[11px] font-bold">{syncMsg}</span>
+                      : <ArrowsClockwise size={13} />
+                  }
+                </button>
               </div>
               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                 {score}/4 objectifs
