@@ -11,7 +11,6 @@ import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE } from "@/app/lib/nutrition";
 import type { NutritionGoals, ActivityLevel, Gender } from "@/app/lib/types";
-import AppleHealthCard from "@/app/components/AppleHealthCard";
 
 interface Props {
   fitConnected:      boolean;
@@ -374,16 +373,6 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               Connecter Google Fit
             </a>
           )}
-        </motion.div>
-
-        {/* Apple Health card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.08 }}
-          className="mb-4"
-        >
-          <AppleHealthCard />
         </motion.div>
 
         {/* Withings card */}
