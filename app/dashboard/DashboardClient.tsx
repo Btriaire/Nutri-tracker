@@ -229,6 +229,11 @@ export default function DashboardClient({
           </div>
         </motion.div>
 
+        {/* Fun Facts banner */}
+        <motion.div {...fade(0.04)} className="mb-4">
+          <FunFactsBanner />
+        </motion.div>
+
         {/* ── Hero card: ring + macros + journal ── */}
         <motion.div {...fade(0.05)} className="glass p-5 mb-4">
           {/* Calorie ring */}
@@ -466,11 +471,6 @@ export default function DashboardClient({
             </div>
           </motion.div>
         )}
-
-        {/* Fun Facts banner */}
-        <motion.div {...fade(0.175)}>
-          <FunFactsBanner />
-        </motion.div>
 
         {/* Water tracker */}
         <motion.div {...fade(0.19)} className="mb-4">
