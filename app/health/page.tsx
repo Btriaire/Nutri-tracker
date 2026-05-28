@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 import type { HealthEntry, FitnessDay, NutritionGoals } from "@/app/lib/types";
-import type { CardioPoint } from "@/app/api/cardio/route";
+import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import HealthClient from "./HealthClient";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
@@ -28,6 +28,7 @@ export default async function HealthPage() {
   let entry: HealthData | null = null;
   const trend: HealthData[]    = [];
   const cardioPoints: CardioPoint[] = [];
+  const withingsPoints: WithingsPoint[] = [];
   let age: number | undefined  = undefined;
 
   try {
@@ -54,8 +55,11 @@ export default async function HealthPage() {
     for (const d of fitnessSnap.docs) {
       const fd = d.data() as FitnessDay;
       const gf = fd.googleFit;
+      const wt = fd.withings;
+      const dateStr = fd.date ?? d.id;
+
       cardioPoints.push({
-        date:         fd.date ?? d.id,
+        date:         dateStr,
         hrAvg:        gf?.heartRateAvg ?? null,
         hrMin:        null,
         hrMax:        null,
@@ -63,6 +67,17 @@ export default async function HealthPage() {
         steps:        gf?.steps ?? 0,
         sleepMinutes: gf?.sleepMinutes ?? null,
       });
+
+      // Only push Withings point if there's at least one measurement
+      if (wt && (wt.weightKg || wt.bodyFatPct || wt.muscleMassKg || wt.fatMassKg)) {
+        withingsPoints.push({
+          date:         dateStr,
+          weightKg:     wt.weightKg     ?? null,
+          bodyFatPct:   wt.bodyFatPct   ?? null,
+          muscleMassKg: wt.muscleMassKg ?? null,
+          fatMassKg:    wt.fatMassKg    ?? null,
+        });
+      }
     }
 
     if (goalsSnap.exists) {
@@ -79,6 +94,7 @@ export default async function HealthPage() {
       initialEntry={entry}
       trend={trend}
       cardioPoints={cardioPoints}
+      withingsPoints={withingsPoints}
       age={age}
     />
   );

@@ -8,14 +8,14 @@ import { fr } from "date-fns/locale";
 import {
   CaretLeft, CaretRight, Plus, X, Heartbeat, Thermometer,
   Drop, Spinner, Trash, PencilSimple, Heart, Note,
-  Lightning, Moon, Warning, CheckCircle, ArrowDown, ArrowUp, Minus,
+  Lightning, Moon, Warning, CheckCircle, ArrowDown, ArrowUp, Minus, ArrowsClockwise,
 } from "@phosphor-icons/react";
 import {
   LineChart, Line, AreaChart, Area,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from "recharts";
 import type { BloodPressureReading, BPMoment, HealthEntry } from "@/app/lib/types";
-import type { CardioPoint } from "@/app/api/cardio/route";
+import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import RelaxationPlayer from "@/app/components/RelaxationPlayer";
 
@@ -23,11 +23,12 @@ type HealthData = Omit<HealthEntry, "updatedAt">;
 type HealthTab = "vitaux" | "cardiaque" | "bienetre";
 
 interface Props {
-  date:          string;
-  initialEntry:  HealthData | null;
-  trend:         HealthData[];
-  cardioPoints:  CardioPoint[];
-  age?:          number;
+  date:           string;
+  initialEntry:   HealthData | null;
+  trend:          HealthData[];
+  cardioPoints:   CardioPoint[];
+  withingsPoints: WithingsPoint[];
+  age?:           number;
 }
 
 // ─── BP Category ────────────────────────────────────────────────────────────
@@ -112,7 +113,7 @@ const fade = (delay = 0) => ({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function HealthClient({ date: initialDate, initialEntry, trend, cardioPoints, age }: Props) {
+export default function HealthClient({ date: initialDate, initialEntry, trend, cardioPoints, withingsPoints, age }: Props) {
   const [date,       setDate]       = useState(initialDate);
   const [entry,      setEntry]      = useState<HealthData | null>(initialEntry);
   const [loading,    setLoading]    = useState(false);
@@ -264,6 +265,26 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     ...p,
     label: format(parseISO(p.date), "dd/MM"),
   }));
+
+  // Withings derived — most recent non-null values (not re-used from Google Fit)
+  const latestW  = [...withingsPoints].reverse().find(p => p.weightKg     !== null);
+  const latestF  = [...withingsPoints].reverse().find(p => p.bodyFatPct   !== null);
+  const latestM  = [...withingsPoints].reverse().find(p => p.muscleMassKg !== null);
+  const latestFm = [...withingsPoints].reverse().find(p => p.fatMassKg    !== null);
+  const weightChartData = withingsPoints
+    .filter(p => p.weightKg !== null)
+    .map(p => ({ label: format(parseISO(p.date), "dd/MM"), kg: p.weightKg! }));
+  const [wSyncing, setWSyncing] = useState(false);
+  const [wSyncMsg, setWSyncMsg] = useState("");
+  const handleWithingsSync = async () => {
+    setWSyncing(true); setWSyncMsg("");
+    try {
+      const res = await fetch("/api/withings/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ days: 90 }) });
+      const j = await res.json() as { ok: boolean; days?: number };
+      setWSyncMsg(j.ok ? `${j.days ?? 0} mesure(s) importée(s)` : "Aucune mesure");
+    } catch { setWSyncMsg("Erreur réseau"); }
+    finally { setWSyncing(false); }
+  };
 
   const today = isToday(parseISO(date + "T12:00:00"));
   const dateLabel = today
@@ -553,6 +574,93 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   </motion.button>
                 )}
               </AnimatePresence>
+            </motion.div>
+
+            {/* ── Composition corporelle (Withings) ── */}
+            <motion.div {...fade(0.18)} className="glass p-5 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,rgba(0,150,255,0.15),rgba(0,200,180,0.15))" }}>
+                    ⚖️
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Composition corporelle</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Withings · balance connectée</p>
+                  </div>
+                </div>
+                <button onClick={handleWithingsSync} disabled={wSyncing}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  {wSyncing ? <Spinner size={11} className="animate-spin" /> : <ArrowsClockwise size={11} />}
+                  Sync
+                </button>
+              </div>
+
+              {wSyncMsg && (
+                <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
+              )}
+
+              {!latestW && !latestF && !latestM ? (
+                <p className="text-[12px] text-center py-4" style={{ color: "var(--text-muted)" }}>
+                  Aucune mesure Withings — connecte ta balance dans les Réglages
+                </p>
+              ) : (
+                <>
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {[
+                      { label: "Poids",          value: latestW?.weightKg     ?? null, unit: "kg",  color: "#60a5fa", fmt: (v: number) => v.toFixed(1) },
+                      { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "#fb923c", fmt: (v: number) => v.toFixed(1) },
+                      { label: "Masse musculaire",value: latestM?.muscleMassKg ?? null, unit: "kg",  color: "#34d399", fmt: (v: number) => v.toFixed(1) },
+                      { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "#f87171", fmt: (v: number) => v.toFixed(1) },
+                    ].map(({ label, value, unit, color, fmt }) => (
+                      <div key={label} className="rounded-xl p-3"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                        {value !== null
+                          ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
+                              {fmt(value)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+                            </p>
+                          : <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>—</p>
+                        }
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Weight trend mini chart */}
+                  {weightChartData.length > 1 && (
+                    <div>
+                      <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
+                      <ResponsiveContainer width="100%" height={80}>
+                        <LineChart data={weightChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                          <XAxis dataKey="label" hide />
+                          <YAxis domain={["auto", "auto"]} hide />
+                          <Tooltip
+                            content={({ active, payload, label: lbl }) => {
+                              if (!active || !payload?.length) return null;
+                              return (
+                                <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                                  style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                  <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                                  <p className="font-bold" style={{ color: "#60a5fa" }}>{(payload[0].value as number).toFixed(1)} kg</p>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Line type="monotone" dataKey="kg" stroke="#60a5fa" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {latestW && (
+                    <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                      Dernière mesure : {format(parseISO(latestW.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
+                    </p>
+                  )}
+                </>
+              )}
             </motion.div>
           </>
         )}

@@ -15,6 +15,14 @@ export interface CardioPoint {
   sleepMinutes: number | null;
 }
 
+export interface WithingsPoint {
+  date:         string;
+  weightKg:     number | null;
+  bodyFatPct:   number | null;
+  muscleMassKg: number | null;
+  fatMassKg:    number | null;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const days = Math.min(parseInt(searchParams.get("days") ?? "30"), 90);
