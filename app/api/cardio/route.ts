@@ -6,13 +6,14 @@ import { subDays, format } from "date-fns";
 export const dynamic = "force-dynamic";
 
 export interface CardioPoint {
-  date:         string;
-  hrAvg:        number | null;
-  hrMin:        number | null;
-  hrMax:        number | null;
-  activeMin:    number;
-  steps:        number;
-  sleepMinutes: number | null;
+  date:           string;
+  hrAvg:          number | null;
+  hrMin:          number | null;
+  hrMax:          number | null;
+  activeMin:      number;
+  activeCalories: number;
+  steps:          number;
+  sleepMinutes:   number | null;
 }
 
 export interface WithingsPoint {
@@ -50,13 +51,14 @@ export async function GET(req: NextRequest) {
       const snap = snaps[i];
       const gf = snap.exists ? (snap.data() as { googleFit?: GoogleFitDay }).googleFit : undefined;
       points.push({
-        date:         batch[i],
-        hrAvg:        gf?.heartRateAvg ?? null,
-        hrMin:        null,
-        hrMax:        null,
-        activeMin:    gf?.activeMinutes ?? 0,
-        steps:        gf?.steps ?? 0,
-        sleepMinutes: gf?.sleepMinutes ?? null,
+        date:           batch[i],
+        hrAvg:          gf?.heartRateAvg ?? null,
+        hrMin:          null,
+        hrMax:          null,
+        activeMin:      gf?.activeMinutes ?? 0,
+        activeCalories: gf?.activeCaloriesBurned ?? 0,
+        steps:          gf?.steps ?? 0,
+        sleepMinutes:   gf?.sleepMinutes ?? null,
       });
     }
   }

@@ -11,7 +11,7 @@ import {
   Lightning, Moon, Warning, CheckCircle, ArrowDown, ArrowUp, Minus, ArrowsClockwise,
 } from "@phosphor-icons/react";
 import {
-  LineChart, Line, AreaChart, Area,
+  LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from "recharts";
 import type { BloodPressureReading, BPMoment, HealthEntry } from "@/app/lib/types";
@@ -752,105 +752,127 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               ))}
             </motion.div>
 
-            {/* HR history chart */}
+            {/* ── Vue synthèse combinée ── */}
             <motion.div {...fade(0.14)} className="glass p-4 mb-4">
-              <p className="label-xs mb-3">Évolution BPM</p>
-              {hrPoints.length > 0 ? (
-                <ResponsiveContainer width="100%" height={140}>
-                  <AreaChart data={cardioChartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+              {/* Legend */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="label-xs">Vue synthèse</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  {[
+                    { label: "BPM",       color: "#EA4335" },
+                    { label: "Calories",  color: "#06b6d4" },
+                    { label: "Activité",  color: "#34A853" },
+                    { label: "Sommeil",   color: "#7986CB" },
+                  ].map(({ label, color }) => (
+                    <div key={label} className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+                      <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* BPM — line */}
+              <div className="mb-0.5">
+                <p className="text-[8px] font-medium mb-0.5" style={{ color: "#EA4335" }}>BPM</p>
+                <ResponsiveContainer width="100%" height={68}>
+                  <AreaChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#EA4335" stopOpacity={0.3} />
+                      <linearGradient id="g-hr" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#EA4335" stopOpacity={0.25} />
                         <stop offset="95%" stopColor="#EA4335" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
-                    <Tooltip content={<HrTooltip />} />
-                    <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" />
-                    <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" />
-                    <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "#EA4335" }} />
+                    <XAxis dataKey="label" hide />
+                    <YAxis domain={["auto","auto"]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <ReferenceLine y={60}  stroke="rgba(129,140,248,0.2)" strokeDasharray="3 3" />
+                    <ReferenceLine y={100} stroke="rgba(248,113,113,0.2)" strokeDasharray="3 3" />
+                    <Tooltip content={({ active, payload, label: lbl }) => {
+                      if (!active || !payload?.length) return null;
+                      const v = payload[0]?.value as number | null;
+                      if (!v) return null;
+                      const z = hrZone(v, fcMax);
+                      return (
+                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                          <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                          <p className="font-bold" style={{ color: z.color }}>{v} bpm · {z.label}</p>
+                        </div>
+                      );
+                    }} />
+                    <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={1.5} fill="url(#g-hr)" dot={false} connectNulls />
                   </AreaChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[100px]">
-                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                    Pas de données FC — synchronisez Google Fit
-                  </p>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                {[
-                  { label: "Repos < 60",    color: "var(--fit-indigo)" },
-                  { label: "Normal 60–100", color: "var(--fit-green)" },
-                  { label: "Élevé > 100",   color: "var(--fit-red)" },
-                ].map(({ label, color }) => (
-                  <div key={label} className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                  </div>
-                ))}
               </div>
-            </motion.div>
 
-            {/* Active minutes chart */}
-            <motion.div {...fade(0.16)} className="glass p-4 mb-4">
-              <p className="label-xs mb-3">Minutes actives</p>
-              <ResponsiveContainer width="100%" height={90}>
-                <AreaChart data={cardioChartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#34A853" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                  <Tooltip content={({ active, payload, label: lbl }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
-                        style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
-                        <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                        <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
-                      </div>
-                    );
-                  }} />
-                  <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 3" />
-                  <Area type="monotone" dataKey="activeMin" stroke="#34A853" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
-                </AreaChart>
-              </ResponsiveContainer>
-            </motion.div>
+              <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                {/* Calories — bar */}
+                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#06b6d4" }}>Calories actives (kcal)</p>
+                <ResponsiveContainer width="100%" height={52}>
+                  <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
+                    <XAxis dataKey="label" hide />
+                    <YAxis tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <Tooltip content={({ active, payload, label: lbl }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                          <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                          <p className="font-bold" style={{ color: "#06b6d4" }}>{payload[0]?.value} kcal</p>
+                        </div>
+                      );
+                    }} />
+                    <Bar dataKey="activeCalories" fill="#06b6d4" fillOpacity={0.7} radius={[2,2,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-            {/* Sleep chart */}
-            <motion.div {...fade(0.18)} className="glass p-4 mb-4">
-              <p className="label-xs mb-3">Sommeil</p>
-              <ResponsiveContainer width="100%" height={90}>
-                <AreaChart data={cardioChartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#7986CB" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#7986CB" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                  <Tooltip content={({ active, payload, label: lbl }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
-                        style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
-                        <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                        <p style={{ color: "var(--fit-indigo)" }} className="font-bold">{fmtSleep(payload[0]?.value as number)}</p>
-                      </div>
-                    );
-                  }} />
-                  <ReferenceLine y={420} stroke="rgba(121,134,203,0.3)" strokeDasharray="4 3" />
-                  <Area type="monotone" dataKey="sleepMinutes" stroke="#7986CB" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
-                </AreaChart>
-              </ResponsiveContainer>
-              <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
+              <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                {/* Activité — bar */}
+                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#34A853" }}>Activité (min)</p>
+                <ResponsiveContainer width="100%" height={52}>
+                  <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
+                    <XAxis dataKey="label" hide />
+                    <YAxis tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="3 3" />
+                    <Tooltip content={({ active, payload, label: lbl }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                          <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                          <p className="font-bold" style={{ color: "#34A853" }}>{payload[0]?.value} min</p>
+                        </div>
+                      );
+                    }} />
+                    <Bar dataKey="activeMin" fill="#34A853" fillOpacity={0.7} radius={[2,2,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                {/* Sommeil — bar avec X axis */}
+                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#7986CB" }}>Sommeil (h) · — objectif 7h</p>
+                <ResponsiveContainer width="100%" height={65}>
+                  <BarChart syncId="hs"
+                    data={cardioChartData.map(p => ({ ...p, sleepH: p.sleepMinutes != null ? Math.round(p.sleepMinutes / 60 * 10) / 10 : null }))}
+                    margin={{ top: 2, right: 2, left: 0, bottom: 0 }}
+                    barSize={4}
+                  >
+                    <XAxis dataKey="label" tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={4} />
+                    <ReferenceLine y={7} stroke="rgba(121,134,203,0.4)" strokeDasharray="3 3" />
+                    <Tooltip content={({ active, payload, label: lbl }) => {
+                      if (!active || !payload?.length) return null;
+                      const v = payload[0]?.value as number | null;
+                      return (
+                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                          <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                          <p className="font-bold" style={{ color: "#7986CB" }}>{v != null ? `${v}h` : "—"}</p>
+                        </div>
+                      );
+                    }} />
+                    <Bar dataKey="sleepH" fill="#7986CB" fillOpacity={0.7} radius={[2,2,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </motion.div>
 
             {/* Daily log table */}

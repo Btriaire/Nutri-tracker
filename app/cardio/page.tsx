@@ -28,12 +28,13 @@ export default async function CardioPage() {
       : undefined;
     return {
       date:         dates[i],
-      hrAvg:        gf?.heartRateAvg ?? null,
-      hrMin:        null,
-      hrMax:        null,
-      activeMin:    gf?.activeMinutes ?? 0,
-      steps:        gf?.steps ?? 0,
-      sleepMinutes: gf?.sleepMinutes ?? null,
+      hrAvg:          gf?.heartRateAvg ?? null,
+      hrMin:          null,
+      hrMax:          null,
+      activeMin:      gf?.activeMinutes ?? 0,
+      activeCalories: gf?.activeCaloriesBurned ?? 0,
+      steps:          gf?.steps ?? 0,
+      sleepMinutes:   gf?.sleepMinutes ?? null,
     };
   });
 

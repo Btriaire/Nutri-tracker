@@ -105,6 +105,7 @@ export default function DashboardClient({
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
+  const [bilanMode, setBilanMode] = useState<"%" | "g">("%");
 
   // Silent background sync on every dashboard open
   useEffect(() => {
@@ -131,15 +132,15 @@ export default function DashboardClient({
   const score = objectives.filter(Boolean).length;
 
   // Bilan du jour metrics
-  const bilanMetrics: { label: string; pct: number | null }[] = [
-    { label: "Calories",  pct: goals.dailyCalories > 0 ? Math.min(consumed.calories / goals.dailyCalories * 100, 100) : null },
-    { label: "Protéines", pct: goals.proteinGrams  > 0 ? Math.min(consumed.proteinG  / goals.proteinGrams  * 100, 100) : null },
-    { label: "Glucides",  pct: goals.carbsGrams    > 0 ? Math.min(consumed.carbsG    / goals.carbsGrams    * 100, 100) : null },
-    { label: "Lipides",   pct: goals.fatGrams      > 0 ? Math.min(consumed.fatG      / goals.fatGrams      * 100, 100) : null },
-    { label: "Fibres",    pct: goals.fiberGrams    > 0 ? Math.min(consumed.fiberG    / goals.fiberGrams    * 100, 100) : null },
-    { label: "Eau",       pct: (goals.waterMl ?? 2000) > 0 ? Math.min(initialWaterMl / (goals.waterMl ?? 2000) * 100, 100) : null },
-    { label: "Pas",       pct: steps !== null ? Math.min(steps / stepsGoal * 100, 100) : null },
-    { label: "Sommeil",   pct: sleepMinutes !== null ? Math.min(sleepMinutes / sleepGoalMin * 100, 100) : null },
+  const bilanMetrics: { label: string; pct: number | null; value: number | null; goalVal: number; unit: string }[] = [
+    { label: "Calories",  pct: goals.dailyCalories > 0 ? Math.min(consumed.calories / goals.dailyCalories * 100, 100) : null, value: Math.round(consumed.calories), goalVal: goals.dailyCalories, unit: "kcal" },
+    { label: "Protéines", pct: goals.proteinGrams  > 0 ? Math.min(consumed.proteinG  / goals.proteinGrams  * 100, 100) : null, value: Math.round(consumed.proteinG),  goalVal: goals.proteinGrams,  unit: "g" },
+    { label: "Glucides",  pct: goals.carbsGrams    > 0 ? Math.min(consumed.carbsG    / goals.carbsGrams    * 100, 100) : null, value: Math.round(consumed.carbsG),    goalVal: goals.carbsGrams,    unit: "g" },
+    { label: "Lipides",   pct: goals.fatGrams      > 0 ? Math.min(consumed.fatG      / goals.fatGrams      * 100, 100) : null, value: Math.round(consumed.fatG),      goalVal: goals.fatGrams,      unit: "g" },
+    { label: "Fibres",    pct: goals.fiberGrams    > 0 ? Math.min(consumed.fiberG    / goals.fiberGrams    * 100, 100) : null, value: Math.round(consumed.fiberG),    goalVal: goals.fiberGrams,    unit: "g" },
+    { label: "Eau",       pct: (goals.waterMl ?? 2000) > 0 ? Math.min(waterMl / (goals.waterMl ?? 2000) * 100, 100) : null, value: waterMl, goalVal: goals.waterMl ?? 2000, unit: "mL" },
+    { label: "Pas",       pct: steps !== null ? Math.min(steps / stepsGoal * 100, 100) : null, value: steps, goalVal: stepsGoal, unit: "" },
+    { label: "Sommeil",   pct: sleepMinutes !== null ? Math.min(sleepMinutes / sleepGoalMin * 100, 100) : null, value: sleepMinutes ? Math.round(sleepMinutes / 60 * 10) / 10 : null, goalVal: Math.round(sleepGoalMin / 60 * 10) / 10, unit: "h" },
   ];
   const knownPcts = bilanMetrics.filter(m => m.pct !== null).map(m => m.pct as number);
   const overallScore = knownPcts.length > 0
@@ -287,16 +288,42 @@ export default function DashboardClient({
               <p className="label-xs mb-0.5">Score journalier</p>
               <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Bilan du jour</p>
             </div>
-            <ScoreRing score={overallScore} />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setBilanMode(m => m === "%" ? "g" : "%")}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all"
+                style={{
+                  background: bilanMode === "g" ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)",
+                  color:      bilanMode === "g" ? "var(--calories)"        : "var(--text-muted)",
+                  border:     bilanMode === "g" ? "1px solid rgba(249,115,22,0.3)" : "1px solid var(--border)",
+                }}>
+                {bilanMode === "%" ? "% → g" : "g → %"}
+              </button>
+              <ScoreRing score={overallScore} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-x-5 gap-y-3">
-            {bilanMetrics.map(({ label, pct }) => (
+            {bilanMetrics.map(({ label, pct, value, goalVal, unit }) => (
               <div key={label}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
-                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
-                    {pct !== null ? `${Math.round(pct)}%` : "—"}
-                  </span>
+                  {bilanMode === "%" ? (
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
+                      {pct !== null ? `${Math.round(pct)}%` : "—"}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
+                      {value !== null
+                        ? unit === "" ? value.toLocaleString("fr-FR")
+                          : `${value}${unit !== "kcal" ? "" : " "}${unit}`
+                        : "—"}
+                      {value !== null && goalVal > 0 && (
+                        <span className="font-normal" style={{ color: "var(--text-muted)" }}>
+                          /{goalVal}{unit !== "" && unit !== "kcal" ? unit : unit === "kcal" ? " kcal" : ""}
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                   {pct !== null && (

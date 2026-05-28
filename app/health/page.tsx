@@ -59,13 +59,14 @@ export default async function HealthPage() {
       const dateStr = fd.date ?? d.id;
 
       cardioPoints.push({
-        date:         dateStr,
-        hrAvg:        gf?.heartRateAvg ?? null,
-        hrMin:        null,
-        hrMax:        null,
-        activeMin:    gf?.activeMinutes ?? 0,
-        steps:        gf?.steps ?? 0,
-        sleepMinutes: gf?.sleepMinutes ?? null,
+        date:           dateStr,
+        hrAvg:          gf?.heartRateAvg ?? null,
+        hrMin:          null,
+        hrMax:          null,
+        activeMin:      gf?.activeMinutes ?? 0,
+        activeCalories: gf?.activeCaloriesBurned ?? 0,
+        steps:          gf?.steps ?? 0,
+        sleepMinutes:   gf?.sleepMinutes ?? null,
       });
 
       // Only push Withings point if there's at least one measurement
