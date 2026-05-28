@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth/",
+  "/api/withings/auth",
+  "/api/withings/callback",
+  "/api/apple-health/ingest",
   "/_next/",
   "/favicon",
+  "/auth.txt",
 ];
 
 export function middleware(req: NextRequest) {
