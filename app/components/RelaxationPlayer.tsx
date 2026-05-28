@@ -237,6 +237,15 @@ function buildEngine(ctx: AudioContext, id: string, master: GainNode): AudioEngi
   };
 }
 
+// Webkit prefix needed for older iOS Safari
+type AnyAudioContext = AudioContext & { state: AudioContextState };
+function getAudioContext(): AnyAudioContext {
+  const W = window as unknown as { webkitAudioContext?: typeof AudioContext };
+  const Ctx = window.AudioContext ?? W.webkitAudioContext;
+  if (!Ctx) throw new Error("Web Audio not supported");
+  return new Ctx() as AnyAudioContext;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────
 
 export default function RelaxationPlayer() {
@@ -246,7 +255,31 @@ export default function RelaxationPlayer() {
   const [elapsed, setElapsed]   = useState(0);
 
   const engineRef = useRef<AudioEngine | null>(null);
+  const ctxRef    = useRef<AnyAudioContext | null>(null);
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Pre-create + pre-unlock the AudioContext on first user interaction
+  useEffect(() => {
+    const unlock = () => {
+      if (ctxRef.current) { ctxRef.current.resume().catch(() => {}); return; }
+      try {
+        const ctx = getAudioContext();
+        ctxRef.current = ctx;
+        ctx.resume().catch(() => {});
+      } catch {}
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("click",      unlock);
+    };
+    document.addEventListener("touchstart", unlock, { once: true, passive: true });
+    document.addEventListener("click",      unlock, { once: true });
+    return () => {
+      document.removeEventListener("touchstart", unlock);
+      document.removeEventListener("click",      unlock);
+    };
+  }, []);
+
+  // Cleanup context on unmount
+  useEffect(() => () => { ctxRef.current?.close().catch(() => {}); }, []);
 
   const stopAll = useCallback(() => {
     engineRef.current?.stop();
@@ -260,12 +293,16 @@ export default function RelaxationPlayer() {
   const play = useCallback((id: string) => {
     stopAll();
     try {
-      const ctx = new AudioContext();
-      // resume() called synchronously inside the user-gesture handler (required on iOS)
+      // Reuse or create context
+      if (!ctxRef.current) ctxRef.current = getAudioContext();
+      const ctx = ctxRef.current;
       ctx.resume().catch(() => {});
+
+      // Recreate destination chain on each play
       const master = ctx.createGain();
       master.gain.value = volume;
       master.connect(ctx.destination);
+
       engineRef.current = buildEngine(ctx, id, master);
       setPlaying(id);
       setElapsed(0);
