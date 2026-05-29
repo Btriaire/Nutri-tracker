@@ -9,8 +9,8 @@ import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 const MEALS: { key: MealType; label: string; icon: string }[] = [
   { key: "breakfast", label: "Petit-déjeuner", icon: "🌅" },
   { key: "lunch",     label: "Déjeuner",       icon: "☀️" },
-  { key: "dinner",    label: "Dîner",          icon: "🌙" },
   { key: "snacks",    label: "Collations",     icon: "🍎" },
+  { key: "dinner",    label: "Dîner",          icon: "🌙" },
 ];
 
 // ─── SVG geometry ──────────────────────────────────────────────────────────────
