@@ -46,6 +46,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
   // Full history sync state
   const [showFullSync, setShowFullSync] = useState(false);
+  const [fitOpen,     setFitOpen]     = useState(false);
+  const [withingsOpen,setWithingsOpen]= useState(false);
   const [yearsBack, setYearsBack]       = useState(5);
   const [fullSyncRunning, setFullSyncRunning] = useState(false);
   const [yearProgress, setYearProgress] = useState<YearProgress[]>([]);
@@ -224,21 +226,27 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           transition={{ duration: 0.3, delay: 0.05 }}
           className="glass p-5 mb-4"
         >
-          <div className="flex items-center gap-3 mb-4">
+          <button className="w-full flex items-center gap-3" onClick={() => setFitOpen(v => !v)}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
               style={{ background: "linear-gradient(135deg, #4285f4 0%, #34a853 50%, #ea4335 100%)" }}>
               <Lightning size={18} weight="fill" color="white" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Google Fit</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Pas · Calories · Sommeil · Poids · Séances</p>
             </div>
             {fit
-              ? <CheckCircle size={20} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <XCircle    size={20} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              ? <CheckCircle size={18} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
+              : <XCircle    size={18} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             }
-          </div>
+            {fitOpen ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+          </button>
 
+          <AnimatePresence initial={false}>
+          {fitOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+          <div className="mt-4">
           {fit ? (
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
@@ -380,6 +388,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               Connecter Google Fit
             </a>
           )}
+          </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Withings card */}
@@ -389,21 +401,27 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           transition={{ duration: 0.3, delay: 0.1 }}
           className="glass p-5 mb-4"
         >
-          <div className="flex items-center gap-3 mb-4">
+          <button className="w-full flex items-center gap-3" onClick={() => setWithingsOpen(v => !v)}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
               style={{ background: "linear-gradient(135deg, rgba(0,150,255,0.25) 0%, rgba(0,200,180,0.25) 100%)", border: "1px solid rgba(255,255,255,0.1)" }}>
               ⚖️
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Withings</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · % graisse · Masse musculaire</p>
             </div>
             {withings
-              ? <CheckCircle size={20} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <XCircle    size={20} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              ? <CheckCircle size={18} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
+              : <XCircle    size={18} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             }
-          </div>
+            {withingsOpen ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+          </button>
 
+          <AnimatePresence initial={false}>
+          {withingsOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+          <div className="mt-4">
           {withings ? (
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
@@ -439,6 +457,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               ⚖️ Connecter Withings
             </a>
           )}
+          </div>
+          </motion.div>
+          )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Chart customization */}
@@ -477,6 +499,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 // ─── Photo Panel ─────────────────────────────────────────────────────────────
 
 function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
+  const [open,     setOpen]     = useState(false);
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl ?? "");
   const [saving,   setSaving]   = useState(false);
   const [saved,    setSaved]    = useState(false);
@@ -522,18 +545,29 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
       transition={{ duration: 0.3, delay: 0.07 }}
       className="glass p-5 mt-4"
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(249,115,22,0.12)" }}>
-          <Person size={18} style={{ color: "var(--calories)" }} />
+      <button className="w-full flex items-center gap-3" onClick={() => setOpen(v => !v)}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+          style={{ border: "1.5px solid var(--border-strong)" }}>
+          {photoUrl
+            ? <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-[18px]"
+                style={{ background: "rgba(249,115,22,0.12)" }}>
+                <Person size={18} style={{ color: "var(--calories)" }} />
+              </div>
+          }
         </div>
-        <div>
+        <div className="flex-1 text-left">
           <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Photo de profil</p>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Visible sur l'accueil et la navigation</p>
         </div>
-      </div>
+        {open ? <CaretUp size={14} style={{ color: "var(--text-muted)" }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)" }} />}
+      </button>
 
-      <div className="flex items-center gap-5">
+      <AnimatePresence initial={false}>
+      {open && (
+      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+      <div className="mt-4 flex items-center gap-5">
         {/* Avatar preview */}
         <div className="relative flex-shrink-0">
           <div className="w-20 h-20 rounded-full overflow-hidden"
@@ -574,6 +608,9 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
           </p>
         </div>
       </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </motion.div>
@@ -1769,6 +1806,7 @@ function ExportPanel() {
   const today     = format(new Date(), "yyyy-MM-dd");
   const yearStart = format(startOfYear(new Date()), "yyyy-MM-dd");
 
+  const [open,        setOpen]        = useState(false);
   const [from,        setFrom]        = useState(yearStart);
   const [to,          setTo]          = useState(today);
   const [exportFmt,   setExportFmt]   = useState<"json" | "csv">("json");
@@ -1816,19 +1854,39 @@ function ExportPanel() {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.12 }}
-      className="glass p-5 space-y-5"
+      className="glass overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Header (toggle) */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-3 p-5 text-left"
+        style={{ background: "transparent" }}
+      >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: "linear-gradient(135deg,rgba(96,165,250,0.15),rgba(167,139,250,0.15))" }}>
           <Database size={17} style={{ color: "#60a5fa" }} />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-[14px] font-semibold">Exporter mes données</p>
           <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Export exhaustif de tous tes paramètres</p>
         </div>
-      </div>
+        <CaretDown
+          size={16}
+          style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s" }}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="export-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="px-5 pb-5 space-y-5">
 
       {/* Format selector */}
       <div className="flex gap-2">
@@ -1921,6 +1979,11 @@ function ExportPanel() {
       <p className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>
         Les données restent sur ton appareil · aucun envoi vers des serveurs tiers
       </p>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -1934,6 +1997,7 @@ const RESET_OPTIONS = [
 ] as const;
 
 function ResetPanel() {
+  const [open,     setOpen]     = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm,  setConfirm]  = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -1961,15 +2025,39 @@ function ResetPanel() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.15 }}
-      className="glass p-5 mt-4"
+      className="glass mt-4 overflow-hidden"
     >
-      <div className="flex items-center gap-2 mb-4">
-        <Trash size={18} style={{ color: "#f87171" }} />
-        <div>
+      {/* Header (toggle) */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-3 p-5 text-left"
+        style={{ background: "transparent" }}
+      >
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(248,113,113,0.1)" }}>
+          <Trash size={17} style={{ color: "#f87171" }} />
+        </div>
+        <div className="flex-1 min-w-0">
           <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Remise à zéro</p>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Supprimer des données définitivement</p>
         </div>
-      </div>
+        <CaretDown
+          size={16}
+          style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s" }}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="reset-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="px-5 pb-5">
 
       {done && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3 text-[12px]"
@@ -2038,6 +2126,11 @@ function ResetPanel() {
           </div>
         </div>
       )}
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

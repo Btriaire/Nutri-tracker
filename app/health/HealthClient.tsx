@@ -16,14 +16,43 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from "recharts";
-import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry } from "@/app/lib/types";
+import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry, SymptomEntry, SymptomSeverity } from "@/app/lib/types";
 import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
 import SleepHypnogram from "@/app/components/SleepHypnogram";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
-type HealthTab = "synthese" | "cardiaque" | "medicaments" | "bienetre";
+type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre";
+
+// ─── Symptom categories ──────────────────────────────────────────────────────
+
+const SYMPTOM_CATEGORIES = [
+  {
+    key: "douleur", label: "Douleur", icon: "🤕", color: "#f87171",
+    symptoms: ["Maux de tête", "Migraine", "Douleur musculaire", "Douleur articulaire", "Douleur abdominale", "Douleur thoracique", "Douleur de dos", "Douleur cervicale"],
+  },
+  {
+    key: "digestif", label: "Digestif", icon: "🫃", color: "#fb923c",
+    symptoms: ["Nausée", "Vomissement", "Diarrhée", "Constipation", "Ballonnements", "Reflux gastrique", "Perte d'appétit", "Crampes abdominales"],
+  },
+  {
+    key: "respiratoire", label: "Respiratoire", icon: "🫁", color: "#60a5fa",
+    symptoms: ["Toux sèche", "Toux grasse", "Essoufflement", "Congestion nasale", "Maux de gorge", "Sifflements respiratoires", "Éternuements"],
+  },
+  {
+    key: "general", label: "Général", icon: "🌡️", color: "#fbbf24",
+    symptoms: ["Fatigue", "Fièvre", "Frissons", "Sueurs nocturnes", "Vertiges", "Malaise général", "Palpitations", "Perte de poids involontaire"],
+  },
+  {
+    key: "neurologique", label: "Neurologique", icon: "🧠", color: "#a78bfa",
+    symptoms: ["Insomnie", "Trouble de concentration", "Engourdissement", "Picotements", "Vision trouble", "Acouphènes", "Perte de mémoire"],
+  },
+  {
+    key: "cutane", label: "Cutané", icon: "🩹", color: "#34d399",
+    symptoms: ["Éruption cutanée", "Démangeaisons", "Urticaire", "Rougeur localisée", "Sécheresse cutanée", "Ecchymoses"],
+  },
+] as const;
 
 interface Props {
   date:           string;
@@ -152,6 +181,28 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [medAiLoading, setMedAiLoading] = useState(false);
   const [medAiInfo,    setMedAiInfo]    = useState<{ dose: string; indication: string; description: string; warning: string | null; class: string } | null>(null);
 
+  // Symptoms
+  const [symptoms,      setSymptoms]      = useState<SymptomEntry[]>(initialEntry?.symptoms ?? []);
+  const [symptomOpen,   setSymptomOpen]   = useState(false);
+  const [symCatOpen,    setSymCatOpen]    = useState<string | null>(null);
+  const [symSaving,     setSymSaving]     = useState(false);
+
+  // AI Synthesis
+  type SynthesisResult = {
+    alertLevel:      "vert" | "orange" | "rouge";
+    alertLabel:      string;
+    summary:         string;
+    vitaux:          string;
+    symptomes:       string | null;
+    nutrition:       string;
+    activite:        string | null;
+    recommandations: string[];
+    consulter:       string | null;
+  };
+  const [synthesis,        setSynthesis]        = useState<SynthesisResult | null>(null);
+  const [synthesisLoading, setSynthesisLoading] = useState(false);
+  const [synthesisError,   setSynthesisError]   = useState(false);
+
   // Cardio range
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
 
@@ -159,6 +210,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     setNotes(entry?.notes ?? "");
     setNotesDirty(false);
     setMeds(entry?.medications ?? []);
+    setSymptoms(entry?.symptoms ?? []);
+    setSynthesis(null);
+    setSynthesisError(false);
   }, [entry]);
 
   const navigate = async (newDate: string) => {
@@ -292,6 +346,60 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     await saveMeds(meds.filter(m => m.id !== id));
   };
 
+  // Symptoms ────────────────────────────────────────────────────────────────────
+
+  const saveSymptoms = async (list: SymptomEntry[]) => {
+    setSymptoms(list);
+    await patch({ symptoms: list } as Partial<HealthData>);
+  };
+
+  const handleAddSymptom = async (category: string, name: string) => {
+    // Toggle off if already present
+    const existing = symptoms.find(s => s.name === name && s.category === category);
+    if (existing) {
+      await saveSymptoms(symptoms.filter(s => s.id !== existing.id));
+      return;
+    }
+    setSymSaving(true);
+    try {
+      const entry: SymptomEntry = {
+        id:       Date.now().toString(36),
+        category,
+        name,
+        severity: "modéré",
+        time:     nowHHMM(),
+      };
+      await saveSymptoms([...symptoms, entry]);
+    } finally { setSymSaving(false); }
+  };
+
+  const handleSetSeverity = async (id: string, severity: SymptomSeverity) => {
+    await saveSymptoms(symptoms.map(s => s.id === id ? { ...s, severity } : s));
+  };
+
+  const handleDeleteSymptom = async (id: string) => {
+    await saveSymptoms(symptoms.filter(s => s.id !== id));
+  };
+
+  // AI Synthesis ────────────────────────────────────────────────────────────────
+
+  const handleSynthesis = async () => {
+    setSynthesisLoading(true);
+    setSynthesisError(false);
+    setSynthesis(null);
+    try {
+      const res = await fetch("/api/health/ai-synthesis", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ date }),
+      });
+      if (!res.ok) { setSynthesisError(true); return; }
+      const data = await res.json() as SynthesisResult & { ok?: boolean };
+      setSynthesis(data);
+    } catch { setSynthesisError(true); }
+    finally  { setSynthesisLoading(false); }
+  };
+
   // Derived data ────────────────────────────────────────────────────────────────
 
   const readings = entry?.bloodPressure ?? [];
@@ -404,7 +512,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           {([
             { id: "synthese",     label: "🩺 Synthèse" },
             { id: "cardiaque",    label: "❤️ Cardiaque" },
-            { id: "medicaments",  label: "💊 Médic." },
+            { id: "medical",      label: "🏥 Médical" },
             { id: "bienetre",     label: "🧠 Bien-être" },
           ] as const).map(({ id, label }) => (
             <button key={id} onClick={() => setActiveTab(id)}
@@ -795,9 +903,164 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           </>
         )}
 
-        {/* ── TAB: MÉDICAMENTS ── */}
-        {activeTab === "medicaments" && (
+        {/* ── TAB: MÉDICAL ── */}
+        {activeTab === "medical" && (
           <motion.div {...fade(0.05)} className="space-y-4">
+
+            {/* ── Nutri-IA-Med ── */}
+            <div className="glass p-4">
+              {/* Header row */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg,rgba(167,139,250,0.15),rgba(96,165,250,0.15))" }}>
+                  <span className="text-[16px]">🤖</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</p>
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    Synthèse IA · symptômes, constantes, nutrition &amp; activité
+                  </p>
+                </div>
+                <button
+                  onClick={handleSynthesis}
+                  disabled={synthesisLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold flex-shrink-0 transition-all"
+                  style={{
+                    background: synthesisLoading ? "rgba(167,139,250,0.15)" : "linear-gradient(135deg,rgba(167,139,250,0.18),rgba(96,165,250,0.18))",
+                    border: "1px solid rgba(167,139,250,0.4)",
+                    color: "#a78bfa",
+                    opacity: synthesisLoading ? 0.7 : 1,
+                  }}>
+                  {synthesisLoading
+                    ? <><Spinner size={12} className="animate-spin" /> Analyse…</>
+                    : synthesis ? <><ArrowsClockwise size={12} /> Relancer</> : <>Analyser</>
+                  }
+                </button>
+              </div>
+
+              {/* Error */}
+              {synthesisError && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px]"
+                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
+                  <Warning size={13} weight="fill" />
+                  Erreur lors de l'analyse. Réessayez dans un instant.
+                </div>
+              )}
+
+              {/* Loading skeleton */}
+              {synthesisLoading && (
+                <div className="space-y-2 mt-1">
+                  {[100, 80, 90, 70].map((w, i) => (
+                    <div key={i} className="h-3 rounded-full animate-pulse"
+                      style={{ width: `${w}%`, background: "rgba(167,139,250,0.12)" }} />
+                  ))}
+                </div>
+              )}
+
+              {/* Result */}
+              {synthesis && !synthesisLoading && (() => {
+                const ALERT_CFG = {
+                  vert:   { color: "#34d399", bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.3)", dot: "🟢" },
+                  orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.3)", dot: "🟡" },
+                  rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.3)", dot: "🔴" },
+                };
+                const cfg = ALERT_CFG[synthesis.alertLevel];
+
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-3"
+                  >
+                    {/* Alert badge */}
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                      <span className="text-[13px]">{cfg.dot}</span>
+                      <span className="text-[12px] font-semibold" style={{ color: cfg.color }}>
+                        {synthesis.alertLabel}
+                      </span>
+                    </div>
+
+                    {/* Summary */}
+                    <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      {synthesis.summary}
+                    </p>
+
+                    {/* Sections grid */}
+                    <div className="space-y-2">
+                      {[
+                        { icon: "❤️", label: "Constantes",  text: synthesis.vitaux,     show: true },
+                        { icon: "🩺", label: "Symptômes",   text: synthesis.symptomes,  show: !!synthesis.symptomes },
+                        { icon: "🥗", label: "Nutrition",   text: synthesis.nutrition,  show: true },
+                        { icon: "🏃", label: "Activité",    text: synthesis.activite,   show: !!synthesis.activite },
+                      ].filter(s => s.show).map(({ icon, label, text }) => (
+                        <div key={label}
+                          className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          <span className="text-[13px] flex-shrink-0 mt-0.5">{icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recommendations */}
+                    {synthesis.recommandations?.length > 0 && (
+                      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                        <div className="px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                            💡 Recommandations
+                          </p>
+                        </div>
+                        <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                          {synthesis.recommandations.map((r, i) => (
+                            <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                              <span className="text-[10px] font-bold mt-0.5 flex-shrink-0"
+                                style={{ color: "#a78bfa" }}>{i + 1}</span>
+                              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{r}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Consulter warning */}
+                    {synthesis.consulter && (
+                      <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                        style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
+                        <Warning size={14} weight="fill" style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
+                        <p className="text-[12px] leading-relaxed" style={{ color: "#f87171" }}>
+                          {synthesis.consulter}
+                        </p>
+                      </div>
+                    )}
+
+                    <p className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>
+                      Analyse indicative · ne remplace pas un avis médical professionnel
+                    </p>
+                  </motion.div>
+                );
+              })()}
+
+              {/* Empty state (no analysis yet) */}
+              {!synthesis && !synthesisLoading && !synthesisError && (
+                <button onClick={handleSynthesis}
+                  className="w-full py-5 rounded-xl flex flex-col items-center gap-2 transition-colors"
+                  style={{ border: "1.5px dashed rgba(167,139,250,0.3)" }}>
+                  <span className="text-[24px]">🔬</span>
+                  <p className="text-[12px] font-medium" style={{ color: "#a78bfa" }}>
+                    Lancer l'analyse complète
+                  </p>
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    Synthèse de tes constantes, symptômes, nutrition &amp; activité
+                  </p>
+                </button>
+              )}
+            </div>
+
+            {/* ── Médicaments ── */}
             <div className="glass p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -860,6 +1123,167 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
               )}
             </div>
+
+            {/* ── Symptômes ── */}
+            <div className="glass p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px]">🩺</span>
+                  <p className="label-xs">Symptômes du jour</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {symptoms.length > 0 && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.3)" }}>
+                      {symptoms.length} symptôme{symptoms.length > 1 ? "s" : ""}
+                    </span>
+                  )}
+                  <button onClick={() => setSymptomOpen(v => !v)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                    style={{ background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.3)", color: "#fb923c" }}>
+                    <Plus size={12} weight="bold" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Recorded symptoms */}
+              {symptoms.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {symptoms.map(s => {
+                    const cat = SYMPTOM_CATEGORIES.find(c => c.key === s.category);
+                    const sev: SymptomSeverity[] = ["léger", "modéré", "sévère"];
+                    const sevColor: Record<SymptomSeverity, string> = {
+                      "léger": "#34d399",
+                      "modéré": "#fbbf24",
+                      "sévère": "#f87171",
+                    };
+                    return (
+                      <div key={s.id}
+                        className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        <span className="text-[14px] flex-shrink-0 mt-0.5">{cat?.icon ?? "🩺"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>
+                            {s.name}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1.5">
+                            {sev.map(sv => (
+                              <button key={sv}
+                                onClick={() => handleSetSeverity(s.id, sv)}
+                                className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide transition-all"
+                                style={{
+                                  background: s.severity === sv ? `${sevColor[sv]}22` : "rgba(255,255,255,0.04)",
+                                  border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
+                                  color: s.severity === sv ? sevColor[sv] : "var(--text-muted)",
+                                }}>
+                                {sv}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {s.time && (
+                          <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{s.time}</span>
+                        )}
+                        <button onClick={() => handleDeleteSymptom(s.id)}
+                          className="p-1 rounded-md flex-shrink-0 transition-colors self-start"
+                          style={{ color: "var(--text-muted)" }}
+                          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+                          onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}>
+                          <Trash size={13} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Category picker (collapsible) */}
+              <AnimatePresence>
+                {symptomOpen && (
+                  <motion.div
+                    key="sym-picker"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <div className="space-y-2 pt-2">
+                      {SYMPTOM_CATEGORIES.map(cat => {
+                        const isOpen = symCatOpen === cat.key;
+                        return (
+                          <div key={cat.key} className="rounded-xl overflow-hidden"
+                            style={{ border: `1px solid ${isOpen ? cat.color + "55" : "var(--border)"}`, background: isOpen ? `${cat.color}08` : "transparent" }}>
+                            {/* Category header */}
+                            <button
+                              onClick={() => setSymCatOpen(v => v === cat.key ? null : cat.key)}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5"
+                            >
+                              <span className="text-[15px]">{cat.icon}</span>
+                              <span className="flex-1 text-left text-[12px] font-semibold" style={{ color: isOpen ? cat.color : "var(--text-secondary)" }}>
+                                {cat.label}
+                              </span>
+                              {/* Count badge if any selected */}
+                              {(() => {
+                                const n = symptoms.filter(s => s.category === cat.key).length;
+                                return n > 0 ? (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                                    style={{ background: `${cat.color}22`, color: cat.color, border: `1px solid ${cat.color}55` }}>
+                                    {n}
+                                  </span>
+                                ) : null;
+                              })()}
+                              <span className="text-[10px]" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                            </button>
+                            {/* Symptom chips */}
+                            <AnimatePresence>
+                              {isOpen && (
+                                <motion.div
+                                  initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  style={{ overflow: "hidden" }}
+                                >
+                                  <div className="flex flex-wrap gap-2 px-3 pb-3">
+                                    {cat.symptoms.map(sym => {
+                                      const active = symptoms.some(s => s.name === sym && s.category === cat.key);
+                                      return (
+                                        <button key={sym}
+                                          onClick={() => handleAddSymptom(cat.key, sym)}
+                                          disabled={symSaving}
+                                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                                          style={{
+                                            background: active ? `${cat.color}20` : "rgba(255,255,255,0.05)",
+                                            border: `1px solid ${active ? cat.color : "var(--border)"}`,
+                                            color: active ? cat.color : "var(--text-secondary)",
+                                          }}>
+                                          {active && <Check size={10} weight="bold" />}
+                                          {sym}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Empty state */}
+              {symptoms.length === 0 && !symptomOpen && (
+                <button onClick={() => setSymptomOpen(true)}
+                  className="w-full py-4 rounded-xl flex flex-col items-center gap-1.5 transition-colors"
+                  style={{ border: "1.5px dashed var(--border)" }}>
+                  <span className="text-[18px]">🩺</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
+                </button>
+              )}
+            </div>
+
           </motion.div>
         )}
 

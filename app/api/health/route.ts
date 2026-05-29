@@ -15,6 +15,8 @@ function strip(e: HealthEntry) {
     spO2:          e.spO2          ?? null,
     temperatureC:  e.temperatureC  ?? null,
     notes:         e.notes         ?? null,
+    medications:   e.medications   ?? [],
+    symptoms:      e.symptoms      ?? [],
   };
 }
 

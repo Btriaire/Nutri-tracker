@@ -420,6 +420,16 @@ export interface MedicationEntry {
   taken:  boolean;
 }
 
+export type SymptomSeverity = "léger" | "modéré" | "sévère";
+
+export interface SymptomEntry {
+  id:        string;
+  category:  string;  // e.g. "douleur"
+  name:      string;  // e.g. "Maux de tête"
+  severity?: SymptomSeverity;
+  time?:     string;  // "HH:MM"
+}
+
 export interface HealthEntry {
   date:           string;
   bloodPressure:  BloodPressureReading[];
@@ -429,6 +439,7 @@ export interface HealthEntry {
   temperatureC?:  number;   // °C
   notes?:         string;
   medications?:   MedicationEntry[];
+  symptoms?:      SymptomEntry[];
   updatedAt?:     Timestamp;
 }
 
