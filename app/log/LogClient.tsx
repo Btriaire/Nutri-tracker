@@ -14,7 +14,7 @@ import { pct } from "@/app/lib/nutrition";
 import { Check } from "@phosphor-icons/react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 
-const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
+const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
 interface Props {
   date:       string;
