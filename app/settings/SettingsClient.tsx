@@ -1878,7 +1878,7 @@ function TrackedNutrientsPanel() {
         body: JSON.stringify({ chartPrefs: { ...chartPrefs, trackedNutrients: tracked } }),
       });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => { setSaved(false); setOpen(false); }, 1200);
     } finally { setSaving(false); }
   };
 
