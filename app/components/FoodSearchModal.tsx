@@ -38,11 +38,13 @@ const CATEGORIES = [
 ];
 
 const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
-  ciqual: { label: "Ciqual ANSES",    color: "var(--fiber)" },
-  off:    { label: "Open Food Facts", color: "var(--steps)" },
-  usda:   { label: "USDA",            color: "var(--carbs)" },
-  custom: { label: "Personnel",       color: "var(--protein)" },
-  recipe: { label: "Recette",         color: "var(--calories)" },
+  ciqual:      { label: "Ciqual ANSES",    color: "var(--fiber)"   },
+  off:         { label: "Open Food Facts", color: "var(--steps)"   },
+  usda:        { label: "USDA",            color: "var(--carbs)"   },
+  edamam:      { label: "Edamam",          color: "#f59e0b"        },
+  nutritionix: { label: "Nutritionix",     color: "#10b981"        },
+  custom:      { label: "Personnel",       color: "var(--protein)" },
+  recipe:      { label: "Recette",         color: "var(--calories)" },
   ai:     { label: "Nutri-AI",         color: "#a855f7" },
 };
 
