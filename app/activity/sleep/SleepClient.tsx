@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -64,12 +64,16 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
   const [saved,    setSaved]    = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const totalMin = hours * 60 + minutes;
-  const changed  = totalMin !== (current ?? 0);
+  const totalMin    = hours * 60 + minutes;
+  const changed     = totalMin !== (current ?? 0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<number>(current ?? 0);
 
   // Auto-save helper
   async function doSave(min: number) {
     if (min < 1) return;
+    if (min === lastSavedRef.current) return;   // skip if already saved
+    lastSavedRef.current = min;
     setSaving(true);
     await fetch("/api/sleep", {
       method: "POST",
@@ -81,17 +85,33 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
     onSaved(date, min);
   }
 
+  // Debounce auto-save on every H/M change (600ms)
+  useEffect(() => {
+    if (totalMin < 1 || !changed) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      doSave(totalMin);
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hours, minutes]);
+
   // Preset click → save + close immediately
   async function handlePreset(min: number) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setHours(Math.floor(min / 60));
     setMinutes(min % 60);
     await doSave(min);
     onClose();
   }
 
-  // Close backdrop → auto-save if changed
+  // Close backdrop → flush pending debounce then close
   async function handleBackdropClose() {
-    if (changed && totalMin >= 1) await doSave(totalMin);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+      if (changed && totalMin >= 1) await doSave(totalMin);
+    }
     onClose();
   }
 
@@ -125,7 +145,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
             <div>
               <p className="text-[15px] font-semibold capitalize">{label}</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                {saved ? "✓ Enregistré automatiquement" : current ? "Modifier · ferme pour sauvegarder" : "Sauvegarde automatique à la fermeture"}
+                {saved ? "✓ Enregistré" : saving ? "Enregistrement…" : current ? "Modifier · sauvegarde auto" : "Sauvegarde automatique"}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -206,7 +226,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
               style={{ background: "rgba(121,134,203,0.1)", border: "1px solid rgba(121,134,203,0.25)" }}>
               <Moon size={14} weight="fill" style={{ color: "#7986CB" }} />
               <span className="flex-1 text-[12px]" style={{ color: "#7986CB" }}>
-                {fmtSleep(totalMin)} · ferme pour sauvegarder
+                {fmtSleep(totalMin)} · {saving ? "enregistrement…" : saved ? "✓ enregistré" : "sauvegarde auto"}
               </span>
               {saving && <Spinner size={13} className="animate-spin" style={{ color: "#7986CB" }} />}
             </motion.div>
