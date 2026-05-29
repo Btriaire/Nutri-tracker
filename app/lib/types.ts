@@ -174,11 +174,12 @@ export interface DayTotals {
 }
 
 export interface DayLog {
-  date:       string;     // YYYY-MM-DD
-  entries:    FoodEntry[];
-  totals:     DayTotals;
-  waterMl:    number;     // hydratation du jour
-  updatedAt:  Timestamp;
+  date:        string;     // YYYY-MM-DD
+  entries:     FoodEntry[];
+  totals:      DayTotals;
+  waterMl:     number;     // hydratation du jour
+  mealHunger?: Partial<Record<MealType, HungerLevel>>; // faim par repas
+  updatedAt:   Timestamp;
 }
 
 // ─── User Profile ─────────────────────────────────────────────────────────────

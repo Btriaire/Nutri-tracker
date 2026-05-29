@@ -77,20 +77,30 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ entry: newEntry, totals: day.totals }, { status: 201 });
 }
 
-// ─── PATCH /api/log — validate day ───────────────────────────────────────────
+// ─── PATCH /api/log — validate day or update mealHunger ─────────────────────
 
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { date: string; validated: boolean };
+  const body = await req.json() as {
+    date:        string;
+    validated?:  boolean;
+    mealHunger?: Partial<Record<string, number>>;
+  };
   try { dateKey(body.date); } catch {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
   const db  = getAdminFirestore();
   const ref = db.doc(`users/${session.userId}/foodLog/${body.date}`);
-  await ref.set({ validated: body.validated, updatedAt: Timestamp.now() }, { merge: true });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const update: Record<string, any> = { updatedAt: Timestamp.now() };
+  if (body.validated  !== undefined) update.validated  = body.validated;
+  if (body.mealHunger !== undefined) update.mealHunger = body.mealHunger;
+
+  await ref.set(update, { merge: true });
 
   return NextResponse.json({ ok: true });
 }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, CaretDown, Camera, Trash, ChartBar } from "@phosphor-icons/react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
-import type { FoodEntry, MealType, Lang } from "@/app/lib/types";
+import type { FoodEntry, MealType, Lang, HungerLevel } from "@/app/lib/types";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
   breakfast: { fr: "Petit-déjeuner", en: "Breakfast", icon: "🌅" },
@@ -14,20 +14,30 @@ const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
   snacks:    { fr: "Collations",     en: "Snacks",    icon: "🍎" },
 };
 
+const HUNGER_FACES: { level: HungerLevel; emoji: string; label: string; color: string }[] = [
+  { level: 1, emoji: "😌", label: "Pas faim",  color: "#22c55e" },
+  { level: 2, emoji: "🙂", label: "Peu faim",  color: "#84cc16" },
+  { level: 3, emoji: "😐", label: "Modéré",   color: "#f59e0b" },
+  { level: 4, emoji: "😤", label: "Faim",      color: "#f97316" },
+  { level: 5, emoji: "🤤", label: "Très faim", color: "#ef4444" },
+];
+
 interface Props {
   meal:            MealType;
   entries:         FoodEntry[];
   date:            string;
   lang?:           Lang;
   photoUrl?:       string;
+  hunger?:         HungerLevel;
   onEntriesChange: (meal: MealType, entries: FoodEntry[]) => void;
   onFoodAdded?:    (info: AddedInfo) => void;
   onPhotoChange?:  (meal: MealType, url: string | null) => void;
+  onHungerChange?: (meal: MealType, level: HungerLevel | null) => void;
 }
 
 export default function MealSection({
   meal, entries, date, lang = "fr",
-  photoUrl, onEntriesChange, onFoodAdded, onPhotoChange,
+  photoUrl, hunger, onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
@@ -156,6 +166,32 @@ export default function MealSection({
           </button>
         )}
 
+        {/* Hunger level selector */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          {HUNGER_FACES.map(({ level, emoji, label, color }) => {
+            const active = hunger === level;
+            return (
+              <motion.button
+                key={level}
+                onClick={() => onHungerChange?.(meal, active ? null : level)}
+                whileTap={{ scale: 0.82 }}
+                title={label}
+                className="flex items-center justify-center rounded-lg transition-all"
+                style={{
+                  width: "26px", height: "26px",
+                  fontSize: "15px",
+                  background: active ? `${color}22` : "transparent",
+                  border: active ? `1px solid ${color}55` : "1px solid transparent",
+                  opacity: hunger != null && !active ? 0.4 : 1,
+                  boxShadow: active ? `0 0 6px ${color}44` : "none",
+                }}
+              >
+                {emoji}
+              </motion.button>
+            );
+          })}
+        </div>
+
         {/* Add food button */}
         <button
           onClick={() => setModal(true)}
@@ -178,25 +214,26 @@ export default function MealSection({
             transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
-            {/* Photo illustration */}
+            {/* Photo thumbnail */}
             {photoUrl && (
-              <div className="relative mx-4 mt-3 rounded-xl overflow-hidden"
-                style={{ border: "1px solid var(--border)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoUrl}
-                  alt="Photo du repas"
-                  className="w-full object-cover"
-                  style={{ maxHeight: "180px" }}
-                />
-                <button
-                  onClick={handleDeletePhoto}
-                  className="absolute top-2 right-2 flex items-center justify-center w-7 h-7 rounded-full"
-                  style={{ background: "rgba(0,0,0,0.55)", color: "#f87171" }}
-                  aria-label="Supprimer la photo"
-                >
-                  <Trash size={14} />
-                </button>
+              <div className="flex justify-end px-4 pt-2">
+                <div className="relative rounded-xl overflow-hidden flex-shrink-0"
+                  style={{ width: 56, height: 56, border: "1px solid var(--border)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoUrl}
+                    alt="Photo du repas"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={handleDeletePhoto}
+                    className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                    style={{ background: "rgba(0,0,0,0.55)", color: "#f87171" }}
+                    aria-label="Supprimer la photo"
+                  >
+                    <Trash size={13} />
+                  </button>
+                </div>
               </div>
             )}
 

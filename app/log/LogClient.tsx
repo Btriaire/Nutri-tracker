@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel } from "@/app/lib/types";
+import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
@@ -25,6 +26,9 @@ interface Props {
 export default function LogClient({ date, initialLog, goals, lang = "fr" }: Props) {
   const [entries,    setEntries]    = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl,   setWaterMl]    = useState(initialLog?.waterMl ?? 0);
+  const [mealHunger, setMealHunger] = useState<Partial<Record<MealType, HungerLevel>>>(
+    (initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {}
+  );
   const [toast,     setToast]      = useState<AddedInfo | null>(null);
   const [validated,      setValidated]      = useState((initialLog as { validated?: boolean } | null)?.validated ?? false);
   const [validating,     setValidating]     = useState(false);
@@ -36,6 +40,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
     setEntries(initialLog?.entries ?? []);
     setWaterMl(initialLog?.waterMl ?? 0);
     setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
+    setMealHunger((initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {});
     // Load meal photos for this date
     fetch(`/api/log/photos?date=${date}`)
       .then((r) => r.ok ? r.json() : {})
@@ -96,6 +101,17 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
+  };
+
+  const handleHungerChange = async (meal: MealType, level: HungerLevel | null) => {
+    const next = { ...mealHunger };
+    if (level == null) delete next[meal]; else next[meal] = level;
+    setMealHunger(next);
+    await fetch("/api/log", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, mealHunger: next }),
+    });
   };
 
   const handlePhotoChange = (meal: MealType, url: string | null) => {
@@ -253,13 +269,28 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
                 date={date}
                 lang={lang}
                 photoUrl={mealPhotos[meal]}
+                hunger={mealHunger[meal]}
                 onEntriesChange={handleMealChange}
                 onFoodAdded={showToast}
                 onPhotoChange={handlePhotoChange}
+                onHungerChange={handleHungerChange}
               />
             </motion.div>
           ))}
         </div>
+
+        {/* Hunger timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
+          className="mt-3"
+        >
+          <HungerTimeline
+            mealHunger={mealHunger}
+            onSetHunger={handleHungerChange}
+          />
+        </motion.div>
       </div>
 
       {/* Validate modal */}
