@@ -146,6 +146,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [medDose,    setMedDose]    = useState("");
   const [medTime,    setMedTime]    = useState(nowHHMM);
   const [medSaving,  setMedSaving]  = useState(false);
+  // Nutri-AI-Med
+  const [medAiLoading, setMedAiLoading] = useState(false);
+  const [medAiInfo,    setMedAiInfo]    = useState<{ dose: string; indication: string; description: string; warning: string | null; class: string } | null>(null);
 
   // Cardio range
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
@@ -255,7 +258,27 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       await saveMeds([...meds, newMed]);
       setMedOpen(false);
       setMedName(""); setMedDose(""); setMedTime(nowHHMM());
+      setMedAiInfo(null);
     } finally { setMedSaving(false); }
+  };
+
+  const handleAiMedLookup = async () => {
+    if (!medName.trim()) return;
+    setMedAiLoading(true);
+    setMedAiInfo(null);
+    try {
+      const res = await fetch("/api/health/med-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: medName.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { ok: boolean; dose: string; indication: string; description: string; warning: string | null; class: string };
+        setMedAiInfo(data);
+        if (data.dose && !medDose.trim()) setMedDose(data.dose);
+      }
+    } catch { /* noop */ }
+    finally { setMedAiLoading(false); }
   };
 
   const handleToggleMed = async (id: string) => {
@@ -1165,16 +1188,72 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               </div>
 
               <div className="space-y-3 mb-5">
+                {/* Nom + Nutri-AI-Med button */}
                 <div>
                   <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
-                  <input
-                    autoFocus type="text" value={medName}
-                    onChange={e => setMedName(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleAddMed()}
-                    placeholder="Paracétamol, Doliprane…"
-                    className="input text-[14px]"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      autoFocus type="text" value={medName}
+                      onChange={e => { setMedName(e.target.value); setMedAiInfo(null); }}
+                      onKeyDown={e => e.key === "Enter" && handleAddMed()}
+                      placeholder="Paracétamol, Doliprane…"
+                      className="input text-[14px] flex-1"
+                    />
+                    <button
+                      onClick={handleAiMedLookup}
+                      disabled={medAiLoading || !medName.trim()}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium flex-shrink-0 transition-all"
+                      style={{
+                        background: medAiLoading ? "rgba(192,132,252,0.15)" : "rgba(192,132,252,0.1)",
+                        border: "1px solid rgba(192,132,252,0.35)",
+                        color: "#c084fc",
+                        opacity: medName.trim() ? 1 : 0.4,
+                      }}>
+                      {medAiLoading
+                        ? <Spinner size={11} className="animate-spin" />
+                        : <span>🤖</span>
+                      }
+                      <span>Nutri-AI-Med</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* AI Info Card */}
+                <AnimatePresence>
+                  {medAiInfo && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="rounded-xl p-3 space-y-1.5 overflow-hidden"
+                      style={{ background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.25)" }}>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[13px]">🤖</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold" style={{ color: "#c084fc" }}>
+                            {medAiInfo.class}
+                          </p>
+                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                            {medAiInfo.description}
+                          </p>
+                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                            <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Indication :</span> {medAiInfo.indication}
+                          </p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                            <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Dose :</span> {medAiInfo.dose}
+                          </p>
+                          {medAiInfo.warning && (
+                            <p className="text-[10px] mt-1.5 flex items-start gap-1" style={{ color: "#fbbf24" }}>
+                              <Warning size={11} weight="fill" className="mt-0.5 flex-shrink-0" />
+                              {medAiInfo.warning}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>

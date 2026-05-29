@@ -664,8 +664,10 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [water,    setWater]    = useState(initialGoals.waterMl.toString());
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
-  const [weeklyGoal, setWeeklyGoal] = useState(initialGoals.weeklyGoal ?? "maintain");
-  const [tdeeCalc,          setTdeeCalc]          = useState<number | null>(null);
+  const [weeklyGoal,     setWeeklyGoal]     = useState(initialGoals.weeklyGoal ?? "maintain");
+  const [currentWeight,  setCurrentWeight]  = useState(initialGoals.currentWeightKg?.toString() ?? "");
+  const [targetDate,     setTargetDate]     = useState<string>("");
+  const [tdeeCalc,       setTdeeCalc]       = useState<number | null>(null);
   const [selectedProgram,   setSelectedProgram]   = useState<string | null>(null);
   const [saving,            setSaving]            = useState(false);
   const [saved,             setSaved]             = useState(false);
@@ -695,7 +697,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const handleCalcTDEE = () => {
     const a = parseInt(age);
     const h = parseInt(height);
-    const w = parseFloat(weight) || 70;
+    const w = parseFloat(currentWeight) || parseFloat(weight) || 70;
     if (!a || !h || !gender) return;
     const tdee = calcTDEE(w, h, a, gender as Gender, activity);
     setTdeeCalc(tdee);
@@ -712,7 +714,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const handleApplyProgram = (key: string) => {
     const prog = PROGRAMS[key];
     if (!prog) return;
-    const a = parseInt(age), h = parseInt(height), w = parseFloat(weight) || 70;
+    const a = parseInt(age), h = parseInt(height), w = parseFloat(currentWeight) || parseFloat(weight) || 70;
     let base = parseInt(calories) || 2000;
     if (a && h && gender) {
       base = calcTDEE(w, h, a, gender as Gender, activity);
@@ -746,9 +748,10 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
       weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
       targetWeightKg: parseFloat(weight) || null,
     };
-    if (age)    goals.age       = parseInt(age);
-    if (height) goals.heightCm  = parseInt(height);
-    if (gender) goals.gender    = gender as Gender;
+    if (age)           goals.age             = parseInt(age);
+    if (height)        goals.heightCm        = parseInt(height);
+    if (gender)        goals.gender          = gender as Gender;
+    if (currentWeight) goals.currentWeightKg = parseFloat(currentWeight) || undefined;
     return goals;
   };
 
@@ -801,8 +804,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
         programLabel:  prog.label,
         programEmoji:  prog.emoji,
         startDate:     formatDate(new Date(), "yyyy-MM-dd"),
-        startWeightKg: parseFloat(weight) || null,
-        targetWeightKg: parseFloat(weight) ? (goalsObj.targetWeightKg ?? null) : null,
+        startWeightKg:  parseFloat(currentWeight) || parseFloat(weight) || null,
+        targetWeightKg: parseFloat(weight) || null,
         dailyCalories:  parseInt(calories) || 2000,
       };
 
@@ -830,6 +833,40 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     border: "1px solid var(--border)",
     color: "var(--text-primary)",
   };
+
+  // ── Date presets ──
+  const DATE_PRESETS = [
+    { label: "1 mois",  months: 1 },
+    { label: "3 mois",  months: 3 },
+    { label: "6 mois",  months: 6 },
+    { label: "1 an",    months: 12 },
+  ];
+  const addMonthsToToday = (months: number): string => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString().split("T")[0];
+  };
+
+  // ── Projection réaliste (calcul live) ──
+  const projLive = (() => {
+    const cur = parseFloat(currentWeight);
+    const tgt = parseFloat(weight);
+    if (!cur || !tgt || !targetDate) return null;
+    const today = new Date();
+    const end   = new Date(targetDate + "T00:00:00");
+    const days  = Math.max(1, Math.round((end.getTime() - today.getTime()) / 86400000));
+    const totalKg = cur - tgt;
+    if (Math.abs(totalKg) < 0.5) return null;
+    const perDay        = totalKg / days;
+    const perWeek       = perDay * 7;
+    const dailyDeficit  = Math.round(Math.abs(perDay) * 7700);
+    const isRealistic   = Math.abs(perWeek) <= 0.75;
+    const isAmbitious   = Math.abs(perWeek) > 0.75 && Math.abs(perWeek) <= 1.0;
+    const isUnrealistic = Math.abs(perWeek) > 1.0;
+    const minDays = Math.ceil(Math.abs(totalKg) / 0.75 * 7);
+    const minDate = new Date(today.getTime() + minDays * 86400000);
+    return { totalKg, perDay, perWeek, dailyDeficit, days, isRealistic, isAmbitious, isUnrealistic, minDate };
+  })();
 
   return (
     <motion.div
@@ -910,61 +947,136 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                   ))}
                 </div>
 
-                {/* Poids cible + suggestions IMC */}
-                <div className="mt-2">
-                  <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Poids cible</p>
-                  <div className="relative mb-2">
-                    <input
-                      type="number"
-                      value={weight}
-                      onChange={e => setWeight(e.target.value)}
-                      placeholder="—"
-                      className={inputClass}
-                      style={{ ...inputStyle, paddingRight: "28px" }}
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
-                      style={{ color: "var(--text-muted)" }}>kg</span>
-                  </div>
-                  {/* Ideal weight chips — only show when height is known */}
+                {/* ── Poids actuel ── */}
+                <div className="mt-3">
+                  <SliderField label="Poids actuel" unit=" kg"
+                    value={currentWeight || "70"} min={40} max={200} step={0.5}
+                    color="rgba(250,250,250,0.55)" onChange={setCurrentWeight} />
+                </div>
+
+                {/* ── Poids cible ── */}
+                <div className="mt-4">
+                  <SliderField label="Poids cible" unit=" kg"
+                    value={weight || "70"} min={40} max={200} step={0.5}
+                    color="var(--calories)" onChange={setWeight} />
+                  {/* BMI suggestions */}
                   {parseInt(height) >= 100 && (() => {
                     const hM = parseInt(height) / 100;
-                    const suggestions = [
-                      { label: "🏆 Optimal",    bmi: 22, desc: "IMC 22" },
-                      { label: "📉 Mince",       bmi: 20, desc: "IMC 20" },
-                      { label: "✅ Normal max",  bmi: 25, desc: "IMC 25" },
-                    ].map(s => ({ ...s, kg: Math.round(s.bmi * hM * hM * 10) / 10 }));
                     return (
-                      <div>
-                        <p className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>Suggestions pour {height} cm :</p>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {suggestions.map(s => {
-                            const sel = parseFloat(weight) === s.kg;
-                            return (
-                              <button
-                                key={s.bmi}
-                                onClick={() => setWeight(s.kg.toString())}
-                                className="flex flex-col items-center px-2.5 py-1.5 rounded-xl transition-all text-center"
-                                style={{
-                                  background: sel ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
-                                  border: `1px solid ${sel ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
-                                  minWidth: 70,
-                                }}
-                              >
-                                <span className="text-[12px] font-bold tabular-nums"
-                                  style={{ color: sel ? "var(--calories)" : "var(--text-primary)" }}>
-                                  {s.kg} kg
-                                </span>
-                                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
-                                  {s.label} · {s.desc}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                      <div className="flex gap-1.5 flex-wrap mt-2">
+                        {[
+                          { label: "Mince",    bmi: 20, emoji: "📉" },
+                          { label: "Optimal",  bmi: 22, emoji: "🏆" },
+                          { label: "Normal+",  bmi: 25, emoji: "✅" },
+                        ].map(s => {
+                          const kg = Math.round(s.bmi * hM * hM * 10) / 10;
+                          const sel = parseFloat(weight) === kg;
+                          return (
+                            <button key={s.bmi} onClick={() => setWeight(kg.toString())}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all"
+                              style={{
+                                background: sel ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                                border: `1px solid ${sel ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+                              }}>
+                              <span className="text-[11px]">{s.emoji}</span>
+                              <span className="text-[11px] font-bold tabular-nums"
+                                style={{ color: sel ? "var(--calories)" : "var(--text-primary)" }}>
+                                {kg} kg
+                              </span>
+                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                                IMC {s.bmi}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   })()}
                 </div>
+
+                {/* ── Date cible ── */}
+                <div className="mt-4">
+                  <p className="text-[10px] mb-2 font-medium" style={{ color: "var(--text-muted)" }}>Date cible</p>
+                  <div className="flex gap-1.5 flex-wrap mb-2">
+                    {DATE_PRESETS.map(p => {
+                      const d = addMonthsToToday(p.months);
+                      const sel = targetDate === d;
+                      return (
+                        <button key={p.months} onClick={() => setTargetDate(d)}
+                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                          style={{
+                            background: sel ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+                            border: `1px solid ${sel ? "rgba(99,102,241,0.5)" : "var(--border)"}`,
+                            color: sel ? "#a5b4fc" : "var(--text-muted)",
+                          }}>
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input type="date" value={targetDate}
+                    onChange={e => setTargetDate(e.target.value)}
+                    className={inputClass}
+                    style={{ ...inputStyle, fontSize: "13px" }}
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
+
+                {/* ── Projection live ── */}
+                {projLive && (
+                  <div className="mt-3 rounded-xl p-3 space-y-2"
+                    style={{
+                      background: projLive.isUnrealistic ? "rgba(239,68,68,0.07)" : projLive.isAmbitious ? "rgba(251,191,36,0.07)" : "rgba(52,211,153,0.07)",
+                      border: `1px solid ${projLive.isUnrealistic ? "rgba(239,68,68,0.3)" : projLive.isAmbitious ? "rgba(251,191,36,0.3)" : "rgba(52,211,153,0.25)"}`,
+                    }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] font-semibold"
+                        style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "#fbbf24" : "#34d399" }}>
+                        {projLive.isUnrealistic ? "❌ Irréaliste" : projLive.isAmbitious ? "⚠️ Ambitieux" : "✅ Réaliste"}
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        {Math.abs(projLive.totalKg).toFixed(1)} kg à {projLive.totalKg > 0 ? "perdre" : "prendre"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par semaine</p>
+                        <p className="text-[16px] font-bold tabular-nums leading-none"
+                          style={{ color: projLive.isUnrealistic ? "#ef4444" : "var(--text-primary)" }}>
+                          {projLive.totalKg > 0 ? "−" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
+                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par jour</p>
+                        <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                          {projLive.totalKg > 0 ? "−" : "+"}{Math.abs(projLive.perDay * 1000).toFixed(0)}
+                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>g</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit kcal/jour</p>
+                        <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
+                          ~{projLive.dailyDeficit}
+                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée totale</p>
+                        <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--text-secondary)" }}>
+                          {projLive.days}
+                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>jours</span>
+                        </p>
+                      </div>
+                    </div>
+                    {projLive.isUnrealistic && (
+                      <p className="text-[10px]" style={{ color: "#f87171" }}>
+                        ⚠️ Date mini réaliste pour {Math.abs(projLive.totalKg).toFixed(1)} kg :{" "}
+                        <strong>{projLive.minDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* ── Niveau d'activité ── */}
