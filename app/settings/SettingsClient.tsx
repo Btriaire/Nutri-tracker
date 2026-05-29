@@ -959,39 +959,6 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                   <SliderField label="Poids cible" unit=" kg"
                     value={weight || "70"} min={40} max={200} step={0.5}
                     color="var(--calories)" onChange={setWeight} />
-                  {/* BMI suggestions */}
-                  {parseInt(height) >= 100 && (() => {
-                    const hM = parseInt(height) / 100;
-                    return (
-                      <div className="flex gap-1.5 flex-wrap mt-2">
-                        {[
-                          { label: "Mince",    bmi: 20, emoji: "📉" },
-                          { label: "Optimal",  bmi: 22, emoji: "🏆" },
-                          { label: "Normal+",  bmi: 25, emoji: "✅" },
-                        ].map(s => {
-                          const kg = Math.round(s.bmi * hM * hM * 10) / 10;
-                          const sel = parseFloat(weight) === kg;
-                          return (
-                            <button key={s.bmi} onClick={() => setWeight(kg.toString())}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all"
-                              style={{
-                                background: sel ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
-                                border: `1px solid ${sel ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
-                              }}>
-                              <span className="text-[11px]">{s.emoji}</span>
-                              <span className="text-[11px] font-bold tabular-nums"
-                                style={{ color: sel ? "var(--calories)" : "var(--text-primary)" }}>
-                                {kg} kg
-                              </span>
-                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
-                                IMC {s.bmi}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
                 </div>
 
                 {/* ── Date cible ── */}
