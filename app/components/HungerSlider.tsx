@@ -69,13 +69,33 @@ export default function HungerSlider({ value, onChange, label, compact = false }
             );
           })}
         </div>
-        {/* Emoji du niveau sélectionné */}
-        <span
-          className="text-[14px] leading-none flex-shrink-0 transition-all"
-          style={{ opacity: isSet ? 1 : 0.2, filter: isSet ? "none" : "grayscale(1)" }}
-        >
-          {isSet ? HUNGER_CFG[value!].emoji : "😶"}
-        </span>
+        {/* − et + pour décrémenter / incrémenter */}
+        <button
+          type="button"
+          onClick={() => handleClick(Math.max(1, (value ?? 1) - 1) as HungerLevel)}
+          aria-label="Moins faim"
+          style={{
+            width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
+            background: "rgba(255,255,255,0.08)",
+            color: "var(--text-muted)",
+            fontSize: 13, fontWeight: 700, lineHeight: 1,
+            cursor: "pointer", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >−</button>
+        <button
+          type="button"
+          onClick={() => handleClick(Math.min(5, (value ?? 0) + 1) as HungerLevel)}
+          aria-label="Plus faim"
+          style={{
+            width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
+            background: "rgba(255,255,255,0.08)",
+            color: "var(--text-muted)",
+            fontSize: 13, fontWeight: 700, lineHeight: 1,
+            cursor: "pointer", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >+</button>
       </div>
 
       {/* Légende labels (non-compact uniquement) */}
