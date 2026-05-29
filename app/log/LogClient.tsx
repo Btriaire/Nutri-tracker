@@ -96,8 +96,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
     },
     waterMl,
     waterGoal: goals.waterMl ?? 2000,
+    mealHunger,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [entries.length, Math.round(totals.calories), waterMl]);
+  }), [entries.length, Math.round(totals.calories), waterMl, mealHunger]);
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);

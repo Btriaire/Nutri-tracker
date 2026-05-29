@@ -24,9 +24,10 @@ function buildSystemPrompt(type: InsightType, hour: number): string {
   const timeNote = `\n\nCONTEXTE TEMPOREL : ${ctx}`;
 
   const base: Record<InsightType, string> = {
-    journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour et les objectifs.
+    journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour, les objectifs et les niveaux de faim ressentis par repas.
 Rédige une analyse nutritionnelle factuelle, succincte et positive, en 2-3 phrases maximum.
 Compare les apports réels aux objectifs (calories, protéines, glucides, lipides, fibres, eau).
+Si des niveaux de faim sont disponibles, intègre-les dans l'analyse : une faim élevée (4-5) suggère un repas trop léger ou un timing mal adapté, une faim basse (1-2) avant un repas peut indiquer un bon équilibre.
 Identifie 1 point fort et 1 piste d'amélioration si nécessaire.
 Réponds directement sans intro ni conclusion générique.`,
 
@@ -66,13 +67,33 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
   void hour; // used above
   switch (type) {
     case "journal": {
-      const { entries, totals, goals, waterMl, waterGoal } = data as {
-        entries:  { name: string; grams: number; calories: number }[];
-        totals:   { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number };
-        goals:    { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatGrams: number; fiberGrams: number };
-        waterMl:  number;
-        waterGoal: number;
+      const { entries, totals, goals, waterMl, waterGoal, mealHunger } = data as {
+        entries:    { name: string; grams: number; calories: number }[];
+        totals:     { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number };
+        goals:      { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatGrams: number; fiberGrams: number };
+        waterMl:    number;
+        waterGoal:  number;
+        mealHunger?: Partial<Record<string, number>>;
       };
+      const HUNGER_LABELS: Record<number, string> = {
+        1: "pas faim (1/5)",
+        2: "peu faim (2/5)",
+        3: "modéré (3/5)",
+        4: "faim (4/5)",
+        5: "très faim (5/5)",
+      };
+      const MEAL_NAMES: Record<string, string> = {
+        breakfast: "Petit-déjeuner",
+        lunch:     "Déjeuner",
+        dinner:    "Dîner",
+        snacks:    "Collations",
+      };
+      const hungerLines = mealHunger
+        ? Object.entries(mealHunger)
+            .filter(([, v]) => v != null)
+            .map(([meal, v]) => `  - ${MEAL_NAMES[meal] ?? meal} : ${HUNGER_LABELS[v as number] ?? v}`)
+            .join("\n")
+        : "";
       const foodList = (entries ?? [])
         .slice(0, 20)
         .map((e) => `- ${e.name} (${e.grams}g, ${e.calories} kcal)`)
@@ -86,7 +107,8 @@ Totaux :
 - Glucides : ${Math.round(totals?.carbsG ?? 0)} / ${goals?.carbsGrams ?? 0} g
 - Lipides : ${Math.round(totals?.fatG ?? 0)} / ${goals?.fatGrams ?? 0} g
 - Fibres : ${Math.round(totals?.fiberG ?? 0)} / ${goals?.fiberGrams ?? 0} g
-- Eau : ${waterMl ?? 0} / ${waterGoal ?? 2000} mL`;
+- Eau : ${waterMl ?? 0} / ${waterGoal ?? 2000} mL
+${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}`;
     }
 
     case "dashboard": {

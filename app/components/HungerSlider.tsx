@@ -15,63 +15,68 @@ export const HUNGER_CFG: Record<HungerLevel, { emoji: string; label: string; col
 interface Props {
   value:    HungerLevel | null | undefined;
   onChange: (v: HungerLevel | null) => void;
-  label?:   string;       // optionnel, ex. "Avant ce repas"
-  compact?: boolean;      // true = pas de label texte sous le slider
+  label?:   string;
+  compact?: boolean;   // true = juste les 5 segments, pas de label
 }
 
+// ─── Composant : 5 segments cliquables ────────────────────────────────────────
+
 export default function HungerSlider({ value, onChange, label, compact = false }: Props) {
-  const isSet  = value != null;
-  const level  = value ?? 3;                          // position neutre si non défini
-  const cfg    = isSet ? HUNGER_CFG[value!] : null;
-  const fillPct = ((level - 1) / 4) * 100;           // 0 % → 100 %
+  const isSet = value != null;
+
+  const handleClick = (l: HungerLevel) => {
+    // clic sur le niveau déjà sélectionné → reset à null
+    onChange(value === l ? null : l);
+  };
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
-      {/* Header row: emoji + label */}
-      <div className="flex items-center justify-between">
-        {label && (
-          <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
-            {label}
-          </span>
-        )}
-        <div className="flex items-center gap-1.5 ml-auto">
-          <span className="text-[17px] leading-none transition-all" style={{ filter: isSet ? "none" : "grayscale(1) opacity(0.35)" }}>
-            {cfg?.emoji ?? "😶"}
-          </span>
-          {!compact && (
-            <span
-              className="text-[11px] font-semibold transition-all"
-              style={{ color: cfg?.color ?? "var(--text-muted)", opacity: isSet ? 1 : 0.4, minWidth: 56, textAlign: "right" }}
-            >
-              {cfg?.label ?? "—"}
-            </span>
-          )}
-        </div>
+    <div className="flex flex-col gap-1 w-full">
+      {/* Label */}
+      {label && !compact && (
+        <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+          {label}
+        </span>
+      )}
+
+      {/* 5 segments */}
+      <div
+        role="group"
+        aria-label="Niveau de faim"
+        className="flex gap-0.5"
+        /* padding vertical invisible → grande zone de tap mobile */
+        style={{ paddingTop: 6, paddingBottom: 6, margin: "-6px 0", cursor: "pointer" }}
+      >
+        {([1, 2, 3, 4, 5] as HungerLevel[]).map((l) => {
+          const filled  = isSet && value! >= l;
+          const color   = HUNGER_CFG[l].color;
+          return (
+            <button
+              key={l}
+              type="button"
+              onClick={() => handleClick(l)}
+              aria-label={HUNGER_CFG[l].label}
+              style={{
+                flex:         1,
+                height:       3,
+                borderRadius: 2,
+                background:   filled ? color : "rgba(255,255,255,0.1)",
+                border:       "none",
+                padding:      0,
+                transition:   "background 0.12s",
+                cursor:       "pointer",
+              }}
+            />
+          );
+        })}
       </div>
 
-      {/* Slider */}
-      <input
-        type="range"
-        min={1} max={5} step={1}
-        value={level}
-        className={`nt-hunger${isSet ? "" : " nt-hunger-unset"}`}
-        style={{
-          "--hfill":  `${fillPct}%`,
-          "--hcolor": cfg?.color ?? "#6b7280",
-        } as React.CSSProperties}
-        onChange={(e) => onChange(parseInt(e.target.value) as HungerLevel)}
-        onMouseDown={() => { if (!isSet) onChange(level as HungerLevel); }}
-        onTouchStart={() => { if (!isSet) onChange(level as HungerLevel); }}
-        aria-label="Niveau de faim"
-        aria-valuemin={1} aria-valuemax={5} aria-valuenow={level}
-      />
-
-      {/* Tick marks */}
+      {/* Légende labels (non-compact uniquement) */}
       {!compact && (
         <div className="flex justify-between px-0.5">
           {([1, 2, 3, 4, 5] as HungerLevel[]).map((l) => (
-            <span key={l} className="text-[11px]" style={{ opacity: value === l ? 1 : 0.3 }}>
-              {HUNGER_CFG[l].emoji}
+            <span key={l} className="text-[10px]"
+              style={{ color: value === l ? HUNGER_CFG[l].color : "var(--text-muted)", opacity: value === l ? 1 : 0.4 }}>
+              {HUNGER_CFG[l].label.split(" ")[0]}
             </span>
           ))}
         </div>

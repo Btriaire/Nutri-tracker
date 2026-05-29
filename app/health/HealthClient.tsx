@@ -21,7 +21,7 @@ import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
-type HealthTab = "vitaux" | "cardiaque" | "medicaments" | "bienetre";
+type HealthTab = "synthese" | "cardiaque" | "medicaments" | "bienetre";
 
 interface Props {
   date:           string;
@@ -118,7 +118,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [date,       setDate]       = useState(initialDate);
   const [entry,      setEntry]      = useState<HealthData | null>(initialEntry);
   const [loading,    setLoading]    = useState(false);
-  const [activeTab,  setActiveTab]  = useState<HealthTab>("vitaux");
+  const [activeTab,  setActiveTab]  = useState<HealthTab>("synthese");
 
   // BP modal
   const [bpOpen,   setBpOpen]   = useState(false);
@@ -394,7 +394,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
           {([
-            { id: "vitaux",       label: "🩺 Vitaux" },
+            { id: "synthese",     label: "🩺 Synthèse" },
             { id: "cardiaque",    label: "❤️ Cardiaque" },
             { id: "medicaments",  label: "💊 Médic." },
             { id: "bienetre",     label: "🧠 Bien-être" },
@@ -412,7 +412,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         </motion.div>
 
         {/* ── TAB: VITAUX ── */}
-        {activeTab === "vitaux" && (
+        {activeTab === "synthese" && (
           <>
             {/* ── Composition corporelle (Withings) ── */}
             <motion.div {...fade(0.03)} className="glass p-5 mb-4">
