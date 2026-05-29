@@ -85,19 +85,66 @@ type WeightChartPoint = {
 };
 
 /**
- * Non-linear weight projection using exponential decay.
+ * Plateau-based weight projection.
  *
- * Rationale: As a caloric deficit is maintained, the body progressively adapts
- * (lower BMR, hormonal changes) making weight loss increasingly slower. This is
- * modelled with W(d) = targetKg + gap × e^(-k·d) where k is tuned so that
- * 95% of the gap is covered by targetDate.
+ * The body loses weight in cycles: 2–3 weeks of active loss followed by
+ * 1 week of metabolic adaptation (plateau / slight rebound). Each cycle
+ * the loss rate decreases by ~15% (hormonal adaptation, lower BMR).
  *
- * This means loss is fastest at the start and slows progressively, with
- * ~78% of the total loss occurring in the first half of the period.
+ * This produces a visible staircase pattern:
+ *   ↘↘ loss phase → ── plateau → ↘↘ loss (slower) → ── plateau → …
  *
- * An uncertainty band (±variance) is added: wider in later weeks to reflect
- * higher prediction uncertainty as the body adapts unpredictably.
+ * The loss-phase rate is calibrated so the total projected loss equals
+ * exactly the gap by targetDate.
  */
+function buildPlateauDailyKg(
+  startKg:   number,
+  targetKg:  number,
+  totalDays: number,
+): number[] {
+  const gap          = startKg - targetKg; // positive = weight loss
+  const direction    = gap >= 0 ? 1 : -1;  // +1 loss, -1 gain
+  const LOSS_WEEKS   = 3;  // weeks of active loss per cycle
+  const PLATEAU_WEEKS = 1; // weeks of stagnation per cycle
+  const CYCLE        = LOSS_WEEKS + PLATEAU_WEEKS;
+  const DECAY        = 0.85; // rate multiplier per cycle
+
+  const totalWeeks   = totalDays / 7;
+  const numCycles    = Math.ceil(totalWeeks / CYCLE);
+
+  // Calibrate base rate so total projected loss = gap
+  // Total loss = sum over cycles of: LOSS_WEEKS × baseRate × DECAY^c
+  //            = baseRate × LOSS_WEEKS × Σ DECAY^c
+  let geoSum = 0;
+  for (let c = 0; c < numCycles; c++) geoSum += Math.pow(DECAY, c);
+  const baseWeeklyLoss = Math.abs(gap) / Math.max(geoSum * LOSS_WEEKS, 0.01);
+
+  const daily: number[] = [startKg];
+  let cur = startKg;
+
+  for (let day = 0; day < totalDays; day++) {
+    const week      = Math.floor(day / 7);
+    const cycleNum  = Math.floor(week / CYCLE);
+    const cycleWeek = week % CYCLE;
+    const weeklyRate = baseWeeklyLoss * Math.pow(DECAY, cycleNum);
+    const dailyRate  = weeklyRate / 7;
+
+    if (cycleWeek < LOSS_WEEKS) {
+      // Active loss phase
+      cur = direction > 0
+        ? Math.max(targetKg, cur - dailyRate)
+        : Math.min(targetKg, cur + dailyRate);
+    } else {
+      // Plateau: body stagnates (or slight micro-rebound ~5% of loss rate)
+      cur = direction > 0
+        ? cur + dailyRate * 0.05   // tiny rebound
+        : cur - dailyRate * 0.05;
+    }
+    daily.push(Math.round(cur * 100) / 100);
+  }
+  return daily;
+}
+
 function buildWeightChartData(
   weightData: { label: string; date: string; weightKg: number | undefined }[],
   calorieData: { date: string; calories: number }[],
@@ -129,17 +176,12 @@ function buildWeightChartData(
   if (!lastActual) return past;
 
   const endDate   = new Date(targetDate + "T00:00:00");
-  const totalDays = Math.max(7, Math.round((endDate.getTime() - today.getTime()) / 86400000));
+  const totalDays = Math.max(14, Math.round((endDate.getTime() - today.getTime()) / 86400000));
 
-  // Exponential decay coefficient: k = ln(20) / totalDays
-  // → at d=totalDays, gap is reduced to 5% (exp(-k*T) = 0.05)
-  const gap = lastActual - targetKg; // positive = losing, negative = gaining
-  const k   = Math.log(20) / totalDays;
+  // Build daily plateau simulation
+  const dailyKg = buildPlateauDailyKg(lastActual, targetKg, totalDays);
 
-  // Helper: projected weight at d days from now
-  const projAt = (d: number) => targetKg + gap * Math.exp(-k * d);
-
-  // Bridge point: today (connects actual line to projected line)
+  // Bridge point: today
   const todayBridge: WeightChartPoint = {
     date:      todayStr,
     label:     "Auj.",
@@ -151,41 +193,32 @@ function buildWeightChartData(
     isToday:   true,
   };
 
-  // Future projection: weekly points up to target date
+  // Sample: one point per week, plus the final target date
   const future: WeightChartPoint[] = [];
+  const gap   = Math.abs(lastActual - targetKg);
   const weeksTotal = Math.ceil(totalDays / 7);
+
   for (let w = 1; w <= weeksTotal; w++) {
-    const d = new Date(today.getTime() + w * 7 * 86400000);
-    if (d >= endDate) break;
-    const daysFromNow = Math.round((d.getTime() - today.getTime()) / 86400000);
-    const proj        = projAt(daysFromNow);
-    // Uncertainty band widens over time: ±0.3 kg/week initially, growing to ±1.2 kg by the end
-    const bandKg = Math.min(0.3 + (daysFromNow / totalDays) * 0.9, 1.2);
-    const sign   = gap >= 0 ? 1 : -1; // direction: loss = +, gain = -
+    const daysFromNow = Math.min(w * 7, totalDays);
+    const d           = new Date(today.getTime() + daysFromNow * 86400000);
+    const proj        = dailyKg[daysFromNow] ?? (dailyKg[dailyKg.length - 1]);
+    // Uncertainty band widens over time
+    const bandKg      = Math.min(0.25 + (daysFromNow / totalDays) * 0.75, 1.0);
+    const isLoss      = (lastActual - targetKg) >= 0;
+
     future.push({
       date:      format(d, "yyyy-MM-dd"),
-      label:     format(d, "dd/MM"),
+      label:     daysFromNow >= totalDays ? format(endDate, "dd/MM/yy") : format(d, "dd/MM"),
       actual:    null,
       projected: Math.round(proj * 10) / 10,
-      projLow:   Math.round((proj + sign * bandKg) * 10) / 10, // "worse" scenario
-      projHigh:  Math.round((proj - sign * bandKg) * 10) / 10, // "better" scenario
+      projLow:   Math.round((proj + (isLoss ? bandKg : -bandKg)) * 10) / 10,
+      projHigh:  Math.round((proj - (isLoss ? bandKg : -bandKg)) * 10) / 10,
       calories:  null,
       isFuture:  true,
     });
+    if (daysFromNow >= totalDays) break;
   }
-  // Final target point
-  future.push({
-    date:      targetDate,
-    label:     format(endDate, "dd/MM/yy"),
-    actual:    null,
-    projected: Math.round(projAt(totalDays) * 10) / 10,
-    projLow:   Math.round((projAt(totalDays) + Math.abs(gap) * 0.08) * 10) / 10,
-    projHigh:  Math.round((projAt(totalDays) - Math.abs(gap) * 0.08) * 10) / 10,
-    calories:  null,
-    isFuture:  true,
-  });
 
-  // Deduplicate: avoid duplicate today if already in past
   const filteredPast = past.filter(p => p.date !== todayStr);
   return [...filteredPast, todayBridge, ...future];
 }
@@ -934,8 +967,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <div className="mt-2.5 px-3 py-2 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                       <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        📉 <span style={{ color: "var(--text-secondary)" }}>Modèle non-linéaire</span> — La perte ralentit
-                        progressivement (adaptation métabolique). ~78% de la perte se fait dans la première moitié de la période.
+                        📉 <span style={{ color: "var(--text-secondary)" }}>Modèle par paliers</span> — 3 semaines de perte active
+                        → 1 semaine de stagnation/rebond → répétition. Chaque cycle perd ~15% de moins (adaptation métabolique).
                         La fourchette indique l&apos;incertitude croissante.
                       </p>
                     </div>
