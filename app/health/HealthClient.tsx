@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
@@ -707,6 +708,60 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 onClear={() => handleClearVital("temperatureC")} onCancel={() => setEditVital(null)}
               />
             </motion.div>
+
+            {/* Sommeil */}
+            {(() => {
+              const lastSleep = [...cardioPoints].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+              const sleepGoalMin = 420; // default 7h; TODO: pass from props if available
+              const sleepOk = lastSleep && lastSleep.sleepMinutes! >= sleepGoalMin;
+              const sleepH  = lastSleep ? Math.round(lastSleep.sleepMinutes! / 60 * 10) / 10 : null;
+              return (
+                <motion.div {...fade(0.13)} className="glass p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(121,134,203,0.15)" }}>
+                        <Moon size={15} weight="fill" style={{ color: "#7986CB" }} />
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-semibold">Sommeil</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          {lastSleep ? format(parseISO(lastSleep.date + "T12:00:00"), "dd MMM", { locale: fr }) : "Aucune donnée"}
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/activity/sleep"
+                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors"
+                      style={{ background: "rgba(121,134,203,0.1)", color: "#7986CB", border: "1px solid rgba(121,134,203,0.2)" }}>
+                      Détail
+                      <ArrowUp size={10} style={{ transform: "rotate(45deg)" }} />
+                    </Link>
+                  </div>
+                  {lastSleep ? (
+                    <>
+                      <div className="flex items-baseline gap-2 mb-3">
+                        <span className="text-[36px] font-bold tabular-nums leading-none"
+                          style={{ color: sleepOk ? "#34A853" : "#7986CB" }}>
+                          {sleepH}h
+                        </span>
+                        <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>/ 7h objectif</span>
+                        {sleepOk && <span className="text-[11px] font-medium ml-1" style={{ color: "#34A853" }}>✓ Objectif atteint</span>}
+                      </div>
+                      <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Aucune donnée de sommeil</p>
+                      <Link href="/activity/sleep"
+                        className="text-[11px] font-medium"
+                        style={{ color: "#7986CB" }}>
+                        Saisir manuellement →
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })()}
 
             {/* Notes */}
             <motion.div {...fade(0.15)} className="glass p-4 mb-4">

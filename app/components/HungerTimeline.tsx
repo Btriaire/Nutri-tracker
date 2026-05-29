@@ -186,14 +186,14 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
             );
           })}
 
-          {/* Ghost dots for empty meals */}
+          {/* Tick marks on x-axis for meals without data (no dots — avoid false zero impression) */}
           {MEALS.map((m, i) => {
             if (mealHunger[m.key] != null) return null;
             const x = xFor(i);
-            const y = SVG_H - PAD_BOT - 4;
+            const y = SVG_H - PAD_BOT;
             return (
-              <circle key={i} cx={x} cy={y} r={4}
-                fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1.5} strokeDasharray="2 2" />
+              <line key={i} x1={x} y1={y} x2={x} y2={y + 4}
+                stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
             );
           })}
         </svg>
