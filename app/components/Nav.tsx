@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -41,6 +42,17 @@ export default function Nav() {
 
   return (
     <>
+      {/* Top logo bar (mobile only) */}
+      <div className="fixed top-0 inset-x-0 z-50 flex md:hidden items-center justify-center px-4 py-2"
+        style={{
+          background: "var(--nav-bg)",
+          borderBottom: "1px solid var(--nav-border)",
+          backdropFilter: "blur(16px)",
+          height: "48px",
+        }}>
+        <Image src="/logo.png" alt="Nutri-Tracker" width={120} height={65} className="h-8 w-auto" priority />
+      </div>
+
       {/* Bottom nav (mobile) */}
       <nav
         className="fixed bottom-0 inset-x-0 z-50 flex md:hidden"
@@ -91,19 +103,15 @@ export default function Nav() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-3 mb-6">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(139,92,246,0.25))",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            🥗
-          </div>
-          <span className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-            NutriTracker
-          </span>
+        <div className="flex items-center px-2 mb-6">
+          <Image
+            src="/logo.png"
+            alt="Nutri-Tracker"
+            width={160}
+            height={87}
+            className="w-full max-w-[160px] h-auto"
+            priority
+          />
         </div>
 
         {TABS.map(({ href, icon: Icon, label }) => {

@@ -20,6 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ background: "var(--bg)", color: "var(--text-primary)", minHeight: "100vh" }}>
         <ThemeProvider>
           <NavWrapper />
+          {/* Push content below mobile logo bar */}
+          <div className="md:hidden" style={{ height: "48px" }} />
           {children}
         </ThemeProvider>
       </body>
