@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { format, addDays, subDays, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  CaretLeft, CaretRight, Plus, X, Heartbeat, Thermometer,
+  CaretLeft, CaretRight, CaretUp, CaretDown, Plus, X, Heartbeat, Thermometer,
   Drop, Spinner, Trash, PencilSimple, Heart, Note,
   Lightning, Moon, Warning, CheckCircle, ArrowDown, ArrowUp, Minus, ArrowsClockwise,
   Pill, Check,
@@ -188,9 +188,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [symSaving,     setSymSaving]     = useState(false);
 
   // AI Synthesis
-  const [synthesis,        setSynthesis]        = useState<AISynthesisResult | null>(initialEntry?.aiSynthesis ?? null);
-  const [synthesisLoading, setSynthesisLoading] = useState(false);
-  const [synthesisError,   setSynthesisError]   = useState(false);
+  const [synthesis,          setSynthesis]          = useState<AISynthesisResult | null>(initialEntry?.aiSynthesis ?? null);
+  const [synthesisLoading,   setSynthesisLoading]   = useState(false);
+  const [synthesisError,     setSynthesisError]     = useState(false);
+  const [synthesisExpanded,  setSynthesisExpanded]  = useState(false);
 
   // Cardio range
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
@@ -897,158 +898,137 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         {activeTab === "medical" && (
           <motion.div {...fade(0.05)} className="space-y-4">
 
-            {/* ── Nutri-IA-Med ── */}
-            <div className="glass p-4">
-              {/* Header row */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,rgba(167,139,250,0.15),rgba(96,165,250,0.15))" }}>
-                  <span className="text-[16px]">🤖</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</p>
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    Synthèse IA · symptômes, constantes, nutrition &amp; activité
-                  </p>
-                </div>
-                <button
-                  onClick={handleSynthesis}
-                  disabled={synthesisLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold flex-shrink-0 transition-all"
-                  style={{
-                    background: synthesisLoading ? "rgba(167,139,250,0.15)" : "linear-gradient(135deg,rgba(167,139,250,0.18),rgba(96,165,250,0.18))",
-                    border: "1px solid rgba(167,139,250,0.4)",
-                    color: "#a78bfa",
-                    opacity: synthesisLoading ? 0.7 : 1,
-                  }}>
-                  {synthesisLoading
-                    ? <><Spinner size={12} className="animate-spin" /> Analyse…</>
-                    : synthesis ? <><ArrowsClockwise size={12} /> Relancer</> : <>Analyser</>
-                  }
-                </button>
-              </div>
-
-              {/* Error */}
-              {synthesisError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px]"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
-                  <Warning size={13} weight="fill" />
-                  Erreur lors de l'analyse. Réessayez dans un instant.
-                </div>
-              )}
-
-              {/* Loading skeleton */}
-              {synthesisLoading && (
-                <div className="space-y-2 mt-1">
-                  {[100, 80, 90, 70].map((w, i) => (
-                    <div key={i} className="h-3 rounded-full animate-pulse"
-                      style={{ width: `${w}%`, background: "rgba(167,139,250,0.12)" }} />
-                  ))}
-                </div>
-              )}
-
-              {/* Result */}
-              {synthesis && !synthesisLoading && (() => {
-                const ALERT_CFG = {
-                  vert:   { color: "#34d399", bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.3)", dot: "🟢" },
-                  orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.3)", dot: "🟡" },
-                  rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.3)", dot: "🔴" },
-                };
-                const cfg = ALERT_CFG[synthesis.alertLevel];
-
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-3"
-                  >
-                    {/* Alert badge */}
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                      <span className="text-[13px]">{cfg.dot}</span>
-                      <span className="text-[12px] font-semibold" style={{ color: cfg.color }}>
-                        {synthesis.alertLabel}
+            {/* ── Nutri-IA-Med ── compact ── */}
+            {(() => {
+              const ALERT_CFG = {
+                vert:   { color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.25)", dot: "🟢" },
+                orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", dot: "🟡" },
+                rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", dot: "🔴" },
+              };
+              const cfg = synthesis ? ALERT_CFG[synthesis.alertLevel] : null;
+              return (
+                <div className="glass px-3 py-2.5">
+                  {/* ── Header row ── */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px]">🤖</span>
+                    <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</span>
+                    {/* Alert pill */}
+                    {synthesis && cfg && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+                        {cfg.dot} {synthesis.alertLabel}
                       </span>
-                    </div>
+                    )}
+                    <div className="flex-1" />
+                    {/* Relancer / Analyser */}
+                    <button onClick={handleSynthesis} disabled={synthesisLoading}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all flex-shrink-0"
+                      style={{
+                        background: "rgba(167,139,250,0.1)",
+                        border: "1px solid rgba(167,139,250,0.3)",
+                        color: "#a78bfa",
+                        opacity: synthesisLoading ? 0.6 : 1,
+                      }}>
+                      {synthesisLoading
+                        ? <><Spinner size={10} className="animate-spin" /> Analyse…</>
+                        : synthesis ? <><ArrowsClockwise size={10} /> Refaire</> : <>Analyser</>}
+                    </button>
+                    {/* Expand toggle */}
+                    {synthesis && !synthesisLoading && (
+                      <button onClick={() => setSynthesisExpanded(v => !v)}
+                        className="w-6 h-6 flex items-center justify-center rounded-lg flex-shrink-0"
+                        style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
+                        {synthesisExpanded ? <CaretUp size={11} /> : <CaretDown size={11} />}
+                      </button>
+                    )}
+                  </div>
 
-                    {/* Summary */}
-                    <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                      {synthesis.summary}
-                    </p>
-
-                    {/* Sections grid */}
-                    <div className="space-y-2">
-                      {[
-                        { icon: "❤️", label: "Constantes",  text: synthesis.vitaux,     show: true },
-                        { icon: "🩺", label: "Symptômes",   text: synthesis.symptomes,  show: !!synthesis.symptomes },
-                        { icon: "🥗", label: "Nutrition",   text: synthesis.nutrition,  show: true },
-                        { icon: "🏃", label: "Activité",    text: synthesis.activite,   show: !!synthesis.activite },
-                      ].filter(s => s.show).map(({ icon, label, text }) => (
-                        <div key={label}
-                          className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                          <span className="text-[13px] flex-shrink-0 mt-0.5">{icon}</span>
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
-                            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{text}</p>
-                          </div>
-                        </div>
+                  {/* Loading bar */}
+                  {synthesisLoading && (
+                    <div className="mt-2 space-y-1.5">
+                      {[90, 70, 80].map((w, i) => (
+                        <div key={i} className="h-2 rounded-full animate-pulse"
+                          style={{ width: `${w}%`, background: "rgba(167,139,250,0.1)" }} />
                       ))}
                     </div>
+                  )}
 
-                    {/* Recommendations */}
-                    {synthesis.recommandations?.length > 0 && (
-                      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                        <div className="px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-                          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                            💡 Recommandations
-                          </p>
-                        </div>
-                        <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-                          {synthesis.recommandations.map((r, i) => (
-                            <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
-                              <span className="text-[10px] font-bold mt-0.5 flex-shrink-0"
-                                style={{ color: "#a78bfa" }}>{i + 1}</span>
-                              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{r}</p>
-                            </div>
+                  {/* Error inline */}
+                  {synthesisError && !synthesisLoading && (
+                    <p className="text-[10px] mt-1.5" style={{ color: "#f87171" }}>
+                      Erreur d'analyse · réessaye
+                    </p>
+                  )}
+
+                  {/* Summary — always visible when synthesis */}
+                  {synthesis && !synthesisLoading && (
+                    <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      {synthesis.summary}
+                    </p>
+                  )}
+
+                  {/* Empty state minimal */}
+                  {!synthesis && !synthesisLoading && !synthesisError && (
+                    <button onClick={handleSynthesis}
+                      className="w-full mt-2 py-2 rounded-lg text-[11px] font-medium transition-all"
+                      style={{ border: "1px dashed rgba(167,139,250,0.25)", color: "#a78bfa" }}>
+                      Lancer l'analyse
+                    </button>
+                  )}
+
+                  {/* Expanded details */}
+                  <AnimatePresence initial={false}>
+                    {synthesis && synthesisExpanded && !synthesisLoading && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
+                        style={{ overflow: "hidden" }}>
+                        <div className="mt-3 space-y-1.5">
+                          {[
+                            { icon: "❤️", label: "Constantes", text: synthesis.vitaux,    show: true },
+                            { icon: "🩺", label: "Symptômes",  text: synthesis.symptomes, show: !!synthesis.symptomes },
+                            { icon: "🥗", label: "Nutrition",  text: synthesis.nutrition,  show: true },
+                            { icon: "🏃", label: "Activité",   text: synthesis.activite,   show: !!synthesis.activite },
+                          ].filter(s => s.show).map(({ icon, label, text }) => (
+                            <p key={label} className="text-[11px] leading-relaxed">
+                              <span className="mr-1">{icon}</span>
+                              <span className="font-medium" style={{ color: "var(--text-muted)" }}>{label} · </span>
+                              <span style={{ color: "var(--text-secondary)" }}>{text}</span>
+                            </p>
                           ))}
                         </div>
-                      </div>
-                    )}
 
-                    {/* Consulter warning */}
-                    {synthesis.consulter && (
-                      <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
-                        <Warning size={14} weight="fill" style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
-                        <p className="text-[12px] leading-relaxed" style={{ color: "#f87171" }}>
-                          {synthesis.consulter}
+                        {synthesis.recommandations?.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                              💡 Recommandations
+                            </p>
+                            <div className="space-y-1">
+                              {synthesis.recommandations.map((r, i) => (
+                                <p key={i} className="text-[11px] leading-relaxed">
+                                  <span className="font-bold mr-1" style={{ color: "#a78bfa" }}>{i + 1}.</span>
+                                  <span style={{ color: "var(--text-secondary)" }}>{r}</span>
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {synthesis.consulter && (
+                          <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#f87171" }}>
+                            ⚠️ {synthesis.consulter}
+                          </p>
+                        )}
+
+                        <p className="text-[8px] mt-2" style={{ color: "var(--text-muted)" }}>
+                          Indicatif · ne remplace pas un avis médical
                         </p>
-                      </div>
+                      </motion.div>
                     )}
-
-                    <p className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>
-                      Analyse indicative · ne remplace pas un avis médical professionnel
-                    </p>
-                  </motion.div>
-                );
-              })()}
-
-              {/* Empty state (no analysis yet) */}
-              {!synthesis && !synthesisLoading && !synthesisError && (
-                <button onClick={handleSynthesis}
-                  className="w-full py-5 rounded-xl flex flex-col items-center gap-2 transition-colors"
-                  style={{ border: "1.5px dashed rgba(167,139,250,0.3)" }}>
-                  <span className="text-[24px]">🔬</span>
-                  <p className="text-[12px] font-medium" style={{ color: "#a78bfa" }}>
-                    Lancer l'analyse complète
-                  </p>
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    Synthèse de tes constantes, symptômes, nutrition &amp; activité
-                  </p>
-                </button>
-              )}
-            </div>
+                  </AnimatePresence>
+                </div>
+              );
+            })()}
 
             {/* ── Médicaments ── */}
             <div className="glass p-4">
