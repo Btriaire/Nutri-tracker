@@ -15,31 +15,32 @@ import WelcomeChime from "@/app/components/WelcomeChime";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang } from "@/app/lib/types";
+import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
 interface Props {
-  date:           string;
-  displayName?:   string;
-  photoUrl?:      string;
-  goals:          NutritionGoals;
-  consumed:       DayTotals;
-  burned:         number | null;
-  steps:          number | null;
-  stepsGoal:      number;
-  activeMinutes:  number | null;
-  heartRate:      number | null;
-  sleepMinutes:   number | null;
-  sleepGoalMin:   number;
-  sessions:       Session[];
-  weight:         WeightPoint | null;
-  previousWeight: WeightPoint | null;
-  recentWeight:   WeightPoint[];
-  trendPoints:    DayTrendPoint[];
-  waterMl:        number;
-  plan?:          NutritionPlan;
-  lang:           Lang;
+  date:              string;
+  displayName?:      string;
+  photoUrl?:         string;
+  goals:             NutritionGoals;
+  consumed:          DayTotals;
+  burned:            number | null;
+  steps:             number | null;
+  stepsGoal:         number;
+  activeMinutes:     number | null;
+  heartRate:         number | null;
+  sleepMinutes:      number | null;
+  sleepGoalMin:      number;
+  sessions:          Session[];
+  weight:            WeightPoint | null;
+  previousWeight:    WeightPoint | null;
+  recentWeight:      WeightPoint[];
+  trendPoints:       DayTrendPoint[];
+  waterMl:           number;
+  plan?:             NutritionPlan;
+  lang:              Lang;
+  trackedNutrients?: TrackedNutrients;
 }
 
 function activityEmoji(type: number): string {
@@ -103,7 +104,7 @@ const fade = (delay = 0) => ({
 export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
-  waterMl: initialWaterMl, plan, lang,
+  waterMl: initialWaterMl, plan, lang, trackedNutrients,
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -226,96 +227,130 @@ export default function DashboardClient({
       >
 
         {/* ── Header ── */}
-        <motion.div {...fade(0)} className="mb-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 min-w-0">
+        <motion.div {...fade(0)} className="mb-5">
+
+          {/* Row 1 — avatar · greeting · sync */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 min-w-0">
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 mt-0.5"
-                style={{ border: "1.5px solid var(--border-strong)" }}>
+              <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0"
+                style={{ border: "2px solid var(--border-strong)" }}>
                 {photoUrl ? (
                   <img src={photoUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[15px] font-semibold"
+                  <div className="w-full h-full flex items-center justify-center text-[16px] font-semibold"
                     style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
                     {displayName ? displayName[0].toUpperCase() : "N"}
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-[13px] font-medium mb-0.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   {greetingEmoji} {greeting}{displayName ? `, ${displayName.split(" ")[0]}` : ""}
                 </p>
-                <h1 className="text-[22px] font-semibold tracking-tight capitalize" style={{ color: "var(--text-primary)" }}>
+                <h1 className="text-[24px] font-bold tracking-tight capitalize leading-tight" style={{ color: "var(--text-primary)" }}>
                   {todayLabel}
                 </h1>
               </div>
             </div>
-            {/* Daily score dots + sync */}
-            <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  {objectives.map((ok, i) => (
-                    <motion.div key={i}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2 + i * 0.07, type: "spring", stiffness: 400 }}
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.1)" }}
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={handleForceSync}
-                  disabled={syncing}
-                  title="Synchroniser maintenant"
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: syncMsg === "✓" ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)" }}>
-                  {syncing
-                    ? <ArrowsClockwise size={13} className="animate-spin" />
-                    : syncMsg
-                      ? <span className="text-[11px] font-bold">{syncMsg}</span>
-                      : <ArrowsClockwise size={13} />
-                  }
-                </button>
-              </div>
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                {score}/4 objectifs
-              </p>
-              {plan && (() => {
-                const daysInPlan = Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1;
-                const wk = plan.projectedWeeklyLossKg;
-                const mo = wk !== undefined ? Math.round(wk * 4.33 * 10) / 10 : undefined;
-                const fmtKg = (v: number) => `${v <= 0 ? "" : "+"}${v.toFixed(1)} kg`;
-                return (
-                  <div className="mt-1 space-y-0.5">
-                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      <span>{plan.programEmoji}</span>
-                      <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{plan.programLabel}</span>
-                      <span>· Jour {daysInPlan}</span>
-                      {plan.projectedTargetDate && (
-                        <span>· 🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}</span>
-                      )}
-                    </div>
-                    {wk !== undefined && (
-                      <div className="flex items-center gap-2 text-[10px]">
-                        <span style={{ color: "var(--fiber)" }}>{fmtKg(wk)}/sem</span>
-                        <span style={{ color: "var(--text-muted)" }}>·</span>
-                        {mo !== undefined && <span style={{ color: "var(--fiber)" }}>{fmtKg(mo)}/mois</span>}
-                      </div>
+
+            {/* Sync button */}
+            <button
+              onClick={handleForceSync}
+              disabled={syncing}
+              title="Synchroniser"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid var(--border)",
+                color: syncMsg === "✓" ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)",
+              }}>
+              {syncing
+                ? <ArrowsClockwise size={15} className="animate-spin" />
+                : syncMsg
+                  ? <span className="text-[12px] font-bold">{syncMsg}</span>
+                  : <ArrowsClockwise size={15} />
+              }
+            </button>
+          </div>
+
+          {/* Row 2 — daily objectives pill */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5 items-center">
+              {objectives.map((ok, i) => (
+                <motion.div key={i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.15 + i * 0.06, type: "spring", stiffness: 500 }}
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.12)" }}
+                />
+              ))}
+            </div>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              {score}/4 objectifs du jour
+            </span>
+          </div>
+
+          {/* Row 3 — plan card (if active) */}
+          {(plan || (goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan) && (() => {
+            const ap = (goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan;
+            const daysInPlan = plan ? Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1 : null;
+            const wk = plan?.projectedWeeklyLossKg;
+            const mo = wk !== undefined ? Math.round(wk * 4.33 * 10) / 10 : undefined;
+            const fmtKg = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)} kg`;
+            return (
+              <div className="mt-3 rounded-2xl px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1.5"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--border)",
+                }}>
+                {/* Program name + day */}
+                {plan && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{plan.programEmoji}</span>
+                    <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</span>
+                    {daysInPlan !== null && (
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-md"
+                        style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", fontWeight: 600 }}>
+                        Jour {daysInPlan}
+                      </span>
+                    )}
+                    {plan.projectedTargetDate && (
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}
+                      </span>
                     )}
                   </div>
-                );
-              })()}
-              {(goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan && (() => {
-                const ap = (goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan!;
-                return (
-                  <div className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    🏃 {ap.sessionsPerWeek} séances/sem · ~{Math.round(ap.weeklyKcalBurned)} kcal
+                )}
+
+                {/* Weight projections */}
+                {wk !== undefined && (
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="h-3 w-px" style={{ background: "var(--border)" }} />
+                    <span style={{ color: "var(--fiber)", fontWeight: 600 }}>{fmtKg(wk)}/sem</span>
+                    {mo !== undefined && (
+                      <>
+                        <span style={{ color: "var(--text-muted)" }}>·</span>
+                        <span style={{ color: "var(--fiber)", fontWeight: 600 }}>{fmtKg(mo)}/mois</span>
+                      </>
+                    )}
                   </div>
-                );
-              })()}
-            </div>
-          </div>
+                )}
+
+                {/* Activity plan */}
+                {ap && (
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="h-3 w-px" style={{ background: "var(--border)" }} />
+                    <span>🏃</span>
+                    <span style={{ color: "var(--text-secondary)" }}>
+                      {ap.sessionsPerWeek} séances/sem · ~{Math.round(ap.weeklyKcalBurned)} kcal
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </motion.div>
 
         {/* Fun Facts banner */}
@@ -610,6 +645,48 @@ export default function DashboardClient({
             onUpdate={setWaterMl}
           />
         </motion.div>
+
+        {/* ── Tracked nutrients ── */}
+        {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (() => {
+          const rows: { key: keyof TrackedNutrients; emoji: string; label: string; unit: string; value: number; goal: number; color: string; invertAlert?: boolean }[] = [];
+          if (trackedNutrients.protein)      rows.push({ key: "protein",      emoji: "💪", label: "Protéines",     unit: "g",  value: Math.round(consumed.proteinG),       goal: goals.proteinGrams,         color: "var(--protein)"  });
+          if (trackedNutrients.sodium)       rows.push({ key: "sodium",       emoji: "🧂", label: "Sel",           unit: "mg", value: Math.round(consumed.sodiumMg ?? 0),   goal: goals.sodiumMg ?? 2000,     color: "#f59e0b", invertAlert: true });
+          if (trackedNutrients.sugar)        rows.push({ key: "sugar",        emoji: "🍬", label: "Sucres",        unit: "g",  value: Math.round(consumed.sugarG ?? 0),     goal: goals.sugarGrams ?? 50,     color: "#ec4899", invertAlert: true });
+          if (trackedNutrients.saturatedFat) rows.push({ key: "saturatedFat", emoji: "🧈", label: "Lip. saturés",  unit: "g",  value: Math.round(consumed.saturatedFatG ?? 0), goal: goals.saturatedFatGrams ?? 20, color: "var(--fat)", invertAlert: true });
+          return (
+            <motion.div {...fade(0.185)} className="glass p-4 mb-4">
+              <p className="label-xs mb-3">Paramètres suivis</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {rows.map(({ key, emoji, label, unit, value, goal, color, invertAlert }) => {
+                  const fraction = goal > 0 ? value / goal : 0;
+                  const over = fraction > 1;
+                  const barColor = over && invertAlert ? "#ef4444" : color;
+                  return (
+                    <div key={key} className="rounded-xl p-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="text-sm">{emoji}</span>
+                        <span className="text-[11px] font-medium flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{label}</span>
+                        <span className="text-[11px] font-semibold tabular-nums" style={{ color: over && invertAlert ? "#ef4444" : color }}>
+                          {value}{unit}
+                        </span>
+                      </div>
+                      <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: barColor }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(fraction * 100, 100)}%` }}
+                          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                        />
+                      </div>
+                      <p className="text-[9px] mt-1 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* 14-day calorie trend */}
         {chartData.filter((p) => p.calories > 0).length > 1 && (

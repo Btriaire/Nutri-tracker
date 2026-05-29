@@ -192,9 +192,10 @@ export interface NutritionGoals {
   carbsGrams:       number;
   fatGrams:         number;
   fiberGrams:       number;
-  sugarGrams?:      number;
-  sodiumMg?:        number;
-  waterMl:          number;   // objectif eau quotidien en ml
+  sugarGrams?:        number;
+  sodiumMg?:          number;
+  saturatedFatGrams?: number;
+  waterMl:            number;   // objectif eau quotidien en ml
   targetWeightKg:   number | null;
   targetDate?:      string;         // "YYYY-MM-DD" cible utilisateur
   weeklyGoal:       WeeklyGoal;
@@ -461,6 +462,13 @@ export interface HealthEntry {
 
 export type ChartType = "area" | "bar" | "line";
 
+export interface TrackedNutrients {
+  protein:      boolean;   // Protéines (g)
+  sodium:       boolean;   // Sel (mg)
+  sugar:        boolean;   // Sucre (g)
+  saturatedFat: boolean;   // Lipides saturés (g)
+}
+
 export interface ChartPrefs {
   calorieTrend:       ChartType;       // default "area"
   macroDisplay:       "rings" | "bars" | "pie"; // default "rings"
@@ -468,4 +476,5 @@ export interface ChartPrefs {
   showMicroNutrients: boolean;         // default false
   showSleepData:      boolean;         // default true
   showHeartRate:      boolean;         // default true
+  trackedNutrients?:  TrackedNutrients;
 }

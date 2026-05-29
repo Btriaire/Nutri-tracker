@@ -11,7 +11,7 @@ import { getClientAuth } from "@/app/lib/firebase-client";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
-import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan } from "@/app/lib/types";
+import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
 import { format as formatDate } from "date-fns";
 
 interface Props {
@@ -478,6 +478,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Chart customization */}
         <ChartPrefsPanel />
+
+        {/* Tracked nutrients */}
+        <TrackedNutrientsPanel />
 
         {/* Export data */}
         <ExportPanel />
@@ -1808,6 +1811,178 @@ function ChartPrefsPanel() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Tracked Nutrients Panel ──────────────────────────────────────────────────
+
+const DEFAULT_TRACKED: TrackedNutrients = { protein: false, sodium: false, sugar: false, saturatedFat: false };
+
+function TrackedNutrientsPanel() {
+  const [open,        setOpen]       = useState(false);
+  const [tracked,     setTracked]    = useState<TrackedNutrients>(DEFAULT_TRACKED);
+  const [chartPrefs,  setChartPrefs] = useState<Record<string, unknown>>({});
+  const [goals,       setGoals]      = useState({
+    proteinGrams:      50,
+    sodiumMg:          2000,
+    sugarGrams:        50,
+    saturatedFatGrams: 20,
+  });
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => {
+    fetch("/api/goals")
+      .then(r => r.json())
+      .then((d: {
+        chartPrefs?: Record<string, unknown> & { trackedNutrients?: TrackedNutrients };
+        goals?: { proteinGrams?: number; sodiumMg?: number; sugarGrams?: number; saturatedFatGrams?: number };
+      }) => {
+        if (d.chartPrefs) {
+          setChartPrefs(d.chartPrefs);
+          if (d.chartPrefs.trackedNutrients) setTracked(d.chartPrefs.trackedNutrients);
+        }
+        setGoals({
+          proteinGrams:      d.goals?.proteinGrams      ?? 50,
+          sodiumMg:          d.goals?.sodiumMg          ?? 2000,
+          sugarGrams:        d.goals?.sugarGrams        ?? 50,
+          saturatedFatGrams: d.goals?.saturatedFatGrams ?? 20,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggle = (key: keyof TrackedNutrients) =>
+    setTracked(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save goal fields (PUT merges with existing goals)
+      await fetch("/api/goals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proteinGrams:      goals.proteinGrams,
+          sodiumMg:          goals.sodiumMg,
+          sugarGrams:        goals.sugarGrams,
+          saturatedFatGrams: goals.saturatedFatGrams,
+        }),
+      });
+      // Save chartPrefs — merge tracked nutrients into existing chart prefs
+      await fetch("/api/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chartPrefs: { ...chartPrefs, trackedNutrients: tracked } }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally { setSaving(false); }
+  };
+
+  const ROWS: { key: keyof TrackedNutrients; label: string; emoji: string; unit: string; field: keyof typeof goals; color: string }[] = [
+    { key: "protein",      label: "Protéines",       emoji: "💪", unit: "g",  field: "proteinGrams",      color: "var(--protein)"  },
+    { key: "sodium",       label: "Sel / Sodium",    emoji: "🧂", unit: "mg", field: "sodiumMg",          color: "#f59e0b"         },
+    { key: "sugar",        label: "Sucres",          emoji: "🍬", unit: "g",  field: "sugarGrams",        color: "#ec4899"         },
+    { key: "saturatedFat", label: "Lipides saturés", emoji: "🧈", unit: "g",  field: "saturatedFatGrams", color: "var(--fat)"      },
+  ];
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.07 }} className="glass p-4 mb-4">
+
+      {/* Header */}
+      <button className="w-full flex items-center gap-3" onClick={() => setOpen(v => !v)}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+          style={{ background: "rgba(236,72,153,0.12)" }}>🔬</div>
+        <div className="flex-1 min-w-0 text-left">
+          <p className="font-semibold text-[13.5px]" style={{ color: "var(--text-primary)" }}>Suivi nutritionnel avancé</p>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            {Object.values(tracked).filter(Boolean).length === 0
+              ? "Activez les paramètres à suivre"
+              : `${Object.values(tracked).filter(Boolean).length} paramètre(s) actif(s)`}
+          </p>
+        </div>
+        {open ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+               : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+      </button>
+
+      <AnimatePresence initial={false}>
+      {open && (
+      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+        <div className="mt-4 space-y-3">
+          <p className="text-[11px] px-1" style={{ color: "var(--text-muted)" }}>
+            Les paramètres activés s'afficheront dans le Journal (par jour) et sur l'Accueil.
+          </p>
+
+          {ROWS.map(({ key, label, emoji, unit, field, color }) => (
+            <div key={key} className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-base">{emoji}</span>
+                <p className="flex-1 text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{label}</p>
+                {/* Toggle */}
+                <button
+                  onClick={() => toggle(key)}
+                  className="relative flex-shrink-0 w-[44px] h-[24px] rounded-full transition-all"
+                  style={{
+                    background: tracked[key] ? color : "rgba(255,255,255,0.1)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <span
+                    className="absolute top-[2px] w-[18px] h-[18px] rounded-full transition-all"
+                    style={{
+                      background: "#fff",
+                      left: tracked[key] ? "calc(100% - 20px)" : "2px",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                    }}
+                  />
+                </button>
+              </div>
+
+              {tracked[key] && (
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] flex-1" style={{ color: "var(--text-muted)" }}>
+                    Objectif quotidien
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      value={goals[field]}
+                      onChange={e => setGoals(prev => ({ ...prev, [field]: Number(e.target.value) }))}
+                      className="w-20 h-8 rounded-lg text-center text-[13px] font-medium"
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid var(--border-strong)",
+                        color: "var(--text-primary)",
+                      }}
+                    />
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+            style={{
+              background: saved ? "rgba(34,197,94,0.12)" : "linear-gradient(135deg,rgba(236,72,153,0.15),rgba(168,85,247,0.12))",
+              border: `1px solid ${saved ? "rgba(34,197,94,0.4)" : "rgba(236,72,153,0.3)"}`,
+              color: saved ? "#22c55e" : "#ec4899",
+            }}
+          >
+            {saving ? <Spinner size={13} className="animate-spin" /> : saved ? <CheckCircle size={13} weight="fill" /> : <FloppyDisk size={13} />}
+            {saved ? "Enregistré !" : "Enregistrer"}
+          </button>
+        </div>
+      </motion.div>
+      )}
       </AnimatePresence>
     </motion.div>
   );

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan } from "@/app/lib/types";
+import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
 import { format } from "date-fns";
 import DashboardClient from "./DashboardClient";
 
@@ -10,10 +10,11 @@ export default async function DashboardPage() {
   const today  = format(new Date(), "yyyy-MM-dd");
   const userId = "owner";
 
-  let goals       = defaultGoals();
-  let displayName = "";
-  let photoUrl: string | undefined;
-  let plan: NutritionPlan | undefined;
+  let goals             = defaultGoals();
+  let displayName       = "";
+  let photoUrl:         string | undefined;
+  let plan:             NutritionPlan | undefined;
+  let trackedNutrients: TrackedNutrients | undefined;
   let dayLog: DayLog | null         = null;
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
@@ -36,10 +37,11 @@ export default async function DashboardPage() {
     ]);
 
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
-    goals       = profile?.goals ?? defaultGoals();
-    displayName = profile?.displayName ?? "";
-    photoUrl    = profile?.photoUrl ?? undefined;
-    plan        = profile?.goals?.plan ?? undefined;
+    goals             = profile?.goals ?? defaultGoals();
+    displayName       = profile?.displayName ?? "";
+    photoUrl          = profile?.photoUrl ?? undefined;
+    plan              = profile?.goals?.plan ?? undefined;
+    trackedNutrients  = profile?.chartPrefs?.trackedNutrients;
     dayLog      = logSnap.exists ? logSnap.data() as DayLog : null;
     fitnessDay  = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
 
@@ -92,6 +94,7 @@ export default async function DashboardPage() {
       waterMl={dayLog?.waterMl ?? 0}
       plan={plan}
       lang="fr"
+      trackedNutrients={trackedNutrients}
     />
   );
 }
