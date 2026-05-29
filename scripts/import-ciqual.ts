@@ -68,11 +68,11 @@ const FIELD_MAP: Record<string, string> = {
   "Phosphore (mg/100 g)":                             "phosphorusMg",
   "Fer (mg/100 g)":                                   "ironMg",
   "Zinc (mg/100 g)":                                  "zincMg",
-  "Vitamine A (µg/100 g)":                            "vitaminAUg",
+  "Rétinol (µg/100 g)":                               "vitaminAUg",
   "Vitamine C (mg/100 g)":                            "vitaminCMg",
   "Vitamine D (µg/100 g)":                            "vitaminDUg",
   "Vitamine B12 (µg/100 g)":                          "vitaminB12Ug",
-  "Folates totaux (µg/100 g)":                        "vitaminB9Ug",
+  "Vitamine B9 ou Folates totaux (µg/100 g)":         "vitaminB9Ug",
   "Eau (g/100 g)":                                    "waterG",
   "Alcool (g/100 g)":                                 "alcoholG",
 };
