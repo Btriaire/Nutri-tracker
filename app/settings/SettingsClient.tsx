@@ -700,28 +700,29 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   // Plan change confirmation
   const [planActive,         setPlanActive]         = useState(!!initialGoals.plan);
   const [confirmPlanChange,  setConfirmPlanChange]  = useState(false);
-  // Section collapse
-  const [programOpen,    setProgramOpen]    = useState(!initialGoals.plan);
-  const [activityOpen,   setActivityOpen]   = useState(true);
+  // Section collapse — both start closed
+  const [programOpen,    setProgramOpen]    = useState(false);
+  const [activityOpen,   setActivityOpen]   = useState(false);
 
 
-  // ── Auto-propose date cible quand programme + poids sont renseignés ──
+  // ── Auto-propose date cible dès que poids actuel + cible + profil sont renseignés ──
   useEffect(() => {
-    if (!selectedProgram || !currentWeight || !weight) return;
+    if (!currentWeight || !weight) return;
     const cur = parseFloat(currentWeight);
     const tgt = parseFloat(weight);
-    if (!cur || !tgt || Math.abs(cur - tgt) < 0.5 || cur <= tgt) return;
+    if (!cur || !tgt || Math.abs(cur - tgt) < 0.5) return;
+    // Compute deficit: use TDEE if profile available, else assume 500 kcal/day
+    let deficit = 500;
     const a = parseInt(age), h = parseInt(height);
-    if (!a || !h || !gender) return;
-    const prog = PROGRAMS[selectedProgram];
-    if (!prog) return;
-    const tdee      = calcTDEE(cur, h, a, gender as Gender, activity);
-    const adj       = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
-    const kcalTarget = Math.max(800, tdee + adj + (prog.calorieBonus ?? 0));
-    const deficit    = tdee - kcalTarget;
-    if (deficit <= 0) return;
-    const days      = Math.round((cur - tgt) * 7700 / deficit);
-    const proposed  = new Date();
+    if (a && h && gender) {
+      const tdee = calcTDEE(cur, h, a, gender as Gender, activity);
+      const adj  = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
+      const prog = selectedProgram ? PROGRAMS[selectedProgram] : null;
+      const kcalTarget = Math.max(800, tdee + adj + (prog?.calorieBonus ?? 0));
+      deficit = Math.abs(tdee - kcalTarget) || 500;
+    }
+    const days     = Math.round(Math.abs(cur - tgt) * 7700 / deficit);
+    const proposed = new Date();
     proposed.setDate(proposed.getDate() + days);
     setTargetDate(proposed.toISOString().split("T")[0]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1233,20 +1234,33 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                         })}
                       </div>
 
-                      {/* Total estimé */}
-                      {apSelected.size > 0 && (() => {
+                      {/* Total estimé + Valider */}
+                      {(() => {
                         const totalPerSession = [...apSelected].reduce((sum, id) => {
                           const act = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
                           return sum + (act ? act.kcalPer30min * apMinDuration / 30 : 0);
                         }, 0);
                         const weeklyKcal = Math.round(totalPerSession * apSessions);
                         return (
-                          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-                            style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
-                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                              {apSelected.size} activité{apSelected.size > 1 ? "s" : ""} · {apSessions} séances/sem de {apMinDuration} min
-                            </p>
-                            <p className="text-[14px] font-bold" style={{ color: "var(--calories)" }}>~{weeklyKcal} kcal</p>
+                          <div className="space-y-2">
+                            {apSelected.size > 0 && (
+                              <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                                style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                                  {apSelected.size} activité{apSelected.size > 1 ? "s" : ""} · {apSessions} séances/sem · {apMinDuration} min
+                                </p>
+                                <p className="text-[14px] font-bold" style={{ color: "var(--calories)" }}>~{weeklyKcal} kcal</p>
+                              </div>
+                            )}
+                            <button onClick={() => setActivityOpen(false)}
+                              className="w-full py-2 rounded-xl text-[12px] font-medium transition-all"
+                              style={{
+                                background: "rgba(249,115,22,0.08)",
+                                border: "1px solid rgba(249,115,22,0.25)",
+                                color: "var(--calories)",
+                              }}>
+                              ✓ Valider le plan d&apos;activité
+                            </button>
                           </div>
                         );
                       })()}
