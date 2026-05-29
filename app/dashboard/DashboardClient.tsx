@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp, ArrowsClockwise } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
+import AIInsightBox from "@/app/components/AIInsightBox";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
@@ -165,6 +166,26 @@ export default function DashboardClient({
   const overallScore = knownPcts.length > 0
     ? Math.round(knownPcts.reduce((a, b) => a + b, 0) / knownPcts.length)
     : 0;
+
+  const dashboardInsightData = {
+    sleepMinutes,
+    sleepGoalMin,
+    caloriesConsumed: Math.round(consumed.calories),
+    caloriesGoal:     goals.dailyCalories,
+    burned,
+    steps,
+    stepsGoal,
+    activeMinutes,
+    heartRate,
+    waterMl,
+    waterGoal:        goals.waterMl ?? 2000,
+    weightKg:         weight?.kg ?? null,
+    targetWeightKg:   goals.targetWeightKg ?? null,
+    planLabel:        plan?.programLabel,
+    planEmoji:        plan?.programEmoji,
+    planDay:          plan ? Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1 : undefined,
+    projectedTargetDate: plan?.projectedTargetDate,
+  };
 
   // Macro progress
   const macros = [
@@ -396,6 +417,11 @@ export default function DashboardClient({
               </div>
             ))}
           </div>
+        </motion.div>
+
+        {/* ── AI Insight ── */}
+        <motion.div {...fade(0.09)} className="mb-4">
+          <AIInsightBox type="dashboard" data={dashboardInsightData} delay={1000} />
         </motion.div>
 
         {/* ── Steps + Weight ── */}

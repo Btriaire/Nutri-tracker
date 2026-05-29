@@ -13,6 +13,7 @@ import {
   CalendarBlank, Footprints, Fire, Heart, Moon, Drop, PersonSimpleRun,
 } from "@phosphor-icons/react";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
+import AIInsightBox from "@/app/components/AIInsightBox";
 import { Spinner } from "@phosphor-icons/react";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
@@ -129,6 +130,38 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const firstWeight = weightData[0]?.weightKg;
   const lastWeight  = weightData[weightData.length - 1]?.weightKg;
   const weightDelta = (firstWeight && lastWeight) ? lastWeight - firstWeight : null;
+
+  const avgSleepPts = points.filter((p) => (p.sleepMinutes ?? 0) > 0);
+  const avgSleepH   = avgSleepPts.length
+    ? Math.round(avgSleepPts.reduce((s, p) => s + (p.sleepMinutes ?? 0), 0) / avgSleepPts.length / 6) / 10
+    : 0;
+  const avgHRPts    = points.filter((p) => (p.heartRateAvg ?? 0) > 0);
+  const avgHR       = avgHRPts.length
+    ? Math.round(avgHRPts.reduce((s, p) => s + (p.heartRateAvg ?? 0), 0) / avgHRPts.length)
+    : null;
+  const weightTrend = weightDelta === null ? "stable" : weightDelta < -0.1 ? "down" : weightDelta > 0.1 ? "up" : "stable";
+
+  const progressInsightData = {
+    days:           points.length,
+    avgCalories,
+    avgSteps,
+    avgSleepH,
+    avgHR,
+    startWeight:    currentWeightKg,  // start of range
+    currentWeight:  currentWeightKg,
+    targetWeight:   targetWeightKg,
+    weightTrend,
+    calorieGoal:    goals.dailyCalories,
+    stepsGoal:      goals.stepsGoal ?? 10000,
+    sleepGoalH:     Math.round((goals.sleepGoalMin ?? 480) / 60 * 10) / 10,
+    plan: plan ? {
+      label:          plan.programLabel,
+      emoji:          plan.programEmoji,
+      day:            Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1,
+      projectedDate:  plan.projectedTargetDate,
+      weeklyLoss:     plan.projectedWeeklyLossKg,
+    } : undefined,
+  };
 
   const tdee = estimateTDEE(goals);
   const projectionDays = (currentWeightKg && targetWeightKg && avgCalories > 0)
@@ -262,6 +295,12 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </motion.div>
           );
         })()}
+
+        {/* ── AI Insight ── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }}
+          className="mb-5">
+          <AIInsightBox type="progress" data={progressInsightData} delay={1000} />
+        </motion.div>
 
         {/* Range selector */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}

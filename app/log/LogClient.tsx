@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
@@ -11,6 +11,7 @@ type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
 import { Check } from "@phosphor-icons/react";
+import AIInsightBox from "@/app/components/AIInsightBox";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
 
@@ -67,6 +68,31 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
   );
 
   const remaining = goals.dailyCalories - Math.round(totals.calories);
+
+  const journalInsightData = useMemo(() => ({
+    entries: entries.map((e) => ({
+      name:     e.name,
+      grams:    e.servingGrams,
+      calories: Math.round(e.nutrition.calories),
+    })),
+    totals: {
+      calories: Math.round(totals.calories),
+      proteinG: Math.round(totals.proteinG),
+      carbsG:   Math.round(totals.carbsG),
+      fatG:     Math.round(totals.fatG),
+      fiberG:   Math.round(totals.fiberG),
+    },
+    goals: {
+      dailyCalories: goals.dailyCalories,
+      proteinGrams:  goals.proteinGrams,
+      carbsGrams:    goals.carbsGrams,
+      fatGrams:      goals.fatGrams,
+      fiberGrams:    goals.fiberGrams,
+    },
+    waterMl,
+    waterGoal: goals.waterMl ?? 2000,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [entries.length, Math.round(totals.calories), waterMl]);
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
@@ -185,6 +211,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr" }: Prop
             <Check size={14} weight={validated ? "fill" : "regular"} />
             {validated ? "Journée validée" : "Valider la journée"}
           </button>
+        </motion.div>
+
+        {/* AI Insight */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.07 }}
+          className="mb-5"
+        >
+          <AIInsightBox type="journal" data={journalInsightData} delay={800} />
         </motion.div>
 
         {/* Water tracker */}

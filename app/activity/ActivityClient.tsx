@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -8,7 +8,8 @@ import {
   Plus, Trash, Timer, Lightning, Heart, Moon, Footprints, Fire,
   BookmarkSimple, X, Check, Spinner,
 } from "@phosphor-icons/react";
-import type { FitnessDay, ManualActivity } from "@/app/lib/types";
+import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
+import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 
 const ACTIVITY_OPTIONS = [
@@ -43,6 +44,7 @@ interface Props {
   date:                    string;
   fitnessDay:              FitnessDay | null;
   initialManualActivities: unknown[];
+  goals?:                  NutritionGoals;
 }
 
 // ─── Shared activity form state ───────────────────────────────────────────────
@@ -56,7 +58,7 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { actType: 0, duration: "30", customName: "", calories: "" };
 
-export default function ActivityClient({ date, fitnessDay, initialManualActivities }: Props) {
+export default function ActivityClient({ date, fitnessDay, initialManualActivities, goals }: Props) {
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const gf    = fitnessDay?.googleFit;
 
@@ -184,6 +186,27 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
 
   const selectedOpt = ACTIVITY_OPTIONS.find((a) => a.type === form.actType) ?? ACTIVITY_OPTIONS[0];
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const activityInsightData = useMemo(() => ({
+    sessions: (fitnessDay?.googleFit?.sessions ?? []).map((s) => ({
+      name:        s.name,
+      durationMin: s.durationMin,
+      calories:    s.calories,
+    })),
+    manualActivities: activities.map((a) => ({
+      name:           a.name,
+      durationMin:    a.durationMin,
+      caloriesBurned: a.caloriesBurned,
+    })),
+    steps:         fitnessDay?.googleFit?.steps        ?? null,
+    activeMinutes: fitnessDay?.googleFit?.activeMinutes ?? null,
+    burned:        totalBurned || null,
+    stepsGoal:     goals?.stepsGoal ?? 10000,
+    activityPlan:  goals?.activityPlan
+      ? { sessionsPerWeek: goals.activityPlan.sessionsPerWeek, weeklyKcalBurned: goals.activityPlan.weeklyKcalBurned }
+      : undefined,
+  }), [activities.length, totalBurned, fitnessDay]);
+
   return (
     <div className="relative min-h-screen" style={{ paddingBottom: "80px" }}>
       <div className="bg-orbs" />
@@ -222,6 +245,14 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
+        </motion.div>
+
+        {/* ── AI Insight ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
+          className="mb-5"
+        >
+          <AIInsightBox type="activity" data={activityInsightData} delay={800} />
         </motion.div>
 
         {/* ── Log form ────────────────────────────────────────────────────────── */}
