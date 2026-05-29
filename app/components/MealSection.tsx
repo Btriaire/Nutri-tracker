@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, CaretDown, Camera, Trash, ChartBar } from "@phosphor-icons/react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
+import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 import type { FoodEntry, MealType, Lang, HungerLevel } from "@/app/lib/types";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
@@ -14,13 +15,6 @@ const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
   snacks:    { fr: "Collations",     en: "Snacks",    icon: "🍎" },
 };
 
-const HUNGER_FACES: { level: HungerLevel; emoji: string; label: string; color: string }[] = [
-  { level: 1, emoji: "😌", label: "Pas faim",  color: "#22c55e" },
-  { level: 2, emoji: "🙂", label: "Peu faim",  color: "#84cc16" },
-  { level: 3, emoji: "😐", label: "Modéré",   color: "#f59e0b" },
-  { level: 4, emoji: "😤", label: "Faim",      color: "#f97316" },
-  { level: 5, emoji: "🤤", label: "Très faim", color: "#ef4444" },
-];
 
 interface Props {
   meal:            MealType;
@@ -166,30 +160,20 @@ export default function MealSection({
           </button>
         )}
 
-        {/* Hunger level selector */}
-        <div className="flex items-center gap-0.5 shrink-0">
-          {HUNGER_FACES.map(({ level, emoji, label, color }) => {
-            const active = hunger === level;
-            return (
-              <motion.button
-                key={level}
-                onClick={() => onHungerChange?.(meal, active ? null : level)}
-                whileTap={{ scale: 0.82 }}
-                title={label}
-                className="flex items-center justify-center rounded-lg transition-all"
-                style={{
-                  width: "26px", height: "26px",
-                  fontSize: "15px",
-                  background: active ? `${color}22` : "transparent",
-                  border: active ? `1px solid ${color}55` : "1px solid transparent",
-                  opacity: hunger != null && !active ? 0.4 : 1,
-                  boxShadow: active ? `0 0 6px ${color}44` : "none",
-                }}
-              >
-                {emoji}
-              </motion.button>
-            );
-          })}
+        {/* Hunger slider — compact version in header */}
+        <div className="flex items-center gap-1.5 shrink-0" style={{ width: 130 }}>
+          {hunger != null && (
+            <span className="text-[15px] leading-none flex-shrink-0">
+              {HUNGER_CFG[hunger].emoji}
+            </span>
+          )}
+          <div className="flex-1">
+            <HungerSlider
+              value={hunger}
+              onChange={(v) => onHungerChange?.(meal, v)}
+              compact
+            />
+          </div>
         </div>
 
         {/* Add food button */}

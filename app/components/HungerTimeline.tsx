@@ -1,25 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import type { HungerLevel, MealType } from "@/app/lib/types";
+import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
-const MEALS: { key: MealType; label: string; icon: string; shortLabel: string }[] = [
-  { key: "breakfast", label: "Petit-déjeuner", icon: "🌅", shortLabel: "Matin" },
-  { key: "lunch",     label: "Déjeuner",       icon: "☀️", shortLabel: "Midi" },
-  { key: "dinner",    label: "Dîner",          icon: "🌙", shortLabel: "Soir" },
-  { key: "snacks",    label: "Collations",     icon: "🍎", shortLabel: "Snack" },
+const MEALS: { key: MealType; label: string; icon: string }[] = [
+  { key: "breakfast", label: "Petit-déjeuner", icon: "🌅" },
+  { key: "lunch",     label: "Déjeuner",       icon: "☀️" },
+  { key: "dinner",    label: "Dîner",          icon: "🌙" },
+  { key: "snacks",    label: "Collations",     icon: "🍎" },
 ];
-
-const HUNGER_CONFIG: Record<HungerLevel, { emoji: string; label: string; color: string; bg: string }> = {
-  1: { emoji: "😌", label: "Pas faim",  color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
-  2: { emoji: "🙂", label: "Peu faim",  color: "#84cc16", bg: "rgba(132,204,22,0.15)" },
-  3: { emoji: "😐", label: "Modéré",   color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-  4: { emoji: "😤", label: "Faim",      color: "#f97316", bg: "rgba(249,115,22,0.15)" },
-  5: { emoji: "🤤", label: "Très faim", color: "#ef4444", bg: "rgba(239,68,68,0.15)"  },
-};
 
 // ─── SVG geometry ──────────────────────────────────────────────────────────────
 
@@ -125,7 +117,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           {/* Horizontal grid lines for levels */}
           {[1, 2, 3, 4, 5].map((lvl) => {
             const y = yFor(lvl as HungerLevel);
-            const cfg = HUNGER_CONFIG[lvl as HungerLevel];
+            const cfg = HUNGER_CFG[lvl as HungerLevel];
             return (
               <g key={lvl}>
                 <line
@@ -183,11 +175,11 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           {recorded.map(({ idx, level }) => {
             const x = xFor(idx);
             const y = yFor(level);
-            const cfg = HUNGER_CONFIG[level];
+            const cfg = HUNGER_CFG[level];
             return (
               <g key={idx}>
-                <circle cx={x} cy={y} r={7} fill={cfg.bg} stroke={cfg.color} strokeWidth={1.5} />
-                <text x={x} y={y + 4.5} textAnchor="middle" fontSize={8.5} dominantBaseline="auto">
+                <circle cx={x} cy={y} r={8} fill={cfg.color + "22"} stroke={cfg.color} strokeWidth={1.5} />
+                <text x={x} y={y + 4.5} textAnchor="middle" fontSize={9} dominantBaseline="auto">
                   {cfg.emoji}
                 </text>
               </g>
@@ -207,63 +199,36 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
         </svg>
       </div>
 
-      {/* Meal selector buttons */}
-      <div className="grid grid-cols-4 gap-1.5">
-        {MEALS.map((m) => {
-          const current = mealHunger[m.key];
-          const cfg = current ? HUNGER_CONFIG[current] : null;
-          return (
-            <div key={m.key} className="flex flex-col items-center gap-1.5">
-              {/* Meal label */}
-              <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>
-                {m.icon} {m.shortLabel}
-              </span>
-              {/* 5 level buttons */}
-              <div className="flex flex-col gap-1 w-full">
-                {([5, 4, 3, 2, 1] as HungerLevel[]).map((lvl) => {
-                  const lcfg = HUNGER_CONFIG[lvl];
-                  const active = current === lvl;
-                  return (
-                    <motion.button
-                      key={lvl}
-                      onClick={() => onSetHunger(m.key, active ? null : lvl)}
-                      whileTap={{ scale: 0.88 }}
-                      className="w-full flex items-center justify-center rounded-lg transition-all"
-                      style={{
-                        height: "28px",
-                        background: active ? lcfg.bg : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${active ? lcfg.color + "66" : "rgba(255,255,255,0.07)"}`,
-                        fontSize: "15px",
-                        boxShadow: active ? `0 0 8px ${lcfg.color}33` : "none",
-                      }}
-                      title={lcfg.label}
-                    >
-                      {lcfg.emoji}
-                    </motion.button>
-                  );
-                })}
-              </div>
-              {/* Selected label */}
-              <span className="text-[9px] h-3 leading-3 font-medium text-center"
-                style={{ color: cfg?.color ?? "transparent" }}>
-                {cfg?.label ?? "·"}
+      {/* One slider per meal */}
+      <div className="space-y-3 pt-1">
+        {MEALS.map((m) => (
+          <div key={m.key} className="flex items-center gap-3">
+            {/* Meal icon + label */}
+            <div className="flex items-center gap-1.5 shrink-0" style={{ width: 90 }}>
+              <span className="text-[14px]">{m.icon}</span>
+              <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                {m.label}
               </span>
             </div>
-          );
-        })}
+            {/* Slider */}
+            <div className="flex-1">
+              <HungerSlider
+                value={mealHunger[m.key]}
+                onChange={(v) => onSetHunger(m.key, v)}
+                compact
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-3 pt-1">
-        {([1, 3, 5] as HungerLevel[]).map((lvl) => {
-          const cfg = HUNGER_CONFIG[lvl];
-          return (
-            <div key={lvl} className="flex items-center gap-1">
-              <span className="text-[12px]">{cfg.emoji}</span>
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{cfg.label}</span>
-            </div>
-          );
-        })}
+      {/* Mini legend */}
+      <div className="flex justify-between px-1 pt-0.5">
+        {([1, 2, 3, 4, 5] as HungerLevel[]).map((lvl) => (
+          <span key={lvl} className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            {HUNGER_CFG[lvl].emoji}
+          </span>
+        ))}
       </div>
     </div>
   );

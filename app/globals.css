@@ -360,6 +360,64 @@ html, body, .glass, .card, .card-sm, .input, .btn, .btn-primary, .btn-ghost, .bt
   color: var(--text-secondary);
 }
 
+/* ─── Hunger slider (HungerTimeline / MealSection) ──────────────────────────── */
+/*     Uses CSS vars --hfill (%) and --hcolor set inline                         */
+input[type="range"].nt-hunger {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--hcolor, #f59e0b) 0%,
+    var(--hcolor, #f59e0b) var(--hfill, 50%),
+    rgba(255,255,255,0.1) var(--hfill, 50%),
+    rgba(255,255,255,0.1) 100%
+  );
+}
+input[type="range"].nt-hunger::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.55), 0 0 0 3px var(--hcolor, #f59e0b);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+input[type="range"].nt-hunger::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+}
+input[type="range"].nt-hunger::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border: none; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.55), 0 0 0 3px var(--hcolor, #f59e0b);
+  cursor: pointer;
+}
+input[type="range"].nt-hunger::-moz-range-track {
+  background: linear-gradient(
+    to right,
+    var(--hcolor, #f59e0b) 0%,
+    var(--hcolor, #f59e0b) var(--hfill, 50%),
+    rgba(255,255,255,0.1) var(--hfill, 50%),
+    rgba(255,255,255,0.1) 100%
+  );
+  height: 4px; border-radius: 9999px;
+}
+/* Unset state — greyed out */
+input[type="range"].nt-hunger.nt-hunger-unset {
+  background: rgba(255,255,255,0.09);
+  opacity: 0.5;
+}
+input[type="range"].nt-hunger.nt-hunger-unset::-webkit-slider-thumb {
+  background: rgba(255,255,255,0.4);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+}
+
 /* ─── Range sliders (Settings GoalsPanel) ───────────────────────────────────── */
 input[type="range"].nt-slider {
   -webkit-appearance: none;
