@@ -16,7 +16,7 @@ import AIInsightBox from "@/app/components/AIInsightBox";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
-function TrackedNutrientBar({
+function TrackedNutrientPill({
   emoji, label, unit, value, goal, color, invertAlert = false,
 }: {
   emoji: string; label: string; unit: string;
@@ -24,24 +24,22 @@ function TrackedNutrientBar({
 }) {
   const fraction = goal > 0 ? value / goal : 0;
   const over = fraction > 1;
-  // For nutrients where going over is bad (sodium, sugar, sat. fat), alert in red when over
   const barColor = over && invertAlert ? "#ef4444" : color;
+  const valColor = over && invertAlert ? "#ef4444" : color;
   return (
-    <div className="rounded-xl p-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-sm">{emoji}</span>
-        <span className="text-[11px] font-medium flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{label}</span>
-        <span className="text-[11px] font-semibold tabular-nums" style={{ color: over && invertAlert ? "#ef4444" : color }}>
-          {value}{unit}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-1 mb-1">
+        <span className="text-[11px]">{emoji}</span>
+        <span className="text-[9px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+        <span className="ml-auto text-[10px] font-semibold tabular-nums flex-shrink-0" style={{ color: valColor }}>
+          {value}<span className="font-normal text-[8px]">{unit}</span>
         </span>
       </div>
-      <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.min(fraction * 100, 100)}%`, background: barColor }}
-        />
+      <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.min(fraction * 100, 100)}%`, background: barColor }} />
       </div>
-      <p className="text-[9px] mt-1 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+      <p className="text-[8px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
     </div>
   );
 }
@@ -115,19 +113,26 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       calories: Math.round(e.nutrition.calories),
     })),
     totals: {
-      calories: Math.round(totals.calories),
-      proteinG: Math.round(totals.proteinG),
-      carbsG:   Math.round(totals.carbsG),
-      fatG:     Math.round(totals.fatG),
-      fiberG:   Math.round(totals.fiberG),
+      calories:      Math.round(totals.calories),
+      proteinG:      Math.round(totals.proteinG),
+      carbsG:        Math.round(totals.carbsG),
+      fatG:          Math.round(totals.fatG),
+      fiberG:        Math.round(totals.fiberG),
+      sugarG:        Math.round(totals.sugarG ?? 0),
+      sodiumMg:      Math.round(totals.sodiumMg ?? 0),
+      saturatedFatG: Math.round(totals.saturatedFatG ?? 0),
     },
     goals: {
-      dailyCalories: goals.dailyCalories,
-      proteinGrams:  goals.proteinGrams,
-      carbsGrams:    goals.carbsGrams,
-      fatGrams:      goals.fatGrams,
-      fiberGrams:    goals.fiberGrams,
+      dailyCalories:     goals.dailyCalories,
+      proteinGrams:      goals.proteinGrams,
+      carbsGrams:        goals.carbsGrams,
+      fatGrams:          goals.fatGrams,
+      fiberGrams:        goals.fiberGrams,
+      sugarGrams:        goals.sugarGrams,
+      sodiumMg:          goals.sodiumMg,
+      saturatedFatGrams: goals.saturatedFatGrams,
     },
+    trackedNutrients,
     waterMl,
     waterGoal: goals.waterMl ?? 2000,
     mealHunger,
@@ -264,52 +269,30 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </button>
         </motion.div>
 
-        {/* Tracked nutrients */}
+        {/* Tracked nutrients — compact strip */}
         {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.065 }}
-            className="glass p-4 mb-5"
+            className="glass px-3 py-2.5 mb-5"
           >
-            <p className="text-[11px] font-semibold mb-3" style={{ color: "var(--text-muted)" }}>
-              PARAMÈTRES SUIVIS
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex items-stretch gap-2.5">
               {trackedNutrients.protein && (
-                <TrackedNutrientBar
-                  emoji="💪" label="Protéines" unit="g"
-                  value={Math.round(totals.proteinG)}
-                  goal={goals.proteinGrams}
-                  color="var(--protein)"
-                />
+                <TrackedNutrientPill emoji="💪" label="Protéines" unit="g"
+                  value={Math.round(totals.proteinG)} goal={goals.proteinGrams} color="var(--protein)" />
               )}
               {trackedNutrients.sodium && (
-                <TrackedNutrientBar
-                  emoji="🧂" label="Sel" unit="mg"
-                  value={Math.round(totals.sodiumMg ?? 0)}
-                  goal={goals.sodiumMg ?? 2000}
-                  color="#f59e0b"
-                  invertAlert
-                />
+                <TrackedNutrientPill emoji="🧂" label="Sel" unit="mg"
+                  value={Math.round(totals.sodiumMg ?? 0)} goal={goals.sodiumMg ?? 2000} color="#f59e0b" invertAlert />
               )}
               {trackedNutrients.sugar && (
-                <TrackedNutrientBar
-                  emoji="🍬" label="Sucres" unit="g"
-                  value={Math.round(totals.sugarG ?? 0)}
-                  goal={goals.sugarGrams ?? 50}
-                  color="#ec4899"
-                  invertAlert
-                />
+                <TrackedNutrientPill emoji="🍬" label="Sucres" unit="g"
+                  value={Math.round(totals.sugarG ?? 0)} goal={goals.sugarGrams ?? 50} color="#ec4899" invertAlert />
               )}
               {trackedNutrients.saturatedFat && (
-                <TrackedNutrientBar
-                  emoji="🧈" label="Lip. saturés" unit="g"
-                  value={Math.round(totals.saturatedFatG ?? 0)}
-                  goal={goals.saturatedFatGrams ?? 20}
-                  color="var(--fat)"
-                  invertAlert
-                />
+                <TrackedNutrientPill emoji="🧈" label="Lip.sat." unit="g"
+                  value={Math.round(totals.saturatedFatG ?? 0)} goal={goals.saturatedFatGrams ?? 20} color="var(--fat)" invertAlert />
               )}
             </div>
           </motion.div>

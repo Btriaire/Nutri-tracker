@@ -114,13 +114,21 @@ export async function POST(req: NextRequest) {
 
   // Nutrition
   const totals = food?.totals;
+  const trackedNutrients = profile?.chartPrefs?.trackedNutrients;
   const nutritionLines: string[] = [];
   if (totals) {
     nutritionLines.push(`Calories : ${Math.round(totals.calories)} / ${goals.dailyCalories} kcal`);
     nutritionLines.push(`Protéines : ${Math.round(totals.proteinG)} / ${goals.proteinGrams} g`);
     nutritionLines.push(`Glucides : ${Math.round(totals.carbsG)} / ${goals.carbsGrams} g`);
-    nutritionLines.push(`Lipides : ${Math.round(totals.fatG)} / ${goals.fatGrams} g`);
+    nutritionLines.push(`Lipides totaux : ${Math.round(totals.fatG)} / ${goals.fatGrams} g`);
     nutritionLines.push(`Fibres : ${Math.round(totals.fiberG ?? 0)} / ${goals.fiberGrams} g`);
+    // Extended tracked nutrients
+    if (trackedNutrients?.sugar        && (totals.sugarG ?? 0) > 0)
+      nutritionLines.push(`Sucres : ${Math.round(totals.sugarG ?? 0)}${goals.sugarGrams ? ` / ${goals.sugarGrams} g` : " g"}`);
+    if (trackedNutrients?.sodium       && (totals.sodiumMg ?? 0) > 0)
+      nutritionLines.push(`Sodium : ${Math.round(totals.sodiumMg ?? 0)}${goals.sodiumMg ? ` / ${goals.sodiumMg} mg` : " mg"}`);
+    if (trackedNutrients?.saturatedFat && (totals.saturatedFatG ?? 0) > 0)
+      nutritionLines.push(`Lipides saturés : ${Math.round(totals.saturatedFatG ?? 0)}${goals.saturatedFatGrams ? ` / ${goals.saturatedFatGrams} g` : " g"}`);
   }
   if (food?.waterMl !== undefined) nutritionLines.push(`Hydratation : ${food.waterMl} mL / ${goals.waterMl ?? 2000} mL`);
 

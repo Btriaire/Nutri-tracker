@@ -26,7 +26,7 @@ function buildSystemPrompt(type: InsightType, hour: number): string {
   const base: Record<InsightType, string> = {
     journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour, les objectifs et les niveaux de faim ressentis par repas.
 Rédige une analyse en 3 parties courtes :
-1. Bilan nutritionnel : compare calories, protéines, glucides, lipides, fibres et eau aux objectifs.
+1. Bilan nutritionnel : compare calories, protéines, glucides, lipides, fibres et eau aux objectifs. Si des données supplémentaires sont fournies (sucres, sodium, lipides saturés), intègre-les dans l'analyse — signale tout dépassement de limite recommandée.
 2. Sensations de faim (UNIQUEMENT si des niveaux de faim sont fournis) : analyse le pattern de faim. Une faim élevée (4-5) avant un repas = repas précédent trop léger ou timing à ajuster. Une faim basse (1-2) = bon équilibre ou repas trop lourd. Grignotages avec faim élevée = signal métabolique à prendre au sérieux.
 3. 1 point fort + 1 conseil concret.
 Total : 3-4 phrases maximum. Réponds directement sans intro générique.`,
@@ -67,13 +67,14 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
   void hour; // used above
   switch (type) {
     case "journal": {
-      const { entries, totals, goals, waterMl, waterGoal, mealHunger } = data as {
+      const { entries, totals, goals, waterMl, waterGoal, mealHunger, trackedNutrients } = data as {
         entries:    { name: string; grams: number; calories: number }[];
-        totals:     { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number };
-        goals:      { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatGrams: number; fiberGrams: number };
+        totals:     { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; sugarG?: number; sodiumMg?: number; saturatedFatG?: number };
+        goals:      { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatGrams: number; fiberGrams: number; sugarGrams?: number; sodiumMg?: number; saturatedFatGrams?: number };
         waterMl:    number;
         waterGoal:  number;
         mealHunger?: Partial<Record<string, number>>;
+        trackedNutrients?: { protein?: boolean; sodium?: boolean; sugar?: boolean; saturatedFat?: boolean };
       };
       const HUNGER_LABELS: Record<number, string> = {
         1: "pas faim (1/5)",
@@ -98,6 +99,16 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
         .slice(0, 20)
         .map((e) => `- ${e.name} (${e.grams}g, ${e.calories} kcal)`)
         .join("\n");
+
+      // Extra tracked nutrients
+      const extraLines: string[] = [];
+      if (trackedNutrients?.sugar        && (totals.sugarG ?? 0) > 0)
+        extraLines.push(`- Sucres : ${Math.round(totals.sugarG ?? 0)}${goals.sugarGrams ? ` / ${goals.sugarGrams}` : ""} g`);
+      if (trackedNutrients?.sodium       && (totals.sodiumMg ?? 0) > 0)
+        extraLines.push(`- Sel/Sodium : ${Math.round(totals.sodiumMg ?? 0)}${goals.sodiumMg ? ` / ${goals.sodiumMg}` : ""} mg`);
+      if (trackedNutrients?.saturatedFat && (totals.saturatedFatG ?? 0) > 0)
+        extraLines.push(`- Lipides saturés : ${Math.round(totals.saturatedFatG ?? 0)}${goals.saturatedFatGrams ? ` / ${goals.saturatedFatGrams}` : ""} g`);
+
       return `${timePrefix}Aliments consommés aujourd'hui :
 ${foodList || "Aucun aliment enregistré"}
 
@@ -108,6 +119,7 @@ Totaux :
 - Lipides : ${Math.round(totals?.fatG ?? 0)} / ${goals?.fatGrams ?? 0} g
 - Fibres : ${Math.round(totals?.fiberG ?? 0)} / ${goals?.fiberGrams ?? 0} g
 - Eau : ${waterMl ?? 0} / ${waterGoal ?? 2000} mL
+${extraLines.length ? extraLines.join("\n") : ""}
 ${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}`;
     }
 
