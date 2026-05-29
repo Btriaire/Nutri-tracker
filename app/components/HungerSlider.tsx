@@ -38,36 +38,44 @@ export default function HungerSlider({ value, onChange, label, compact = false }
         </span>
       )}
 
-      {/* 5 segments */}
-      <div
-        role="group"
-        aria-label="Niveau de faim"
-        className="flex gap-0.5"
-        /* padding vertical invisible → grande zone de tap mobile */
-        style={{ paddingTop: 6, paddingBottom: 6, margin: "-6px 0", cursor: "pointer" }}
-      >
-        {([1, 2, 3, 4, 5] as HungerLevel[]).map((l) => {
-          const filled  = isSet && value! >= l;
-          const color   = HUNGER_CFG[l].color;
-          return (
-            <button
-              key={l}
-              type="button"
-              onClick={() => handleClick(l)}
-              aria-label={HUNGER_CFG[l].label}
-              style={{
-                flex:         1,
-                height:       3,
-                borderRadius: 2,
-                background:   filled ? color : "rgba(255,255,255,0.1)",
-                border:       "none",
-                padding:      0,
-                transition:   "background 0.12s",
-                cursor:       "pointer",
-              }}
-            />
-          );
-        })}
+      {/* 5 segments + emoji */}
+      <div className="flex items-center gap-1.5">
+        <div
+          role="group"
+          aria-label="Niveau de faim"
+          className="flex gap-0.5 flex-1"
+          style={{ paddingTop: 6, paddingBottom: 6, margin: "-6px 0", cursor: "pointer" }}
+        >
+          {([1, 2, 3, 4, 5] as HungerLevel[]).map((l) => {
+            const filled = isSet && value! >= l;
+            const color  = HUNGER_CFG[l].color;
+            return (
+              <button
+                key={l}
+                type="button"
+                onClick={() => handleClick(l)}
+                aria-label={HUNGER_CFG[l].label}
+                style={{
+                  flex:         1,
+                  height:       3,
+                  borderRadius: 2,
+                  background:   filled ? color : "rgba(255,255,255,0.1)",
+                  border:       "none",
+                  padding:      0,
+                  transition:   "background 0.12s",
+                  cursor:       "pointer",
+                }}
+              />
+            );
+          })}
+        </div>
+        {/* Emoji du niveau sélectionné */}
+        <span
+          className="text-[14px] leading-none flex-shrink-0 transition-all"
+          style={{ opacity: isSet ? 1 : 0.2, filter: isSet ? "none" : "grayscale(1)" }}
+        >
+          {isSet ? HUNGER_CFG[value!].emoji : "😶"}
+        </span>
       </div>
 
       {/* Légende labels (non-compact uniquement) */}
