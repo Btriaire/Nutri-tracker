@@ -297,7 +297,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const avgDia = readings.length ? Math.round(readings.reduce((s, r) => s + r.diastolic, 0) / readings.length) : null;
   const bpCat  = avgSys && avgDia ? bpCategory(avgSys, avgDia) : null;
 
-  const chartData = trend
+  // Merge static trend with live entry so new readings appear immediately in the chart
+  const trendWithLive = [
+    ...trend.filter(e => e.date !== date),
+    ...(entry ? [{ ...entry, date }] : []),
+  ].sort((a, b) => a.date.localeCompare(b.date));
+
+  const chartData = trendWithLive
     .filter(e => (e.bloodPressure?.length ?? 0) > 0)
     .map(e => {
       const rr = e.bloodPressure;
