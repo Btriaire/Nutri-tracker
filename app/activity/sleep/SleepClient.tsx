@@ -58,23 +58,40 @@ interface ModalProps {
 function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
   const initH = current ? Math.floor(current / 60) : 7;
   const initM = current ? current % 60 : 0;
-  const [hours,   setHours]   = useState(initH);
-  const [minutes, setMinutes] = useState(initM);
-  const [saving,  setSaving]  = useState(false);
+  const [hours,    setHours]    = useState(initH);
+  const [minutes,  setMinutes]  = useState(initM);
+  const [saving,   setSaving]   = useState(false);
+  const [saved,    setSaved]    = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const totalMin = hours * 60 + minutes;
+  const changed  = totalMin !== (current ?? 0);
 
-  async function save() {
-    if (totalMin < 1) return;
+  // Auto-save helper
+  async function doSave(min: number) {
+    if (min < 1) return;
     setSaving(true);
     await fetch("/api/sleep", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, sleepMinutes: totalMin }),
+      body: JSON.stringify({ date, sleepMinutes: min }),
     });
     setSaving(false);
-    onSaved(date, totalMin);
+    setSaved(true);
+    onSaved(date, min);
+  }
+
+  // Preset click → save + close immediately
+  async function handlePreset(min: number) {
+    setHours(Math.floor(min / 60));
+    setMinutes(min % 60);
+    await doSave(min);
+    onClose();
+  }
+
+  // Close backdrop → auto-save if changed
+  async function handleBackdropClose() {
+    if (changed && totalMin >= 1) await doSave(totalMin);
     onClose();
   }
 
@@ -93,7 +110,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
       <motion.div
         className="fixed inset-0 z-50 flex items-end justify-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleBackdropClose}
         style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
       >
         <motion.div
@@ -108,13 +125,23 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
             <div>
               <p className="text-[15px] font-semibold capitalize">{label}</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                {current ? "Modifier la durée de sommeil" : "Saisir manuellement"}
+                {saved ? "✓ Enregistré automatiquement" : current ? "Modifier · ferme pour sauvegarder" : "Sauvegarde automatique à la fermeture"}
               </p>
             </div>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg"
-              style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-              <X size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              {current && (
+                <button onClick={remove} disabled={deleting}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                  {deleting ? <Spinner size={13} className="animate-spin" /> : <Trash size={13} />}
+                </button>
+              )}
+              <button onClick={handleBackdropClose}
+                className="w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+                {saving ? <Spinner size={14} className="animate-spin" /> : <X size={16} />}
+              </button>
+            </div>
           </div>
 
           {/* Time pickers */}
@@ -138,7 +165,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
 
             {/* Minutes */}
             <div className="flex flex-col items-center gap-2">
-              <button onClick={() => setMinutes(m => (m + 15) % 60 === 0 && m === 45 ? 0 : Math.min(m + 15, 45))}
+              <button onClick={() => setMinutes(m => m >= 45 ? 0 : m + 15)}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
                 style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▲</button>
               <div className="w-20 h-14 rounded-2xl flex flex-col items-center justify-center"
@@ -152,11 +179,14 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
             </div>
           </div>
 
-          {/* Quick presets */}
-          <div className="flex gap-2 mb-6 flex-wrap justify-center">
+          {/* Quick presets — tap to save instantly */}
+          <p className="text-[10px] text-center mb-2" style={{ color: "var(--text-muted)" }}>
+            Sélectionne une durée → sauvegarde instantanée
+          </p>
+          <div className="flex gap-2 mb-5 flex-wrap justify-center">
             {[360, 390, 420, 450, 480, 510].map(min => (
               <button key={min}
-                onClick={() => { setHours(Math.floor(min / 60)); setMinutes(min % 60); }}
+                onClick={() => handlePreset(min)}
                 className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
                 style={{
                   background: totalMin === min ? "rgba(121,134,203,0.25)" : "var(--surface)",
@@ -168,25 +198,19 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            {current && (
-              <button onClick={remove} disabled={deleting}
-                className="w-10 h-11 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors"
-                style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
-                {deleting ? <Spinner size={14} className="animate-spin" /> : <Trash size={14} />}
-              </button>
-            )}
-            <button onClick={save} disabled={saving || totalMin < 1}
-              className="flex-1 h-11 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 transition-all"
-              style={{
-                background: totalMin >= 1 ? "rgba(121,134,203,0.9)" : "var(--surface)",
-                color:      totalMin >= 1 ? "#fff" : "var(--text-muted)",
-              }}>
-              {saving ? <Spinner size={16} className="animate-spin" /> : null}
-              {current ? "Mettre à jour" : "Enregistrer"}
-            </button>
-          </div>
+          {/* Confirm strip — only shown when H/M changed and not a preset */}
+          {changed && totalMin >= 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl"
+              style={{ background: "rgba(121,134,203,0.1)", border: "1px solid rgba(121,134,203,0.25)" }}>
+              <Moon size={14} weight="fill" style={{ color: "#7986CB" }} />
+              <span className="flex-1 text-[12px]" style={{ color: "#7986CB" }}>
+                {fmtSleep(totalMin)} · ferme pour sauvegarder
+              </span>
+              {saving && <Spinner size={13} className="animate-spin" style={{ color: "#7986CB" }} />}
+            </motion.div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
