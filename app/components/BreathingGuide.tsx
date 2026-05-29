@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Stop, Timer } from "@phosphor-icons/react";
+import { Play, Stop, Timer, CaretDown, CaretUp } from "@phosphor-icons/react";
 
 // ─── Programs ────────────────────────────────────────────────────────────────
 
@@ -76,6 +76,7 @@ function fmtTime(s: number): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BreathingGuide() {
+  const [collapsed,   setCollapsed]   = useState(true);
   const [selectedId,  setSelectedId]  = useState<string>("coherence");
   const [active,      setActive]      = useState(false);
   const [phaseIdx,    setPhaseIdx]    = useState(0);
@@ -141,7 +142,29 @@ export default function BreathingGuide() {
 
   return (
     <div className="glass p-4">
-      <p className="label-xs mb-3">🫁 Respiration guidée</p>
+      {/* Collapsible header */}
+      <button
+        className="w-full flex items-center justify-between"
+        onClick={() => setCollapsed(v => !v)}
+      >
+        <p className="label-xs">🫁 Respiration guidée</p>
+        {collapsed
+          ? <CaretDown size={14} style={{ color: "var(--text-muted)" }} />
+          : <CaretUp   size={14} style={{ color: "var(--text-muted)" }} />
+        }
+      </button>
+
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.div
+            key="breathing-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="mt-3">
 
       {/* Program selector */}
       <div className="grid grid-cols-3 gap-2 mb-4">
@@ -307,6 +330,11 @@ export default function BreathingGuide() {
           </motion.button>
         )}
       </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

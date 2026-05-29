@@ -14,7 +14,7 @@ import WelcomeChime from "@/app/components/WelcomeChime";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import type { DayTotals, NutritionGoals, WeightPoint, DayTrendPoint, Lang } from "@/app/lib/types";
+import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang } from "@/app/lib/types";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -37,6 +37,7 @@ interface Props {
   recentWeight:   WeightPoint[];
   trendPoints:    DayTrendPoint[];
   waterMl:        number;
+  plan?:          NutritionPlan;
   lang:           Lang;
 }
 
@@ -101,7 +102,7 @@ const fade = (delay = 0) => ({
 export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
-  waterMl: initialWaterMl, lang,
+  waterMl: initialWaterMl, plan, lang,
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -259,6 +260,27 @@ export default function DashboardClient({
               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                 {score}/4 objectifs
               </p>
+              {plan && (() => {
+                const daysInPlan = Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1;
+                return (
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span>{plan.programEmoji}</span>
+                    <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{plan.programLabel}</span>
+                    <span>· Jour {daysInPlan}</span>
+                    {plan.projectedTargetDate && (
+                      <span>· 🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}</span>
+                    )}
+                  </div>
+                );
+              })()}
+              {(goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan && (() => {
+                const ap = (goals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan!;
+                return (
+                  <div className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    🏃 {ap.sessionsPerWeek} séances/sem · ~{Math.round(ap.weeklyKcalBurned)} kcal
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </motion.div>

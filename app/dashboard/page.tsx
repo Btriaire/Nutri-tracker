@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint } from "@/app/lib/types";
+import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan } from "@/app/lib/types";
 import { format } from "date-fns";
 import DashboardClient from "./DashboardClient";
 
@@ -13,6 +13,7 @@ export default async function DashboardPage() {
   let goals       = defaultGoals();
   let displayName = "";
   let photoUrl: string | undefined;
+  let plan: NutritionPlan | undefined;
   let dayLog: DayLog | null         = null;
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
     goals       = profile?.goals ?? defaultGoals();
     displayName = profile?.displayName ?? "";
     photoUrl    = profile?.photoUrl ?? undefined;
+    plan        = profile?.goals?.plan ?? undefined;
     dayLog      = logSnap.exists ? logSnap.data() as DayLog : null;
     fitnessDay  = fitnessSnap.exists ? fitnessSnap.data() as FitnessDay : null;
 
@@ -88,6 +90,7 @@ export default async function DashboardPage() {
       recentWeight={[...recentWeight].reverse()}
       trendPoints={trendPoints}
       waterMl={dayLog?.waterMl ?? 0}
+      plan={plan}
       lang="fr"
     />
   );

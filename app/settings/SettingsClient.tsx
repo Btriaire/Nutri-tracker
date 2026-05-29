@@ -10,7 +10,8 @@ import { getClientAuth } from "@/app/lib/firebase-client";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE } from "@/app/lib/nutrition";
-import type { NutritionGoals, ActivityLevel, Gender } from "@/app/lib/types";
+import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan } from "@/app/lib/types";
+import { format as formatDate } from "date-fns";
 
 interface Props {
   fitConnected:      boolean;
@@ -165,9 +166,12 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           </h1>
         </motion.div>
 
+        {/* Nutrition & Profile Goals — FIRST */}
+        <GoalsPanel initialGoals={initialGoals} />
+
         {/* Theme toggle */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
-          className="glass p-4 mb-4">
+          className="glass p-4 mb-4 mt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -437,9 +441,6 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         {/* Profile photo */}
         <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
 
-        {/* Nutrition & Profile Goals */}
-        <GoalsPanel initialGoals={initialGoals} />
-
         {/* Chart customization */}
         <ChartPrefsPanel />
 
@@ -630,6 +631,25 @@ const ACTIVITY_DESCS: Record<ActivityLevel, string> = {
   very_active: "2× par jour",
 };
 
+const ACTIVITY_CATALOG: Omit<PlannedActivity, 'id' | 'durationMin'>[] = [
+  // Sport
+  { label: "Course à pied",   emoji: "🏃", category: "sport",   kcalPer30min: 300 },
+  { label: "Vélo",            emoji: "🚴", category: "sport",   kcalPer30min: 200 },
+  { label: "Natation",        emoji: "🏊", category: "sport",   kcalPer30min: 250 },
+  { label: "Musculation",     emoji: "🏋️", category: "sport",   kcalPer30min: 150 },
+  { label: "Tennis",          emoji: "🎾", category: "sport",   kcalPer30min: 200 },
+  { label: "Football",        emoji: "⚽", category: "sport",   kcalPer30min: 250 },
+  { label: "Yoga",            emoji: "🧘", category: "sport",   kcalPer30min: 80  },
+  { label: "Marche rapide",   emoji: "🚶", category: "sport",   kcalPer30min: 120 },
+  // Loisirs
+  { label: "Jardinage",       emoji: "🌱", category: "leisure", kcalPer30min: 120 },
+  { label: "Danse",           emoji: "💃", category: "leisure", kcalPer30min: 150 },
+  { label: "Ménage intensif", emoji: "🧹", category: "leisure", kcalPer30min: 90  },
+  { label: "Bricolage",       emoji: "🔨", category: "leisure", kcalPer30min: 100 },
+  { label: "Promenade",       emoji: "🌳", category: "leisure", kcalPer30min: 80  },
+  { label: "Stretching",      emoji: "🤸", category: "leisure", kcalPer30min: 60  },
+];
+
 function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [age,      setAge]      = useState(initialGoals.age?.toString()       ?? "");
   const [height,   setHeight]   = useState(initialGoals.heightCm?.toString()  ?? "");
@@ -645,11 +665,21 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
   const [weeklyGoal, setWeeklyGoal] = useState(initialGoals.weeklyGoal ?? "maintain");
-  const [tdeeCalc,        setTdeeCalc]        = useState<number | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [saving,          setSaving]          = useState(false);
-  const [saved,           setSaved]           = useState(false);
-  const [expanded,        setExpanded]        = useState(false);
+  const [tdeeCalc,          setTdeeCalc]          = useState<number | null>(null);
+  const [selectedProgram,   setSelectedProgram]   = useState<string | null>(null);
+  const [saving,            setSaving]            = useState(false);
+  const [saved,             setSaved]             = useState(false);
+  const [expanded,          setExpanded]          = useState(false);
+  const [planLoading,       setPlanLoading]       = useState(false);
+  const [planResult,        setPlanResult]        = useState<{ projectedTargetDate: string | null; projectedWeeklyLossKg: number | null; projectedNote: string | null } | null>(null);
+  const [activityPlan,      setActivityPlan]      = useState<ActivityPlan | null>(
+    (initialGoals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan ?? null
+  );
+  const [apSessions, setApSessions] = useState<number>(activityPlan?.sessionsPerWeek ?? 3);
+  const [apSelected, setApSelected] = useState<Record<string, number>>(
+    // map activity id → durationMin for pre-selected ones
+    Object.fromEntries((activityPlan?.activities ?? []).map(a => [a.id, a.durationMin]))
+  );
 
   const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number }> = {
     balanced: { label: "Équilibré",       emoji: "⚖️",  desc: "50% G · 25% P · 25% L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
@@ -702,34 +732,96 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     setSelectedProgram(key);
   };
 
+  const buildGoalsObject = (): Partial<NutritionGoals> => {
+    const goals: Partial<NutritionGoals> = {
+      dailyCalories:  parseInt(calories) || 2000,
+      proteinGrams:   parseInt(protein)  || 150,
+      carbsGrams:     parseInt(carbs)    || 220,
+      fatGrams:       parseInt(fat)      || 65,
+      fiberGrams:     parseInt(fiber)    || 30,
+      waterMl:        parseInt(water)    || 2000,
+      stepsGoal:      parseInt(steps)    || 10000,
+      sleepGoalMin:   (parseInt(sleep)   || 7) * 60,
+      activityLevel:  activity,
+      weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
+      targetWeightKg: parseFloat(weight) || null,
+    };
+    if (age)    goals.age       = parseInt(age);
+    if (height) goals.heightCm  = parseInt(height);
+    if (gender) goals.gender    = gender as Gender;
+    return goals;
+  };
+
+  const buildActivityPlan = (): ActivityPlan | null => {
+    const selectedEntries = Object.entries(apSelected);
+    if (selectedEntries.length === 0) return null;
+    const activities: PlannedActivity[] = selectedEntries.map(([id, durationMin]) => {
+      const catalog = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
+      if (!catalog) return null;
+      return { id, label: catalog.label, emoji: catalog.emoji, category: catalog.category, durationMin, kcalPer30min: catalog.kcalPer30min };
+    }).filter((a): a is PlannedActivity => a !== null);
+    const weeklyKcalBurned = activities.reduce((sum, a) => sum + a.kcalPer30min * a.durationMin / 30, 0) * apSessions;
+    return { sessionsPerWeek: apSessions, activities, weeklyKcalBurned };
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const goals: Partial<NutritionGoals> = {
-        dailyCalories:  parseInt(calories) || 2000,
-        proteinGrams:   parseInt(protein)  || 150,
-        carbsGrams:     parseInt(carbs)    || 220,
-        fatGrams:       parseInt(fat)      || 65,
-        fiberGrams:     parseInt(fiber)    || 30,
-        waterMl:        parseInt(water)    || 2000,
-        stepsGoal:      parseInt(steps)    || 10000,
-        sleepGoalMin:   (parseInt(sleep)   || 7) * 60,
-        activityLevel:  activity,
-        weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
-        targetWeightKg: parseFloat(weight) || null,
-      };
-      if (age)    goals.age       = parseInt(age);
-      if (height) goals.heightCm  = parseInt(height);
-      if (gender) goals.gender    = gender as Gender;
-
+      const goals = buildGoalsObject();
+      const ap = buildActivityPlan();
+      if (ap) goals.activityPlan = ap;
       await fetch("/api/goals", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ goals }),
       });
+      if (ap) setActivityPlan(ap);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } finally { setSaving(false); }
+  };
+
+  const handleStartPlan = async () => {
+    if (!selectedProgram) return;
+    setPlanLoading(true);
+    setPlanResult(null);
+    try {
+      // 1. Save goals first
+      const goalsObj = buildGoalsObject();
+      await fetch("/api/goals", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ goals: goalsObj }),
+      });
+
+      // 2. Build NutritionPlan
+      const prog = PROGRAMS[selectedProgram];
+      const plan: NutritionPlan = {
+        programKey:    selectedProgram,
+        programLabel:  prog.label,
+        programEmoji:  prog.emoji,
+        startDate:     formatDate(new Date(), "yyyy-MM-dd"),
+        startWeightKg: parseFloat(weight) || null,
+        targetWeightKg: parseFloat(weight) ? (goalsObj.targetWeightKg ?? null) : null,
+        dailyCalories:  parseInt(calories) || 2000,
+      };
+
+      // 3. Call projection API
+      const res = await fetch("/api/plan/projection", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ plan, goals: goalsObj }),
+      });
+      if (res.ok) {
+        const json = await res.json() as { ok: boolean; projectedTargetDate: string | null; projectedWeeklyLossKg: number | null; projectedNote: string | null };
+        setPlanResult({
+          projectedTargetDate:   json.projectedTargetDate,
+          projectedWeeklyLossKg: json.projectedWeeklyLossKg,
+          projectedNote:         json.projectedNote,
+        });
+      }
+    } catch { /* noop */ }
+    finally { setPlanLoading(false); }
   };
 
   const inputClass = "w-full px-3 py-2 rounded-xl text-[13px] transition-colors outline-none";
@@ -861,6 +953,116 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 </div>
               </div>
 
+              {/* ── Plan d'activité ── */}
+              <div>
+                <p className="label-xs mb-3 flex items-center gap-1.5">
+                  <Lightning size={11} />
+                  Plan d&apos;activité
+                </p>
+
+                {/* Sessions par semaine */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>Sessions par semaine</p>
+                    <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                      {apSessions}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}> séances</span>
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1} max={7} step={1}
+                    value={apSessions}
+                    onChange={e => setApSessions(parseInt(e.target.value))}
+                    className="nt-slider"
+                    style={{
+                      background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, rgba(255,255,255,0.1) ${((apSessions - 1) / 6) * 100}%)`,
+                    }}
+                  />
+                  <div className="flex justify-between text-[9px] mt-1" style={{ color: "var(--text-muted)" }}>
+                    <span>1 séance</span>
+                    <span>7 séances</span>
+                  </div>
+                </div>
+
+                {/* Grille activités */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {ACTIVITY_CATALOG.map(act => {
+                    const id = `${act.category}-${act.label}`;
+                    const isSelected = id in apSelected;
+                    const dur = apSelected[id] ?? 30;
+                    return (
+                      <div key={id}
+                        className="rounded-xl p-3 transition-all"
+                        style={{
+                          background: isSelected ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${isSelected ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+                        }}>
+                        <button
+                          onClick={() => {
+                            if (isSelected) {
+                              const next = { ...apSelected };
+                              delete next[id];
+                              setApSelected(next);
+                            } else {
+                              setApSelected({ ...apSelected, [id]: 30 });
+                            }
+                          }}
+                          className="flex items-center gap-2 w-full text-left mb-1">
+                          <span className="text-base">{act.emoji}</span>
+                          <p className="text-[12px] font-medium flex-1 leading-tight" style={{ color: isSelected ? "var(--calories)" : "var(--text-primary)" }}>
+                            {act.label}
+                          </p>
+                          <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ background: isSelected ? "var(--calories)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
+                            {isSelected && <CheckCircle size={10} weight="fill" color="#fff" />}
+                          </div>
+                        </button>
+                        <p className="text-[9px] mb-1.5" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            style={{ overflow: "hidden" }}>
+                            <div className="flex gap-1 flex-wrap">
+                              {[30, 45, 60, 90].map(d => (
+                                <button key={d}
+                                  onClick={() => setApSelected({ ...apSelected, [id]: d })}
+                                  className="px-2 py-0.5 rounded-md text-[10px] transition-colors"
+                                  style={{
+                                    background: dur === d ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                                    color: dur === d ? "#fff" : "var(--text-muted)",
+                                    border: `1px solid ${dur === d ? "var(--calories)" : "var(--border)"}`,
+                                  }}>
+                                  {d}min
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Total estimé */}
+                {Object.keys(apSelected).length > 0 && (() => {
+                  const totalPerSession = Object.entries(apSelected).reduce((sum, [id, dur]) => {
+                    const act = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
+                    return sum + (act ? act.kcalPer30min * dur / 30 : 0);
+                  }, 0);
+                  const weeklyKcal = Math.round(totalPerSession * apSessions);
+                  return (
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                      style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Total estimé / semaine</p>
+                      <p className="text-[14px] font-bold" style={{ color: "var(--calories)" }}>~{weeklyKcal} kcal</p>
+                    </div>
+                  );
+                })()}
+              </div>
+
               {/* ── Programmes nutritionnels ── */}
               <div>
                 <p className="label-xs mb-2 flex items-center gap-1.5">
@@ -910,19 +1112,72 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                   Calcule les besoins caloriques via Mifflin-St Jeor et remplit les macros automatiquement.
                 </p>
-                <button onClick={handleCalcTDEE}
-                  disabled={!age || !height || !gender}
-                  className="w-full btn gap-2 text-[12px]"
-                  style={{
-                    height: "34px",
-                    background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
-                    color: age && height && gender ? "#fff" : "var(--text-muted)",
-                    border: "none",
-                    opacity: age && height && gender ? 1 : 0.5,
-                  }}>
-                  <Calculator size={12} />
-                  Calculer et remplir
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={handleCalcTDEE}
+                    disabled={!age || !height || !gender}
+                    className="flex-1 btn gap-2 text-[12px]"
+                    style={{
+                      height: "34px",
+                      background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                      color: age && height && gender ? "#fff" : "var(--text-muted)",
+                      border: "none",
+                      opacity: age && height && gender ? 1 : 0.5,
+                    }}>
+                    <Calculator size={12} />
+                    Calculer TDEE
+                  </button>
+                  <button
+                    onClick={handleStartPlan}
+                    disabled={!selectedProgram || !age || !height || !gender || planLoading}
+                    className="flex-1 btn gap-2 text-[12px]"
+                    style={{
+                      height: "34px",
+                      background: selectedProgram && age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                      color: selectedProgram && age && height && gender ? "#fff" : "var(--text-muted)",
+                      border: "none",
+                      opacity: selectedProgram && age && height && gender ? 1 : 0.5,
+                    }}>
+                    {planLoading
+                      ? <><Spinner size={12} className="animate-spin" /> IA…</>
+                      : <>🚀 Démarrer le plan</>
+                    }
+                  </button>
+                </div>
+
+                {/* Plan result card */}
+                <AnimatePresence>
+                  {planLoading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="px-3 py-2.5 rounded-xl text-[12px]"
+                      style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)", color: "var(--text-muted)" }}>
+                      Calcul IA en cours…
+                    </motion.div>
+                  )}
+                  {!planLoading && planResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="px-3 py-3 rounded-xl space-y-1"
+                      style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                      {planResult.projectedTargetDate && planResult.projectedWeeklyLossKg !== null && (
+                        <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
+                          📅 Objectif estimé : {formatDate(new Date(planResult.projectedTargetDate + "T00:00:00"), "d MMM yyyy")}
+                          {" · "}
+                          {planResult.projectedWeeklyLossKg > 0 ? "+" : ""}{planResult.projectedWeeklyLossKg?.toFixed(2)} kg/sem
+                        </p>
+                      )}
+                      {planResult.projectedNote && (
+                        <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                          {planResult.projectedNote}
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Calories & Macros ── */}

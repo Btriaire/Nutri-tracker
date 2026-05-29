@@ -202,6 +202,37 @@ export interface NutritionGoals {
   age?:             number;
   heightCm?:        number;
   gender?:          Gender;
+  currentWeightKg?: number;   // pour tracking
+  plan?:            NutritionPlan;
+  activityPlan?:    ActivityPlan;
+}
+
+export interface PlannedActivity {
+  id:           string;
+  label:        string;
+  emoji:        string;
+  category:     "sport" | "leisure";
+  durationMin:  number;         // durée par séance
+  kcalPer30min: number;         // calories brûlées / 30 min (selon poids moyen 75kg)
+}
+
+export interface ActivityPlan {
+  sessionsPerWeek: number;
+  activities:      PlannedActivity[];
+  weeklyKcalBurned: number;     // sum(activity.kcalPer30min * durationMin / 30) * sessionsPerWeek
+}
+
+export interface NutritionPlan {
+  programKey:              string;        // "keto"|"balanced"|"lowcarb"|"highprot"|"mediter"|"bulk"
+  programLabel:            string;        // "Cétogène", "Équilibré", etc.
+  programEmoji:            string;        // "🥑", "⚖️", etc.
+  startDate:               string;        // "YYYY-MM-DD"
+  startWeightKg:           number | null;
+  targetWeightKg:          number | null;
+  dailyCalories:           number;
+  projectedTargetDate?:    string;        // "YYYY-MM-DD" (from Groq)
+  projectedWeeklyLossKg?:  number;        // from Groq
+  projectedNote?:          string;        // short text from Groq
 }
 
 export interface IntegrationStatus {

@@ -12,7 +12,8 @@ import {
   ArrowDown, ArrowUp, Minus, Lightning, Scales, ChartBar, ChartLine,
   CalendarBlank, Footprints, Fire, Heart, Moon, Drop, PersonSimpleRun,
 } from "@phosphor-icons/react";
-import type { DayTrendPoint, NutritionGoals } from "@/app/lib/types";
+import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
+import { Spinner } from "@phosphor-icons/react";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -57,6 +58,7 @@ interface Props {
   currentWeightKg: number | null;
   targetWeightKg:  number | null;
   age?:            number;
+  plan?:           NutritionPlan;
 }
 
 const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; value: string | number | undefined; unit?: string; color?: string }) => (
@@ -67,12 +69,14 @@ const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; val
   </div>
 );
 
-export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, age }: Props) {
+export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, age, plan: initialPlan }: Props) {
   const fcMax = age ? 220 - age : 190;
-  const [range,    setRange]    = useState<Range>("30d");
-  const [calChart, setCalChart] = useState<CalChart>("area");
-  const [points,   setPoints]   = useState<DayTrendPoint[]>([]);
-  const [loading,  setLoading]  = useState(true);
+  const [range,           setRange]      = useState<Range>("30d");
+  const [calChart,        setCalChart]   = useState<CalChart>("area");
+  const [points,          setPoints]     = useState<DayTrendPoint[]>([]);
+  const [loading,         setLoading]    = useState(true);
+  const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
+  const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/goals")
@@ -135,6 +139,28 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   // ── today data (for Jour view)
   const todayPoint = points[points.length - 1];
 
+  const handleRecalcPlan = async () => {
+    if (!plan) return;
+    setPlanRecalcLoading(true);
+    try {
+      const res = await fetch("/api/plan/projection", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ plan, goals }),
+      });
+      if (res.ok) {
+        const json = await res.json() as { ok: boolean; projectedTargetDate: string | null; projectedWeeklyLossKg: number | null; projectedNote: string | null };
+        setPlan(p => p ? {
+          ...p,
+          projectedTargetDate:   json.projectedTargetDate   ?? undefined,
+          projectedWeeklyLossKg: json.projectedWeeklyLossKg ?? undefined,
+          projectedNote:         json.projectedNote         ?? undefined,
+        } : p);
+      }
+    } catch { /* noop */ }
+    finally { setPlanRecalcLoading(false); }
+  };
+
   return (
     <div className="relative min-h-screen" style={{ paddingBottom: "80px" }}>
       <div className="bg-orbs" />
@@ -144,6 +170,98 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           <p className="label-xs mb-0.5">Analyse</p>
           <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Progrès</h1>
         </motion.div>
+
+        {/* ── Mon plan card ── */}
+        {plan && (() => {
+          const daysInPlan = Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1;
+          const startKg    = plan.startWeightKg;
+          const targetKg   = plan.targetWeightKg;
+          const currentKg  = currentWeightKg;
+          const progressPct = (startKg && targetKg && currentKg && startKg !== targetKg)
+            ? Math.max(0, Math.min(100, Math.abs(currentKg - startKg) / Math.abs(targetKg - startKg) * 100))
+            : null;
+          return (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.02 }}
+              className="glass p-4 mb-5">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[20px]">{plan.programEmoji}</span>
+                  <div>
+                    <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Démarré le {format(new Date(plan.startDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                    style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.3)" }}>
+                    Jour {daysInPlan}
+                  </span>
+                  <button onClick={handleRecalcPlan} disabled={planRecalcLoading}
+                    className="btn btn-ghost text-[11px] px-2 py-1 gap-1"
+                    style={{ height: "auto" }}>
+                    {planRecalcLoading
+                      ? <Spinner size={11} className="animate-spin" />
+                      : "Recalculer"
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                {[
+                  { label: "Départ",  value: startKg   ? `${startKg} kg`   : "—", color: "var(--text-primary)" },
+                  { label: "Actuel",  value: currentKg ? `${currentKg.toFixed(1)} kg` : "—", color: "var(--protein)" },
+                  { label: "Cible",   value: targetKg  ? `${targetKg} kg`  : "—", color: "var(--fiber)" },
+                  { label: "Calories", value: `${plan.dailyCalories}`, color: "var(--calories)" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                    <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{value}</span>
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar */}
+              {progressPct !== null && (
+                <div className="mb-3">
+                  <div className="flex justify-between text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
+                    <span>{startKg} kg</span>
+                    <span>{Math.round(progressPct)}% atteint</span>
+                    <span>{targetKg} kg</span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${progressPct}%`, background: "linear-gradient(90deg, var(--protein), var(--fiber))" }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Projection info */}
+              {(plan.projectedTargetDate || plan.projectedWeeklyLossKg !== undefined) && (
+                <div className="space-y-1 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                  {plan.projectedTargetDate && (
+                    <p className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>
+                      🎯 Objectif estimé : {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
+                    </p>
+                  )}
+                  {plan.projectedWeeklyLossKg !== undefined && (
+                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                      {plan.projectedWeeklyLossKg >= 0 ? "+" : ""}{plan.projectedWeeklyLossKg.toFixed(2)} kg/semaine attendu
+                    </p>
+                  )}
+                  {plan.projectedNote && (
+                    <p className="text-[11px] italic" style={{ color: "var(--text-muted)" }}>
+                      {plan.projectedNote}
+                    </p>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          );
+        })()}
 
         {/* Range selector */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}

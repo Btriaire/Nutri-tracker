@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { UserProfile } from "@/app/lib/types";
+import type { UserProfile, NutritionPlan } from "@/app/lib/types";
 import ProgressClient from "./ProgressClient";
 
 export default async function ProgressPage() {
@@ -10,6 +10,7 @@ export default async function ProgressPage() {
   let goals = defaultGoals();
   let targetWeightKg: number | null = null;
   let currentWeightKg: number | null = null;
+  let plan: NutritionPlan | undefined;
 
   try {
     const db = getAdminFirestore();
@@ -20,6 +21,7 @@ export default async function ProgressPage() {
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
     goals = profile?.goals ?? defaultGoals();
     targetWeightKg = goals.targetWeightKg ?? null;
+    plan = profile?.goals?.plan ?? undefined;
     for (const d of fitnessSnap.docs) {
       const fd = d.data() as { withings?: { weightKg?: number }; googleFit?: { weightKg?: number } };
       const kg = fd.withings?.weightKg ?? fd.googleFit?.weightKg ?? null;
@@ -35,6 +37,7 @@ export default async function ProgressPage() {
       currentWeightKg={currentWeightKg}
       targetWeightKg={targetWeightKg}
       age={goals.age}
+      plan={plan}
     />
   );
 }

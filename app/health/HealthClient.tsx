@@ -21,7 +21,7 @@ import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
-type HealthTab = "vitaux" | "cardiaque" | "bienetre";
+type HealthTab = "vitaux" | "cardiaque" | "medicaments" | "bienetre";
 
 interface Props {
   date:           string;
@@ -371,9 +371,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
           {([
-            { id: "vitaux",    label: "🩺 Vitaux" },
-            { id: "cardiaque", label: "❤️ Cardiaque" },
-            { id: "bienetre",  label: "🧠 Bien-être" },
+            { id: "vitaux",       label: "🩺 Vitaux" },
+            { id: "cardiaque",    label: "❤️ Cardiaque" },
+            { id: "medicaments",  label: "💊 Médic." },
+            { id: "bienetre",     label: "🧠 Bien-être" },
           ] as const).map(({ id, label }) => (
             <button key={id} onClick={() => setActiveTab(id)}
               className="flex-1 py-1.5 rounded-lg text-[12px] font-medium transition-all"
@@ -390,8 +391,95 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         {/* ── TAB: VITAUX ── */}
         {activeTab === "vitaux" && (
           <>
+            {/* ── Composition corporelle (Withings) ── */}
+            <motion.div {...fade(0.03)} className="glass p-5 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg,rgba(0,150,255,0.15),rgba(0,200,180,0.15))" }}>
+                    ⚖️
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Composition corporelle</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Withings · balance connectée</p>
+                  </div>
+                </div>
+                <button onClick={handleWithingsSync} disabled={wSyncing}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  {wSyncing ? <Spinner size={11} className="animate-spin" /> : <ArrowsClockwise size={11} />}
+                  Sync
+                </button>
+              </div>
+
+              {wSyncMsg && (
+                <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
+              )}
+
+              {!latestW && !latestF && !latestM ? (
+                <p className="text-[12px] text-center py-4" style={{ color: "var(--text-muted)" }}>
+                  Aucune mesure Withings — connecte ta balance dans les Réglages
+                </p>
+              ) : (
+                <>
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {[
+                      { label: "Poids",          value: latestW?.weightKg     ?? null, unit: "kg",  color: "#60a5fa", fmt: (v: number) => v.toFixed(1) },
+                      { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "#fb923c", fmt: (v: number) => v.toFixed(1) },
+                      { label: "Masse musculaire",value: latestM?.muscleMassKg ?? null, unit: "kg",  color: "#34d399", fmt: (v: number) => v.toFixed(1) },
+                      { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "#f87171", fmt: (v: number) => v.toFixed(1) },
+                    ].map(({ label, value, unit, color, fmt }) => (
+                      <div key={label} className="rounded-xl p-3"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                        {value !== null
+                          ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
+                              {fmt(value)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+                            </p>
+                          : <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>—</p>
+                        }
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Weight trend mini chart */}
+                  {weightChartData.length > 1 && (
+                    <div>
+                      <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
+                      <ResponsiveContainer width="100%" height={80}>
+                        <LineChart data={weightChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                          <XAxis dataKey="label" hide />
+                          <YAxis domain={["auto", "auto"]} hide />
+                          <Tooltip
+                            content={({ active, payload, label: lbl }) => {
+                              if (!active || !payload?.length) return null;
+                              return (
+                                <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                                  style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                  <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                                  <p className="font-bold" style={{ color: "#60a5fa" }}>{(payload[0].value as number).toFixed(1)} kg</p>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Line type="monotone" dataKey="kg" stroke="#60a5fa" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {latestW && (
+                    <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                      Dernière mesure : {format(parseISO(latestW.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
+                    </p>
+                  )}
+                </>
+              )}
+            </motion.div>
+
             {/* Date nav */}
-            <motion.div {...fade(0.03)} className="flex items-center justify-between mb-5 glass px-4 py-2.5">
+            <motion.div {...fade(0.06)} className="flex items-center justify-between mb-5 glass px-4 py-2.5">
               <button
                 onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
                 className="btn-icon flex-shrink-0">
@@ -410,7 +498,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Tension artérielle */}
-            <motion.div {...fade(0.06)} className="glass p-5 mb-4">
+            <motion.div {...fade(0.09)} className="glass p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -551,7 +639,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Other vitals grid */}
-            <motion.div {...fade(0.09)} className="grid grid-cols-2 gap-3 mb-4">
+            <motion.div {...fade(0.12)} className="grid grid-cols-2 gap-3 mb-4">
               <VitalCard
                 icon={<Heartbeat size={15} weight="fill" style={{ color: "#EA4335" }} />}
                 label="FC repos" unit="bpm" value={entry?.restingHR} editKey="restingHR"
@@ -590,8 +678,42 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               />
             </motion.div>
 
-            {/* ── Médicaments ── */}
-            <motion.div {...fade(0.11)} className="glass p-4 mb-4">
+            {/* Notes */}
+            <motion.div {...fade(0.15)} className="glass p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Note size={14} style={{ color: "var(--text-muted)" }} />
+                <p className="label-xs">Notes de santé</p>
+              </div>
+              <textarea
+                value={notes}
+                onChange={e => { setNotes(e.target.value); setNotesDirty(true); }}
+                placeholder="Symptômes, médicaments, remarques…"
+                rows={3}
+                className="input resize-none text-[13px]"
+                style={{ lineHeight: "1.5" }}
+              />
+              <AnimatePresence>
+                {notesDirty && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
+                    onClick={handleSaveNotes}
+                    disabled={notesSaving}
+                    className="btn btn-primary w-full gap-2 text-[12.5px] mt-2.5"
+                    style={{ height: "36px" }}>
+                    {notesSaving ? <Spinner size={11} className="animate-spin" /> : null}
+                    Sauvegarder les notes
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+          </>
+        )}
+
+        {/* ── TAB: MÉDICAMENTS ── */}
+        {activeTab === "medicaments" && (
+          <motion.div {...fade(0.05)} className="space-y-4">
+            <div className="glass p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Pill size={14} weight="fill" style={{ color: "#c084fc" }} />
@@ -652,124 +774,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   ))}
                 </div>
               )}
-            </motion.div>
-
-            {/* Notes */}
-            <motion.div {...fade(0.12)} className="glass p-4 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Note size={14} style={{ color: "var(--text-muted)" }} />
-                <p className="label-xs">Notes de santé</p>
-              </div>
-              <textarea
-                value={notes}
-                onChange={e => { setNotes(e.target.value); setNotesDirty(true); }}
-                placeholder="Symptômes, médicaments, remarques…"
-                rows={3}
-                className="input resize-none text-[13px]"
-                style={{ lineHeight: "1.5" }}
-              />
-              <AnimatePresence>
-                {notesDirty && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
-                    onClick={handleSaveNotes}
-                    disabled={notesSaving}
-                    className="btn btn-primary w-full gap-2 text-[12.5px] mt-2.5"
-                    style={{ height: "36px" }}>
-                    {notesSaving ? <Spinner size={11} className="animate-spin" /> : null}
-                    Sauvegarder les notes
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* ── Composition corporelle (Withings) ── */}
-            <motion.div {...fade(0.18)} className="glass p-5 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,rgba(0,150,255,0.15),rgba(0,200,180,0.15))" }}>
-                    ⚖️
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Composition corporelle</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Withings · balance connectée</p>
-                  </div>
-                </div>
-                <button onClick={handleWithingsSync} disabled={wSyncing}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                  {wSyncing ? <Spinner size={11} className="animate-spin" /> : <ArrowsClockwise size={11} />}
-                  Sync
-                </button>
-              </div>
-
-              {wSyncMsg && (
-                <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
-              )}
-
-              {!latestW && !latestF && !latestM ? (
-                <p className="text-[12px] text-center py-4" style={{ color: "var(--text-muted)" }}>
-                  Aucune mesure Withings — connecte ta balance dans les Réglages
-                </p>
-              ) : (
-                <>
-                  {/* Stats grid */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {[
-                      { label: "Poids",          value: latestW?.weightKg     ?? null, unit: "kg",  color: "#60a5fa", fmt: (v: number) => v.toFixed(1) },
-                      { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "#fb923c", fmt: (v: number) => v.toFixed(1) },
-                      { label: "Masse musculaire",value: latestM?.muscleMassKg ?? null, unit: "kg",  color: "#34d399", fmt: (v: number) => v.toFixed(1) },
-                      { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "#f87171", fmt: (v: number) => v.toFixed(1) },
-                    ].map(({ label, value, unit, color, fmt }) => (
-                      <div key={label} className="rounded-xl p-3"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
-                        {value !== null
-                          ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
-                              {fmt(value)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
-                            </p>
-                          : <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>—</p>
-                        }
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Weight trend mini chart */}
-                  {weightChartData.length > 1 && (
-                    <div>
-                      <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
-                      <ResponsiveContainer width="100%" height={80}>
-                        <LineChart data={weightChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                          <XAxis dataKey="label" hide />
-                          <YAxis domain={["auto", "auto"]} hide />
-                          <Tooltip
-                            content={({ active, payload, label: lbl }) => {
-                              if (!active || !payload?.length) return null;
-                              return (
-                                <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
-                                  style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
-                                  <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                                  <p className="font-bold" style={{ color: "#60a5fa" }}>{(payload[0].value as number).toFixed(1)} kg</p>
-                                </div>
-                              );
-                            }}
-                          />
-                          <Line type="monotone" dataKey="kg" stroke="#60a5fa" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-
-                  {latestW && (
-                    <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
-                      Dernière mesure : {format(parseISO(latestW.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
-                    </p>
-                  )}
-                </>
-              )}
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
         )}
 
         {/* ── TAB: CARDIAQUE & SOMMEIL ── */}
