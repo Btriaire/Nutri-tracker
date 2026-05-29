@@ -272,26 +272,47 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 </div>
               )}
 
-              {/* Projection info */}
-              {(plan.projectedTargetDate || plan.projectedWeeklyLossKg !== undefined) && (
-                <div className="space-y-1 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-                  {plan.projectedTargetDate && (
-                    <p className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>
-                      🎯 Objectif estimé : {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
-                    </p>
-                  )}
-                  {plan.projectedWeeklyLossKg !== undefined && (
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                      {plan.projectedWeeklyLossKg >= 0 ? "+" : ""}{plan.projectedWeeklyLossKg.toFixed(2)} kg/semaine attendu
-                    </p>
-                  )}
-                  {plan.projectedNote && (
-                    <p className="text-[11px] italic" style={{ color: "var(--text-muted)" }}>
-                      {plan.projectedNote}
-                    </p>
-                  )}
-                </div>
-              )}
+              {/* Projection — weekly + monthly reduction */}
+              {(plan.projectedWeeklyLossKg !== undefined || plan.projectedTargetDate) && (() => {
+                const wk  = plan.projectedWeeklyLossKg ?? 0;
+                const mo  = Math.round(wk * 4.33 * 100) / 100;
+                const isLoss = wk < 0;
+                const color  = isLoss ? "var(--fiber)" : "var(--protein)";
+                const sign   = (v: number) => v <= 0 ? v.toFixed(2) : `+${v.toFixed(2)}`;
+                return (
+                  <div className="pt-3 mt-1" style={{ borderTop: "1px solid var(--border)" }}>
+                    {/* Weekly / Monthly chips */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+                          {sign(wk)} kg
+                        </span>
+                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
+                      </div>
+                      <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+                          {sign(mo)} kg
+                        </span>
+                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
+                      </div>
+                    </div>
+                    {/* Target date */}
+                    {plan.projectedTargetDate && (
+                      <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
+                        🎯 Objectif estimé le {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
+                      </p>
+                    )}
+                    {/* AI note */}
+                    {plan.projectedNote && (
+                      <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-muted)" }}>
+                        {plan.projectedNote}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </motion.div>
           );
         })()}

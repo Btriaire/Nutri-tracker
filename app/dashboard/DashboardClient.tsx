@@ -283,13 +283,25 @@ export default function DashboardClient({
               </p>
               {plan && (() => {
                 const daysInPlan = Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1;
+                const wk = plan.projectedWeeklyLossKg;
+                const mo = wk !== undefined ? Math.round(wk * 4.33 * 10) / 10 : undefined;
+                const fmtKg = (v: number) => `${v <= 0 ? "" : "+"}${v.toFixed(1)} kg`;
                 return (
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    <span>{plan.programEmoji}</span>
-                    <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{plan.programLabel}</span>
-                    <span>· Jour {daysInPlan}</span>
-                    {plan.projectedTargetDate && (
-                      <span>· 🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}</span>
+                  <div className="mt-1 space-y-0.5">
+                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <span>{plan.programEmoji}</span>
+                      <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{plan.programLabel}</span>
+                      <span>· Jour {daysInPlan}</span>
+                      {plan.projectedTargetDate && (
+                        <span>· 🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}</span>
+                      )}
+                    </div>
+                    {wk !== undefined && (
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <span style={{ color: "var(--fiber)" }}>{fmtKg(wk)}/sem</span>
+                        <span style={{ color: "var(--text-muted)" }}>·</span>
+                        {mo !== undefined && <span style={{ color: "var(--fiber)" }}>{fmtKg(mo)}/mois</span>}
+                      </div>
                     )}
                   </div>
                 );
