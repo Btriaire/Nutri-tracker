@@ -5,12 +5,12 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CaretDown,
-  Smiley, SmileyMeh, SmileySad, SmileyBlank, SmileyXEyes,
   ForkKnife, BookBookmark, CookingPot, Trash, Check,
 } from "@phosphor-icons/react";
 import MealBuilderModal from "./MealBuilderModal";
+import FoodPictogram from "./FoodPictogram";
 import type {
-  FoodNutrition, FoodSearchResult, HungerLevel, MealType, Lang,
+  FoodNutrition, FoodSearchResult, MealType, Lang,
   ServingOption, SavedMeal, Recipe,
 } from "@/app/lib/types";
 import { COMMON_SERVING_UNITS } from "@/app/lib/types";
@@ -19,22 +19,22 @@ import { scaleNutrition } from "@/app/lib/nutrition";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { emoji: "🥩", label: "Viandes",         query: "viande bœuf poulet porc" },
-  { emoji: "🐟", label: "Poissons",        query: "poisson saumon thon" },
-  { emoji: "🥚", label: "Œufs",            query: "œuf" },
-  { emoji: "🧀", label: "Laitages",        query: "lait yaourt fromage" },
-  { emoji: "🌾", label: "Céréales",        query: "riz pâtes avoine quinoa" },
-  { emoji: "🥖", label: "Pain",            query: "pain baguette brioche" },
-  { emoji: "🥦", label: "Légumes",         query: "carotte brocoli courgette tomate" },
-  { emoji: "🍎", label: "Fruits",          query: "pomme banane fraise raisin" },
-  { emoji: "🫘", label: "Légumineuses",    query: "lentilles pois chiche haricots" },
-  { emoji: "🥜", label: "Noix",            query: "amandes noix noisettes" },
-  { emoji: "🧈", label: "Corps gras",      query: "beurre huile" },
-  { emoji: "🍫", label: "Sucreries",       query: "chocolat gâteau biscuit" },
-  { emoji: "🥤", label: "Boissons",        query: "jus soda café thé" },
-  { emoji: "🍿", label: "Snacks",          query: "chips crackers barre céréales" },
-  { emoji: "🍲", label: "Plats cuisinés",  query: "plat cuisiné lasagne pizza" },
-  { emoji: "🌿", label: "Épices",          query: "herbe épice sel ail" },
+  { emoji: "🥩", label: "Viandes",        query: "viande bœuf poulet porc",          g1: "#ef4444", g2: "#9f1239" },
+  { emoji: "🐟", label: "Poissons",       query: "poisson saumon thon",              g1: "#0ea5e9", g2: "#0369a1" },
+  { emoji: "🥚", label: "Œufs",           query: "œuf",                              g1: "#fbbf24", g2: "#d97706" },
+  { emoji: "🧀", label: "Laitages",       query: "lait yaourt fromage",              g1: "#f59e0b", g2: "#b45309" },
+  { emoji: "🌾", label: "Céréales",       query: "riz pâtes avoine quinoa",          g1: "#d97706", g2: "#92400e" },
+  { emoji: "🥖", label: "Pain",           query: "pain baguette brioche",            g1: "#d97706", g2: "#78350f" },
+  { emoji: "🥦", label: "Légumes",        query: "carotte brocoli courgette tomate", g1: "#22c55e", g2: "#15803d" },
+  { emoji: "🍎", label: "Fruits",         query: "pomme banane fraise raisin",       g1: "#ef4444", g2: "#b91c1c" },
+  { emoji: "🫘", label: "Légumineuses",   query: "lentilles pois chiche haricots",   g1: "#d97706", g2: "#92400e" },
+  { emoji: "🥜", label: "Oléagineux",     query: "amandes noix noisettes",           g1: "#d97706", g2: "#78350f" },
+  { emoji: "🧈", label: "Corps gras",     query: "beurre huile",                     g1: "#fbbf24", g2: "#ca8a04" },
+  { emoji: "🍫", label: "Sucreries",      query: "chocolat gâteau biscuit",          g1: "#7c3aed", g2: "#3b0764" },
+  { emoji: "🥤", label: "Boissons",       query: "jus soda café thé",                g1: "#0ea5e9", g2: "#0284c7" },
+  { emoji: "🍿", label: "Snacks",         query: "chips crackers barre céréales",    g1: "#f59e0b", g2: "#d97706" },
+  { emoji: "🫕", label: "Plats cuisinés", query: "plat cuisiné lasagne pizza",       g1: "#f97316", g2: "#9a3412" },
+  { emoji: "🌿", label: "Épices",         query: "herbe épice sel ail",              g1: "#4ade80", g2: "#15803d" },
 ];
 
 const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
@@ -48,13 +48,6 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   ai:     { label: "Nutri-AI",         color: "#a855f7" },
 };
 
-const HUNGER_ICONS = [
-  { level: 1 as HungerLevel, Icon: SmileySad,   label: "Pas faim" },
-  { level: 2 as HungerLevel, Icon: SmileyMeh,   label: "Peu faim" },
-  { level: 3 as HungerLevel, Icon: Smiley,      label: "Modéré" },
-  { level: 4 as HungerLevel, Icon: SmileyBlank, label: "Faim" },
-  { level: 5 as HungerLevel, Icon: SmileyXEyes, label: "Très faim" },
-];
 
 const MEAL_ICONS = ["🍽️","☕","🥗","🍱","🍜","🥙","🥪","🍛","🥘","🫕"];
 
@@ -68,48 +61,7 @@ function getServingOptions(food: FoodSearchResult): ServingOption[] {
   return food.servingOptions?.length ? food.servingOptions : COMMON_SERVING_UNITS;
 }
 
-const CATEGORY_EMOJI: [RegExp, string][] = [
-  [/viande|bœuf|veau|porc|agneau|poulet|dinde|canard/i, "🥩"],
-  [/poisson|saumon|thon|cabillaud|sardine|truite/i,     "🐟"],
-  [/lait|yaourt|fromage|crème|beurre|dairy/i,           "🧀"],
-  [/œuf|egg/i,                                          "🥚"],
-  [/riz|pâte|pasta|céréale|avoine|quinoa|blé/i,         "🌾"],
-  [/pain|baguette|brioche|bread/i,                      "🥖"],
-  [/légume|carotte|brocoli|tomate|courgette|salade/i,   "🥦"],
-  [/fruit|pomme|banane|fraise|raisin|orange/i,          "🍎"],
-  [/chocolat|gâteau|biscuit|sucre|dessert/i,            "🍫"],
-  [/boisson|jus|soda|café|thé|drink/i,                  "🥤"],
-  [/noix|amande|noisette|cacahuète|nut/i,               "🥜"],
-  [/huile|oil/i,                                        "🫙"],
-  [/pizza|lasagne|plat/i,                               "🍕"],
-];
-
-function foodEmoji(name: string, category?: string): string {
-  const text = `${name} ${category ?? ""}`;
-  for (const [re, emoji] of CATEGORY_EMOJI) if (re.test(text)) return emoji;
-  return "🍽️";
-}
-
-function FoodImage({ food }: { food: { name: string; category?: string; imageUrl?: string; source: string } }) {
-  if (food.imageUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={food.imageUrl}
-        alt={food.name}
-        className="w-11 h-11 rounded-xl object-cover shrink-0"
-        style={{ border: "1px solid var(--border)" }}
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-      />
-    );
-  }
-  return (
-    <div className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-[22px]"
-      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
-      {foodEmoji(food.name, food.category)}
-    </div>
-  );
-}
+// FoodImage is replaced by FoodPictogram (imported above)
 
 const GROUP_COLORS: Record<string, string> = {
   "Glucides":  "var(--carbs)",
@@ -199,7 +151,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [useCustomG, setUseCustomG] = useState(false);
   const [customGrams, setCustomGrams] = useState("100");
   const [notes, setNotes]   = useState("");
-  const [hunger, setHunger] = useState<HungerLevel | null>(null);
   const [adding, setAdding] = useState(false);
   const [quickAddingId, setQuickAddingId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -235,7 +186,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     setStep("browse");
     setShowDetails(false);
     setNotes("");
-    setHunger(null);
     setNewMealName("");
     setNewMealIcon("🍽️");
   };
@@ -246,7 +196,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       setTab("aliments"); setStep("browse");
       setQuery(""); setResults([]); setAiResults([]); setSavedAiIds(new Set()); setSelected(null);
       setSelectedUnit(null); setCustomQty("1"); setUseCustomG(false); setCustomGrams("100");
-      setNotes(""); setHunger(null);
+      setNotes("");
       setNewMealName(""); setNewMealIcon("🍽️");
       setSelectedRecipe(null); setRecipeServings("1");
       setTimeout(() => inputRef.current?.focus(), 120);
@@ -383,7 +333,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             servingLabel, servingGrams: grams,
             servingQty:  useCustomG ? grams : parseFloat(customQty) || 1,
             servingUnit: useCustomG ? "g" : (selectedUnit?.label ?? "g"),
-            nutrition, notes: notes || undefined, hunger: hunger ?? undefined,
+            nutrition, notes: notes || undefined,
           },
         }),
       });
@@ -590,7 +540,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
             {/* Search input — only for Aliments tab */}
             {tab === "aliments" && (
-              <div className="px-4 pb-0 pt-2.5 flex-shrink-0">
+              <div className="px-4 pb-0 pt-2.5 flex-shrink-0 space-y-2">
+                {/* Input row */}
                 <div className="relative">
                   {searching
                     ? <Spinner size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
@@ -605,6 +556,55 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     style={{ height: "44px" }}
                   />
                 </div>
+
+                {/* AI search pill — always visible when query is non-empty */}
+                <AnimatePresence initial={false}>
+                  {query.trim() && (
+                    <motion.div
+                      key="ai-pill"
+                      initial={{ opacity: 0, height: 0, y: -4 }}
+                      animate={{ opacity: 1, height: "auto", y: 0 }}
+                      exit={{ opacity: 0, height: 0, y: -4 }}
+                      transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleAiSearch}
+                          disabled={aiSearching}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
+                          style={{
+                            background:  aiSearching ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.1)",
+                            border:      "1px solid rgba(168,85,247,0.35)",
+                            color:       "#a855f7",
+                            boxShadow:   aiSearching ? "0 0 12px rgba(168,85,247,0.25)" : "none",
+                          }}
+                        >
+                          {aiSearching
+                            ? <Spinner size={11} className="animate-spin" />
+                            : <span className="text-[13px] leading-none">✨</span>
+                          }
+                          {aiSearching
+                            ? "Recherche IA en cours…"
+                            : aiResults.length > 0
+                              ? "Relancer Nutri-IA"
+                              : "Rechercher avec Nutri-IA"
+                          }
+                        </button>
+                        {aiResults.length > 0 && !aiSearching && (
+                          <motion.span
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="text-[10px]"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            {aiResults.length} résultat{aiResults.length > 1 ? "s" : ""} IA
+                          </motion.span>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
@@ -623,43 +623,39 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <div className="grid grid-cols-4 gap-2">
                         {CATEGORIES.map((cat, i) => (
                           <motion.button key={cat.emoji}
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.88 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.15, delay: i * 0.018 }}
+                            transition={{ duration: 0.18, delay: i * 0.022, ease: [0.34, 1.56, 0.64, 1] }}
                             onClick={() => browseCategory(cat)}
-                            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
-                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <span className="text-[22px] leading-none">{cat.emoji}</span>
-                            <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-muted)" }}>{cat.label}</span>
+                            className="flex flex-col items-center gap-2 p-2.5 rounded-2xl transition-all"
+                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                            whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.93 }}>
+                            {/* Pictogram icon */}
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[22px] relative overflow-hidden flex-shrink-0"
+                              style={{
+                                background: `linear-gradient(145deg, ${cat.g1} 0%, ${cat.g2} 100%)`,
+                                boxShadow: `0 3px 10px ${cat.g1}55, inset 0 1px 0 rgba(255,255,255,0.22)`,
+                              }}>
+                              {/* Glass highlight */}
+                              <div className="absolute inset-x-0 top-0 h-[48%] pointer-events-none"
+                                style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 100%)", borderRadius: "10px 10px 60% 60%" }} />
+                              <span style={{ position: "relative", zIndex: 1 }}>{cat.emoji}</span>
+                            </div>
+                            <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-secondary)" }}>{cat.label}</span>
                           </motion.button>
                         ))}
                       </div>
                     </>
                   )}
-                  {query && !searching && results.length === 0 && (
-                    <div className="flex flex-col items-center gap-3 py-10">
+                  {query && !searching && results.length === 0 && aiResults.length === 0 && !aiSearching && (
+                    <div className="flex flex-col items-center gap-2 py-10">
+                      <span className="text-3xl">🔍</span>
                       <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                         Aucun résultat pour &ldquo;{query}&rdquo;
                       </p>
-                      {aiResults.length === 0 && (
-                        <button
-                          onClick={handleAiSearch}
-                          disabled={aiSearching}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-                          style={{
-                            background: "rgba(168,85,247,0.12)",
-                            border: "1px solid rgba(168,85,247,0.35)",
-                            color: "#a855f7",
-                          }}
-                        >
-                          {aiSearching
-                            ? <Spinner size={13} className="animate-spin" />
-                            : <span>✨</span>
-                          }
-                          {aiSearching ? "Recherche IA…" : "Rechercher avec l'IA"}
-                        </button>
-                      )}
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                        Essayez Nutri-IA via le bouton ci-dessus
+                      </p>
                     </div>
                   )}
                   {aiResults.length > 0 && (
@@ -677,7 +673,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                               className="flex items-center gap-2 rounded-xl overflow-hidden"
                               style={{ background: "rgba(168,85,247,0.05)", border: "1px solid rgba(168,85,247,0.2)" }}>
                               <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
-                                <FoodImage food={r} />
+                                <FoodPictogram name={r.name} category={r.category} />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2">
                                     <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
@@ -746,7 +742,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                           {/* Tap to configure */}
                           <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
-                            <FoodImage food={r} />
+                            <FoodPictogram name={r.name} category={r.category} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
@@ -1136,26 +1132,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           <input value={notes} onChange={(e) => setNotes(e.target.value)}
                             placeholder="Ex : avec vinaigrette…"
                             className="input text-[13px]" />
-                        </div>
-
-                        {/* Hunger */}
-                        <div>
-                          <p className="label-xs mb-2">Niveau de faim</p>
-                          <div className="flex gap-2">
-                            {HUNGER_ICONS.map(({ level, Icon, label }) => (
-                              <button key={level} onClick={() => setHunger(hunger === level ? null : level)}
-                                title={label}
-                                className="flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all"
-                                style={{
-                                  background: hunger === level ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.03)",
-                                  border: `1px solid ${hunger === level ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
-                                }}>
-                                <Icon size={20} weight={hunger === level ? "fill" : "regular"}
-                                  style={{ color: hunger === level ? "var(--protein)" : "var(--text-muted)" }} />
-                                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                              </button>
-                            ))}
-                          </div>
                         </div>
 
                         {/* Actions */}

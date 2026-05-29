@@ -5,6 +5,7 @@ import { Trash, CaretDown, X, Spinner, Check } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
+import FoodPictogram from "./FoodPictogram";
 
 const SOURCE_DOT: Record<string, string> = {
   ciqual: "var(--fiber)",
@@ -12,67 +13,6 @@ const SOURCE_DOT: Record<string, string> = {
   usda:   "var(--carbs)",
   custom: "var(--protein)",
 };
-
-// Keyword → emoji mapping (order matters — first match wins)
-function foodEmoji(name: string): string {
-  const n = name.toLowerCase();
-  if (/poulet|dinde|volaille|canard|pintade/.test(n)) return "🍗";
-  if (/bœuf|boeuf|steak|bifteck|entrecôte|veau/.test(n)) return "🥩";
-  if (/porc|jambon|lard|bacon|saucisse|chorizo|salami/.test(n)) return "🥓";
-  if (/agneau|mouton/.test(n)) return "🍖";
-  if (/saumon|thon|sardine|cabillaud|truite|dorade|bar|tilapia|sole/.test(n)) return "🐟";
-  if (/crevette|homard|crabe|moule|huître|fruit de mer/.test(n)) return "🦐";
-  if (/œuf|omelette|tortilla/.test(n)) return "🥚";
-  if (/lait|yaourt|fromage|beurre|crème|ricotta|mozzarella|camembert|gruyère|emmental|cheddar/.test(n)) return "🧀";
-  if (/riz|paella/.test(n)) return "🍚";
-  if (/pâte|spaghetti|tagliatelle|penne|fusilli|ravioli|gnocchi/.test(n)) return "🍝";
-  if (/pain|baguette|brioche|toast|tartine/.test(n)) return "🍞";
-  if (/croissant/.test(n)) return "🥐";
-  if (/pizza/.test(n)) return "🍕";
-  if (/burger|hamburger/.test(n)) return "🍔";
-  if (/sandwich|wrap|burrito|tacos|fajita/.test(n)) return "🌮";
-  if (/soupe|bouillon|velouté/.test(n)) return "🍜";
-  if (/salade/.test(n)) return "🥗";
-  if (/pomme de terre|frite|patate|purée/.test(n)) return "🥔";
-  if (/carotte|céleri|brocoli|choufleur|épinard|courgette|poivron|aubergine|haricot vert/.test(n)) return "🥦";
-  if (/tomate/.test(n)) return "🍅";
-  if (/concombre/.test(n)) return "🥒";
-  if (/maïs/.test(n)) return "🌽";
-  if (/avocat/.test(n)) return "🥑";
-  if (/banane/.test(n)) return "🍌";
-  if (/pomme/.test(n)) return "🍎";
-  if (/raisin/.test(n)) return "🍇";
-  if (/fraise/.test(n)) return "🍓";
-  if (/orange|mandarine|clémentine/.test(n)) return "🍊";
-  if (/citron/.test(n)) return "🍋";
-  if (/cerise/.test(n)) return "🍒";
-  if (/pêche|abricot|nectarine/.test(n)) return "🍑";
-  if (/melon|pastèque/.test(n)) return "🍉";
-  if (/ananas/.test(n)) return "🍍";
-  if (/mangue|papaye/.test(n)) return "🥭";
-  if (/noix|amande|noisette|cacahuète|cajou|pistache/.test(n)) return "🥜";
-  if (/chocolat/.test(n)) return "🍫";
-  if (/gâteau|tarte|cake|cookie|biscuit|madeleine/.test(n)) return "🍰";
-  if (/glace|sorbet/.test(n)) return "🍦";
-  if (/miel/.test(n)) return "🍯";
-  if (/confiture|jam/.test(n)) return "🫙";
-  if (/huile|margarine/.test(n)) return "🧴";
-  if (/café/.test(n)) return "☕";
-  if (/thé/.test(n)) return "🍵";
-  if (/jus|smoothie/.test(n)) return "🧃";
-  if (/soda|cola|limonade/.test(n)) return "🥤";
-  if (/eau/.test(n)) return "💧";
-  if (/vin/.test(n)) return "🍷";
-  if (/bière/.test(n)) return "🍺";
-  if (/lentille|pois chiche|haricot|fève/.test(n)) return "🫘";
-  if (/quinoa|boulgour|épeautre|seigle|avoine|céréale|flocon|muesli|granola/.test(n)) return "🌾";
-  if (/crêpe|galette|pancake/.test(n)) return "🥞";
-  if (/épice|herbe|ail|oignon|échalote|poivre|sel|curry|curcuma|gingembre/.test(n)) return "🌿";
-  if (/sauce|ketchup|mayonnaise|moutarde|vinaigrette/.test(n)) return "🫙";
-  if (/tofu|tempeh|seitan|protéine végétale/.test(n)) return "🌱";
-  if (/algue/.test(n)) return "🫛";
-  return "🍽️";
-}
 
 interface MicroRow { label: string; value: number | undefined; unit: string; color?: string }
 
@@ -260,8 +200,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
           }}
         >
           <div className="flex items-center gap-2.5 py-2.5">
-            {/* Food emoji */}
-            <span className="text-[22px] flex-shrink-0 select-none">{foodEmoji(entry.name)}</span>
+            {/* Food pictogram */}
+            <FoodPictogram name={entry.name} size={38} />
 
             {/* Food info — click to toggle edit */}
             <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
