@@ -48,9 +48,9 @@ export default function Nav() {
           background: "var(--nav-bg)",
           borderBottom: "1px solid var(--nav-border)",
           backdropFilter: "blur(16px)",
-          height: "56px",
+          height: "44px",
         }}>
-        <Image src="/logo.png" alt="Nutri-Tracker" width={160} height={87} className="h-11 w-auto" priority />
+        <Image src="/logo.png" alt="Nutri-Tracker" width={200} height={109} className="h-9 w-auto" priority />
       </div>
 
       {/* Bottom nav (mobile) */}
