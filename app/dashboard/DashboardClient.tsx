@@ -439,8 +439,8 @@ export default function DashboardClient({
         {/* ── Steps + Weight ── */}
         <motion.div {...fade(0.1)} className="grid grid-cols-2 gap-3 mb-4">
 
-          {/* Steps — redesigned inline */}
-          <div className="card flex flex-col gap-2">
+          {/* Steps */}
+          <Link href="/activity/steps" className="card flex flex-col gap-2 transition-opacity active:opacity-70">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <Footprints size={13} style={{ color: "var(--steps)" }} />
@@ -463,14 +463,15 @@ export default function DashboardClient({
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-              {steps !== null
-                ? stepsPct >= 100
-                  ? "🎉 Objectif atteint !"
-                  : `${Math.round((1 - stepsPct / 100) * stepsGoal).toLocaleString("fr-FR")} restants`
-                : "Sync Google Fit"}
-            </span>
-          </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                {steps !== null
+                  ? stepsPct >= 100 ? "🎉 Objectif atteint !" : `${Math.round((1 - stepsPct / 100) * stepsGoal).toLocaleString("fr-FR")} restants`
+                  : "Sync Google Fit"}
+              </span>
+              <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+            </div>
+          </Link>
 
           <WeightWidget weight={weight} previous={previousWeight} />
         </motion.div>
@@ -480,7 +481,7 @@ export default function DashboardClient({
           <div className="grid grid-cols-3 gap-0">
 
             {/* Sleep */}
-            <div className="flex flex-col gap-2 pr-4" style={{ borderRight: "1px solid var(--border)" }}>
+            <Link href="/activity/sleep" className="flex flex-col gap-2 pr-4 transition-opacity active:opacity-70" style={{ borderRight: "1px solid var(--border)" }}>
               <div className="flex items-center gap-1.5">
                 <Moon size={12} weight="fill" style={{ color: "#7986CB" }} />
                 <span className="label-xs">Sommeil</span>
@@ -500,10 +501,13 @@ export default function DashboardClient({
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
-              <span className="text-[10px]" style={{ color: sleepOk ? "#34A853" : "var(--text-muted)" }}>
-                {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
-              </span>
-            </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px]" style={{ color: sleepOk ? "#34A853" : "var(--text-muted)" }}>
+                  {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
+                </span>
+                <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+              </div>
+            </Link>
 
             {/* Heart rate */}
             <Link href="/cardio" className="flex flex-col gap-2 px-4 transition-opacity active:opacity-70"
@@ -535,7 +539,7 @@ export default function DashboardClient({
             </Link>
 
             {/* Active minutes */}
-            <div className="flex flex-col gap-2 pl-4">
+            <Link href="/activity" className="flex flex-col gap-2 pl-4 transition-opacity active:opacity-70">
               <div className="flex items-center gap-1.5">
                 <Lightning size={12} weight="fill" style={{ color: "#34A853" }} />
                 <span className="label-xs">Min. actives</span>
@@ -558,12 +562,15 @@ export default function DashboardClient({
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
-              <span className="text-[10px]" style={{ color: activePct >= 100 ? "#34A853" : "var(--text-muted)" }}>
-                {activeMinutes
-                  ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
-                  : "Aucune donnée"}
-              </span>
-            </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px]" style={{ color: activePct >= 100 ? "#34A853" : "var(--text-muted)" }}>
+                  {activeMinutes
+                    ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
+                    : "Aucune donnée"}
+                </span>
+                <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+              </div>
+            </Link>
           </div>
         </motion.div>
 

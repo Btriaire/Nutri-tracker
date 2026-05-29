@@ -6,7 +6,7 @@ import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts";
 import {
   ArrowDown, ArrowUp, Minus, Lightning, Scales, ChartBar, ChartLine,
@@ -73,15 +73,31 @@ const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; val
 
 // ── Build combined actual + projected weight chart data ──────────────────────
 type WeightChartPoint = {
-  label:     string;
-  date:      string;
-  actual:    number | null;
-  projected: number | null;
-  calories:  number | null;
-  isToday?:  boolean;
-  isFuture?: boolean;
+  label:      string;
+  date:       string;
+  actual:     number | null;
+  projected:  number | null;
+  projLow:    number | null;  // lower bound of uncertainty band
+  projHigh:   number | null;  // upper bound of uncertainty band
+  calories:   number | null;
+  isToday?:   boolean;
+  isFuture?:  boolean;
 };
 
+/**
+ * Non-linear weight projection using exponential decay.
+ *
+ * Rationale: As a caloric deficit is maintained, the body progressively adapts
+ * (lower BMR, hormonal changes) making weight loss increasingly slower. This is
+ * modelled with W(d) = targetKg + gap × e^(-k·d) where k is tuned so that
+ * 95% of the gap is covered by targetDate.
+ *
+ * This means loss is fastest at the start and slows progressively, with
+ * ~78% of the total loss occurring in the first half of the period.
+ *
+ * An uncertainty band (±variance) is added: wider in later weeks to reflect
+ * higher prediction uncertainty as the body adapts unpredictably.
+ */
 function buildWeightChartData(
   weightData: { label: string; date: string; weightKg: number | undefined }[],
   calorieData: { date: string; calories: number }[],
@@ -102,6 +118,8 @@ function buildWeightChartData(
       label:     p.label,
       actual:    p.weightKg ?? null,
       projected: null,
+      projLow:   null,
+      projHigh:  null,
       calories:  calMap.get(p.date) ?? null,
     }));
 
@@ -112,7 +130,14 @@ function buildWeightChartData(
 
   const endDate   = new Date(targetDate + "T00:00:00");
   const totalDays = Math.max(7, Math.round((endDate.getTime() - today.getTime()) / 86400000));
-  const dailyDelta = (targetKg - lastActual) / totalDays;
+
+  // Exponential decay coefficient: k = ln(20) / totalDays
+  // → at d=totalDays, gap is reduced to 5% (exp(-k*T) = 0.05)
+  const gap = lastActual - targetKg; // positive = losing, negative = gaining
+  const k   = Math.log(20) / totalDays;
+
+  // Helper: projected weight at d days from now
+  const projAt = (d: number) => targetKg + gap * Math.exp(-k * d);
 
   // Bridge point: today (connects actual line to projected line)
   const todayBridge: WeightChartPoint = {
@@ -120,6 +145,8 @@ function buildWeightChartData(
     label:     "Auj.",
     actual:    lastActual,
     projected: lastActual,
+    projLow:   lastActual,
+    projHigh:  lastActual,
     calories:  calMap.get(todayStr) ?? null,
     isToday:   true,
   };
@@ -131,11 +158,17 @@ function buildWeightChartData(
     const d = new Date(today.getTime() + w * 7 * 86400000);
     if (d >= endDate) break;
     const daysFromNow = Math.round((d.getTime() - today.getTime()) / 86400000);
+    const proj        = projAt(daysFromNow);
+    // Uncertainty band widens over time: ±0.3 kg/week initially, growing to ±1.2 kg by the end
+    const bandKg = Math.min(0.3 + (daysFromNow / totalDays) * 0.9, 1.2);
+    const sign   = gap >= 0 ? 1 : -1; // direction: loss = +, gain = -
     future.push({
       date:      format(d, "yyyy-MM-dd"),
       label:     format(d, "dd/MM"),
       actual:    null,
-      projected: Math.round((lastActual + dailyDelta * daysFromNow) * 10) / 10,
+      projected: Math.round(proj * 10) / 10,
+      projLow:   Math.round((proj + sign * bandKg) * 10) / 10, // "worse" scenario
+      projHigh:  Math.round((proj - sign * bandKg) * 10) / 10, // "better" scenario
       calories:  null,
       isFuture:  true,
     });
@@ -145,7 +178,9 @@ function buildWeightChartData(
     date:      targetDate,
     label:     format(endDate, "dd/MM/yy"),
     actual:    null,
-    projected: targetKg,
+    projected: Math.round(projAt(totalDays) * 10) / 10,
+    projLow:   Math.round((projAt(totalDays) + Math.abs(gap) * 0.08) * 10) / 10,
+    projHigh:  Math.round((projAt(totalDays) - Math.abs(gap) * 0.08) * 10) / 10,
     calories:  null,
     isFuture:  true,
   });
@@ -237,16 +272,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     targetWeightKg,
     targetDate || undefined,
   );
-  const weightYMin = weightChartData.length
-    ? Math.floor(Math.min(
-        ...weightChartData.map(p => p.actual ?? p.projected ?? 999).filter(v => v < 999)
-      ) - 1)
-    : undefined;
-  const weightYMax = weightChartData.length
-    ? Math.ceil(Math.max(
-        ...weightChartData.map(p => p.actual ?? p.projected ?? 0).filter(v => v > 0)
-      ) + 1)
-    : undefined;
+  const allWeightValues = weightChartData.flatMap(p =>
+    [p.actual, p.projected, p.projLow, p.projHigh].filter((v): v is number => v != null && v > 0 && v < 999)
+  );
+  const weightYMin = allWeightValues.length ? Math.floor(Math.min(...allWeightValues) - 0.5) : undefined;
+  const weightYMax = allWeightValues.length ? Math.ceil(Math.max(...allWeightValues)  + 0.5) : undefined;
 
   const progressInsightData = {
     days:           points.length,
@@ -784,12 +814,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Chart */}
                 {weightChartData.length > 0 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={210}>
+                    <ResponsiveContainer width="100%" height={220}>
                       <ComposedChart data={weightChartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.22} />
                             <stop offset="95%" stopColor="var(--protein)" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#4ade80" stopOpacity={0.12} />
+                            <stop offset="95%" stopColor="#4ade80" stopOpacity={0.03} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -807,7 +841,15 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <Tooltip
                           content={({ active, payload, label: lbl }) => {
                             if (!active || !payload?.length) return null;
-                            const entries = payload.filter(p => p.value != null);
+                            const seen = new Set<string>();
+                            const entries = payload.filter(p => {
+                              const key = String(p.dataKey);
+                              if (["projLow","projHigh"].includes(key)) return false;
+                              if (p.value == null) return false;
+                              if (seen.has(key)) return false;
+                              seen.add(key);
+                              return true;
+                            });
                             if (!entries.length) return null;
                             return (
                               <div className="px-3 py-2 rounded-xl text-[11px] space-y-1"
@@ -838,6 +880,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {/* Goal calorie reference */}
                         <ReferenceLine yAxisId="c" y={goals.dailyCalories}
                           stroke="rgba(249,115,22,0.25)" strokeDasharray="3 3" />
+                        {/* Uncertainty band: projLow → projHigh (filled area between) */}
+                        <Area yAxisId="w" type="monotone" dataKey="projHigh"
+                          stroke="none" fill="url(#bandGrad)" fillOpacity={1}
+                          dot={false} activeDot={false} connectNulls legendType="none" />
+                        <Area yAxisId="w" type="monotone" dataKey="projLow"
+                          stroke="none" fill="var(--bg)" fillOpacity={1}
+                          dot={false} activeDot={false} connectNulls legendType="none" />
                         {/* Actual weight (solid area) */}
                         <Area yAxisId="w" type="monotone" dataKey="actual" name="actual"
                           stroke="var(--protein)" strokeWidth={2.5} fill="url(#actualGrad)"
@@ -848,7 +897,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 5 : 3} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1.5} />;
                           }}
                           activeDot={{ r: 5 }} connectNulls={false} />
-                        {/* Projected weight (dashed) */}
+                        {/* Projected weight (dashed line, non-linear decay) */}
                         <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
                           stroke="#4ade80" strokeWidth={2} strokeDasharray="6 3"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -860,8 +909,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           activeDot={{ r: 4 }} connectNulls />
                       </ComposedChart>
                     </ResponsiveContainer>
+
                     {/* Legend */}
-                    <div className="flex items-center gap-5 mt-2 justify-center">
+                    <div className="flex items-center gap-4 mt-2 justify-center flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
                         <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
@@ -871,13 +921,28 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulation</span>
                       </div>
                       <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-3 rounded-sm opacity-60" style={{ background: "rgba(74,222,128,0.35)" }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fourchette</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(249,115,22,0.5)" }} />
                         <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Calories</span>
                       </div>
                     </div>
+
+                    {/* Model explanation */}
+                    <div className="mt-2.5 px-3 py-2 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        📉 <span style={{ color: "var(--text-secondary)" }}>Modèle non-linéaire</span> — La perte ralentit
+                        progressivement (adaptation métabolique). ~78% de la perte se fait dans la première moitié de la période.
+                        La fourchette indique l&apos;incertitude croissante.
+                      </p>
+                    </div>
+
                     {/* Projection summary */}
                     {projectionDate && avgCalories > 0 && (
-                      <div className="mt-3 px-3 py-2 rounded-xl flex items-center justify-between"
+                      <div className="mt-2.5 px-3 py-2 rounded-xl flex items-center justify-between"
                         style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
                         <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                           À ce rythme ({avgCalories} kcal/j) →

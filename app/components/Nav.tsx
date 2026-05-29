@@ -43,14 +43,14 @@ export default function Nav() {
   return (
     <>
       {/* Top logo bar (mobile only) */}
-      <div className="fixed top-0 inset-x-0 z-50 flex md:hidden items-center justify-center px-4 py-2"
+      <div className="fixed top-0 inset-x-0 z-50 flex md:hidden items-center justify-center px-4"
         style={{
           background: "var(--nav-bg)",
           borderBottom: "1px solid var(--nav-border)",
           backdropFilter: "blur(16px)",
-          height: "48px",
+          height: "56px",
         }}>
-        <Image src="/logo.png" alt="Nutri-Tracker" width={120} height={65} className="h-8 w-auto" priority />
+        <Image src="/logo.png" alt="Nutri-Tracker" width={160} height={87} className="h-11 w-auto" priority />
       </div>
 
       {/* Bottom nav (mobile) */}
