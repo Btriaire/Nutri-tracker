@@ -86,15 +86,50 @@ const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
   very_active: 1.9,
 };
 
+export type TDEEFormula = "mifflin" | "harris" | "katch";
+
+export const TDEE_FORMULA_CONFIG: Record<TDEEFormula, {
+  label: string; short: string; desc: string; needsBodyFat: boolean;
+}> = {
+  mifflin: { label: "Mifflin-St Jeor",      short: "Mifflin",  desc: "Recommandée par l'ADA — la plus précise en population générale", needsBodyFat: false },
+  harris:  { label: "Harris-Benedict (révisé)", short: "Harris", desc: "Formule classique révisée par Roza & Shizgal — légèrement plus haute", needsBodyFat: false },
+  katch:   { label: "Katch-McArdle",         short: "Katch",    desc: "Basée sur la masse maigre — idéale si vous connaissez votre % de graisse", needsBodyFat: true  },
+};
+
+export function calcBMR(
+  weightKg:      number,
+  heightCm:      number,
+  age:           number,
+  gender:        Gender,
+  formula:       TDEEFormula = "mifflin",
+  bodyFatPct?:   number,
+): number {
+  switch (formula) {
+    case "harris":
+      return gender === "male"
+        ? 88.362  + 13.397 * weightKg + 4.799 * heightCm - 5.677 * age
+        : 447.593 + 9.247  * weightKg + 3.098 * heightCm - 4.330 * age;
+    case "katch": {
+      const bfPct = bodyFatPct ?? 20;
+      const lbm   = weightKg * (1 - bfPct / 100);
+      return 370 + 21.6 * lbm;
+    }
+    default: // mifflin
+      return gender === "male"
+        ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
+        : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  }
+}
+
 export function calcTDEE(
   weightKg:      number,
   heightCm:      number,
   age:           number,
   gender:        Gender,
   activityLevel: ActivityLevel,
+  formula:       TDEEFormula = "mifflin",
+  bodyFatPct?:   number,
 ): number {
-  const bmr = gender === "male"
-    ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
-    : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+  const bmr = calcBMR(weightKg, heightCm, age, gender, formula, bodyFatPct);
   return Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 }

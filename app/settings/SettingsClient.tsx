@@ -9,7 +9,7 @@ import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
-import { calcTDEE } from "@/app/lib/nutrition";
+import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan } from "@/app/lib/types";
 import { format as formatDate } from "date-fns";
 
@@ -684,6 +684,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [targetDate,     setTargetDate]     = useState<string>("");
   const [tdeeCalc,       setTdeeCalc]       = useState<number | null>(null);
   const [selectedProgram,   setSelectedProgram]   = useState<string | null>(null);
+  const [tdeeFormula,       setTdeeFormula]       = useState<TDEEFormula>("mifflin");
+  const [bodyFatPct,        setBodyFatPct]        = useState<string>("");
   const [saving,            setSaving]            = useState(false);
   const [saved,             setSaved]             = useState(false);
   const [expanded,          setExpanded]          = useState(false);
@@ -715,7 +717,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     let deficit = 500;
     const a = parseInt(age), h = parseInt(height);
     if (a && h && gender) {
-      const tdee = calcTDEE(cur, h, a, gender as Gender, activity);
+      const bf   = parseFloat(bodyFatPct) || undefined;
+      const tdee = calcTDEE(cur, h, a, gender as Gender, activity, tdeeFormula, bf);
       const adj  = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
       const prog = selectedProgram ? PROGRAMS[selectedProgram] : null;
       const kcalTarget = Math.max(800, tdee + adj + (prog?.calorieBonus ?? 0));
@@ -732,8 +735,9 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     const a = parseInt(age);
     const h = parseInt(height);
     const w = parseFloat(currentWeight) || parseFloat(weight) || 70;
+    const bf = parseFloat(bodyFatPct) || undefined;
     if (!a || !h || !gender) return;
-    const tdee = calcTDEE(w, h, a, gender as Gender, activity);
+    const tdee = calcTDEE(w, h, a, gender as Gender, activity, tdeeFormula, bf);
     setTdeeCalc(tdee);
     setCalories(tdee.toString());
     const p = Math.round(w * 2);
@@ -749,9 +753,10 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     const prog = PROGRAMS[key];
     if (!prog) return;
     const a = parseInt(age), h = parseInt(height), w = parseFloat(currentWeight) || parseFloat(weight) || 70;
+    const bf = parseFloat(bodyFatPct) || undefined;
     let base = parseInt(calories) || 2000;
     if (a && h && gender) {
-      base = calcTDEE(w, h, a, gender as Gender, activity);
+      base = calcTDEE(w, h, a, gender as Gender, activity, tdeeFormula, bf);
       setTdeeCalc(base);
     }
     const adj = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
@@ -1336,9 +1341,66 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  Calcule les besoins caloriques via Mifflin-St Jeor et remplit les macros automatiquement.
-                </p>
+                {/* Formula selector */}
+                <div className="space-y-1.5 mb-1">
+                  {(Object.entries(TDEE_FORMULA_CONFIG) as [TDEEFormula, typeof TDEE_FORMULA_CONFIG[TDEEFormula]][]).map(([key, cfg]) => (
+                    <button key={key} onClick={() => setTdeeFormula(key)}
+                      className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
+                      style={{
+                        background: tdeeFormula === key ? "rgba(249,115,22,0.1)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${tdeeFormula === key ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+                      }}>
+                      <div className="w-3.5 h-3.5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center"
+                        style={{ border: `1.5px solid ${tdeeFormula === key ? "var(--calories)" : "var(--border)"}` }}>
+                        {tdeeFormula === key && (
+                          <div className="w-2 h-2 rounded-full" style={{ background: "var(--calories)" }} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold leading-tight"
+                          style={{ color: tdeeFormula === key ? "var(--calories)" : "var(--text-primary)" }}>
+                          {cfg.label}
+                        </p>
+                        <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>
+                          {cfg.desc}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Body fat % input for Katch-McArdle */}
+                <AnimatePresence>
+                  {tdeeFormula === "katch" && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                      <div className="mb-2">
+                        <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
+                          % de masse grasse (requis pour Katch-McArdle)
+                        </p>
+                        <div className="relative">
+                          <input
+                            type="number" min={3} max={60} step={0.5}
+                            value={bodyFatPct}
+                            onChange={e => setBodyFatPct(e.target.value)}
+                            placeholder="ex: 18"
+                            className="w-full px-3 py-2 rounded-xl text-[13px] outline-none transition-colors"
+                            style={{
+                              background: "rgba(255,255,255,0.06)",
+                              border: "1px solid var(--border)",
+                              color: "var(--text-primary)",
+                              paddingRight: "28px",
+                            }}
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]"
+                            style={{ color: "var(--text-muted)" }}>%</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="flex gap-2">
                   <button onClick={handleCalcTDEE}
                     disabled={!age || !height || !gender}

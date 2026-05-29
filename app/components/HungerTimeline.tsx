@@ -178,9 +178,9 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
             const cfg = HUNGER_CFG[level];
             return (
               <g key={idx}>
-                <circle cx={x} cy={y} r={8} fill={cfg.color + "22"} stroke={cfg.color} strokeWidth={1.5} />
-                <text x={x} y={y + 4.5} textAnchor="middle" fontSize={9} dominantBaseline="auto">
-                  {cfg.emoji}
+                <circle cx={x} cy={y} r={8} fill={cfg.color + "33"} stroke={cfg.color} strokeWidth={1.5} />
+                <text x={x} y={y + 1} textAnchor="middle" fontSize={8} fontWeight="700" dominantBaseline="middle" fill={cfg.color}>
+                  {level}
                 </text>
               </g>
             );
