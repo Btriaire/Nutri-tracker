@@ -166,7 +166,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           </h1>
         </motion.div>
 
-        {/* Nutrition & Profile Goals — FIRST */}
+        {/* Profile photo — TOP */}
+        <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
+
+        {/* Nutrition & Profile Goals */}
         <GoalsPanel initialGoals={initialGoals} />
 
         {/* Theme toggle */}
@@ -437,9 +440,6 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             </a>
           )}
         </motion.div>
-
-        {/* Profile photo */}
-        <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
 
         {/* Chart customization */}
         <ChartPrefsPanel />
