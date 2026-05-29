@@ -766,6 +766,9 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   // Section collapse — both start closed
   const [programOpen,    setProgramOpen]    = useState(false);
   const [activityOpen,   setActivityOpen]   = useState(false);
+  const [activityLevelOpen, setActivityLevelOpen] = useState(false);
+  const [tdeeOpen,          setTdeeOpen]          = useState(false);
+  const [macroOpen,         setMacroOpen]          = useState(false);
 
 
   // ── Auto-propose date cible dès que poids actuel + cible + profil sont renseignés ──
@@ -776,21 +779,21 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     if (!cur || !tgt || Math.abs(cur - tgt) < 0.5) return;
     // Compute deficit: use TDEE if profile available, else assume 500 kcal/day
     let deficit = 500;
+    const kcal = parseInt(calories) || 0;
     const a = parseInt(age), h = parseInt(height);
-    if (a && h && gender) {
+    if (kcal && a && h && gender) {
       const bf   = parseFloat(bodyFatPct) || undefined;
       const tdee = calcTDEE(cur, h, a, gender as Gender, activity, tdeeFormula, bf);
-      const adj  = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
-      const prog = selectedProgram ? PROGRAMS[selectedProgram] : null;
-      const kcalTarget = Math.max(800, tdee + adj + (prog?.calorieBonus ?? 0));
-      deficit = Math.abs(tdee - kcalTarget) || 500;
+      deficit = Math.max(50, Math.abs(tdee - kcal));
+    } else if (kcal) {
+      deficit = Math.max(50, Math.abs(cur * 30 - kcal));
     }
     const days     = Math.round(Math.abs(cur - tgt) * 7700 / deficit);
     const proposed = new Date();
     proposed.setDate(proposed.getDate() + days);
     setTargetDate(proposed.toISOString().split("T")[0]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProgram, currentWeight, weight, weeklyGoal, activity, age, height, gender]);
+  }, [selectedProgram, calories, currentWeight, weight, weeklyGoal, activity, age, height, gender, bodyFatPct, tdeeFormula]);
 
   const handleCalcTDEE = () => {
     const a = parseInt(age);
@@ -1164,25 +1167,47 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
 
               {/* ── Niveau d'activité ── */}
               <div>
-                <p className="label-xs mb-2">Niveau d'activité</p>
-                <div className="space-y-1.5">
-                  {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(level => (
-                    <button key={level} onClick={() => setActivity(level)}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
-                      style={{
-                        background: activity === level ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${activity === level ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
-                      }}>
-                      <div>
-                        <p className="text-[12px] font-medium" style={{ color: activity === level ? "var(--calories)" : "var(--text-primary)" }}>
-                          {ACTIVITY_LABELS[level]}
-                        </p>
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
+                <button className="w-full flex items-center justify-between mb-2"
+                  onClick={() => setActivityLevelOpen(o => !o)}>
+                  <p className="label-xs">Niveau d&apos;activité</p>
+                  <div className="flex items-center gap-2">
+                    {!activityLevelOpen && (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                        style={{ background: "rgba(249,115,22,0.1)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.25)" }}>
+                        {ACTIVITY_LABELS[activity]}
+                      </span>
+                    )}
+                    {activityLevelOpen
+                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {activityLevelOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                      <div className="space-y-1.5 pb-1">
+                        {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(level => (
+                          <button key={level}
+                            onClick={() => { setActivity(level); setActivityLevelOpen(false); }}
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
+                            style={{
+                              background: activity === level ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
+                              border: `1px solid ${activity === level ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
+                            }}>
+                            <div>
+                              <p className="text-[12px] font-medium" style={{ color: activity === level ? "var(--calories)" : "var(--text-primary)" }}>
+                                {ACTIVITY_LABELS[level]}
+                              </p>
+                              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
+                            </div>
+                            {activity === level && <CheckCircle size={14} weight="fill" style={{ color: "var(--calories)" }} />}
+                          </button>
+                        ))}
                       </div>
-                      {activity === level && <CheckCircle size={14} weight="fill" style={{ color: "var(--calories)" }} />}
-                    </button>
-                  ))}
-                </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Objectif poids ── */}
@@ -1429,169 +1454,240 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
               </div>
 
               {/* ── TDEE Calculator ── */}
-              <div className="rounded-xl p-3 space-y-2"
-                style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
-                <div className="flex items-center justify-between">
+              <div>
+                <button className="w-full flex items-center justify-between mb-2"
+                  onClick={() => setTdeeOpen(o => !o)}>
+                  <p className="label-xs flex items-center gap-1.5">
+                    <Calculator size={11} />
+                    Calcul TDEE
+                  </p>
                   <div className="flex items-center gap-2">
-                    <Calculator size={14} style={{ color: "var(--calories)" }} />
-                    <p className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>
-                      Calcul automatique TDEE
-                    </p>
+                    {!tdeeOpen && (
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        {tdeeCalc ? <><span className="font-bold" style={{ color: "var(--calories)" }}>{tdeeCalc} kcal</span> · </> : ""}{TDEE_FORMULA_CONFIG[tdeeFormula].label}
+                      </span>
+                    )}
+                    {tdeeOpen
+                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
                   </div>
-                  {tdeeCalc && (
-                    <span className="text-[11px] font-bold" style={{ color: "var(--calories)" }}>
-                      {tdeeCalc} kcal
-                    </span>
-                  )}
-                </div>
-                {/* Formula selector */}
-                <div className="space-y-1.5 mb-1">
-                  {(Object.entries(TDEE_FORMULA_CONFIG) as [TDEEFormula, typeof TDEE_FORMULA_CONFIG[TDEEFormula]][]).map(([key, cfg]) => (
-                    <button key={key} onClick={() => setTdeeFormula(key)}
-                      className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
-                      style={{
-                        background: tdeeFormula === key ? "rgba(249,115,22,0.1)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${tdeeFormula === key ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
-                      }}>
-                      <div className="w-3.5 h-3.5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center"
-                        style={{ border: `1.5px solid ${tdeeFormula === key ? "var(--calories)" : "var(--border)"}` }}>
-                        {tdeeFormula === key && (
-                          <div className="w-2 h-2 rounded-full" style={{ background: "var(--calories)" }} />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold leading-tight"
-                          style={{ color: tdeeFormula === key ? "var(--calories)" : "var(--text-primary)" }}>
-                          {cfg.label}
-                        </p>
-                        <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>
-                          {cfg.desc}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Body fat % input for Katch-McArdle */}
-                <AnimatePresence>
-                  {tdeeFormula === "katch" && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                </button>
+                <AnimatePresence initial={false}>
+                  {tdeeOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
-                      <div className="mb-2">
-                        <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
-                          % de masse grasse (requis pour Katch-McArdle)
-                        </p>
-                        <div className="relative">
-                          <input
-                            type="number" min={3} max={60} step={0.5}
-                            value={bodyFatPct}
-                            onChange={e => setBodyFatPct(e.target.value)}
-                            placeholder="ex: 18"
-                            className="w-full px-3 py-2 rounded-xl text-[13px] outline-none transition-colors"
-                            style={{
-                              background: "rgba(255,255,255,0.06)",
-                              border: "1px solid var(--border)",
-                              color: "var(--text-primary)",
-                              paddingRight: "28px",
-                            }}
-                          />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]"
-                            style={{ color: "var(--text-muted)" }}>%</span>
+                      <div className="rounded-xl p-3 space-y-3"
+                        style={{ background: "rgba(249,115,22,0.04)", border: "1px solid rgba(249,115,22,0.18)" }}>
+                        {/* Compact formula pills */}
+                        <div className="flex gap-1.5">
+                          {(Object.entries(TDEE_FORMULA_CONFIG) as [TDEEFormula, typeof TDEE_FORMULA_CONFIG[TDEEFormula]][]).map(([key, cfg]) => (
+                            <button key={key} onClick={() => setTdeeFormula(key)}
+                              className="flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                              style={{
+                                background: tdeeFormula === key ? "var(--calories)" : "rgba(255,255,255,0.05)",
+                                color: tdeeFormula === key ? "#fff" : "var(--text-muted)",
+                                border: `1px solid ${tdeeFormula === key ? "var(--calories)" : "var(--border)"}`,
+                              }}>
+                              {cfg.label}
+                            </button>
+                          ))}
                         </div>
+                        {/* Selected formula description */}
+                        <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                          {TDEE_FORMULA_CONFIG[tdeeFormula].desc}
+                        </p>
+
+                        {/* Body fat % input for Katch-McArdle */}
+                        <AnimatePresence>
+                          {tdeeFormula === "katch" && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                              <div>
+                                <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
+                                  % masse grasse (requis)
+                                </p>
+                                <div className="relative">
+                                  <input
+                                    type="number" min={3} max={60} step={0.5}
+                                    value={bodyFatPct}
+                                    onChange={e => setBodyFatPct(e.target.value)}
+                                    placeholder="ex: 18"
+                                    className="w-full px-3 py-2 rounded-xl text-[13px] outline-none transition-colors"
+                                    style={{
+                                      background: "rgba(255,255,255,0.06)",
+                                      border: "1px solid var(--border)",
+                                      color: "var(--text-primary)",
+                                      paddingRight: "28px",
+                                    }}
+                                  />
+                                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px]"
+                                    style={{ color: "var(--text-muted)" }}>%</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <button onClick={() => { handleCalcTDEE(); setTdeeOpen(false); }}
+                          disabled={!age || !height || !gender}
+                          className="w-full btn gap-2 text-[12px]"
+                          style={{
+                            height: "34px",
+                            background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                            color: age && height && gender ? "#fff" : "var(--text-muted)",
+                            border: "none",
+                            opacity: age && height && gender ? 1 : 0.5,
+                          }}>
+                          <Calculator size={12} />
+                          {tdeeCalc ? `Recalculer (${tdeeCalc} kcal)` : "Calculer TDEE → appliquer aux macros"}
+                        </button>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex gap-2">
-                  <button onClick={handleCalcTDEE}
-                    disabled={!age || !height || !gender}
-                    className="flex-1 btn gap-2 text-[12px]"
-                    style={{
-                      height: "34px",
-                      background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
-                      color: age && height && gender ? "#fff" : "var(--text-muted)",
-                      border: "none",
-                      opacity: age && height && gender ? 1 : 0.5,
-                    }}>
-                    <Calculator size={12} />
-                    Calculer TDEE
-                  </button>
-                  <button
-                    onClick={handleStartPlan}
-                    disabled={!selectedProgram || !age || !height || !gender || planLoading}
-                    className="flex-1 btn gap-2 text-[12px]"
-                    style={{
-                      height: "34px",
-                      background: selectedProgram && age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
-                      color: selectedProgram && age && height && gender ? "#fff" : "var(--text-muted)",
-                      border: "none",
-                      opacity: selectedProgram && age && height && gender ? 1 : 0.5,
-                    }}>
-                    {planLoading
-                      ? <><Spinner size={12} className="animate-spin" /> IA…</>
-                      : <>🚀 Démarrer le plan</>
-                    }
-                  </button>
-                </div>
-
-                {/* Plan result card */}
-                <AnimatePresence>
-                  {planLoading && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="px-3 py-2.5 rounded-xl text-[12px]"
-                      style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)", color: "var(--text-muted)" }}>
-                      Calcul IA en cours…
-                    </motion.div>
-                  )}
-                  {!planLoading && planResult && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="px-3 py-3 rounded-xl space-y-1"
-                      style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)" }}>
-                      {planResult.projectedTargetDate && planResult.projectedWeeklyLossKg !== null && (
-                        <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
-                          📅 Objectif estimé : {formatDate(new Date(planResult.projectedTargetDate + "T00:00:00"), "d MMM yyyy")}
-                          {" · "}
-                          {planResult.projectedWeeklyLossKg > 0 ? "+" : ""}{planResult.projectedWeeklyLossKg?.toFixed(2)} kg/sem
-                        </p>
-                      )}
-                      {planResult.projectedNote && (
-                        <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                          {planResult.projectedNote}
-                        </p>
-                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
+              {/* ── Démarrer le plan ── */}
+              {selectedProgram && (
+                <div className="rounded-xl p-3 space-y-3"
+                  style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
+                        {PROGRAMS[selectedProgram].emoji} {PROGRAMS[selectedProgram].label}
+                      </p>
+                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        {parseInt(calories)} kcal/j · {PROGRAMS[selectedProgram].desc}
+                      </p>
+                    </div>
+                    {projLive && (
+                      <div className="text-right">
+                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "#fbbf24" : "#34d399" }}>
+                          {projLive.isUnrealistic ? "⚠️ Irréaliste" : projLive.isAmbitious ? "⚡ Ambitieux" : "✅ Réaliste"}
+                        </p>
+                        {targetDate && (
+                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            ~{new Date(targetDate + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {projLive && (
+                    <div className="flex gap-3 text-center">
+                      <div className="flex-1">
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par sem.</p>
+                        <p className="text-[14px] font-bold tabular-nums" style={{ color: projLive.isUnrealistic ? "#ef4444" : "var(--text-primary)" }}>
+                          {projLive.totalKg > 0 ? "-" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
+                          <span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit/j</p>
+                        <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
+                          ~{projLive.dailyDeficit}
+                          <span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée</p>
+                        <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                          {projLive.days}
+                          <span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>j</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleStartPlan}
+                    disabled={!age || !height || !gender || planLoading}
+                    className="w-full btn gap-2 text-[13px]"
+                    style={{
+                      height: "38px",
+                      background: age && height && gender ? "linear-gradient(135deg,rgba(52,211,153,0.3),rgba(16,185,129,0.2))" : "rgba(255,255,255,0.06)",
+                      color: age && height && gender ? "#34d399" : "var(--text-muted)",
+                      border: age && height && gender ? "1px solid rgba(52,211,153,0.4)" : "1px solid var(--border)",
+                      opacity: age && height && gender ? 1 : 0.5,
+                    }}>
+                    {planLoading
+                      ? <><Spinner size={12} className="animate-spin" /> Calcul…</>
+                      : <>🚀 Démarrer le plan</>
+                    }
+                  </button>
+
+                  {/* Plan result */}
+                  <AnimatePresence>
+                    {!planLoading && planResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="px-3 py-2.5 rounded-xl space-y-1"
+                        style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                        {planResult.projectedTargetDate && planResult.projectedWeeklyLossKg !== null && (
+                          <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
+                            📅 {formatDate(new Date(planResult.projectedTargetDate + "T00:00:00"), "d MMM yyyy")}
+                            {" · "}{planResult.projectedWeeklyLossKg > 0 ? "+" : ""}{planResult.projectedWeeklyLossKg?.toFixed(2)} kg/sem
+                          </p>
+                        )}
+                        {planResult.projectedNote && (
+                          <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{planResult.projectedNote}</p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
               {/* ── Calories & Macros ── */}
               <div>
-                <p className="label-xs mb-4 flex items-center gap-1.5">
-                  <Heartbeat size={11} />
-                  Calories & Macros
-                </p>
-                <div className="space-y-4">
-                  <SliderField label="Calories" unit=" kcal" value={calories} min={800} max={4000} step={50}
-                    color="var(--calories)" onChange={setCalories} />
-                  <SliderField label="Protéines" unit="g" value={protein} min={30} max={300} step={5}
-                    color="var(--protein)" onChange={setProtein} />
-                  <SliderField label="Glucides" unit="g" value={carbs} min={50} max={600} step={5}
-                    color="var(--carbs)" onChange={setCarbs} />
-                  <SliderField label="Lipides" unit="g" value={fat} min={20} max={200} step={5}
-                    color="var(--fat)" onChange={setFat} />
-                  <SliderField label="Fibres" unit="g" value={fiber} min={10} max={60} step={1}
-                    color="var(--fiber)" onChange={setFiber} />
-                  <SliderField label="Eau" unit=" ml" value={water} min={500} max={5000} step={250}
-                    color="var(--fit-indigo)" onChange={setWater} />
-                </div>
+                <button className="w-full flex items-center justify-between mb-2"
+                  onClick={() => setMacroOpen(o => !o)}>
+                  <p className="label-xs flex items-center gap-1.5">
+                    <Heartbeat size={11} />
+                    Calories & Macros
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {!macroOpen && (
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <span className="font-bold tabular-nums" style={{ color: "var(--calories)" }}>{calories}</span>
+                        <span> kcal · </span>
+                        <span style={{ color: "var(--protein)" }}>{protein}g P</span>
+                        <span> · </span>
+                        <span style={{ color: "var(--carbs)" }}>{carbs}g G</span>
+                        <span> · </span>
+                        <span style={{ color: "var(--fat)" }}>{fat}g L</span>
+                      </span>
+                    )}
+                    {macroOpen
+                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {macroOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                      <div className="space-y-4 pt-1">
+                        <SliderField label="Calories" unit=" kcal" value={calories} min={800} max={4000} step={50}
+                          color="var(--calories)" onChange={setCalories} />
+                        <SliderField label="Protéines" unit="g" value={protein} min={30} max={300} step={5}
+                          color="var(--protein)" onChange={setProtein} />
+                        <SliderField label="Glucides" unit="g" value={carbs} min={50} max={600} step={5}
+                          color="var(--carbs)" onChange={setCarbs} />
+                        <SliderField label="Lipides" unit="g" value={fat} min={20} max={200} step={5}
+                          color="var(--fat)" onChange={setFat} />
+                        <SliderField label="Fibres" unit="g" value={fiber} min={10} max={60} step={1}
+                          color="var(--fiber)" onChange={setFiber} />
+                        <SliderField label="Eau" unit=" ml" value={water} min={500} max={5000} step={250}
+                          color="var(--fit-indigo)" onChange={setWater} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Steps & Sleep ── */}
