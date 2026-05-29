@@ -708,13 +708,18 @@ const ACTIVITY_CATALOG: Omit<PlannedActivity, 'id' | 'durationMin'>[] = [
 
 // ─── Programmes & ajustements (module-level pour useEffect) ─────────────────
 
-const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number }> = {
-  balanced: { label: "Équilibré",       emoji: "⚖️",  desc: "50% G · 25% P · 25% L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
-  keto:     { label: "Cétogène",        emoji: "🥑",  desc: "5% G · 25% P · 70% L",    protPct: 0.25, carbPct: 0.05, fatPct: 0.70, fiber: 25 },
-  lowcarb:  { label: "Sans sucre",      emoji: "🚫🍬", desc: "20% G · 30% P · 50% L",   protPct: 0.30, carbPct: 0.20, fatPct: 0.50, fiber: 28 },
-  highprot: { label: "Hyperprotéiné",   emoji: "💪",  desc: "25% G · 40% P · 35% L",   protPct: 0.40, carbPct: 0.25, fatPct: 0.35, fiber: 30 },
-  mediter:  { label: "Méditerranéen",   emoji: "🫒",  desc: "45% G · 20% P · 35% L",   protPct: 0.20, carbPct: 0.45, fatPct: 0.35, fiber: 35 },
-  bulk:     { label: "Prise de masse",  emoji: "🏋️",  desc: "45% G · 30% P · 25% L",   protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, calorieBonus: 300 },
+const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number; fixedCalories?: number; group?: string; tip?: string }> = {
+  // ── Programmes standard ──
+  balanced:    { label: "Équilibré",           emoji: "⚖️",  desc: "50% G · 25% P · 25% L",              protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
+  keto:        { label: "Cétogène",            emoji: "🥑",  desc: "5% G · 25% P · 70% L",               protPct: 0.25, carbPct: 0.05, fatPct: 0.70, fiber: 25 },
+  lowcarb:     { label: "Sans sucre",          emoji: "🚫🍬", desc: "20% G · 30% P · 50% L",              protPct: 0.30, carbPct: 0.20, fatPct: 0.50, fiber: 28 },
+  highprot:    { label: "Hyperprotéiné",       emoji: "💪",  desc: "25% G · 40% P · 35% L",              protPct: 0.40, carbPct: 0.25, fatPct: 0.35, fiber: 30 },
+  mediter:     { label: "Méditerranéen",       emoji: "🫒",  desc: "45% G · 20% P · 35% L",              protPct: 0.20, carbPct: 0.45, fatPct: 0.35, fiber: 35 },
+  bulk:        { label: "Prise de masse",      emoji: "🏋️",  desc: "45% G · 30% P · 25% L",              protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, calorieBonus: 300 },
+  // ── Méthode Dr.C (Dr Jean-Michel Cohen) — calories fixes ──
+  drc_confort: { label: "Dr.C Confort",        emoji: "🥗",  desc: "1 400 kcal · 45%G · 30%P · 25%L",   protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, fixedCalories: 1400, group: "drc", tip: "Phase principale · perte 2–4 kg/mois" },
+  drc_boost:   { label: "Dr.C Boost",          emoji: "⚡",  desc: "900 kcal · 35%G · 40%P · 25%L",     protPct: 0.40, carbPct: 0.35, fatPct: 0.25, fiber: 20, fixedCalories: 900,  group: "drc", tip: "1–2 sem/mois · relance après plateau" },
+  drc_stab:    { label: "Dr.C Stabilisation",  emoji: "🏆",  desc: "1 600 kcal · 50%G · 25%P · 25%L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30, fixedCalories: 1600, group: "drc", tip: "Maintien du poids · long terme" },
 };
 
 const WEEKLY_ADJUSTMENTS: Record<string, number> = { lose: -500, maintain: 0, gain: 300 };
@@ -810,14 +815,20 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     if (!prog) return;
     const a = parseInt(age), h = parseInt(height), w = parseFloat(currentWeight) || parseFloat(weight) || 70;
     const bf = parseFloat(bodyFatPct) || undefined;
-    let base = parseInt(calories) || 2000;
-    if (a && h && gender) {
-      base = calcTDEE(w, h, a, gender as Gender, activity, tdeeFormula, bf);
-      setTdeeCalc(base);
+    // Dr.C programs use fixed calories — ignore TDEE
+    let kcal: number;
+    if (prog.fixedCalories) {
+      kcal = prog.fixedCalories;
+    } else {
+      let base = parseInt(calories) || 2000;
+      if (a && h && gender) {
+        base = calcTDEE(w, h, a, gender as Gender, activity, tdeeFormula, bf);
+        setTdeeCalc(base);
+      }
+      const adj = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
+      const bonus = prog.calorieBonus ?? 0;
+      kcal = Math.max(800, base + adj + bonus);
     }
-    const adj = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
-    const bonus = prog.calorieBonus ?? 0;
-    const kcal = Math.max(800, base + adj + bonus);
     const p = Math.round((kcal * prog.protPct) / 4);
     const f = Math.round((kcal * prog.fatPct)  / 9);
     const c = Math.round((kcal * prog.carbPct) / 4);
@@ -1355,8 +1366,9 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                   {programOpen && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                      {/* Standard programs */}
                       <div className="grid grid-cols-2 gap-2">
-                        {Object.entries(PROGRAMS).map(([key, prog]) => {
+                        {Object.entries(PROGRAMS).filter(([, p]) => !p.group).map(([key, prog]) => {
                           const active = selectedProgram === key;
                           return (
                             <button key={key} onClick={() => handleApplyProgram(key)}
@@ -1374,9 +1386,43 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                           );
                         })}
                       </div>
-                      <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[10px] mt-2 mb-3" style={{ color: "var(--text-muted)" }}>
                         Le programme calcule automatiquement les macros selon ton profil.
                       </p>
+
+                      {/* Dr.C section */}
+                      <div className="rounded-xl p-3 space-y-2"
+                        style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>Dr.C</span>
+                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            Méthode Dr Jean-Michel Cohen · calories fixes
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {Object.entries(PROGRAMS).filter(([, p]) => p.group === "drc").map(([key, prog]) => {
+                            const active = selectedProgram === key;
+                            return (
+                              <button key={key} onClick={() => handleApplyProgram(key)}
+                                className="flex flex-col items-start p-2.5 rounded-xl text-left transition-all"
+                                style={{
+                                  background: active ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)",
+                                  border: `1px solid ${active ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.15)"}`,
+                                }}>
+                                <span className="text-base mb-1">{prog.emoji}</span>
+                                <p className="text-[11px] font-semibold leading-tight" style={{ color: active ? "#22c55e" : "var(--text-primary)" }}>
+                                  {prog.label}
+                                </p>
+                                <p className="text-[8px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
+                                {prog.tip && (
+                                  <p className="text-[8px] mt-1 leading-tight" style={{ color: active ? "#22c55e" : "var(--text-muted)", opacity: 0.8 }}>{prog.tip}</p>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
