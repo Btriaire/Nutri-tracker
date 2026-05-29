@@ -196,6 +196,7 @@ export interface NutritionGoals {
   sodiumMg?:        number;
   waterMl:          number;   // objectif eau quotidien en ml
   targetWeightKg:   number | null;
+  targetDate?:      string;         // "YYYY-MM-DD" cible utilisateur
   weeklyGoal:       WeeklyGoal;
   activityLevel:    ActivityLevel;
   stepsGoal:        number;

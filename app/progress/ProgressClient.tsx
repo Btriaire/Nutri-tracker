@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
+  ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Legend,
 } from "recharts";
 import {
   ArrowDown, ArrowUp, Minus, Lightning, Scales, ChartBar, ChartLine,
@@ -58,6 +58,7 @@ interface Props {
   goals:           NutritionGoals;
   currentWeightKg: number | null;
   targetWeightKg:  number | null;
+  targetDate?:     string;
   age?:            number;
   plan?:           NutritionPlan;
 }
@@ -70,7 +71,91 @@ const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; val
   </div>
 );
 
-export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, age, plan: initialPlan }: Props) {
+// ── Build combined actual + projected weight chart data ──────────────────────
+type WeightChartPoint = {
+  label:     string;
+  date:      string;
+  actual:    number | null;
+  projected: number | null;
+  calories:  number | null;
+  isToday?:  boolean;
+  isFuture?: boolean;
+};
+
+function buildWeightChartData(
+  weightData: { label: string; date: string; weightKg: number | undefined }[],
+  calorieData: { date: string; calories: number }[],
+  currentKg: number | null,
+  targetKg: number | null,
+  targetDate: string | undefined,
+): WeightChartPoint[] {
+  const today    = new Date();
+  const todayStr = format(today, "yyyy-MM-dd");
+
+  const calMap = new Map(calorieData.map(p => [p.date, p.calories]));
+
+  // Past: actual measured weight
+  const past: WeightChartPoint[] = weightData
+    .filter(p => (p.weightKg ?? 0) > 0)
+    .map(p => ({
+      date:      p.date,
+      label:     p.label,
+      actual:    p.weightKg ?? null,
+      projected: null,
+      calories:  calMap.get(p.date) ?? null,
+    }));
+
+  if (!targetKg || !targetDate) return past;
+
+  const lastActual = past[past.length - 1]?.actual ?? currentKg;
+  if (!lastActual) return past;
+
+  const endDate   = new Date(targetDate + "T00:00:00");
+  const totalDays = Math.max(7, Math.round((endDate.getTime() - today.getTime()) / 86400000));
+  const dailyDelta = (targetKg - lastActual) / totalDays;
+
+  // Bridge point: today (connects actual line to projected line)
+  const todayBridge: WeightChartPoint = {
+    date:      todayStr,
+    label:     "Auj.",
+    actual:    lastActual,
+    projected: lastActual,
+    calories:  calMap.get(todayStr) ?? null,
+    isToday:   true,
+  };
+
+  // Future projection: weekly points up to target date
+  const future: WeightChartPoint[] = [];
+  const weeksTotal = Math.ceil(totalDays / 7);
+  for (let w = 1; w <= weeksTotal; w++) {
+    const d = new Date(today.getTime() + w * 7 * 86400000);
+    if (d >= endDate) break;
+    const daysFromNow = Math.round((d.getTime() - today.getTime()) / 86400000);
+    future.push({
+      date:      format(d, "yyyy-MM-dd"),
+      label:     format(d, "dd/MM"),
+      actual:    null,
+      projected: Math.round((lastActual + dailyDelta * daysFromNow) * 10) / 10,
+      calories:  null,
+      isFuture:  true,
+    });
+  }
+  // Final target point
+  future.push({
+    date:      targetDate,
+    label:     format(endDate, "dd/MM/yy"),
+    actual:    null,
+    projected: targetKg,
+    calories:  null,
+    isFuture:  true,
+  });
+
+  // Deduplicate: avoid duplicate today if already in past
+  const filteredPast = past.filter(p => p.date !== todayStr);
+  return [...filteredPast, todayBridge, ...future];
+}
+
+export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, targetDate: initialTargetDate, age, plan: initialPlan }: Props) {
   const fcMax = age ? 220 - age : 190;
   const [range,           setRange]      = useState<Range>("30d");
   const [calChart,        setCalChart]   = useState<CalChart>("area");
@@ -78,6 +163,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [loading,         setLoading]    = useState(true);
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
   const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
+  const [targetDate,      setTargetDate] = useState<string>(
+    initialTargetDate ?? plan?.projectedTargetDate ?? ""
+  );
 
   useEffect(() => {
     fetch("/api/goals")
@@ -140,6 +228,25 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     ? Math.round(avgHRPts.reduce((s, p) => s + (p.heartRateAvg ?? 0), 0) / avgHRPts.length)
     : null;
   const weightTrend = weightDelta === null ? "stable" : weightDelta < -0.1 ? "down" : weightDelta > 0.1 ? "up" : "stable";
+
+  // ── Dual-axis weight chart data ──
+  const weightChartData = buildWeightChartData(
+    chartData.map(p => ({ label: p.label, date: p.date, weightKg: p.weightKg })),
+    chartData.map(p => ({ date: p.date, calories: p.calories })),
+    currentWeightKg,
+    targetWeightKg,
+    targetDate || undefined,
+  );
+  const weightYMin = weightChartData.length
+    ? Math.floor(Math.min(
+        ...weightChartData.map(p => p.actual ?? p.projected ?? 999).filter(v => v < 999)
+      ) - 1)
+    : undefined;
+  const weightYMax = weightChartData.length
+    ? Math.ceil(Math.max(
+        ...weightChartData.map(p => p.actual ?? p.projected ?? 0).filter(v => v > 0)
+      ) + 1)
+    : undefined;
 
   const progressInsightData = {
     days:           points.length,
@@ -621,32 +728,173 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               )}
             </motion.div>
 
-            {/* Weight trend */}
-            {weightData.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="label-xs">Courbe de poids</p>
+            {/* ── Dual-axis weight + simulation chart ── */}
+            {(weightData.length > 0 || currentWeightKg) && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Scales size={15} style={{ color: "var(--protein)" }} />
+                    <p className="label-xs">Poids &amp; Simulation</p>
+                  </div>
                   {weightDelta !== null && (
                     <span className="flex items-center gap-1 text-[12px] font-medium"
                       style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "#f87171" : "var(--text-muted)" }}>
                       {weightDelta < -0.1 ? <ArrowDown size={11} weight="bold" /> : weightDelta > 0.1 ? <ArrowUp size={11} weight="bold" /> : <Minus size={11} />}
-                      {Math.abs(weightDelta).toFixed(1)} kg
+                      {Math.abs(weightDelta).toFixed(1)} kg sur la période
                     </span>
                   )}
                 </div>
-                <ResponsiveContainer width="100%" height={130}>
-                  <LineChart data={weightData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
-                    <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={(payload[0].value as number).toFixed(1)} unit="kg" color="var(--steps)" /> : null} />
-                    {targetWeightKg && (
-                      <ReferenceLine y={targetWeightKg} stroke="rgba(74,222,128,0.5)" strokeDasharray="4 4"
-                        label={{ value: `${targetWeightKg}kg`, fontSize: 10, fill: "#4ade80", position: "insideTopRight" }} />
+
+                {/* Stats row */}
+                <div className="flex gap-2 mb-3">
+                  {[
+                    { label: "Actuel",   value: currentWeightKg ? `${currentWeightKg.toFixed(1)} kg` : "—", color: "var(--protein)" },
+                    { label: "Objectif", value: targetWeightKg   ? `${targetWeightKg.toFixed(1)} kg`  : "—", color: "#4ade80" },
+                    { label: "Écart",
+                      value: (currentWeightKg && targetWeightKg) ? `${Math.abs(currentWeightKg - targetWeightKg).toFixed(1)} kg` : "—",
+                      color: (currentWeightKg && targetWeightKg && currentWeightKg > targetWeightKg) ? "#f87171" : "#4ade80" },
+                    { label: "Date cible",
+                      value: targetDate ? format(new Date(targetDate + "T00:00:00"), "dd/MM/yy") : "—",
+                      color: "var(--calories)" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="flex-1 flex flex-col items-center p-2 rounded-xl gap-0.5"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      <span className="text-[12px] font-bold tabular-nums leading-tight" style={{ color }}>{value}</span>
+                      <span className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Editable target date */}
+                <div className="flex items-center gap-2 mb-3">
+                  <CalendarBlank size={12} style={{ color: "var(--text-muted)" }} />
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
+                  <input
+                    type="date" value={targetDate}
+                    onChange={e => setTargetDate(e.target.value)}
+                    className="flex-1 px-2 py-1 rounded-lg text-[11px] outline-none"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    min={format(new Date(), "yyyy-MM-dd")}
+                  />
+                </div>
+
+                {/* Chart */}
+                {weightChartData.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={210}>
+                      <ComposedChart data={weightChartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.22} />
+                            <stop offset="95%" stopColor="var(--protein)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                          tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                        {/* Left Y: weight */}
+                        <YAxis yAxisId="w" orientation="left"
+                          tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          domain={[weightYMin ?? "auto", weightYMax ?? "auto"]}
+                          tickFormatter={v => `${v}kg`} width={40} />
+                        {/* Right Y: calories */}
+                        <YAxis yAxisId="c" orientation="right"
+                          tick={{ fontSize: 9, fill: "rgba(249,115,22,0.55)" }} tickLine={false} axisLine={false}
+                          tickFormatter={v => `${v}`} width={32} />
+                        <Tooltip
+                          content={({ active, payload, label: lbl }) => {
+                            if (!active || !payload?.length) return null;
+                            const entries = payload.filter(p => p.value != null);
+                            if (!entries.length) return null;
+                            return (
+                              <div className="px-3 py-2 rounded-xl text-[11px] space-y-1"
+                                style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                                {entries.map((p, i) => (
+                                  <p key={i} className="font-semibold" style={{ color: p.color ?? "var(--text-primary)" }}>
+                                    {p.dataKey === "actual" ? "Mesuré" : p.dataKey === "projected" ? "Simulé" : "Calories"} :{" "}
+                                    {p.dataKey === "calories" ? `${p.value} kcal` : `${(p.value as number).toFixed(1)} kg`}
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          }}
+                        />
+                        {/* Target weight */}
+                        {targetWeightKg && (
+                          <ReferenceLine yAxisId="w" y={targetWeightKg}
+                            stroke="rgba(74,222,128,0.4)" strokeDasharray="5 3"
+                            label={{ value: `🎯 ${targetWeightKg}kg`, fontSize: 9, fill: "#4ade80", position: "insideTopRight" }} />
+                        )}
+                        {/* Today line */}
+                        <ReferenceLine yAxisId="w" x="Auj."
+                          stroke="rgba(255,255,255,0.18)" strokeDasharray="3 3" />
+                        {/* Calorie bars (right axis) */}
+                        <Bar yAxisId="c" dataKey="calories" fill="var(--calories)"
+                          fillOpacity={0.15} radius={[2, 2, 0, 0]} />
+                        {/* Goal calorie reference */}
+                        <ReferenceLine yAxisId="c" y={goals.dailyCalories}
+                          stroke="rgba(249,115,22,0.25)" strokeDasharray="3 3" />
+                        {/* Actual weight (solid area) */}
+                        <Area yAxisId="w" type="monotone" dataKey="actual" name="actual"
+                          stroke="var(--protein)" strokeWidth={2.5} fill="url(#actualGrad)"
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          dot={(props: any) => {
+                            const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
+                            if (payload.actual == null) return <g key={`a-${payload.date}`} />;
+                            return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 5 : 3} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1.5} />;
+                          }}
+                          activeDot={{ r: 5 }} connectNulls={false} />
+                        {/* Projected weight (dashed) */}
+                        <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
+                          stroke="#4ade80" strokeWidth={2} strokeDasharray="6 3"
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          dot={(props: any) => {
+                            const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
+                            if (!payload.isFuture || payload.projected == null) return <g key={`p-${payload.date}`} />;
+                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={3} fill="#4ade80" stroke="var(--bg)" strokeWidth={1.5} />;
+                          }}
+                          activeDot={{ r: 4 }} connectNulls />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                    {/* Legend */}
+                    <div className="flex items-center gap-5 mt-2 justify-center">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-0" style={{ borderTop: "2px dashed #4ade80" }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulation</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(249,115,22,0.5)" }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Calories</span>
+                      </div>
+                    </div>
+                    {/* Projection summary */}
+                    {projectionDate && avgCalories > 0 && (
+                      <div className="mt-3 px-3 py-2 rounded-xl flex items-center justify-between"
+                        style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          À ce rythme ({avgCalories} kcal/j) →
+                        </p>
+                        <p className="text-[12px] font-semibold" style={{ color: "#4ade80" }}>
+                          🎯 {projectionDate}
+                        </p>
+                      </div>
                     )}
-                    <Line type="monotone" dataKey="weightKg" stroke="var(--steps)" strokeWidth={2.5} dot={{ fill: "var(--steps)", r: 3 }} activeDot={{ r: 5 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                  </>
+                ) : (
+                  <div className="h-28 flex items-center justify-center">
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                      Aucune mesure de poids — connectez Withings ou Google Fit
+                    </p>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -680,46 +928,6 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </motion.div>
             )}
 
-            {/* Weight projection */}
-            {currentWeightKg && targetWeightKg && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.14 }} className="glass p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Scales size={15} style={{ color: "var(--protein)" }} />
-                  <p className="label-xs">Projection de poids</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--steps)" }}>{currentWeightKg.toFixed(1)} kg</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Poids actuel</p>
-                  </div>
-                  <div className="p-3 rounded-xl text-center" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.3)" }}>
-                    <p className="text-[20px] font-bold tabular-nums" style={{ color: "#4ade80" }}>{targetWeightKg.toFixed(1)} kg</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Objectif</p>
-                  </div>
-                </div>
-                {avgCalories > 0 ? (
-                  <div className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    {projectionDate ? (
-                      <>
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <CalendarBlank size={14} style={{ color: "var(--calories)" }} />
-                          <p className="text-[14px] font-bold" style={{ color: "var(--text-primary)" }}>{projectionDate}</p>
-                        </div>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                          À ce rythme ({avgCalories} kcal/j), objectif en ~{projectionDays} jours
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                        {currentWeightKg <= targetWeightKg ? "🎯 Objectif atteint !" : "Augmentez votre déficit pour atteindre l'objectif."}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>Loggez des repas pour calculer la projection.</p>
-                )}
-              </motion.div>
-            )}
 
             {points.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-3 py-16">

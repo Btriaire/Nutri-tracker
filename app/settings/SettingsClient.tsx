@@ -792,6 +792,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     if (height)        goals.heightCm        = parseInt(height);
     if (gender)        goals.gender          = gender as Gender;
     if (currentWeight) goals.currentWeightKg = parseFloat(currentWeight) || undefined;
+    if (targetDate)    goals.targetDate      = targetDate;
     return goals;
   };
 
