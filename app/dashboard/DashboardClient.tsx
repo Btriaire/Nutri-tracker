@@ -12,10 +12,12 @@ import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
 import WelcomeChime from "@/app/components/WelcomeChime";
+import PhotoStrip from "@/app/components/PhotoStrip";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
+import type { RecentPhoto } from "@/app/api/photos/recent/route";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -41,6 +43,7 @@ interface Props {
   plan?:             NutritionPlan;
   lang:              Lang;
   trackedNutrients?: TrackedNutrients;
+  recentPhotos?:     RecentPhoto[];
 }
 
 function activityEmoji(type: number): string {
@@ -104,7 +107,7 @@ const fade = (delay = 0) => ({
 export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
-  waterMl: initialWaterMl, plan, lang, trackedNutrients,
+  waterMl: initialWaterMl, plan, lang, trackedNutrients, recentPhotos = [],
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -225,6 +228,11 @@ export default function DashboardClient({
         className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px] md:max-w-2xl"
         style={{ paddingBottom: "80px" }}
       >
+
+        {/* ── Photo strip (positive memories) ── */}
+        {recentPhotos.length > 0 && (
+          <PhotoStrip photos={recentPhotos} />
+        )}
 
         {/* ── Header ── */}
         <motion.div {...fade(0)} className="mb-5">

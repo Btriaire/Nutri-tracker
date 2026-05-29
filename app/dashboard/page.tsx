@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
+import type { RecentPhoto } from "@/app/api/photos/recent/route";
 import { format } from "date-fns";
 import DashboardClient from "./DashboardClient";
 
@@ -19,12 +20,13 @@ export default async function DashboardPage() {
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
   const trendPoints: DayTrendPoint[] = [];
+  let recentPhotos: RecentPhoto[] = [];
 
   try {
     const db = getAdminFirestore();
     const trendFrom = format(new Date(Date.now() - 13 * 86400000), "yyyy-MM-dd");
 
-    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap] = await Promise.all([
+    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap, photosSnap] = await Promise.all([
       db.doc(`users/${userId}/foodLog/${today}`).get(),
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
       db.doc(`users/${userId}`).get(),
@@ -34,6 +36,7 @@ export default async function DashboardPage() {
         .where("date", "<=", today)
         .orderBy("date", "asc")
         .get(),
+      db.collection(`users/${userId}/dayPhotos`).orderBy("date", "desc").limit(14).get(),
     ]);
 
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
@@ -68,6 +71,13 @@ export default async function DashboardPage() {
         burned:    fit?.googleFit?.activeCaloriesBurned ?? undefined,
       });
     }
+    // Recent photos
+    for (const doc of photosSnap.docs) {
+      const data = doc.data() as { date: string; photos?: { id: string; dataUrl: string; addedAt: string }[] };
+      if (data.photos && data.photos.length > 0) {
+        recentPhotos.push({ date: data.date, photo: data.photos[0] });
+      }
+    }
   } catch (e) {
     console.error("Firestore error:", e);
   }
@@ -95,6 +105,7 @@ export default async function DashboardPage() {
       plan={plan}
       lang="fr"
       trackedNutrients={trackedNutrients}
+      recentPhotos={recentPhotos}
     />
   );
 }

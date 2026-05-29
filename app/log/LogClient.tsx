@@ -13,6 +13,8 @@ import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
 import { Check } from "@phosphor-icons/react";
 import AIInsightBox from "@/app/components/AIInsightBox";
+import DayPhotos from "@/app/components/DayPhotos";
+import type { DayPhoto } from "@/app/api/photos/route";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
@@ -63,6 +65,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [validating,     setValidating]     = useState(false);
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [mealPhotos, setMealPhotos] = useState<MealPhotos>({});
+  const [dayPhotos,  setDayPhotos]  = useState<DayPhoto[]>([]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -75,6 +78,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       .then((r) => r.ok ? r.json() : {})
       .then((data: { photos?: MealPhotos }) => setMealPhotos(data.photos ?? {}))
       .catch(() => setMealPhotos({}));
+    // Load day photos
+    fetch(`/api/photos?date=${date}`)
+      .then((r) => r.ok ? r.json() : { photos: [] })
+      .then((data: { photos?: DayPhoto[] }) => setDayPhotos(data.photos ?? []))
+      .catch(() => setDayPhotos([]));
   }, [date, initialLog]);
 
   const handleValidate = async () => {
@@ -181,6 +189,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           className="mb-5"
         >
           <DateNav date={date} />
+        </motion.div>
+
+        {/* Day photos */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.04 }}
+          className="mb-4"
+        >
+          <DayPhotos date={date} initialPhotos={dayPhotos} />
         </motion.div>
 
         {/* Daily summary */}
