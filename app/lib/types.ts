@@ -241,7 +241,7 @@ export interface GoogleFitDay {
   heartRateAvg:          number | null;
   weightKg:              number | null;
   sleepMinutes:          number | null;
-  sessions:              { id: string; name: string; activityType: number; durationMin: number; startMs: number }[];
+  sessions:              { id: string; name: string; activityType: number; durationMin: number; startMs: number; endMs: number; calories: number | null }[];
   syncedAt:              Timestamp;
 }
 
@@ -379,6 +379,14 @@ export interface BloodPressureReading {
   moment?:    BPMoment;
 }
 
+export interface MedicationEntry {
+  id:     string;   // uuid-like
+  name:   string;
+  dose?:  string;   // "500 mg", "2 comprimés", etc.
+  time?:  string;   // "HH:MM"
+  taken:  boolean;
+}
+
 export interface HealthEntry {
   date:           string;
   bloodPressure:  BloodPressureReading[];
@@ -387,6 +395,7 @@ export interface HealthEntry {
   spO2?:          number;   // %
   temperatureC?:  number;   // °C
   notes?:         string;
+  medications?:   MedicationEntry[];
   updatedAt?:     Timestamp;
 }
 

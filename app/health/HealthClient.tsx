@@ -9,12 +9,13 @@ import {
   CaretLeft, CaretRight, Plus, X, Heartbeat, Thermometer,
   Drop, Spinner, Trash, PencilSimple, Heart, Note,
   Lightning, Moon, Warning, CheckCircle, ArrowDown, ArrowUp, Minus, ArrowsClockwise,
+  Pill, Check,
 } from "@phosphor-icons/react";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from "recharts";
-import type { BloodPressureReading, BPMoment, HealthEntry } from "@/app/lib/types";
+import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry } from "@/app/lib/types";
 import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
@@ -138,12 +139,21 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [notesDirty,  setNotesDirty]  = useState(false);
   const [notesSaving, setNotesSaving] = useState(false);
 
+  // Medications
+  const [meds,       setMeds]       = useState<MedicationEntry[]>(initialEntry?.medications ?? []);
+  const [medOpen,    setMedOpen]    = useState(false);
+  const [medName,    setMedName]    = useState("");
+  const [medDose,    setMedDose]    = useState("");
+  const [medTime,    setMedTime]    = useState(nowHHMM);
+  const [medSaving,  setMedSaving]  = useState(false);
+
   // Cardio range
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
 
   useEffect(() => {
     setNotes(entry?.notes ?? "");
     setNotesDirty(false);
+    setMeds(entry?.medications ?? []);
   }, [entry]);
 
   const navigate = async (newDate: string) => {
@@ -222,6 +232,39 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       setEntry(await patch({ notes }));
       setNotesDirty(false);
     } finally { setNotesSaving(false); }
+  };
+
+  // Medications ─────────────────────────────────────────────────────────────────
+
+  const saveMeds = async (list: MedicationEntry[]) => {
+    setMeds(list);
+    await patch({ medications: list } as Partial<HealthData>);
+  };
+
+  const handleAddMed = async () => {
+    if (!medName.trim()) return;
+    setMedSaving(true);
+    try {
+      const newMed: MedicationEntry = {
+        id:    Date.now().toString(36),
+        name:  medName.trim(),
+        dose:  medDose.trim() || undefined,
+        time:  medTime || undefined,
+        taken: false,
+      };
+      await saveMeds([...meds, newMed]);
+      setMedOpen(false);
+      setMedName(""); setMedDose(""); setMedTime(nowHHMM());
+    } finally { setMedSaving(false); }
+  };
+
+  const handleToggleMed = async (id: string) => {
+    const updated = meds.map(m => m.id === id ? { ...m, taken: !m.taken } : m);
+    await saveMeds(updated);
+  };
+
+  const handleDeleteMed = async (id: string) => {
+    await saveMeds(meds.filter(m => m.id !== id));
   };
 
   // Derived data ────────────────────────────────────────────────────────────────
@@ -545,6 +588,70 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 onValChange={setVitalVal} onSave={() => handleSaveVital("temperatureC")}
                 onClear={() => handleClearVital("temperatureC")} onCancel={() => setEditVital(null)}
               />
+            </motion.div>
+
+            {/* ── Médicaments ── */}
+            <motion.div {...fade(0.11)} className="glass p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Pill size={14} weight="fill" style={{ color: "#c084fc" }} />
+                  <p className="label-xs">Médicaments du jour</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {meds.length > 0 && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(192,132,252,0.12)", color: "#c084fc", border: "1px solid rgba(192,132,252,0.3)" }}>
+                      {meds.filter(m => m.taken).length}/{meds.length} pris
+                    </span>
+                  )}
+                  <button onClick={() => { setMedTime(nowHHMM()); setMedOpen(true); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                    style={{ background: "rgba(192,132,252,0.1)", border: "1px solid rgba(192,132,252,0.3)", color: "#c084fc" }}>
+                    <Plus size={12} weight="bold" />
+                  </button>
+                </div>
+              </div>
+
+              {meds.length === 0 ? (
+                <button onClick={() => { setMedTime(nowHHMM()); setMedOpen(true); }}
+                  className="w-full py-4 rounded-xl flex flex-col items-center gap-1.5 transition-colors"
+                  style={{ border: "1.5px dashed var(--border)" }}>
+                  <Pill size={18} style={{ color: "var(--text-muted)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un médicament</span>
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  {meds.map(m => (
+                    <div key={m.id}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
+                      style={{ background: m.taken ? "rgba(192,132,252,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.taken ? "rgba(192,132,252,0.3)" : "var(--border)"}` }}>
+                      <button onClick={() => handleToggleMed(m.id)}
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                        style={{ background: m.taken ? "#c084fc" : "rgba(255,255,255,0.06)", border: `1.5px solid ${m.taken ? "#c084fc" : "var(--border)"}` }}>
+                        {m.taken && <Check size={11} weight="bold" color="#fff" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium leading-tight"
+                          style={{ color: m.taken ? "var(--text-muted)" : "var(--text-primary)", textDecoration: m.taken ? "line-through" : "none" }}>
+                          {m.name}
+                        </p>
+                        {(m.dose || m.time) && (
+                          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                            {[m.dose, m.time].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                      <button onClick={() => handleDeleteMed(m.id)}
+                        className="p-1 rounded-md flex-shrink-0 transition-colors"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+                        onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}>
+                        <Trash size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Notes */}
@@ -1019,6 +1126,74 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 {bpSaving
                   ? <><Spinner size={13} className="animate-spin" /> Enregistrement…</>
                   : <><Plus size={14} weight="bold" /> Enregistrer la mesure</>
+                }
+              </button>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
+      {/* ── Medication Add Modal ── */}
+      {medOpen && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          <motion.div
+            key="med-overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={e => { if (e.target === e.currentTarget) setMedOpen(false); }}
+          >
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="w-full max-w-md glass-strong rounded-t-2xl p-6 pb-10"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Pill size={16} weight="fill" style={{ color: "#c084fc" }} />
+                  <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
+                    Nouveau médicament
+                  </p>
+                </div>
+                <button onClick={() => setMedOpen(false)} className="btn-icon"><X size={14} /></button>
+              </div>
+
+              <div className="space-y-3 mb-5">
+                <div>
+                  <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
+                  <input
+                    autoFocus type="text" value={medName}
+                    onChange={e => setMedName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleAddMed()}
+                    placeholder="Paracétamol, Doliprane…"
+                    className="input text-[14px]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>
+                    <input type="text" value={medDose}
+                      onChange={e => setMedDose(e.target.value)}
+                      placeholder="500 mg, 1 cp…"
+                      className="input text-[13px]"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
+                    <input type="time" value={medTime}
+                      onChange={e => setMedTime(e.target.value)}
+                      className="input text-[13px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button onClick={handleAddMed} disabled={medSaving || !medName.trim()}
+                className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px",
+                  background: "#c084fc", border: "none" }}>
+                {medSaving
+                  ? <><Spinner size={13} className="animate-spin" /> Enregistrement…</>
+                  : <><Plus size={14} weight="bold" /> Ajouter</>
                 }
               </button>
             </motion.div>
