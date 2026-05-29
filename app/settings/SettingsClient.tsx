@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk, SignOut } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk, SignOut, FilePdf } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
@@ -163,9 +164,21 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <p className="label-xs mb-0.5">Compte</p>
-          <h1 className="text-[22px] font-semibold tracking-tight mb-6" style={{ color: "var(--text-primary)" }}>
-            Réglages
-          </h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Réglages
+            </h1>
+            <Link href="/report"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all"
+              style={{
+                background: "linear-gradient(135deg,rgba(249,115,22,0.12),rgba(251,191,36,0.10))",
+                border: "1px solid rgba(249,115,22,0.35)",
+                color: "#f97316",
+              }}>
+              <FilePdf size={15} weight="fill" />
+              Rapport PDF
+            </Link>
+          </div>
         </motion.div>
 
         {/* Profile photo — TOP */}

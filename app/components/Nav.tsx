@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
-import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart, SignOut, FilePdf } from "@phosphor-icons/react";
+import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart, SignOut } from "@phosphor-icons/react";
 
 const TABS = [
   { href: "/dashboard", icon: HouseSimple,      label: "Accueil"   },
@@ -15,7 +15,6 @@ const TABS = [
   { href: "/health",    icon: Heart,            label: "Santé"     },
   { href: "/activity",  icon: PersonSimpleRun,  label: "Activité"  },
   { href: "/progress",  icon: ChartLine,        label: "Progrès"   },
-  { href: "/report",    icon: FilePdf,          label: "Rapport"   },
   { href: "/settings",  icon: Gear,             label: "Réglages"  },
 ] as const;
 
