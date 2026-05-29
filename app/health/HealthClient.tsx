@@ -19,6 +19,7 @@ import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry } fro
 import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
+import SleepHypnogram from "@/app/components/SleepHypnogram";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
 type HealthTab = "synthese" | "cardiaque" | "medicaments" | "bienetre";
@@ -1016,6 +1017,17 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </ResponsiveContainer>
               </div>
             </motion.div>
+
+            {/* Sleep Hypnogram */}
+            {(() => {
+              const lastSleep = [...visible].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+              if (!lastSleep) return null;
+              return (
+                <motion.div {...fade(0.25)} className="glass p-4">
+                  <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
+                </motion.div>
+              );
+            })()}
 
             {/* Daily log table */}
             {visible.length > 0 && (
