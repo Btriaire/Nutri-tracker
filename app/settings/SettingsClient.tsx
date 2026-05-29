@@ -886,12 +886,11 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                   ))}
                 </div>
 
-                {/* Age / Height / Weight */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Age / Height */}
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Âge",    unit: "ans", val: age,    set: setAge },
                     { label: "Taille", unit: "cm",  val: height, set: setHeight },
-                    { label: "Poids",  unit: "kg",  val: weight, set: setWeight },
                   ].map(({ label, unit, val, set }) => (
                     <div key={label}>
                       <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
@@ -909,6 +908,62 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Poids cible + suggestions IMC */}
+                <div className="mt-2">
+                  <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Poids cible</p>
+                  <div className="relative mb-2">
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={e => setWeight(e.target.value)}
+                      placeholder="—"
+                      className={inputClass}
+                      style={{ ...inputStyle, paddingRight: "28px" }}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                      style={{ color: "var(--text-muted)" }}>kg</span>
+                  </div>
+                  {/* Ideal weight chips — only show when height is known */}
+                  {parseInt(height) >= 100 && (() => {
+                    const hM = parseInt(height) / 100;
+                    const suggestions = [
+                      { label: "🏆 Optimal",    bmi: 22, desc: "IMC 22" },
+                      { label: "📉 Mince",       bmi: 20, desc: "IMC 20" },
+                      { label: "✅ Normal max",  bmi: 25, desc: "IMC 25" },
+                    ].map(s => ({ ...s, kg: Math.round(s.bmi * hM * hM * 10) / 10 }));
+                    return (
+                      <div>
+                        <p className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>Suggestions pour {height} cm :</p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {suggestions.map(s => {
+                            const sel = parseFloat(weight) === s.kg;
+                            return (
+                              <button
+                                key={s.bmi}
+                                onClick={() => setWeight(s.kg.toString())}
+                                className="flex flex-col items-center px-2.5 py-1.5 rounded-xl transition-all text-center"
+                                style={{
+                                  background: sel ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                                  border: `1px solid ${sel ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+                                  minWidth: 70,
+                                }}
+                              >
+                                <span className="text-[12px] font-bold tabular-nums"
+                                  style={{ color: sel ? "var(--calories)" : "var(--text-primary)" }}>
+                                  {s.kg} kg
+                                </span>
+                                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                                  {s.label} · {s.desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1255,6 +1310,7 @@ function ChartPrefsPanel() {
   const [showMicro,  setShowMicro]  = useState(false);
   const [saving,     setSaving]     = useState(false);
   const [saved,      setSaved]      = useState(false);
+  const [open,       setOpen]       = useState(false);
 
   // Load current saved prefs on open
   useEffect(() => {
@@ -1339,45 +1395,66 @@ function ChartPrefsPanel() {
       transition={{ duration: 0.3, delay: 0.12 }}
       className="glass p-5"
     >
-      <div className="flex items-center gap-2 mb-5">
-        <span className="text-xl">🎨</span>
-        <div>
-          <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Personnalisation des graphiques</p>
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Apparence et données affichées</p>
+      {/* Collapsible header */}
+      <button className="w-full flex items-center justify-between" onClick={() => setOpen(v => !v)}>
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🎨</span>
+          <div className="text-left">
+            <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Personnalisation des graphiques</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Apparence et données affichées</p>
+          </div>
         </div>
-      </div>
-
-      <RadioGroup
-        label="Tendance calories"
-        value={calType}
-        options={CHART_TYPE_OPTIONS}
-        onChange={setCalType}
-      />
-      <RadioGroup
-        label="Courbe de poids"
-        value={wtType}
-        options={CHART_TYPE_OPTIONS.filter((o) => o.value !== "area" || true)}
-        onChange={setWtType}
-      />
-      <RadioGroup
-        label="Affichage macros"
-        value={macroDisp}
-        options={MACRO_DISPLAY_OPTIONS}
-        onChange={setMacroDisp}
-      />
-
-      <div className="mb-4">
-        <Toggle
-          label="Afficher les micro-nutriments"
-          checked={showMicro}
-          onChange={setShowMicro}
-        />
-      </div>
-
-      <button onClick={handleSave} disabled={saving}
-        className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
-        {saved ? "✓ Sauvegardé" : saving ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</> : "Sauvegarder les préférences"}
+        {open
+          ? <CaretUp  size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+          : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
       </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="chart-prefs-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="mt-4">
+              <RadioGroup
+                label="Tendance calories"
+                value={calType}
+                options={CHART_TYPE_OPTIONS}
+                onChange={setCalType}
+              />
+              <RadioGroup
+                label="Courbe de poids"
+                value={wtType}
+                options={CHART_TYPE_OPTIONS.filter((o) => o.value !== "area" || true)}
+                onChange={setWtType}
+              />
+              <RadioGroup
+                label="Affichage macros"
+                value={macroDisp}
+                options={MACRO_DISPLAY_OPTIONS}
+                onChange={setMacroDisp}
+              />
+
+              <div className="mb-4">
+                <Toggle
+                  label="Afficher les micro-nutriments"
+                  checked={showMicro}
+                  onChange={setShowMicro}
+                />
+              </div>
+
+              <button onClick={handleSave} disabled={saving}
+                className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
+                {saved ? "✓ Sauvegardé" : saving ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</> : "Sauvegarder les préférences"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
