@@ -161,19 +161,12 @@ export default function MealSection({
         )}
 
         {/* Hunger slider — compact version in header */}
-        <div className="flex items-center gap-1.5 shrink-0" style={{ width: 130 }}>
-          {hunger != null && (
-            <span className="text-[15px] leading-none flex-shrink-0">
-              {HUNGER_CFG[hunger].emoji}
-            </span>
-          )}
-          <div className="flex-1">
-            <HungerSlider
-              value={hunger}
-              onChange={(v) => onHungerChange?.(meal, v)}
-              compact
-            />
-          </div>
+        <div className="shrink-0" style={{ width: 100 }}>
+          <HungerSlider
+            value={hunger}
+            onChange={(v) => onHungerChange?.(meal, v)}
+            compact
+          />
         </div>
 
         {/* Add food button */}

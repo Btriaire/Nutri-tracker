@@ -225,8 +225,9 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
       {/* Mini legend */}
       <div className="flex justify-between px-1 pt-0.5">
         {([1, 2, 3, 4, 5] as HungerLevel[]).map((lvl) => (
-          <span key={lvl} className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-            {HUNGER_CFG[lvl].emoji}
+          <span key={lvl} className="text-[10px] font-medium tabular-nums"
+            style={{ color: "var(--text-muted)", opacity: 0.45 }}>
+            {lvl}
           </span>
         ))}
       </div>

@@ -650,6 +650,21 @@ const ACTIVITY_CATALOG: Omit<PlannedActivity, 'id' | 'durationMin'>[] = [
   { label: "Stretching",      emoji: "🤸", category: "leisure", kcalPer30min: 60  },
 ];
 
+// ─── Programmes & ajustements (module-level pour useEffect) ─────────────────
+
+const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number }> = {
+  balanced: { label: "Équilibré",       emoji: "⚖️",  desc: "50% G · 25% P · 25% L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
+  keto:     { label: "Cétogène",        emoji: "🥑",  desc: "5% G · 25% P · 70% L",    protPct: 0.25, carbPct: 0.05, fatPct: 0.70, fiber: 25 },
+  lowcarb:  { label: "Sans sucre",      emoji: "🚫🍬", desc: "20% G · 30% P · 50% L",   protPct: 0.30, carbPct: 0.20, fatPct: 0.50, fiber: 28 },
+  highprot: { label: "Hyperprotéiné",   emoji: "💪",  desc: "25% G · 40% P · 35% L",   protPct: 0.40, carbPct: 0.25, fatPct: 0.35, fiber: 30 },
+  mediter:  { label: "Méditerranéen",   emoji: "🫒",  desc: "45% G · 20% P · 35% L",   protPct: 0.20, carbPct: 0.45, fatPct: 0.35, fiber: 35 },
+  bulk:     { label: "Prise de masse",  emoji: "🏋️",  desc: "45% G · 30% P · 25% L",   protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, calorieBonus: 300 },
+};
+
+const WEEKLY_ADJUSTMENTS: Record<string, number> = { lose: -500, maintain: 0, gain: 300 };
+
+// ─── Goals Panel ─────────────────────────────────────────────────────────────
+
 function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [age,      setAge]      = useState(initialGoals.age?.toString()       ?? "");
   const [height,   setHeight]   = useState(initialGoals.heightCm?.toString()  ?? "");
@@ -677,22 +692,40 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [activityPlan,      setActivityPlan]      = useState<ActivityPlan | null>(
     (initialGoals as NutritionGoals & { activityPlan?: ActivityPlan }).activityPlan ?? null
   );
-  const [apSessions, setApSessions] = useState<number>(activityPlan?.sessionsPerWeek ?? 3);
-  const [apSelected, setApSelected] = useState<Record<string, number>>(
-    // map activity id → durationMin for pre-selected ones
-    Object.fromEntries((activityPlan?.activities ?? []).map(a => [a.id, a.durationMin]))
+  const [apSessions,     setApSessions]     = useState<number>(activityPlan?.sessionsPerWeek ?? 3);
+  const [apMinDuration,  setApMinDuration]  = useState<number>(activityPlan?.activities?.[0]?.durationMin ?? 30);
+  const [apSelected,     setApSelected]     = useState<Set<string>>(
+    new Set((activityPlan?.activities ?? []).map(a => a.id))
   );
+  // Plan change confirmation
+  const [planActive,         setPlanActive]         = useState(!!initialGoals.plan);
+  const [confirmPlanChange,  setConfirmPlanChange]  = useState(false);
+  // Section collapse
+  const [programOpen,    setProgramOpen]    = useState(!initialGoals.plan);
+  const [activityOpen,   setActivityOpen]   = useState(true);
 
-  const PROGRAMS: Record<string, { label: string; emoji: string; desc: string; protPct: number; carbPct: number; fatPct: number; fiber: number; calorieBonus?: number }> = {
-    balanced: { label: "Équilibré",       emoji: "⚖️",  desc: "50% G · 25% P · 25% L",   protPct: 0.25, carbPct: 0.50, fatPct: 0.25, fiber: 30 },
-    keto:     { label: "Cétogène",        emoji: "🥑",  desc: "5% G · 25% P · 70% L",    protPct: 0.25, carbPct: 0.05, fatPct: 0.70, fiber: 25 },
-    lowcarb:  { label: "Sans sucre",      emoji: "🚫🍬", desc: "20% G · 30% P · 50% L",   protPct: 0.30, carbPct: 0.20, fatPct: 0.50, fiber: 28 },
-    highprot: { label: "Hyperprotéiné",   emoji: "💪",  desc: "25% G · 40% P · 35% L",   protPct: 0.40, carbPct: 0.25, fatPct: 0.35, fiber: 30 },
-    mediter:  { label: "Méditerranéen",   emoji: "🫒",  desc: "45% G · 20% P · 35% L",   protPct: 0.20, carbPct: 0.45, fatPct: 0.35, fiber: 35 },
-    bulk:     { label: "Prise de masse",  emoji: "🏋️",  desc: "45% G · 30% P · 25% L",   protPct: 0.30, carbPct: 0.45, fatPct: 0.25, fiber: 30, calorieBonus: 300 },
-  };
 
-  const WEEKLY_ADJUSTMENTS: Record<string, number> = { lose: -500, maintain: 0, gain: 300 };
+  // ── Auto-propose date cible quand programme + poids sont renseignés ──
+  useEffect(() => {
+    if (!selectedProgram || !currentWeight || !weight) return;
+    const cur = parseFloat(currentWeight);
+    const tgt = parseFloat(weight);
+    if (!cur || !tgt || Math.abs(cur - tgt) < 0.5 || cur <= tgt) return;
+    const a = parseInt(age), h = parseInt(height);
+    if (!a || !h || !gender) return;
+    const prog = PROGRAMS[selectedProgram];
+    if (!prog) return;
+    const tdee      = calcTDEE(cur, h, a, gender as Gender, activity);
+    const adj       = WEEKLY_ADJUSTMENTS[weeklyGoal] ?? 0;
+    const kcalTarget = Math.max(800, tdee + adj + (prog.calorieBonus ?? 0));
+    const deficit    = tdee - kcalTarget;
+    if (deficit <= 0) return;
+    const days      = Math.round((cur - tgt) * 7700 / deficit);
+    const proposed  = new Date();
+    proposed.setDate(proposed.getDate() + days);
+    setTargetDate(proposed.toISOString().split("T")[0]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgram, currentWeight, weight, weeklyGoal, activity, age, height, gender]);
 
   const handleCalcTDEE = () => {
     const a = parseInt(age);
@@ -732,6 +765,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     setCarbs(c.toString());
     setFiber(prog.fiber.toString());
     setSelectedProgram(key);
+    setProgramOpen(false); // collapse after selection
   };
 
   const buildGoalsObject = (): Partial<NutritionGoals> => {
@@ -756,14 +790,13 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   };
 
   const buildActivityPlan = (): ActivityPlan | null => {
-    const selectedEntries = Object.entries(apSelected);
-    if (selectedEntries.length === 0) return null;
-    const activities: PlannedActivity[] = selectedEntries.map(([id, durationMin]) => {
+    if (apSelected.size === 0) return null;
+    const activities: PlannedActivity[] = [...apSelected].map(id => {
       const catalog = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
       if (!catalog) return null;
-      return { id, label: catalog.label, emoji: catalog.emoji, category: catalog.category, durationMin, kcalPer30min: catalog.kcalPer30min };
+      return { id, label: catalog.label, emoji: catalog.emoji, category: catalog.category, durationMin: apMinDuration, kcalPer30min: catalog.kcalPer30min };
     }).filter((a): a is PlannedActivity => a !== null);
-    const weeklyKcalBurned = activities.reduce((sum, a) => sum + a.kcalPer30min * a.durationMin / 30, 0) * apSessions;
+    const weeklyKcalBurned = activities.reduce((sum, a) => sum + a.kcalPer30min * apMinDuration / 30, 0) * apSessions;
     return { sessionsPerWeek: apSessions, activities, weeklyKcalBurned };
   };
 
@@ -786,6 +819,14 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
 
   const handleStartPlan = async () => {
     if (!selectedProgram) return;
+    // Si un plan est déjà actif, demander confirmation
+    if (planActive) { setConfirmPlanChange(true); return; }
+    await doStartPlan();
+  };
+
+  const doStartPlan = async () => {
+    if (!selectedProgram) return;
+    setConfirmPlanChange(false);
     setPlanLoading(true);
     setPlanResult(null);
     try {
@@ -822,6 +863,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
           projectedWeeklyLossKg: json.projectedWeeklyLossKg,
           projectedNote:         json.projectedNote,
         });
+        setPlanActive(true);
       }
     } catch { /* noop */ }
     finally { setPlanLoading(false); }
@@ -1089,142 +1131,179 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
 
               {/* ── Plan d'activité ── */}
               <div>
-                <p className="label-xs mb-3 flex items-center gap-1.5">
-                  <Lightning size={11} />
-                  Plan d&apos;activité
-                </p>
-
-                {/* Sessions par semaine */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>Sessions par semaine</p>
-                    <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                      {apSessions}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}> séances</span>
-                    </span>
+                {/* Collapse header */}
+                <button className="w-full flex items-center justify-between mb-2"
+                  onClick={() => setActivityOpen(o => !o)}>
+                  <p className="label-xs flex items-center gap-1.5">
+                    <Lightning size={11} />
+                    Plan d&apos;activité
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {!activityOpen && apSelected.size > 0 && (
+                      <span className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>
+                        {apSelected.size} activité{apSelected.size > 1 ? "s" : ""} · {apSessions} séances/sem · {apMinDuration} min
+                      </span>
+                    )}
+                    {activityOpen
+                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />
+                    }
                   </div>
-                  <input
-                    type="range"
-                    min={1} max={7} step={1}
-                    value={apSessions}
-                    onChange={e => setApSessions(parseInt(e.target.value))}
-                    className="nt-slider"
-                    style={{
-                      background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, rgba(255,255,255,0.1) ${((apSessions - 1) / 6) * 100}%)`,
-                    }}
-                  />
-                  <div className="flex justify-between text-[9px] mt-1" style={{ color: "var(--text-muted)" }}>
-                    <span>1 séance</span>
-                    <span>7 séances</span>
-                  </div>
-                </div>
+                </button>
 
-                {/* Grille activités */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {ACTIVITY_CATALOG.map(act => {
-                    const id = `${act.category}-${act.label}`;
-                    const isSelected = id in apSelected;
-                    const dur = apSelected[id] ?? 30;
-                    return (
-                      <div key={id}
-                        className="rounded-xl p-3 transition-all"
-                        style={{
-                          background: isSelected ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${isSelected ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
-                        }}>
-                        <button
-                          onClick={() => {
-                            if (isSelected) {
-                              const next = { ...apSelected };
-                              delete next[id];
-                              setApSelected(next);
-                            } else {
-                              setApSelected({ ...apSelected, [id]: 30 });
-                            }
+                <AnimatePresence initial={false}>
+                  {activityOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+
+                      {/* Sessions par semaine */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>Séances par semaine</p>
+                          <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                            {apSessions}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}> séances</span>
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={1} max={7} step={1}
+                          value={apSessions}
+                          onChange={e => setApSessions(parseInt(e.target.value))}
+                          className="nt-slider"
+                          style={{
+                            background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, rgba(255,255,255,0.1) ${((apSessions - 1) / 6) * 100}%)`,
                           }}
-                          className="flex items-center gap-2 w-full text-left mb-1">
-                          <span className="text-base">{act.emoji}</span>
-                          <p className="text-[12px] font-medium flex-1 leading-tight" style={{ color: isSelected ? "var(--calories)" : "var(--text-primary)" }}>
-                            {act.label}
-                          </p>
-                          <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ background: isSelected ? "var(--calories)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
-                            {isSelected && <CheckCircle size={10} weight="fill" color="#fff" />}
-                          </div>
-                        </button>
-                        <p className="text-[9px] mb-1.5" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
-                        {isSelected && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            style={{ overflow: "hidden" }}>
-                            <div className="flex gap-1 flex-wrap">
-                              {[30, 45, 60, 90].map(d => (
-                                <button key={d}
-                                  onClick={() => setApSelected({ ...apSelected, [id]: d })}
-                                  className="px-2 py-0.5 rounded-md text-[10px] transition-colors"
-                                  style={{
-                                    background: dur === d ? "var(--calories)" : "rgba(255,255,255,0.06)",
-                                    color: dur === d ? "#fff" : "var(--text-muted)",
-                                    border: `1px solid ${dur === d ? "var(--calories)" : "var(--border)"}`,
-                                  }}>
-                                  {d}min
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
+                        />
+                        <div className="flex justify-between text-[9px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <span>1 séance</span>
+                          <span>7 séances</span>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Total estimé */}
-                {Object.keys(apSelected).length > 0 && (() => {
-                  const totalPerSession = Object.entries(apSelected).reduce((sum, [id, dur]) => {
-                    const act = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
-                    return sum + (act ? act.kcalPer30min * dur / 30 : 0);
-                  }, 0);
-                  const weeklyKcal = Math.round(totalPerSession * apSessions);
-                  return (
-                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-                      style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
-                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Total estimé / semaine</p>
-                      <p className="text-[14px] font-bold" style={{ color: "var(--calories)" }}>~{weeklyKcal} kcal</p>
-                    </div>
-                  );
-                })()}
+                      {/* Durée minimale par séance */}
+                      <div className="mb-4">
+                        <p className="text-[11px] font-medium mb-2" style={{ color: "var(--calories)" }}>
+                          Durée minimale par séance
+                        </p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {[20, 30, 45, 60, 90].map(d => (
+                            <button key={d} onClick={() => setApMinDuration(d)}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                              style={{
+                                background: apMinDuration === d ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                                color: apMinDuration === d ? "#fff" : "var(--text-muted)",
+                                border: `1px solid ${apMinDuration === d ? "var(--calories)" : "var(--border)"}`,
+                              }}>
+                              {d} min
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Grille activités */}
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {ACTIVITY_CATALOG.map(act => {
+                          const id = `${act.category}-${act.label}`;
+                          const isSelected = apSelected.has(id);
+                          return (
+                            <button key={id}
+                              onClick={() => {
+                                const next = new Set(apSelected);
+                                if (isSelected) next.delete(id); else next.add(id);
+                                setApSelected(next);
+                              }}
+                              className="rounded-xl p-3 text-left transition-all"
+                              style={{
+                                background: isSelected ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.04)",
+                                border: `1px solid ${isSelected ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
+                              }}>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-base">{act.emoji}</span>
+                                <p className="text-[12px] font-medium flex-1 leading-tight" style={{ color: isSelected ? "var(--calories)" : "var(--text-primary)" }}>
+                                  {act.label}
+                                </p>
+                                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                                  style={{ background: isSelected ? "var(--calories)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
+                                  {isSelected && <CheckCircle size={10} weight="fill" color="#fff" />}
+                                </div>
+                              </div>
+                              <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Total estimé */}
+                      {apSelected.size > 0 && (() => {
+                        const totalPerSession = [...apSelected].reduce((sum, id) => {
+                          const act = ACTIVITY_CATALOG.find(a => `${a.category}-${a.label}` === id);
+                          return sum + (act ? act.kcalPer30min * apMinDuration / 30 : 0);
+                        }, 0);
+                        const weeklyKcal = Math.round(totalPerSession * apSessions);
+                        return (
+                          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                            style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
+                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                              {apSelected.size} activité{apSelected.size > 1 ? "s" : ""} · {apSessions} séances/sem de {apMinDuration} min
+                            </p>
+                            <p className="text-[14px] font-bold" style={{ color: "var(--calories)" }}>~{weeklyKcal} kcal</p>
+                          </div>
+                        );
+                      })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Programmes nutritionnels ── */}
               <div>
-                <p className="label-xs mb-2 flex items-center gap-1.5">
-                  <Lightning size={11} />
-                  Programme nutritionnel
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(PROGRAMS).map(([key, prog]) => {
-                    const active = selectedProgram === key;
-                    return (
-                      <button key={key} onClick={() => handleApplyProgram(key)}
-                        className="flex flex-col items-start p-3 rounded-xl text-left transition-all"
-                        style={{
-                          background: active ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${active ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
-                        }}>
-                        <span className="text-base mb-1">{prog.emoji}</span>
-                        <p className="text-[12px] font-semibold leading-tight" style={{ color: active ? "var(--calories)" : "var(--text-primary)" }}>
-                          {prog.label}
-                        </p>
-                        <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
-                  Le programme calcule automatiquement les macros selon ton profil et l'objectif sélectionné.
-                </p>
+                <button className="w-full flex items-center justify-between mb-2"
+                  onClick={() => setProgramOpen(o => !o)}>
+                  <p className="label-xs flex items-center gap-1.5">
+                    <Lightning size={11} />
+                    Programme nutritionnel
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {selectedProgram && !programOpen && (
+                      <span className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>
+                        {PROGRAMS[selectedProgram].emoji} {PROGRAMS[selectedProgram].label}
+                      </span>
+                    )}
+                    {programOpen
+                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />
+                    }
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {programOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(PROGRAMS).map(([key, prog]) => {
+                          const active = selectedProgram === key;
+                          return (
+                            <button key={key} onClick={() => handleApplyProgram(key)}
+                              className="flex flex-col items-start p-3 rounded-xl text-left transition-all"
+                              style={{
+                                background: active ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                                border: `1px solid ${active ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
+                              }}>
+                              <span className="text-base mb-1">{prog.emoji}</span>
+                              <p className="text-[12px] font-semibold leading-tight" style={{ color: active ? "var(--calories)" : "var(--text-primary)" }}>
+                                {prog.label}
+                              </p>
+                              <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                        Le programme calcule automatiquement les macros selon ton profil.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── TDEE Calculator ── */}
@@ -1361,6 +1440,72 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 }
               </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Confirmation dialog : changement de plan ── */}
+      <AnimatePresence>
+        {confirmPlanChange && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={() => setConfirmPlanChange(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-2xl p-5 max-w-xs w-full space-y-4"
+              style={{ background: "var(--glass-bg)", border: "1px solid var(--border-strong)" }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(239,68,68,0.12)" }}>
+                  <Warning size={20} weight="fill" style={{ color: "#ef4444" }} />
+                </div>
+                <div>
+                  <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>
+                    Changer de plan ?
+                  </p>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    Un plan est déjà actif
+                  </p>
+                </div>
+              </div>
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                Démarrer un nouveau plan réinitialisera le suivi de progression et les objectifs associés. Cette action ne peut pas être annulée.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmPlanChange(false)}
+                  className="flex-1 btn text-[12px]"
+                  style={{
+                    height: "36px",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-muted)",
+                  }}>
+                  Annuler
+                </button>
+                <button
+                  onClick={doStartPlan}
+                  className="flex-1 btn text-[12px]"
+                  style={{
+                    height: "36px",
+                    background: "rgba(239,68,68,0.15)",
+                    border: "1px solid rgba(239,68,68,0.4)",
+                    color: "#ef4444",
+                  }}>
+                  Confirmer
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
