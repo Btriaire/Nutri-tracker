@@ -370,6 +370,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         time:     nowHHMM(),
       };
       await saveSymptoms([...symptoms, entry]);
+      setSymCatOpen(null); // ferme le bandeau après sélection
     } finally { setSymSaving(false); }
   };
 
