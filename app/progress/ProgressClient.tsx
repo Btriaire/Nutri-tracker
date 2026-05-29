@@ -847,8 +847,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Chart */}
                 {weightChartData.length > 0 ? (
                   <>
+                    {/* Scrollable wrapper — min 52px per data point so labels never overlap */}
+                    <div style={{ overflowX: "auto", overflowY: "hidden", marginLeft: "-4px", marginRight: "-4px" }}>
+                    <div style={{ width: `${Math.max(100, weightChartData.length * 52)}px`, minWidth: "100%" }}>
                     <ResponsiveContainer width="100%" height={220}>
-                      <ComposedChart data={weightChartData} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                      <ComposedChart data={weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.22} />
@@ -861,7 +864,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }}
-                          tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                          tickLine={false} axisLine={false} interval={0} />
                         {/* Left Y: weight */}
                         <YAxis yAxisId="w" orientation="left"
                           tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
@@ -942,6 +945,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           activeDot={{ r: 4 }} connectNulls />
                       </ComposedChart>
                     </ResponsiveContainer>
+                    </div>{/* inner width */}
+                    </div>{/* scroll wrapper */}
 
                     {/* Legend */}
                     <div className="flex items-center gap-4 mt-2 justify-center flex-wrap">
