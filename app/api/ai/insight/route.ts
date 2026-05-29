@@ -7,36 +7,63 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 type InsightType = "journal" | "dashboard" | "activity" | "progress";
 
+// ─── Time-of-day context ──────────────────────────────────────────────────────
+
+function timeContext(hour: number): string {
+  if (hour >= 5  && hour < 10) return "MATIN TÔTOT (entre 5h et 10h) — la journée démarre à peine. Les données sont très partielles. Ne juge pas les apports comme insuffisants : c'est normal à cette heure. Concentre-toi sur le sommeil, le démarrage et donne une intention positive pour la journée.";
+  if (hour >= 10 && hour < 13) return "MATINÉE (entre 10h et 13h) — la journée est bien entamée mais loin d'être finie. Les données alimentaires sont probablement partielles. Pondère tes remarques en conséquence, reste encourageant pour la suite.";
+  if (hour >= 13 && hour < 17) return "APRÈS-MIDI (entre 13h et 17h) — la moitié de la journée est passée. Les données sont relativement représentatives. Tu peux faire une analyse plus complète tout en restant positif sur la suite.";
+  if (hour >= 17 && hour < 21) return "FIN DE JOURNÉE (entre 17h et 21h) — la journée est quasi complète. Les données sont représentatives. Tu peux faire un bilan complet et précis.";
+  return "SOIRÉE / NUIT (après 21h ou avant 5h) — la journée est terminée ou presque. Fais un bilan complet. Si des données manquent, c'est qu'elles n'ont pas été saisies.";
+}
+
 // ─── System prompts per context ───────────────────────────────────────────────
 
-const SYSTEM_PROMPTS: Record<InsightType, string> = {
-  journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour et les objectifs.
+function buildSystemPrompt(type: InsightType, hour: number): string {
+  const ctx = timeContext(hour);
+  const timeNote = `\n\nCONTEXTE TEMPOREL : ${ctx}`;
+
+  const base: Record<InsightType, string> = {
+    journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour et les objectifs.
 Rédige une analyse nutritionnelle factuelle, succincte et positive, en 2-3 phrases maximum.
 Compare les apports réels aux objectifs (calories, protéines, glucides, lipides, fibres, eau).
 Identifie 1 point fort et 1 piste d'amélioration si nécessaire.
 Réponds directement sans intro ni conclusion générique.`,
 
-  dashboard: `Tu es un coach santé bienveillant mais ambitieux. On te donne un bilan de la journée.
+    dashboard: `Tu es un coach santé bienveillant mais ambitieux. On te donne un bilan de la journée.
 Analyse la situation du jour (sommeil, calories, activité, pas, FC, hydratation) en 2-3 phrases factuelles et positives.
 Si un plan est actif, mets les résultats en perspective par rapport aux objectifs du plan.
 Termine sur une note motivante et concrète pour la suite.
 Réponds directement sans intro ni conclusion générique.`,
 
-  activity: `Tu es un coach sportif expert. On te donne les données d'activité du jour.
+    activity: `Tu es un coach sportif expert. On te donne les données d'activité du jour.
 Analyse les performances comme un vrai coach : durée, intensité, calories brûlées, pas, minutes actives.
 Compare aux objectifs d'activité fixés. Sois factuel, précis, motivant.
 2-3 phrases maximum. Propose une observation concrète ou un conseil.
 Réponds directement sans intro ni conclusion générique.`,
 
-  progress: `Tu es un expert en suivi santé et performance. On te donne des données de tendance sur plusieurs semaines.
+    progress: `Tu es un expert en suivi santé et performance. On te donne des données de tendance sur plusieurs semaines.
 Fais une mise en perspective long terme de tous les paramètres (poids, calories, activité, sommeil, FC) en 3-4 phrases.
 Identifie les tendances positives et les axes de progression. Sois factuel, optimiste et motivant.
 Réponds directement sans intro ni conclusion générique.`,
-};
+  };
+
+  // Progress is long-term → time of day is less relevant, skip the note
+  if (type === "progress") return base[type];
+  return base[type] + timeNote;
+}
 
 // ─── User message builders ────────────────────────────────────────────────────
 
 function buildUserMessage(type: InsightType, data: Record<string, unknown>): string {
+  const hour = typeof data._hourOfDay === "number" ? data._hourOfDay : new Date().getHours();
+  const timeLabel = hour >= 5 && hour < 10 ? `🕐 Il est ${hour}h — début de matinée`
+    : hour >= 10 && hour < 13 ? `🕙 Il est ${hour}h — matinée`
+    : hour >= 13 && hour < 17 ? `🕑 Il est ${hour}h — après-midi`
+    : hour >= 17 && hour < 21 ? `🕔 Il est ${hour}h — fin de journée`
+    : `🌙 Il est ${hour}h — soirée/nuit`;
+  const timePrefix = type !== "progress" ? `${timeLabel}\n\n` : "";
+  void hour; // used above
   switch (type) {
     case "journal": {
       const { entries, totals, goals, waterMl, waterGoal } = data as {
@@ -50,7 +77,7 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
         .slice(0, 20)
         .map((e) => `- ${e.name} (${e.grams}g, ${e.calories} kcal)`)
         .join("\n");
-      return `Aliments consommés aujourd'hui :
+      return `${timePrefix}Aliments consommés aujourd'hui :
 ${foodList || "Aucun aliment enregistré"}
 
 Totaux :
@@ -73,7 +100,7 @@ Totaux :
         planLabel?: string; planDay?: number; planEmoji?: string;
         projectedTargetDate?: string;
       };
-      return `Bilan du jour :
+      return `${timePrefix}Bilan du jour :
 - Sommeil : ${d.sleepMinutes !== null ? `${Math.round((d.sleepMinutes ?? 0) / 60 * 10) / 10}h` : "non renseigné"} (objectif : ${Math.round((d.sleepGoalMin ?? 480) / 60 * 10) / 10}h)
 - Calories consommées : ${d.caloriesConsumed} / ${d.caloriesGoal} kcal
 - Calories brûlées (activité) : ${d.burned !== null ? `${d.burned} kcal` : "non renseigné"}
@@ -96,7 +123,7 @@ ${d.planLabel ? `- Plan actif : ${d.planEmoji ?? ""} ${d.planLabel} — Jour ${d
         ...(d.sessions ?? []).map((s) => `- ${s.name} : ${s.durationMin} min${s.calories ? `, ${s.calories} kcal` : ""}`),
         ...(d.manualActivities ?? []).map((a) => `- ${a.name} : ${a.durationMin} min${a.caloriesBurned ? `, ${a.caloriesBurned} kcal` : ""}`),
       ];
-      return `Activités du jour :
+      return `${timePrefix}Activités du jour :
 ${allSessions.length ? allSessions.join("\n") : "Aucune activité enregistrée"}
 
 Métriques :
@@ -148,7 +175,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
-  const userMessage = buildUserMessage(type, data);
+  const hour        = typeof data._hourOfDay === "number" ? (data._hourOfDay as number) : new Date().getHours();
+  const systemPrompt = buildSystemPrompt(type, hour);
+  const userMessage  = buildUserMessage(type, data);
 
   try {
     const res = await fetch(GROQ_URL, {
@@ -159,7 +188,7 @@ export async function POST(req: NextRequest) {
         temperature: 0.5,
         max_tokens: 200,
         messages: [
-          { role: "system", content: SYSTEM_PROMPTS[type] },
+          { role: "system", content: systemPrompt },
           { role: "user",   content: userMessage },
         ],
       }),

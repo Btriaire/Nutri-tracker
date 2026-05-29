@@ -26,7 +26,8 @@ export default function AIInsightBox({ type, data, label, delay = 600 }: Props) 
       const res = await fetch("/api/ai/insight", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ type, data }),
+        // Always inject local hour so the AI can weight partial-day results
+        body:    JSON.stringify({ type, data: { ...data, _hourOfDay: new Date().getHours() } }),
       });
       if (!res.ok) throw new Error("API error");
       const json = await res.json() as { insight: string };
