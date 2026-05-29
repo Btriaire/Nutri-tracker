@@ -56,62 +56,72 @@ interface ModalProps {
 }
 
 function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
-  const initH = current ? Math.floor(current / 60) : 7;
-  const initM = current ? current % 60 : 0;
+  const initH = current != null ? Math.floor(current / 60) : 7;
+  const initM = current != null ? current % 60 : 0;
+  const initTotal = initH * 60 + initM;
+
   const [hours,    setHours]    = useState(initH);
   const [minutes,  setMinutes]  = useState(initM);
   const [saving,   setSaving]   = useState(false);
   const [saved,    setSaved]    = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const totalMin    = hours * 60 + minutes;
-  const changed     = totalMin !== (current ?? 0);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedRef = useRef<number>(current ?? 0);
+  const totalMin       = hours * 60 + minutes;
+  // "changed" = user has moved away from the initial value
+  const changed        = totalMin !== initTotal;
+  const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track what's actually saved in Firestore (undefined = nothing saved yet this session)
+  const lastSavedRef   = useRef<number | undefined>(current ?? undefined);
+  // Only start debouncing after the user's first interaction
+  const interactedRef  = useRef(false);
 
-  // Auto-save helper
+  // Auto-save helper — robust: only marks saved AFTER successful fetch
   async function doSave(min: number) {
     if (min < 1) return;
-    if (min === lastSavedRef.current) return;   // skip if already saved
-    lastSavedRef.current = min;
-    setSaving(true);
-    await fetch("/api/sleep", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date, sleepMinutes: min }),
-    });
-    setSaving(false);
-    setSaved(true);
-    onSaved(date, min);
+    if (min === lastSavedRef.current) return;   // already persisted
+    try {
+      setSaving(true);
+      const res = await fetch("/api/sleep", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, sleepMinutes: min }),
+      });
+      if (res.ok) {
+        lastSavedRef.current = min;             // only on success
+        setSaved(true);
+        onSaved(date, min);
+      }
+    } catch { /* network error — will retry on next close */ }
+    finally { setSaving(false); }
   }
 
-  // Debounce auto-save on every H/M change (600ms)
+  // Debounce auto-save on every H/M change (700ms) — only after first interaction
   useEffect(() => {
-    if (totalMin < 1 || !changed) return;
+    if (!interactedRef.current || totalMin < 1) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      doSave(totalMin);
-    }, 600);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    debounceRef.current = setTimeout(() => { doSave(totalMin); }, 700);
+    // Cleanup: cancel debounce on deps-change, but NOT on unmount (close handles that)
+    return () => { if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; } };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hours, minutes]);
 
-  // Preset click → save + close immediately
+  // Called when user touches H or M
+  function markInteracted() { interactedRef.current = true; }
+
+  // Preset click → cancel debounce, save immediately, close
   async function handlePreset(min: number) {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+    interactedRef.current = true;
     setHours(Math.floor(min / 60));
     setMinutes(min % 60);
     await doSave(min);
     onClose();
   }
 
-  // Close backdrop → flush pending debounce then close
-  async function handleBackdropClose() {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-      if (changed && totalMin >= 1) await doSave(totalMin);
-    }
+  // Close (X button or backdrop) → always save if changed
+  async function handleClose() {
+    if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+    if (changed && totalMin >= 1) await doSave(totalMin);
     onClose();
   }
 
@@ -130,7 +140,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
       <motion.div
         className="fixed inset-0 z-50 flex items-end justify-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={handleBackdropClose}
+        onClick={handleClose}
         style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
       >
         <motion.div
@@ -156,7 +166,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
                   {deleting ? <Spinner size={13} className="animate-spin" /> : <Trash size={13} />}
                 </button>
               )}
-              <button onClick={handleBackdropClose}
+              <button onClick={handleClose}
                 className="w-8 h-8 flex items-center justify-center rounded-lg"
                 style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
                 {saving ? <Spinner size={14} className="animate-spin" /> : <X size={16} />}
@@ -168,7 +178,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
           <div className="flex items-center justify-center gap-4 mb-6">
             {/* Hours */}
             <div className="flex flex-col items-center gap-2">
-              <button onClick={() => setHours(h => Math.min(h + 1, 14))}
+              <button onClick={() => { markInteracted(); setHours(h => Math.min(h + 1, 14)); }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
                 style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▲</button>
               <div className="w-20 h-14 rounded-2xl flex flex-col items-center justify-center"
@@ -176,7 +186,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
                 <span className="text-[28px] font-bold tabular-nums" style={{ color: "#7986CB" }}>{hours}</span>
                 <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>heures</span>
               </div>
-              <button onClick={() => setHours(h => Math.max(h - 1, 0))}
+              <button onClick={() => { markInteracted(); setHours(h => Math.max(h - 1, 0)); }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
                 style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▼</button>
             </div>
@@ -185,7 +195,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
 
             {/* Minutes */}
             <div className="flex flex-col items-center gap-2">
-              <button onClick={() => setMinutes(m => m >= 45 ? 0 : m + 15)}
+              <button onClick={() => { markInteracted(); setMinutes(m => m >= 45 ? 0 : m + 15); }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
                 style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▲</button>
               <div className="w-20 h-14 rounded-2xl flex flex-col items-center justify-center"
@@ -193,7 +203,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
                 <span className="text-[28px] font-bold tabular-nums" style={{ color: "#7986CB" }}>{String(minutes).padStart(2, "0")}</span>
                 <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>min</span>
               </div>
-              <button onClick={() => setMinutes(m => m === 0 ? 45 : m - 15)}
+              <button onClick={() => { markInteracted(); setMinutes(m => m === 0 ? 45 : m - 15); }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
                 style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▼</button>
             </div>
