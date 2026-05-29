@@ -168,15 +168,34 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
     setTemplates((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // ── Launch template → pre-fill log form
-  const launchTemplate = (tpl: WorkoutTemplate) => {
-    setForm({
-      actType:    tpl.activityType,
-      duration:   String(tpl.defaultDurationMin),
-      customName: tpl.name,
-      calories:   tpl.defaultCalories ? String(tpl.defaultCalories) : String(estimateCalories(tpl.activityType, tpl.defaultDurationMin)),
-    });
-    setShowForm(true);
+  // ── Launch template → save directly (no extra click needed)
+  const launchTemplate = async (tpl: WorkoutTemplate) => {
+    setSaving(true);
+    setSaveError(false);
+    try {
+      const res = await fetch("/api/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          name:           tpl.name,
+          activityType:   tpl.activityType,
+          durationMin:    tpl.defaultDurationMin,
+          caloriesBurned: tpl.defaultCalories ?? null,
+        }),
+      });
+      if (!res.ok) { setSaveError(true); return; }
+      const json = await res.json() as { activity?: ManualActivity };
+      if (json.activity) {
+        setActivities((prev) => [json.activity!, ...prev]);
+      } else {
+        setSaveError(true);
+      }
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const totalBurned = [
@@ -397,8 +416,10 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                   <button
                     onClick={() => launchTemplate(tpl)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
-                    style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}>
-                    <Plus size={12} weight="bold" /> Saisir
+                    style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}
+                    disabled={saving}>
+                    {saving ? <Spinner size={11} className="animate-spin" /> : <Check size={12} weight="bold" />}
+                    Enregistrer
                   </button>
                   <button onClick={() => handleDeleteTemplate(tpl.id)}
                     className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
