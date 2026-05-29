@@ -320,7 +320,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
         {/* ── AI Insight ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }}
           className="mb-5">
-          <AIInsightBox type="progress" data={progressInsightData} delay={1000} />
+          <AIInsightBox type="progress" data={progressInsightData} delay={1000} autoLoad />
         </motion.div>
 
         {/* Range selector */}

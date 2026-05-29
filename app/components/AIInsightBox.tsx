@@ -5,28 +5,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkle, ArrowsClockwise } from "@phosphor-icons/react";
 
 interface Props {
-  type:    "journal" | "dashboard" | "activity" | "progress";
+  type:       "journal" | "dashboard" | "activity" | "progress";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data:    Record<string, any>;
-  label?:  string;   // optional override for the header label
-  delay?:  number;   // ms before auto-loading (default 600)
+  data:       Record<string, any>;
+  label?:     string;    // optional override for the header label
+  delay?:     number;    // ms before auto-loading (default 600)
+  autoLoad?:  boolean;   // si false (défaut) : attend un clic utilisateur
 }
 
-export default function AIInsightBox({ type, data, label, delay = 600 }: Props) {
+export default function AIInsightBox({ type, data, label, delay = 600, autoLoad = false }: Props) {
   const [text,    setText]    = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(false);
-  // Track whether we've done the initial load
+  const [launched, setLaunched] = useState(false);
   const didLoad = useRef(false);
 
   const load = useCallback(async () => {
+    setLaunched(true);
     setLoading(true);
     setError(false);
     try {
       const res = await fetch("/api/ai/insight", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        // Always inject local hour so the AI can weight partial-day results
         body:    JSON.stringify({ type, data: { ...data, _hourOfDay: new Date().getHours() } }),
       });
       if (!res.ok) throw new Error("API error");
@@ -39,13 +40,14 @@ export default function AIInsightBox({ type, data, label, delay = 600 }: Props) 
     }
   }, [type, data]);
 
-  // Auto-load once on mount
+  // Auto-load seulement si autoLoad=true
   useEffect(() => {
+    if (!autoLoad) return;
     if (didLoad.current) return;
     didLoad.current = true;
     const t = setTimeout(load, delay);
     return () => clearTimeout(t);
-  }, [load, delay]);
+  }, [autoLoad, load, delay]);
 
   // ── Label per type
   const LABELS: Record<Props["type"], string> = {
@@ -125,6 +127,22 @@ export default function AIInsightBox({ type, data, label, delay = 600 }: Props) 
             />
           </button>
         </div>
+
+        {/* Bouton initial si pas encore lancé */}
+        {!launched && !autoLoad && (
+          <button
+            onClick={load}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-medium transition-all"
+            style={{
+              background: "rgba(139,92,246,0.08)",
+              border: "1px solid rgba(139,92,246,0.2)",
+              color: "#a78bfa",
+            }}
+          >
+            <Sparkle size={12} weight="fill" />
+            Lancer l&apos;analyse IA
+          </button>
+        )}
 
         {/* Content */}
         <AnimatePresence mode="wait">
