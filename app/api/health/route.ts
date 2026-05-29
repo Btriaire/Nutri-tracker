@@ -17,6 +17,7 @@ function strip(e: HealthEntry) {
     notes:         e.notes         ?? null,
     medications:   e.medications   ?? [],
     symptoms:      e.symptoms      ?? [],
+    aiSynthesis:   e.aiSynthesis   ?? null,
   };
 }
 

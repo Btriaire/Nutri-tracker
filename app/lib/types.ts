@@ -430,6 +430,19 @@ export interface SymptomEntry {
   time?:     string;  // "HH:MM"
 }
 
+export interface AISynthesisResult {
+  alertLevel:      "vert" | "orange" | "rouge";
+  alertLabel:      string;
+  summary:         string;
+  vitaux:          string;
+  symptomes:       string | null;
+  nutrition:       string;
+  activite:        string | null;
+  recommandations: string[];
+  consulter:       string | null;
+  generatedAt?:    string; // ISO
+}
+
 export interface HealthEntry {
   date:           string;
   bloodPressure:  BloodPressureReading[];
@@ -440,6 +453,7 @@ export interface HealthEntry {
   notes?:         string;
   medications?:   MedicationEntry[];
   symptoms?:      SymptomEntry[];
+  aiSynthesis?:   AISynthesisResult;
   updatedAt?:     Timestamp;
 }
 

@@ -17,6 +17,9 @@ function strip(e: HealthEntry): HealthData {
     spO2:          e.spO2,
     temperatureC:  e.temperatureC,
     notes:         e.notes,
+    medications:   e.medications  ?? [],
+    symptoms:      e.symptoms     ?? [],
+    aiSynthesis:   e.aiSynthesis  ?? undefined,
   };
 }
 

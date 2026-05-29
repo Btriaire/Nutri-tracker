@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { HealthEntry, DayLog, FitnessDay, UserProfile } from "@/app/lib/types";
+import type { HealthEntry, DayLog, FitnessDay, UserProfile, AISynthesisResult as StoredSynthesis } from "@/app/lib/types";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -44,17 +44,7 @@ Règles importantes :
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 
-export interface AISynthesisResult {
-  alertLevel:      "vert" | "orange" | "rouge";
-  alertLabel:      string;
-  summary:         string;
-  vitaux:          string;
-  symptomes:       string | null;
-  nutrition:       string;
-  activite:        string | null;
-  recommandations: string[];
-  consulter:       string | null;
-}
+export type { StoredSynthesis as AISynthesisResult };
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -188,9 +178,16 @@ ${activityLines.length ? activityLines.join("\n") : "Aucune donnée d'activité"
 
     const data = await res.json() as { choices: { message: { content: string } }[] };
     const content = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as AISynthesisResult;
+    const parsed = JSON.parse(content) as StoredSynthesis;
 
-    return NextResponse.json({ ok: true, ...parsed });
+    // Persist to Firestore so it can be restored and used in reports
+    const withMeta: StoredSynthesis = { ...parsed, generatedAt: new Date().toISOString() };
+    await db.doc(`users/${userId}/healthLog/${date}`).set(
+      { date, aiSynthesis: withMeta },
+      { merge: true }
+    );
+
+    return NextResponse.json({ ok: true, ...withMeta });
   } catch (e) {
     console.error("AI synthesis error:", e);
     return NextResponse.json({ error: "Synthesis failed" }, { status: 500 });

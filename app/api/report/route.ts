@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FitnessDay, HealthEntry, UserProfile } from "@/app/lib/types";
+import type { DayLog, FitnessDay, HealthEntry, UserProfile, AISynthesisResult } from "@/app/lib/types";
 
 // ─── Output types ─────────────────────────────────────────────────────────────
 
@@ -42,6 +42,12 @@ export interface TopSymptom {
   name:     string;
   category: string;
   count:    number;
+}
+
+export interface SymptomHistoryDay {
+  date:     string;
+  symptoms: { name: string; category: string; severity?: string; time?: string }[];
+  synthesis?: { alertLevel: string; alertLabel: string; summary: string } | null;
 }
 
 export interface ReportData {
@@ -103,7 +109,9 @@ export interface ReportData {
     topSymptoms:  TopSymptom[];
     medicationsTotal: number;
     daily:        DayHealth[];
+    symptomHistory: SymptomHistoryDay[];
   };
+  latestSynthesis: AISynthesisResult | null;
 }
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -255,6 +263,33 @@ export async function GET(req: NextRequest) {
   }
   const topSymptoms = Object.values(symCount).sort((a, b) => b.count - a.count).slice(0, 5);
 
+  // Symptom history (days with at least one symptom, sorted newest first)
+  const symptomHistory: SymptomHistoryDay[] = healthSnaps.docs
+    .map(d => {
+      const h = d.data() as HealthEntry;
+      return {
+        date:     h.date ?? d.id,
+        symptoms: (h.symptoms ?? []).map(s => ({
+          name:     s.name,
+          category: s.category,
+          severity: s.severity,
+          time:     s.time,
+        })),
+        synthesis: h.aiSynthesis
+          ? { alertLevel: h.aiSynthesis.alertLevel, alertLabel: h.aiSynthesis.alertLabel, summary: h.aiSynthesis.summary }
+          : null,
+      };
+    })
+    .filter(d => d.symptoms.length > 0)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  // Latest AI synthesis found in the period
+  const allSyntheses = healthSnaps.docs
+    .map(d => (d.data() as HealthEntry).aiSynthesis)
+    .filter((s): s is AISynthesisResult => !!s)
+    .sort((a, b) => (b.generatedAt ?? "").localeCompare(a.generatedAt ?? ""));
+  const latestSynthesis = allSyntheses[0] ?? null;
+
   const avgHR  = hrArr.length  ? Math.round(hrArr.reduce((a, b) => a + b, 0)  / hrArr.length)  : null;
   const avgSys = sysArr.length ? Math.round(sysArr.reduce((a, b) => a + b, 0) / sysArr.length) : null;
   const avgDia = diaArr.length ? Math.round(diaArr.reduce((a, b) => a + b, 0) / diaArr.length) : null;
@@ -328,7 +363,9 @@ export async function GET(req: NextRequest) {
       topSymptoms,
       medicationsTotal,
       daily: dailyHealth,
+      symptomHistory,
     },
+    latestSynthesis,
   };
 
   return NextResponse.json(data);

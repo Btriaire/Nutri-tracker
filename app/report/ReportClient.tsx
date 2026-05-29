@@ -9,6 +9,7 @@ import {
   Heart, Barbell, Leaf, Drop, Footprints, Moon, Fire,
   ArrowDown, ArrowUp, Minus, Warning,
 } from "@phosphor-icons/react";
+import { format as dateFnsFormat, parseISO } from "date-fns";
 import type { ReportData, DayNutrition, DayActivity } from "@/app/api/report/route";
 
 // ─── Tiny SVG bar chart ───────────────────────────────────────────────────────
@@ -753,6 +754,169 @@ export default function ReportClient() {
                   </div>
                 )}
               </div>
+
+              {/* ═══════════════════════════════════════════════════════════
+                  HISTORIQUE DES SYMPTÔMES
+              ═══════════════════════════════════════════════════════════ */}
+              {data.health.symptomHistory.length > 0 && (
+                <div className="glass p-5 mb-5 report-page-break">
+                  <SectionTitle icon="🩺" title="Historique des symptômes" color="#fb923c" />
+
+                  <div className="space-y-4">
+                    {data.health.symptomHistory.map(day => {
+                      const SCAT_COLOR: Record<string, string> = {
+                        douleur: "#f87171", digestif: "#fb923c", respiratoire: "#60a5fa",
+                        general: "#fbbf24", neurologique: "#a78bfa", cutane: "#34d399",
+                      };
+                      const SCAT_ICON: Record<string, string> = {
+                        douleur: "🤕", digestif: "🫃", respiratoire: "🫁",
+                        general: "🌡️", neurologique: "🧠", cutane: "🩹",
+                      };
+                      const SEV_COLOR: Record<string, string> = {
+                        "léger": "#34d399", "modéré": "#fbbf24", "sévère": "#f87171",
+                      };
+                      const ALERT_CFG: Record<string, { color: string; dot: string }> = {
+                        vert:   { color: "#34d399", dot: "🟢" },
+                        orange: { color: "#fbbf24", dot: "🟡" },
+                        rouge:  { color: "#f87171", dot: "🔴" },
+                      };
+                      return (
+                        <div key={day.date} className="report-card">
+                          {/* Date header */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#fb923c" }} />
+                            <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                              {dateFnsFormat(parseISO(day.date + "T12:00:00"), "EEEE d MMMM yyyy", { locale: fr })}
+                            </p>
+                            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                              {day.symptoms.length} symptôme{day.symptoms.length > 1 ? "s" : ""}
+                            </span>
+                          </div>
+
+                          {/* Symptom chips */}
+                          <div className="flex flex-wrap gap-1.5 pl-3.5 mb-2">
+                            {day.symptoms.map((s, i) => {
+                              const catColor = SCAT_COLOR[s.category] ?? "#fb923c";
+                              const sevColor = s.severity ? (SEV_COLOR[s.severity] ?? catColor) : catColor;
+                              return (
+                                <span key={i}
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                                  style={{ background: `${sevColor}14`, border: `1px solid ${sevColor}44`, color: sevColor }}>
+                                  <span>{SCAT_ICON[s.category] ?? "🩺"}</span>
+                                  {s.name}
+                                  {s.severity && <span style={{ opacity: 0.7 }}>· {s.severity}</span>}
+                                  {s.time && <span style={{ opacity: 0.5 }}>· {s.time}</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+
+                          {/* AI synthesis badge */}
+                          {day.synthesis && (() => {
+                            const cfg = ALERT_CFG[day.synthesis.alertLevel] ?? ALERT_CFG.vert;
+                            return (
+                              <div className="flex items-start gap-2 pl-3.5 py-1.5 rounded-lg"
+                                style={{ background: `${cfg.color}0d`, border: `1px solid ${cfg.color}30` }}>
+                                <span className="text-[11px] flex-shrink-0">{cfg.dot}</span>
+                                <div>
+                                  <p className="text-[10px] font-semibold" style={{ color: cfg.color }}>
+                                    Nutri-IA-Med · {day.synthesis.alertLabel}
+                                  </p>
+                                  <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                                    {day.synthesis.summary}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════
+                  SYNTHÈSE IA (dernière disponible)
+              ═══════════════════════════════════════════════════════════ */}
+              {data.latestSynthesis && (() => {
+                const s = data.latestSynthesis;
+                const ALERT_CFG: Record<string, { color: string; bg: string; border: string; dot: string }> = {
+                  vert:   { color: "#34d399", bg: "rgba(52,211,153,0.10)",  border: "rgba(52,211,153,0.3)",  dot: "🟢" },
+                  orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.3)",  dot: "🟡" },
+                  rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.3)", dot: "🔴" },
+                };
+                const cfg = ALERT_CFG[s.alertLevel] ?? ALERT_CFG.vert;
+                return (
+                  <div className="glass p-5 mb-5">
+                    <SectionTitle icon="🤖" title="Synthèse Nutri-IA-Med" color="#a78bfa" />
+
+                    {/* Alert badge */}
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4"
+                      style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                      <span className="text-[14px]">{cfg.dot}</span>
+                      <span className="text-[13px] font-semibold" style={{ color: cfg.color }}>{s.alertLabel}</span>
+                      {s.generatedAt && (
+                        <span className="ml-auto text-[10px]" style={{ color: "var(--text-muted)" }}>
+                          {dateFnsFormat(new Date(s.generatedAt), "d MMM yyyy", { locale: fr })}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+                      {s.summary}
+                    </p>
+
+                    {/* Sections */}
+                    <div className="space-y-2 mb-4">
+                      {[
+                        { icon: "❤️", label: "Constantes",  text: s.vitaux,    show: true },
+                        { icon: "🩺", label: "Symptômes",   text: s.symptomes, show: !!s.symptomes },
+                        { icon: "🥗", label: "Nutrition",   text: s.nutrition, show: true },
+                        { icon: "🏃", label: "Activité",    text: s.activite,  show: !!s.activite },
+                      ].filter(sec => sec.show).map(({ icon, label, text }) => (
+                        <div key={label}
+                          className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                          style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)" }}>
+                          <span className="text-[13px] flex-shrink-0 mt-0.5">{icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recommendations */}
+                    {s.recommandations?.length > 0 && (
+                      <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
+                        <div className="px-3 py-2" style={{ background: "rgba(167,139,250,0.08)", borderBottom: "1px solid rgba(167,139,250,0.15)" }}>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#a78bfa" }}>
+                            💡 Recommandations
+                          </p>
+                        </div>
+                        <div className="divide-y" style={{ borderColor: "rgba(167,139,250,0.15)" }}>
+                          {s.recommandations.map((r, i) => (
+                            <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                              <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#a78bfa" }}>{i + 1}</span>
+                              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{r}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {s.consulter && (
+                      <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                        style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
+                        <Warning size={14} weight="fill" style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
+                        <p className="text-[12px] leading-relaxed" style={{ color: "#f87171" }}>{s.consulter}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ═══════════════════════════════════════════════════════════
                   FOOTER

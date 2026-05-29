@@ -16,7 +16,7 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
   XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid,
 } from "recharts";
-import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry, SymptomEntry, SymptomSeverity } from "@/app/lib/types";
+import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry, SymptomEntry, SymptomSeverity, AISynthesisResult } from "@/app/lib/types";
 import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
@@ -188,18 +188,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [symSaving,     setSymSaving]     = useState(false);
 
   // AI Synthesis
-  type SynthesisResult = {
-    alertLevel:      "vert" | "orange" | "rouge";
-    alertLabel:      string;
-    summary:         string;
-    vitaux:          string;
-    symptomes:       string | null;
-    nutrition:       string;
-    activite:        string | null;
-    recommandations: string[];
-    consulter:       string | null;
-  };
-  const [synthesis,        setSynthesis]        = useState<SynthesisResult | null>(null);
+  const [synthesis,        setSynthesis]        = useState<AISynthesisResult | null>(initialEntry?.aiSynthesis ?? null);
   const [synthesisLoading, setSynthesisLoading] = useState(false);
   const [synthesisError,   setSynthesisError]   = useState(false);
 
@@ -211,7 +200,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     setNotesDirty(false);
     setMeds(entry?.medications ?? []);
     setSymptoms(entry?.symptoms ?? []);
-    setSynthesis(null);
+    setSynthesis(entry?.aiSynthesis ?? null);
     setSynthesisError(false);
   }, [entry]);
 
@@ -395,7 +384,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         body:    JSON.stringify({ date }),
       });
       if (!res.ok) { setSynthesisError(true); return; }
-      const data = await res.json() as SynthesisResult & { ok?: boolean };
+      const data = await res.json() as AISynthesisResult & { ok?: boolean };
       setSynthesis(data);
     } catch { setSynthesisError(true); }
     finally  { setSynthesisLoading(false); }
@@ -1284,6 +1273,78 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </button>
               )}
             </div>
+
+            {/* ── Historique des symptômes ── */}
+            {(() => {
+              const history = [...trend, ...(entry ? [{ ...entry, date }] : [])]
+                .filter(e => e.date !== date && (e.symptoms ?? []).length > 0)
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 30);
+              if (history.length === 0) return null;
+              const SCAT = Object.fromEntries(SYMPTOM_CATEGORIES.map(c => [c.key, c]));
+              const SEV_COLOR: Record<string, string> = { "léger": "#34d399", "modéré": "#fbbf24", "sévère": "#f87171" };
+              return (
+                <div className="glass p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[14px]">📋</span>
+                    <p className="label-xs">Historique des symptômes</p>
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(251,146,60,0.1)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.25)" }}>
+                      {history.length} jour{history.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {history.map(e => (
+                      <div key={e.date}>
+                        {/* Date row */}
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#fb923c" }} />
+                          <p className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                            {format(parseISO(e.date + "T12:00:00"), "EEEE d MMMM", { locale: fr })}
+                          </p>
+                          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            {(e.symptoms ?? []).length} symptôme{(e.symptoms ?? []).length > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        {/* Symptom chips */}
+                        <div className="flex flex-wrap gap-1.5 pl-3.5">
+                          {(e.symptoms ?? []).map(s => {
+                            const cat = SCAT[s.category];
+                            const sevColor = s.severity ? (SEV_COLOR[s.severity] ?? "#fb923c") : "#fb923c";
+                            return (
+                              <span key={s.id}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                                style={{
+                                  background: `${sevColor}12`,
+                                  border: `1px solid ${sevColor}44`,
+                                  color: sevColor,
+                                }}>
+                                <span>{cat?.icon ?? "🩺"}</span>
+                                {s.name}
+                                {s.severity && <span style={{ opacity: 0.7 }}>· {s.severity}</span>}
+                                {s.time && <span style={{ opacity: 0.5 }}>· {s.time}</span>}
+                              </span>
+                            );
+                          })}
+                        </div>
+                        {/* AI synthesis badge if exists for that day */}
+                        {e.aiSynthesis && (
+                          <div className="flex items-center gap-1.5 mt-1.5 pl-3.5">
+                            <span className="text-[10px]">
+                              {e.aiSynthesis.alertLevel === "vert" ? "🟢" : e.aiSynthesis.alertLevel === "orange" ? "🟡" : "🔴"}
+                            </span>
+                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                              Nutri-IA-Med · {e.aiSynthesis.alertLabel}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
           </motion.div>
         )}
