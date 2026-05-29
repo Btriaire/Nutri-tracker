@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Moon, CheckCircle, Trophy, ArrowUp, ArrowDown, Minus } from "@phosphor-icons/react";
+import {
+  ArrowLeft, Moon, CheckCircle, Trophy, ArrowUp, ArrowDown, Minus,
+  Plus, X, PencilSimple, Trash, Spinner,
+} from "@phosphor-icons/react";
 import {
   ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
@@ -43,26 +46,175 @@ function fmtSleep(min: number): string {
   return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
 }
 
-function trendIcon(avg: number, prev: number) {
-  const diff = avg - prev;
-  if (Math.abs(diff) < 5) return <Minus size={12} style={{ color: "var(--text-muted)" }} />;
-  if (diff > 0) return <ArrowUp size={12} style={{ color: "#34A853" }} />;
-  return <ArrowDown size={12} style={{ color: "#ef4444" }} />;
+// ─── Manual entry modal ───────────────────────────────────────────────────────
+
+interface ModalProps {
+  date: string;
+  current: number | null;
+  onClose: () => void;
+  onSaved: (date: string, min: number | null) => void;
 }
 
-export default function SleepClient({ points, sleepGoalMin }: Props) {
-  const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
+function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
+  const initH = current ? Math.floor(current / 60) : 7;
+  const initM = current ? current % 60 : 0;
+  const [hours,   setHours]   = useState(initH);
+  const [minutes, setMinutes] = useState(initM);
+  const [saving,  setSaving]  = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const visible   = points.slice(-rangeDays);
-  const withData  = visible.filter(p => p.sleepMinutes != null && p.sleepMinutes > 0);
-  const goalH     = Math.round(sleepGoalMin / 60 * 10) / 10;
+  const totalMin = hours * 60 + minutes;
+
+  async function save() {
+    if (totalMin < 1) return;
+    setSaving(true);
+    await fetch("/api/sleep", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, sleepMinutes: totalMin }),
+    });
+    setSaving(false);
+    onSaved(date, totalMin);
+    onClose();
+  }
+
+  async function remove() {
+    setDeleting(true);
+    await fetch(`/api/sleep?date=${date}`, { method: "DELETE" });
+    setDeleting(false);
+    onSaved(date, null);
+    onClose();
+  }
+
+  const label = format(parseISO(date), "EEEE dd MMM", { locale: fr });
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      >
+        <motion.div
+          className="w-full max-w-md rounded-t-2xl p-6"
+          initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 380, damping: 34 }}
+          onClick={e => e.stopPropagation()}
+          style={{ background: "var(--surface-elevated, #1a1a24)", border: "1px solid var(--border)" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-[15px] font-semibold capitalize">{label}</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                {current ? "Modifier la durée de sommeil" : "Saisir manuellement"}
+              </p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg"
+              style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Time pickers */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            {/* Hours */}
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => setHours(h => Math.min(h + 1, 14))}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▲</button>
+              <div className="w-20 h-14 rounded-2xl flex flex-col items-center justify-center"
+                style={{ background: "rgba(121,134,203,0.12)", border: "1px solid rgba(121,134,203,0.3)" }}>
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: "#7986CB" }}>{hours}</span>
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>heures</span>
+              </div>
+              <button onClick={() => setHours(h => Math.max(h - 1, 0))}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▼</button>
+            </div>
+
+            <span className="text-[32px] font-bold mb-4" style={{ color: "var(--text-muted)" }}>:</span>
+
+            {/* Minutes */}
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => setMinutes(m => (m + 15) % 60 === 0 && m === 45 ? 0 : Math.min(m + 15, 45))}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▲</button>
+              <div className="w-20 h-14 rounded-2xl flex flex-col items-center justify-center"
+                style={{ background: "rgba(121,134,203,0.12)", border: "1px solid rgba(121,134,203,0.3)" }}>
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: "#7986CB" }}>{String(minutes).padStart(2, "0")}</span>
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>min</span>
+              </div>
+              <button onClick={() => setMinutes(m => m === 0 ? 45 : m - 15)}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
+                style={{ background: "var(--surface)", color: "var(--text-primary)" }}>▼</button>
+            </div>
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex gap-2 mb-6 flex-wrap justify-center">
+            {[360, 390, 420, 450, 480, 510].map(min => (
+              <button key={min}
+                onClick={() => { setHours(Math.floor(min / 60)); setMinutes(min % 60); }}
+                className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                style={{
+                  background: totalMin === min ? "rgba(121,134,203,0.25)" : "var(--surface)",
+                  color:      totalMin === min ? "#7986CB" : "var(--text-muted)",
+                  border:     totalMin === min ? "1px solid rgba(121,134,203,0.5)" : "1px solid transparent",
+                }}>
+                {fmtSleep(min)}
+              </button>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            {current && (
+              <button onClick={remove} disabled={deleting}
+                className="w-10 h-11 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors"
+                style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                {deleting ? <Spinner size={14} className="animate-spin" /> : <Trash size={14} />}
+              </button>
+            )}
+            <button onClick={save} disabled={saving || totalMin < 1}
+              className="flex-1 h-11 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 transition-all"
+              style={{
+                background: totalMin >= 1 ? "rgba(121,134,203,0.9)" : "var(--surface)",
+                color:      totalMin >= 1 ? "#fff" : "var(--text-muted)",
+              }}>
+              {saving ? <Spinner size={16} className="animate-spin" /> : null}
+              {current ? "Mettre à jour" : "Enregistrer"}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function SleepClient({ points: initialPoints, sleepGoalMin }: Props) {
+  const [points,    setPoints]    = useState(initialPoints);
+  const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
+  const [modal,     setModal]     = useState<{ date: string; current: number | null } | null>(null);
+
+  // Update a point locally after save
+  const handleSaved = useCallback((date: string, min: number | null) => {
+    setPoints(prev => prev.map(p => p.date === date ? { ...p, sleepMinutes: min } : p));
+  }, []);
+
+  const visible  = points.slice(-rangeDays);
+  const withData = visible.filter(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+  const goalH    = Math.round(sleepGoalMin / 60 * 10) / 10;
 
   // Stats
-  const avgMin    = withData.length ? Math.round(withData.reduce((s, p) => s + p.sleepMinutes!, 0) / withData.length) : 0;
-  const maxPoint  = withData.length ? withData.reduce((a, b) => b.sleepMinutes! > a.sleepMinutes! ? b : a) : null;
-  const goalDays  = withData.filter(p => p.sleepMinutes! >= sleepGoalMin).length;
+  const avgMin   = withData.length ? Math.round(withData.reduce((s, p) => s + p.sleepMinutes!, 0) / withData.length) : 0;
+  const maxPoint = withData.length ? withData.reduce((a, b) => b.sleepMinutes! > a.sleepMinutes! ? b : a) : null;
+  const goalDays = withData.filter(p => p.sleepMinutes! >= sleepGoalMin).length;
 
-  // Streak (consecutive days with ≥ goal, from most recent)
+  // Streak
   let streak = 0;
   for (let i = points.length - 1; i >= 0; i--) {
     const p = points[i];
@@ -70,37 +222,48 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
     else if (p.sleepMinutes != null) break;
   }
 
-  // Weekly trend comparison
+  // Weekly trend
   const last7  = points.slice(-7).filter(p => p.sleepMinutes != null && p.sleepMinutes > 0);
   const prev7  = points.slice(-14, -7).filter(p => p.sleepMinutes != null && p.sleepMinutes > 0);
-  const avg7   = last7.length  ? Math.round(last7.reduce((s,p)  => s + p.sleepMinutes!, 0) / last7.length)  : 0;
-  const avgP7  = prev7.length  ? Math.round(prev7.reduce((s,p)  => s + p.sleepMinutes!, 0) / prev7.length)  : 0;
+  const avg7   = last7.length ? Math.round(last7.reduce((s, p) => s + p.sleepMinutes!, 0) / last7.length) : 0;
+  const avgP7  = prev7.length ? Math.round(prev7.reduce((s, p) => s + p.sleepMinutes!, 0) / prev7.length) : 0;
   const trendDiff = avg7 - avgP7;
 
   // Chart data
   const chartData = visible.map(p => ({
-    label:  format(parseISO(p.date), "dd/MM"),
-    sleepH: p.sleepMinutes != null ? Math.round(p.sleepMinutes / 60 * 100) / 100 : null,
+    label:    format(parseISO(p.date), "dd/MM"),
+    sleepH:   p.sleepMinutes != null && p.sleepMinutes > 0 ? Math.round(p.sleepMinutes / 60 * 100) / 100 : null,
     sleepMin: p.sleepMinutes,
-    date:   p.date,
+    date:     p.date,
   }));
 
-  // Most recent sleep with data — for hypnogram
+  // Most recent sleep for hypnogram
   const lastSleep = [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+
+  // Today's date string
+  const today = format(new Date(), "yyyy-MM-dd");
 
   return (
     <div className="min-h-screen" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}>
       {/* Header */}
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3"
         style={{ background: "var(--nav-bg)", borderBottom: "1px solid var(--nav-border)", backdropFilter: "blur(16px)" }}>
-        <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+        <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg"
           style={{ background: "var(--surface)" }}>
           <ArrowLeft size={16} style={{ color: "var(--text-secondary)" }} />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <Moon size={18} weight="fill" style={{ color: "#7986CB" }} />
           <span className="text-[15px] font-semibold">Sommeil</span>
         </div>
+        {/* Add today */}
+        <button
+          onClick={() => setModal({ date: today, current: points.find(p => p.date === today)?.sleepMinutes ?? null })}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+          style={{ background: "rgba(121,134,203,0.15)", color: "#7986CB", border: "1px solid rgba(121,134,203,0.3)" }}>
+          <Plus size={13} />
+          Saisir
+        </button>
       </div>
 
       <div className="px-4 pt-4 space-y-4 md:ml-[220px]">
@@ -111,13 +274,13 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
             <div>
               <p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-muted)" }}>Moyenne sur {rangeDays} jours</p>
               <div className="flex items-end gap-2 leading-none">
-                <span className="text-[38px] font-bold tracking-tight" style={{ color: avgMin ? "var(--text-primary)" : "var(--text-muted)" }}>
+                <span className="text-[38px] font-bold tracking-tight"
+                  style={{ color: avgMin ? "var(--text-primary)" : "var(--text-muted)" }}>
                   {avgMin ? fmtSleep(avgMin) : "—"}
                 </span>
                 <span className="text-[13px] mb-1.5" style={{ color: "var(--text-muted)" }}>/ {goalH}h objectif</span>
               </div>
             </div>
-            {/* Trend badge */}
             {avgP7 > 0 && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
                 style={{ background: trendDiff >= 0 ? "rgba(52,168,83,0.1)" : "rgba(239,68,68,0.1)", color: trendDiff >= 0 ? "#34A853" : "#ef4444" }}>
@@ -126,8 +289,6 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
               </div>
             )}
           </div>
-
-          {/* Progress bar */}
           <div className="w-full h-2.5 rounded-full mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full"
               style={{ background: sleepColor(avgMin, sleepGoalMin) }}
@@ -137,7 +298,11 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
             />
           </div>
           <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            {avgMin >= sleepGoalMin ? `✓ Objectif atteint en moyenne sur ${rangeDays}j` : `${fmtSleep(sleepGoalMin - avgMin)} de moins que l'objectif`}
+            {avgMin >= sleepGoalMin
+              ? `✓ Objectif atteint en moyenne sur ${rangeDays}j`
+              : avgMin > 0
+                ? `${fmtSleep(sleepGoalMin - avgMin)} de moins que l'objectif`
+                : "Aucune donnée — saisis ta première nuit ↗"}
           </p>
         </motion.div>
 
@@ -155,7 +320,6 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
               </span>
             )}
           </div>
-
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Objectif atteint</span>
             <div className="flex items-center gap-1.5">
@@ -166,7 +330,6 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
               {withData.length ? `${Math.round(goalDays / withData.length * 100)}% du temps` : "Aucune donnée"}
             </span>
           </div>
-
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Série en cours</span>
             <span className="text-[18px] font-bold">{streak} <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>nuits</span></span>
@@ -174,11 +337,10 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
               {streak >= 7 ? "🔥 Excellente semaine !" : streak >= 3 ? "Bonne régularité" : "Continue !"}
             </span>
           </div>
-
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Tendance 7j</span>
             <div className="flex items-center gap-1.5">
-              {trendIcon(avg7, avgP7)}
+              {avg7 && avgP7 ? (trendDiff > 0 ? <ArrowUp size={12} style={{ color: "#34A853" }} /> : trendDiff < 0 ? <ArrowDown size={12} style={{ color: "#ef4444" }} /> : <Minus size={12} style={{ color: "var(--text-muted)" }} />) : null}
               <span className="text-[18px] font-bold">{avg7 ? fmtSleep(avg7) : "—"}</span>
             </div>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -187,7 +349,7 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
           </div>
         </motion.div>
 
-        {/* Range selector + Bar chart */}
+        {/* Bar chart */}
         <motion.div {...fade(0.1)} className="glass p-4">
           <div className="flex items-center justify-between mb-4">
             <p className="label-xs">Historique</p>
@@ -211,8 +373,8 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
             <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barSize={rangeDays === 30 ? 6 : rangeDays === 14 ? 10 : 20}>
               <XAxis dataKey="label" tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                 interval={rangeDays === 30 ? 4 : rangeDays === 14 ? 1 : 0} />
-              <YAxis domain={[0, Math.max(10, goalH + 1)]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={24}
-                tickCount={5} tickFormatter={v => `${v}h`} />
+              <YAxis domain={[0, Math.max(10, goalH + 1)]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                width={24} tickCount={5} tickFormatter={v => `${v}h`} />
               <ReferenceLine y={goalH} stroke="rgba(121,134,203,0.4)" strokeDasharray="4 4" />
               <Tooltip
                 cursor={{ fill: "rgba(255,255,255,0.04)" }}
@@ -224,14 +386,15 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
                       style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="font-bold" style={{ color: "#7986CB" }}>{v ? fmtSleep(v) : "—"}</p>
-                      {v && <p style={{ color: "var(--text-muted)" }}>{Math.round(v / sleepGoalMin * 100)}% de l&apos;objectif</p>}
+                      {v && <p style={{ color: "var(--text-muted)" }}>{Math.round(v / sleepGoalMin * 100)}% objectif</p>}
                     </div>
                   );
                 }}
               />
-              <Bar dataKey="sleepH" radius={[3, 3, 0, 0]}>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Bar dataKey="sleepH" radius={[3, 3, 0, 0]} onClick={(d: any) => setModal({ date: d.date as string, current: d.sleepMin as number | null })}>
                 {chartData.map((d, i) => (
-                  <Cell key={i} fill={sleepColor(d.sleepMin, sleepGoalMin)} fillOpacity={d.sleepMin ? 0.85 : 0.3} />
+                  <Cell key={i} fill={sleepColor(d.sleepMin, sleepGoalMin)} fillOpacity={d.sleepMin ? 0.85 : 0.3} style={{ cursor: "pointer" }} />
                 ))}
               </Bar>
             </BarChart>
@@ -250,9 +413,12 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
               </div>
             ))}
           </div>
+          <p className="text-[9px] text-center mt-1.5" style={{ color: "var(--text-muted)" }}>
+            Appuie sur une barre pour modifier
+          </p>
         </motion.div>
 
-        {/* Hypnogram — last night */}
+        {/* Hypnogram */}
         {lastSleep && (
           <motion.div {...fade(0.15)} className="glass p-4">
             <div className="flex items-center justify-between mb-1">
@@ -266,30 +432,38 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
         )}
 
         {/* Daily log */}
-        {withData.length > 0 && (
+        {visible.length > 0 && (
           <motion.div {...fade(0.2)} className="glass p-4">
             <p className="label-xs mb-3">Détail quotidien</p>
             <div className="space-y-0">
-              {[...visible].reverse().filter(p => p.sleepMinutes != null).map(p => {
-                const min = p.sleepMinutes!;
-                const pct = Math.round(min / sleepGoalMin * 100);
+              {[...visible].reverse().map(p => {
+                const min   = p.sleepMinutes;
                 const color = sleepColor(min, sleepGoalMin);
+                const pct   = min ? Math.round(min / sleepGoalMin * 100) : 0;
                 return (
-                  <div key={p.date} className="flex items-center gap-3 py-2"
+                  <button key={p.date}
+                    onClick={() => setModal({ date: p.date, current: min ?? null })}
+                    className="w-full flex items-center gap-3 py-2 transition-opacity active:opacity-60"
                     style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <span className="text-[11px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px] w-[52px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)" }}>
                       {format(parseISO(p.date), "dd MMM", { locale: fr })}
                     </span>
-                    <div className="flex items-center gap-1.5 w-[64px]">
-                      <Moon size={11} weight="fill" style={{ color }} />
-                      <span className="text-[13px] font-semibold" style={{ color }}>{fmtSleep(min)}</span>
+                    <div className="flex items-center gap-1.5 w-[72px]">
+                      {min
+                        ? <><Moon size={11} weight="fill" style={{ color }} /><span className="text-[13px] font-semibold" style={{ color }}>{fmtSleep(min)}</span></>
+                        : <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>— saisir</span>
+                      }
                     </div>
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                      <div className="h-full rounded-full transition-all"
-                        style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+                      {min ? <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} /> : null}
                     </div>
-                    <span className="text-[10px] w-[32px] text-right" style={{ color: "var(--text-muted)" }}>{pct}%</span>
-                  </div>
+                    <div className="flex items-center gap-1 w-[44px] justify-end flex-shrink-0">
+                      {min
+                        ? <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{pct}%</span>
+                        : <PencilSimple size={11} style={{ color: "var(--text-muted)" }} />
+                      }
+                    </div>
+                  </button>
                 );
               })}
             </div>
@@ -298,14 +472,35 @@ export default function SleepClient({ points, sleepGoalMin }: Props) {
 
         {/* Empty state */}
         {withData.length === 0 && (
-          <motion.div {...fade(0.1)} className="glass p-8 flex flex-col items-center gap-3 text-center">
-            <Moon size={32} weight="thin" style={{ color: "var(--text-muted)" }} />
-            <p className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Aucune donnée de sommeil</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Synchronise Google Fit pour importer tes données de sommeil.</p>
+          <motion.div {...fade(0.1)} className="glass p-8 flex flex-col items-center gap-4 text-center">
+            <Moon size={36} weight="thin" style={{ color: "var(--text-muted)" }} />
+            <div>
+              <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Aucune donnée de sommeil</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                Connecte Google Fit pour importer automatiquement,<br />ou saisis ta durée manuellement.
+              </p>
+            </div>
+            <button
+              onClick={() => setModal({ date: today, current: null })}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
+              style={{ background: "rgba(121,134,203,0.2)", color: "#7986CB", border: "1px solid rgba(121,134,203,0.4)" }}>
+              <Plus size={15} />
+              Saisir la nuit dernière
+            </button>
           </motion.div>
         )}
 
       </div>
+
+      {/* Modal */}
+      {modal && (
+        <SleepEntryModal
+          date={modal.date}
+          current={modal.current}
+          onClose={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }
