@@ -6,8 +6,13 @@ import type { GoogleFitDay, UserProfile } from "@/app/lib/types";
 import SleepClient from "./SleepClient";
 
 export interface SleepPoint {
-  date:         string;
-  sleepMinutes: number | null;
+  date:             string;
+  sleepMinutes:     number | null;
+  timeInBedMinutes: number | null;
+  lightSleepMin:    number | null;
+  deepSleepMin:     number | null;
+  remSleepMin:      number | null;
+  sleepSyncedAt?:   string;
 }
 
 export default async function SleepPage() {
@@ -31,8 +36,13 @@ export default async function SleepPage() {
       ? (snap.data() as { googleFit?: GoogleFitDay }).googleFit
       : undefined;
     return {
-      date:         dates[i],
-      sleepMinutes: gf?.sleepMinutes ?? null,
+      date:             dates[i],
+      sleepMinutes:     gf?.sleepMinutes     ?? null,
+      timeInBedMinutes: gf?.timeInBedMinutes ?? null,
+      lightSleepMin:    gf?.lightSleepMin    ?? null,
+      deepSleepMin:     gf?.deepSleepMin     ?? null,
+      remSleepMin:      gf?.remSleepMin      ?? null,
+      sleepSyncedAt:    gf?.sleepSyncedAt,
     };
   });
 

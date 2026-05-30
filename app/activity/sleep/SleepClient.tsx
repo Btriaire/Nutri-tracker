@@ -469,15 +469,83 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           </p>
         </motion.div>
 
-        {/* Hypnogram */}
+        {/* Dernière nuit — hypnogram + phases */}
         {lastSleep && (
-          <motion.div {...fade(0.15)} className="glass p-4">
-            <div className="flex items-center justify-between mb-1">
+          <motion.div {...fade(0.15)} className="glass p-4 space-y-4">
+            <div className="flex items-center justify-between">
               <p className="label-xs">Dernière nuit analysée</p>
               <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                 {format(parseISO(lastSleep.date), "dd MMM", { locale: fr })}
               </span>
             </div>
+
+            {/* Key metrics row */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Au lit",      value: lastSleep.timeInBedMinutes, color: "rgba(255,255,255,0.5)" },
+                { label: "Endormi",     value: lastSleep.sleepMinutes,     color: "#7986CB" },
+                { label: "Efficacité",  value: lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
+                    ? null : null,
+                  pct: lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
+                    ? Math.round(lastSleep.sleepMinutes / lastSleep.timeInBedMinutes * 100)
+                    : null,
+                  color: "#34d399" },
+              ].map(({ label, value, pct, color }) => (
+                <div key={label} className="rounded-xl p-2.5 text-center"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                  <p className="text-[16px] font-bold leading-none" style={{ color }}>
+                    {pct !== undefined && pct !== null ? `${pct}%` : value ? fmtSleep(value) : "—"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Sleep stages breakdown */}
+            {(lastSleep.lightSleepMin || lastSleep.deepSleepMin || lastSleep.remSleepMin) && (() => {
+              const total = (lastSleep.lightSleepMin ?? 0) + (lastSleep.deepSleepMin ?? 0) + (lastSleep.remSleepMin ?? 0);
+              const stages = [
+                { key: "Léger",     min: lastSleep.lightSleepMin, color: "#7986CB", bg: "rgba(121,134,203,0.15)" },
+                { key: "Profond",   min: lastSleep.deepSleepMin,  color: "#3B82F6", bg: "rgba(59,130,246,0.15)" },
+                { key: "Paradoxal", min: lastSleep.remSleepMin,   color: "#8B5CF6", bg: "rgba(139,92,246,0.15)" },
+              ];
+              return (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Phases</p>
+                  {/* Stacked bar */}
+                  <div className="flex h-3 rounded-full overflow-hidden gap-px">
+                    {stages.map(({ key, min, color }) => min ? (
+                      <div key={key} className="transition-all duration-700"
+                        style={{ flex: min, background: color, opacity: 0.8 }} />
+                    ) : null)}
+                  </div>
+                  {/* Legend */}
+                  <div className="space-y-2 pt-1">
+                    {stages.map(({ key, min, color, bg }) => {
+                      const pct = min && total ? Math.round(min / total * 100) : 0;
+                      return (
+                        <div key={key} className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                          <span className="text-[11px] w-[72px]" style={{ color: "var(--text-secondary)" }}>{key}</span>
+                          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                            <div className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, background: color, opacity: 0.85 }} />
+                          </div>
+                          <span className="text-[11px] font-semibold w-[36px] text-right tabular-nums" style={{ color }}>
+                            {min ? fmtSleep(min) : "—"}
+                          </span>
+                          <span className="text-[10px] w-[28px] text-right" style={{ color: "var(--text-muted)" }}>{pct ? `${pct}%` : ""}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                    Données Google Fit · Total {fmtSleep(total)}
+                  </p>
+                </div>
+              );
+            })()}
+
             <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
           </motion.div>
         )}
@@ -508,8 +576,14 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                     <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                       {min ? <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} /> : null}
                     </div>
-                    <div className="flex items-center gap-1 w-[44px] justify-end flex-shrink-0">
-                      {min
+                    <div className="flex items-center gap-1.5 w-[56px] justify-end flex-shrink-0">
+                      {(p.lightSleepMin || p.deepSleepMin || p.remSleepMin) ? (
+                        <div className="flex items-center gap-0.5">
+                          {p.lightSleepMin  && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#7986CB" }} />}
+                          {p.deepSleepMin   && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#3B82F6" }} />}
+                          {p.remSleepMin    && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#8B5CF6" }} />}
+                        </div>
+                      ) : min
                         ? <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{pct}%</span>
                         : <PencilSimple size={11} style={{ color: "var(--text-muted)" }} />
                       }

@@ -121,8 +121,10 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const tokens = await getTokens(userId);
   if (!tokens) return null;
 
-  const startMs     = new Date(date + "T00:00:00").getTime();
-  const endMs       = new Date(date + "T23:59:59").getTime();
+  const startMs        = new Date(date + "T00:00:00").getTime();
+  const endMs          = new Date(date + "T23:59:59").getTime();
+  const noonMs         = startMs + 12 * 3600 * 1000;   // noon of sync date
+  const sleepWindowStart = startMs - 12 * 3600 * 1000; // noon yesterday (captures pre-midnight stages)
   // Sessions query starts 18h before midnight to capture previous-night sleep (which starts ~10 PM day-1)
   const sessionStartMs  = startMs - 18 * 3600 * 1000;
   const startIso = new Date(sessionStartMs).toISOString();
@@ -151,9 +153,11 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
         aggregateBy: [{ dataTypeName: "com.google.sleep.segment" }],
+        // Extend window to noon-yesterday→noon-today so we capture sleep stages
+        // that started before midnight (e.g. falling asleep at 23:00 day-1)
         bucketByTime:    { durationMillis: 86_400_000 },
-        startTimeMillis: startMs,
-        endTimeMillis:   endMs,
+        startTimeMillis: sleepWindowStart,
+        endTimeMillis:   noonMs,
       }),
     }),
     fetch(
@@ -192,23 +196,31 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const sessions: WorkoutSession[] = [];
 
   // Sessions API: type 72 = sleep session = full in-bed time
+  // Only count NIGHT SLEEP: sessions that end after midnight AND before noon
+  // (this excludes afternoon naps and only captures the previous night's sleep).
   if (sessionsRes.ok) {
     const sessJson = await sessionsRes.json() as { session?: RawSession[] };
     let inBedMs = 0;
     for (const s of sessJson.session ?? []) {
-      const durationMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
+      const sessStart   = Number(s.startTimeMillis);
+      const sessEnd     = Number(s.endTimeMillis);
+      const durationMin = Math.round((sessEnd - sessStart) / 60_000);
       if (durationMin < 1) continue;
-      if ((s.activityType ?? 0) === 72 && Number(s.endTimeMillis) >= startMs) {
-        // Full sleep session = in-bed duration
-        inBedMs += Number(s.endTimeMillis) - Number(s.startTimeMillis);
-        if (!sleepSyncedAt) sleepSyncedAt = new Date(Number(s.startTimeMillis)).toISOString();
-      } else if ((s.activityType ?? 0) !== 72) {
+      if ((s.activityType ?? 0) === 72) {
+        // Night sleep: must end after midnight AND before noon of sync date
+        // → excludes afternoon naps; multiple night sub-sessions (e.g. from Garmin
+        //   splitting light/deep blocks) are correctly summed
+        if (sessEnd >= startMs && sessEnd <= noonMs) {
+          inBedMs += sessEnd - sessStart;
+          if (!sleepSyncedAt) sleepSyncedAt = new Date(sessStart).toISOString();
+        }
+      } else {
         sessions.push({
           id:           s.id,
           name:         s.name || activityLabel(s.activityType ?? 0),
           activityType: s.activityType ?? 0,
-          startMs:      Number(s.startTimeMillis),
-          endMs:        Number(s.endTimeMillis),
+          startMs:      sessStart,
+          endMs:        sessEnd,
           durationMin,
           calories:     null,
         });
@@ -218,27 +230,31 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   }
 
   // Sleep segments: classify phases (light=4, deep=5, REM=6, awake=1, unspecified=2)
+  // Only count stages that end before noon (excludes afternoon naps).
   let sleepMinutes: number | null = null;
   if (sleepRes.ok) {
     const sleepJson = await sleepRes.json() as { bucket?: { dataset?: { point?: SleepSegmentPoint[] }[] }[] };
-    const sleepBucket = sleepJson.bucket?.[0];
-    if (sleepBucket?.dataset?.[0]?.point?.length) {
-      let light = 0, deep = 0, rem = 0;
-      for (const pt of sleepBucket.dataset[0].point) {
-        const stage = pt.value?.[0]?.intVal ?? 0;
-        const durMs = (Number(pt.endTimeNanos ?? 0) - Number(pt.startTimeNanos ?? 0)) / 1_000_000;
+    // Buckets may span multiple days — iterate all
+    let light = 0, deep = 0, rem = 0;
+    for (const bkt of sleepJson.bucket ?? []) {
+      for (const pt of bkt.dataset?.[0]?.point ?? []) {
+        const ptEndMs = Number(pt.endTimeNanos ?? 0) / 1_000_000;
+        // Only include stages from the night window (before noon of sync date)
+        if (ptEndMs > noonMs) continue;
+        const stage  = pt.value?.[0]?.intVal ?? 0;
+        const durMs  = (Number(pt.endTimeNanos ?? 0) - Number(pt.startTimeNanos ?? 0)) / 1_000_000;
         const durMin = Math.round(durMs / 60_000);
         if (durMin < 1) continue;
-        if (stage === 4) light += durMin;
-        if (stage === 5) deep  += durMin;
-        if (stage === 6) rem   += durMin;
+        if (stage === 4) light += durMin;   // light sleep
+        if (stage === 5) deep  += durMin;   // deep / slow-wave
+        if (stage === 6) rem   += durMin;   // REM
       }
-      if (light + deep + rem > 0) {
-        lightSleepMin = light || null;
-        deepSleepMin  = deep  || null;
-        remSleepMin   = rem   || null;
-        sleepMinutes  = light + deep + rem;
-      }
+    }
+    if (light + deep + rem > 0) {
+      lightSleepMin = light || null;
+      deepSleepMin  = deep  || null;
+      remSleepMin   = rem   || null;
+      sleepMinutes  = light + deep + rem;
     }
   }
   // Fallback: if no segment data, estimate from in-bed time (85% sleep efficiency)
