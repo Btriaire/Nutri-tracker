@@ -76,12 +76,36 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
 // ─── Activity type labels ─────────────────────────────────────────────────────
 
 const ACTIVITY_LABELS: Record<number, string> = {
-  1:  "Aérobic", 3: "Course", 7: "Vélo", 8: "Vélo indoor", 9: "Circuit training",
-  10: "Ski de fond", 17: "Elliptique", 37: "Aviron", 41: "Course à pied",
-  45: "Football", 46: "Marche", 49: "Snowboard", 54: "Squash", 55: "Escalier",
-  56: "Vélo stationnaire", 60: "Musculation", 63: "Surf", 72: "Tennis",
-  74: "Volley", 75: "Marche", 80: "Badminton", 82: "Yoga", 83: "Zumba",
-  93: "Natation", 104: "Boxe", 108: "Pilates", 109: "Rugby",
+  // ── Cardio / Course ──────────────────────────────────────────────────────────
+  1:   "Aérobic",          3:   "Course",           29:  "Jogging",
+  41:  "Course à pied",    67:  "Tapis de course",  27:  "HIIT",
+  // ── Vélo ─────────────────────────────────────────────────────────────────────
+  7:   "Vélo",             8:   "Vélo indoor",      39:  "VTT",
+  56:  "Vélo stationnaire",
+  // ── Marche / Randonnée ───────────────────────────────────────────────────────
+  46:  "Marche",           75:  "Marche rapide",    19:  "Randonnée",
+  // ── Natation / Eau ──────────────────────────────────────────────────────────
+  93:  "Natation",         78:  "Aquagym",          79:  "Water-polo",
+  // ── Musculation / Force ──────────────────────────────────────────────────────
+  60:  "Musculation",      9:   "Circuit training", 103: "Kettlebell",
+  81:  "Haltérophilie",
+  // ── Sports collectifs ────────────────────────────────────────────────────────
+  45:  "Football",         84:  "Basketball",       74:  "Volley",
+  80:  "Badminton",        54:  "Squash",           72:  "Tennis",
+  109: "Rugby",            16:  "Handball",
+  // ── Arts martiaux / Combat ───────────────────────────────────────────────────
+  104: "Boxe",             31:  "Kickboxing",       36:  "Arts martiaux",
+  // ── Mind-body ────────────────────────────────────────────────────────────────
+  82:  "Yoga",             22:  "Hot yoga",         65:  "Tai-chi",
+  108: "Pilates",          61:  "Stretching",
+  // ── Cardio machines / Salle ─────────────────────────────────────────────────
+  17:  "Elliptique",       55:  "Escalier",         58:  "Stepper",
+  // ── Sports d'hiver / Extrême ─────────────────────────────────────────────────
+  10:  "Ski de fond",      49:  "Snowboard",        53:  "Ski",
+  48:  "Escalade",         63:  "Surf",             57:  "Paddle",
+  // ── Divers ───────────────────────────────────────────────────────────────────
+  37:  "Aviron",           25:  "Patinage",         83:  "Zumba",
+  68:  "Triathlon",        51:  "Skateboard",
 };
 
 export function activityLabel(type: number): string {
@@ -274,6 +298,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         const durMs  = ptEndMs - ptStartMs;
         const durMin = Math.round(durMs / 60_000);
         if (durMin < 1) continue;
+        if (stage === 2) light += durMin;   // generic/unspecified sleep → treat as light
         if (stage === 4) light += durMin;   // light sleep
         if (stage === 5) deep  += durMin;   // deep / slow-wave
         if (stage === 6) rem   += durMin;   // REM

@@ -21,6 +21,9 @@ import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
 import SleepHypnogram from "@/app/components/SleepHypnogram";
+import MoodTrendChart from "@/app/components/MoodTrendChart";
+import PixelWall from "@/app/components/PixelWall";
+import type { MoodPoint } from "@/app/components/MoodTrendChart";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
 type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre";
@@ -1031,7 +1034,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             })()}
 
             {/* ── Médicaments ── */}
-            <div className="glass p-4">
+            <div className={`glass ${meds.length === 0 ? "p-3" : "p-4"}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Pill size={14} weight="fill" style={{ color: "#c084fc" }} />
@@ -1054,9 +1057,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               {meds.length === 0 ? (
                 <button onClick={() => { setMedTime(nowHHMM()); setMedOpen(true); }}
-                  className="w-full py-4 rounded-xl flex flex-col items-center gap-1.5 transition-colors"
-                  style={{ border: "1.5px dashed var(--border)" }}>
-                  <Pill size={18} style={{ color: "var(--text-muted)" }} />
+                  className="w-full py-2 px-3 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{ border: "1px dashed var(--border)" }}>
+                  <Pill size={13} style={{ color: "var(--text-muted)" }} />
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un médicament</span>
                 </button>
               ) : (
@@ -1095,7 +1098,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </div>
 
             {/* ── Symptômes ── */}
-            <div className="glass p-4">
+            <div className={`glass ${symptoms.length === 0 && !symptomOpen ? "p-3" : "p-4"}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px]">🩺</span>
@@ -1115,6 +1118,16 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   </button>
                 </div>
               </div>
+
+              {/* Empty state */}
+              {symptoms.length === 0 && !symptomOpen && (
+                <button onClick={() => setSymptomOpen(true)}
+                  className="w-full py-2 px-3 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{ border: "1px dashed var(--border)" }}>
+                  <span className="text-[13px]">🩺</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
+                </button>
+              )}
 
               {/* Recorded symptoms */}
               {symptoms.length > 0 && (
@@ -1589,10 +1602,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
         {/* ── TAB: BIEN-ÊTRE ── */}
         {activeTab === "bienetre" && (
-          <motion.div {...fade(0.05)} className="space-y-4">
-            <MentalHealthWidget date={date} />
-            <BreathingGuide />
-          </motion.div>
+          <BienEtreTab date={date} />
         )}
 
       </div>
@@ -1937,5 +1947,58 @@ function VitalCard({
         <p className="text-[9px] mt-auto" style={{ color: "var(--text-muted)" }}>{refRange}</p>
       )}
     </div>
+  );
+}
+
+// ─── Bien-être tab with mood history ─────────────────────────────────────────
+
+function BienEtreTab({ date }: { date: string }) {
+  const [moodPoints, setMoodPoints] = useState<MoodPoint[]>([]);
+  const [loadingMood, setLoadingMood] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/mental-health?days=30")
+      .then(r => r.json())
+      .then((d: { points?: MoodPoint[] }) => {
+        setMoodPoints(d.points ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMood(false));
+  }, []);
+
+  const hasData = moodPoints.some(p => p.mood != null);
+  const fade = (delay: number) => ({
+    initial: { opacity: 0, y: 8 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3, delay },
+  });
+
+  return (
+    <motion.div {...fade(0.05)} className="space-y-4">
+      {/* Daily mood entry */}
+      <MentalHealthWidget date={date} />
+
+      {/* Pixel Wall */}
+      <div className="glass p-4">
+        <PixelWall points={moodPoints} today={date} />
+      </div>
+
+      {/* Trend chart */}
+      {!loadingMood && hasData && (
+        <div className="glass p-4">
+          <MoodTrendChart points={moodPoints} />
+        </div>
+      )}
+      {!loadingMood && !hasData && (
+        <div className="glass p-4 text-center">
+          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            Commence à noter ton humeur pour voir l&apos;évolution sur 30 jours ✨
+          </p>
+        </div>
+      )}
+
+      {/* Breathing */}
+      <BreathingGuide />
+    </motion.div>
   );
 }

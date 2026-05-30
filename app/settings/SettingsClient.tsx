@@ -15,15 +15,16 @@ import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActiv
 import { format as formatDate } from "date-fns";
 
 interface Props {
-  fitConnected:      boolean;
-  withingsConnected: boolean;
-  initialGoals:      NutritionGoals;
-  initialPhotoUrl?:  string;
+  fitConnected:       boolean;
+  withingsConnected:  boolean;
+  initialGoals:       NutritionGoals;
+  initialPhotoUrl?:   string;
+  initialDisplayName?: string;
 }
 
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
-export default function SettingsClient({ fitConnected: initialFit, withingsConnected: initialWithings, initialGoals, initialPhotoUrl }: Props) {
+export default function SettingsClient({ fitConnected: initialFit, withingsConnected: initialWithings, initialGoals, initialPhotoUrl, initialDisplayName }: Props) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -184,8 +185,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         {/* Data safety banner */}
         <DataSafetyBanner />
 
-        {/* Profile photo — TOP */}
-        <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
+        {/* Profil — TOP */}
+        <ProfilePanel initialPhotoUrl={initialPhotoUrl} initialDisplayName={initialDisplayName} initialGoals={initialGoals} />
 
         {/* Nutrition & Profile Goals */}
         <GoalsPanel initialGoals={initialGoals} />
@@ -581,14 +582,26 @@ function DataSafetyBanner() {
   );
 }
 
-// ─── Photo Panel ─────────────────────────────────────────────────────────────
+// ─── Profile Panel ────────────────────────────────────────────────────────────
 
-function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
-  const [open,     setOpen]     = useState(false);
-  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl ?? "");
-  const [saving,   setSaving]   = useState(false);
-  const [saved,    setSaved]    = useState(false);
+function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
+  initialPhotoUrl?:   string;
+  initialDisplayName?: string;
+  initialGoals:       NutritionGoals;
+}) {
+  const [open,        setOpen]        = useState(false);
+  const [photoUrl,    setPhotoUrl]    = useState(initialPhotoUrl ?? "");
+  const [firstName,   setFirstName]   = useState(initialDisplayName ?? "");
+  const [birthYear,   setBirthYear]   = useState(
+    initialGoals.age ? (new Date().getFullYear() - initialGoals.age).toString() : ""
+  );
+  const [profession,  setProfession]  = useState("");
+  const [healthNotes, setHealthNotes] = useState("");
+  const [saving,      setSaving]      = useState(false);
+  const [saved,       setSaved]       = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const computedAge = birthYear ? new Date().getFullYear() - parseInt(birthYear) : null;
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -604,42 +617,31 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
         ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 128, 128);
         const url = canvas.toDataURL("image/jpeg", 0.85);
         setPhotoUrl(url);
-        // Auto-save immediately — no need to click "Sauvegarder"
-        setSaving(true);
-        try {
-          const res = await fetch("/api/goals", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ photoUrl: url }),
-          });
-          if (res.ok) {
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
-          }
-        } catch { /* ignore */ }
-        finally { setSaving(false); }
+        // Auto-save photo immediately
+        await saveProfile({ photoUrl: url });
       };
       img.src = ev.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
-    if (!photoUrl) return;
+  const saveProfile = async (extra: Record<string, unknown> = {}) => {
     setSaving(true);
+    const age = computedAge && computedAge > 0 && computedAge < 120 ? computedAge : undefined;
     try {
+      const payload: Record<string, unknown> = { displayName: firstName, ...extra };
+      if (age) payload.goals = { age };
       const res = await fetch("/api/goals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl }),
+        body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
-      }
+      if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
     } catch { /* ignore */ }
     finally { setSaving(false); }
   };
+
+  const handleSave = () => saveProfile();
 
   return (
     <motion.div
@@ -660,8 +662,12 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
           }
         </div>
         <div className="flex-1 text-left">
-          <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Photo de profil</p>
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Visible sur l'accueil et la navigation</p>
+          <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>
+            {firstName || "Profil"}
+          </p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+            {[computedAge ? `${computedAge} ans` : null, initialGoals.gender === "male" ? "Homme" : initialGoals.gender === "female" ? "Femme" : null, initialGoals.heightCm ? `${initialGoals.heightCm} cm` : null].filter(Boolean).join(" · ") || "Photo · Prénom · Âge"}
+          </p>
         </div>
         {open ? <CaretUp size={14} style={{ color: "var(--text-muted)" }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)" }} />}
       </button>
@@ -720,6 +726,87 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
             Sauvegarde automatique · 128×128 px JPEG
           </p>
         </div>
+      </div>
+
+      {/* ── Informations personnelles ── */}
+      <div className="mt-4 pt-4 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
+        <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Informations personnelles</p>
+
+        {/* Prénom */}
+        <div>
+          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Prénom / Pseudo</label>
+          <input
+            type="text"
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            placeholder="Bruno"
+            className="input w-full text-[13px]"
+          />
+        </div>
+
+        {/* Année de naissance */}
+        <div>
+          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
+            Année de naissance
+            {computedAge && computedAge > 0 && computedAge < 120 && (
+              <span className="ml-2 font-normal" style={{ color: "var(--text-muted)" }}>{computedAge} ans</span>
+            )}
+          </label>
+          <input
+            type="number"
+            value={birthYear}
+            onChange={e => setBirthYear(e.target.value)}
+            placeholder={`${new Date().getFullYear() - 35}`}
+            min={1920} max={new Date().getFullYear() - 10}
+            className="input w-full text-[13px]"
+          />
+          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+            Utilisé pour calculer le métabolisme de base (BMR)
+          </p>
+        </div>
+
+        {/* Profession */}
+        <div>
+          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Profession <span className="font-normal opacity-60">(optionnel)</span></label>
+          <input
+            type="text"
+            value={profession}
+            onChange={e => setProfession(e.target.value)}
+            placeholder="ex. Développeur, Enseignant…"
+            className="input w-full text-[13px]"
+          />
+          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+            Aide à contextualiser le niveau d'activité et le stress
+          </p>
+        </div>
+
+        {/* Notes santé */}
+        <div>
+          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Notes de santé <span className="font-normal opacity-60">(optionnel)</span></label>
+          <textarea
+            value={healthNotes}
+            onChange={e => setHealthNotes(e.target.value)}
+            placeholder="Allergies, intolérances, conditions médicales à prendre en compte dans les suggestions…"
+            rows={3}
+            className="input w-full text-[12px] resize-none"
+            style={{ lineHeight: "1.5" }}
+          />
+          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+            Utilisé par les suggestions IA pour personnaliser les recettes et conseils
+          </p>
+        </div>
+
+        {/* Save button */}
+        <button onClick={handleSave} disabled={saving}
+          className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
+          {saving ? (
+            <><Spinner size={14} className="animate-spin" /> Sauvegarde…</>
+          ) : saved ? (
+            <><CheckCircle size={14} weight="fill" /> Profil sauvegardé ✓</>
+          ) : (
+            <><FloppyDisk size={14} /> Sauvegarder le profil</>
+          )}
+        </button>
       </div>
       </motion.div>
       )}

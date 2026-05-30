@@ -1,8 +1,89 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Stop, Timer, CaretDown, CaretUp } from "@phosphor-icons/react";
+import { Play, Stop, Timer, CaretDown, CaretUp, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+
+// ─── Web Audio zen sound engine ───────────────────────────────────────────────
+
+function createZenAudio(color: string) {
+  const ctx  = new AudioContext();
+
+  // ── 1. Drone base (low sine, barely audible) ──────────────────────────────
+  const droneFreq: Record<string, number> = {
+    "#60a5fa": 136.1, // OM frequency — blue (cohérence)
+    "#34d399": 174.0, // solfège Fa — green (box)
+    "#a78bfa": 111.0, // very low, sleepy — purple (4-7-8)
+  };
+  const freq   = droneFreq[color] ?? 136.1;
+  const drone  = ctx.createOscillator();
+  const droneG = ctx.createGain();
+  drone.type      = "sine";
+  drone.frequency.value = freq;
+  droneG.gain.value     = 0;
+  drone.connect(droneG);
+  droneG.connect(ctx.destination);
+  drone.start();
+
+  // ── 2. Soft noise (filtered white noise = wind) ───────────────────────────
+  const bufLen = ctx.sampleRate * 3;
+  const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const data   = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+  const noise    = ctx.createBufferSource();
+  noise.buffer   = buf;
+  noise.loop     = true;
+  const biquad   = ctx.createBiquadFilter();
+  biquad.type    = "lowpass";
+  biquad.frequency.value = 300;
+  biquad.Q.value         = 0.5;
+  const noiseG   = ctx.createGain();
+  noiseG.gain.value = 0;
+  noise.connect(biquad);
+  biquad.connect(noiseG);
+  noiseG.connect(ctx.destination);
+  noise.start();
+
+  // ── 3. Bell on phase change ───────────────────────────────────────────────
+  function playBell() {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type   = "sine";
+    osc.frequency.setValueAtTime(freq * 3, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 2, ctx.currentTime + 1.2);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 2.2);
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────
+  function setInhale(durationS: number) {
+    const t = ctx.currentTime;
+    droneG.gain.cancelScheduledValues(t);
+    noiseG.gain.cancelScheduledValues(t);
+    droneG.gain.linearRampToValueAtTime(0.06, t + durationS * 0.6);
+    noiseG.gain.linearRampToValueAtTime(0.04, t + durationS * 0.6);
+  }
+  function setHold() {
+    // gentle plateau — keep current volume
+  }
+  function setExhale(durationS: number) {
+    const t = ctx.currentTime;
+    droneG.gain.cancelScheduledValues(t);
+    noiseG.gain.cancelScheduledValues(t);
+    droneG.gain.linearRampToValueAtTime(0.02, t + durationS * 0.7);
+    noiseG.gain.linearRampToValueAtTime(0.01, t + durationS * 0.7);
+  }
+  function stop() {
+    const t = ctx.currentTime;
+    droneG.gain.linearRampToValueAtTime(0, t + 1);
+    noiseG.gain.linearRampToValueAtTime(0, t + 1);
+    setTimeout(() => ctx.close(), 1200);
+  }
+
+  return { playBell, setInhale, setHold, setExhale, stop };
+}
 
 // ─── Programs ────────────────────────────────────────────────────────────────
 
@@ -84,8 +165,10 @@ export default function BreathingGuide() {
   const [cycleCount,  setCycleCount]  = useState(0);
   const [elapsed,     setElapsed]     = useState(0); // seconds
   const [duration,    setDuration]    = useState(3); // minutes, 0=infinite
+  const [soundOn,     setSoundOn]     = useState(true);
 
   const tickRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<ReturnType<typeof createZenAudio> | null>(null);
   const prog     = PROGRAMS.find(p => p.id === selectedId)!;
 
   // Tick every 100ms
@@ -102,6 +185,14 @@ export default function BreathingGuide() {
           setPhaseIdx(pi => {
             const nextPi = (pi + 1) % prog.phases.length;
             if (nextPi === 0) setCycleCount(c => c + 1);
+            // Trigger audio for next phase
+            if (audioRef.current) {
+              const nextPhase = prog.phases[nextPi];
+              audioRef.current.playBell();
+              if (nextPhase.label === "Inspirez")      audioRef.current.setInhale(nextPhase.seconds);
+              else if (nextPhase.label === "Expirez")  audioRef.current.setExhale(nextPhase.seconds);
+              else                                     audioRef.current.setHold();
+            }
             return nextPi;
           });
           return 0;
@@ -120,15 +211,24 @@ export default function BreathingGuide() {
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, [active, phaseIdx, prog, duration]);
 
-  const handleStart = () => {
+  // ── Audio: start/stop engine with session ────────────────────────────────
+  const handleStart = useCallback(() => {
     setPhaseIdx(0); setPhaseTick(0); setCycleCount(0); setElapsed(0);
+    if (soundOn) {
+      try {
+        audioRef.current = createZenAudio(prog.color);
+        audioRef.current.playBell();
+        audioRef.current.setInhale(prog.phases[0].seconds);
+      } catch { /* AudioContext may be blocked */ }
+    }
     setActive(true);
-  };
+  }, [soundOn, prog]);
 
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     setActive(false);
     setPhaseIdx(0); setPhaseTick(0); setCycleCount(0); setElapsed(0);
-  };
+    if (audioRef.current) { audioRef.current.stop(); audioRef.current = null; }
+  }, []);
 
   const handleSelectProgram = (id: string) => {
     if (active) handleStop();
@@ -308,6 +408,24 @@ export default function BreathingGuide() {
           {prog.recMin && !active && (
             <span className="text-[9px] ml-auto" style={{ color: "var(--text-muted)" }}>
               Recommandé : {prog.recMin} min
+            </span>
+          )}
+        </div>
+
+        {/* Sound toggle */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setSoundOn(v => !v)}
+            className="flex items-center gap-1.5 text-[11px] transition-all"
+            style={{ color: soundOn ? prog.color : "var(--text-muted)" }}>
+            {soundOn
+              ? <SpeakerHigh size={13} weight="fill" />
+              : <SpeakerSlash size={13} weight="fill" />}
+            {soundOn ? "Sons zen activés" : "Sons désactivés"}
+          </button>
+          {soundOn && !active && (
+            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+              Drone · Vent · Cloche
             </span>
           )}
         </div>

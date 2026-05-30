@@ -12,6 +12,7 @@ export default async function SettingsPage() {
   let withingsConnected = false;
   let goals: NutritionGoals = defaultGoals();
   let photoUrl: string | undefined;
+  let displayName: string | undefined;
   try {
     const db = getAdminFirestore();
     const profile = await db.doc("users/owner").get();
@@ -21,8 +22,9 @@ export default async function SettingsPage() {
     ]);
     if (profile.exists) {
       const p = profile.data() as UserProfile;
-      goals    = { ...defaultGoals(), ...p.goals };
-      photoUrl = p.photoUrl;
+      goals       = { ...defaultGoals(), ...p.goals };
+      photoUrl    = p.photoUrl;
+      displayName = p.displayName || undefined;
     }
   } catch { /* ignore */ }
 
@@ -32,6 +34,7 @@ export default async function SettingsPage() {
       withingsConnected={withingsConnected}
       initialGoals={goals}
       initialPhotoUrl={photoUrl}
+      initialDisplayName={displayName}
     />
   );
 }
