@@ -80,6 +80,8 @@ type WeightChartPoint = {
   projected:  number | null;
   projLow:    number | null;  // lower bound of uncertainty band
   projHigh:   number | null;  // upper bound of uncertainty band
+  gapTop:     number | null;  // gap shading top (max of actual/projected)
+  gapBottom:  number | null;  // gap shading bottom (min of actual/projected)
   calories:   number | null;
   isToday?:   boolean;
   isFuture?:  boolean;
@@ -169,6 +171,8 @@ function buildWeightChartData(
       projected: null,
       projLow:   null,
       projHigh:  null,
+      gapTop:    null,
+      gapBottom: null,
       calories:  calMap.get(p.date) ?? null,
     }));
 
@@ -197,10 +201,17 @@ function buildWeightChartData(
   const isLoss = (simStartKg - targetKg) >= 0;
 
   // Past points with projected overlay for retrospective comparison
-  const past: WeightChartPoint[] = actualPoints.map(p => ({
-    ...p,
-    projected: getProjected(p.date),
-  }));
+  const past: WeightChartPoint[] = actualPoints.map(p => {
+    const proj = getProjected(p.date);
+    const act  = p.actual;
+    return {
+      ...p,
+      projected: proj,
+      // Gap shading between actual and projected (past only)
+      gapTop:    (act != null && proj != null) ? Math.max(act, proj) : null,
+      gapBottom: (act != null && proj != null) ? Math.min(act, proj) : null,
+    };
+  });
 
   const lastActual = past[past.length - 1]?.actual ?? currentKg;
   if (!lastActual) return past;
@@ -214,6 +225,8 @@ function buildWeightChartData(
     projected: getProjected(todayStr) ?? lastActual,
     projLow:   lastActual,
     projHigh:  lastActual,
+    gapTop:    null,
+    gapBottom: null,
     calories:  calMap.get(todayStr) ?? null,
     isToday:   true,
   };
@@ -238,6 +251,8 @@ function buildWeightChartData(
       projected: Math.round(proj * 10) / 10,
       projLow:   Math.round((proj + (isLoss ?  bandKg : -bandKg)) * 10) / 10,
       projHigh:  Math.round((proj - (isLoss ?  bandKg : -bandKg)) * 10) / 10,
+      gapTop:    null,
+      gapBottom: null,
       calories:  null,
       isFuture:  true,
     });
@@ -876,7 +891,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     {/* Scrollable wrapper — min 52px per data point so labels never overlap */}
                     <div style={{ overflowX: "auto", overflowY: "hidden", marginLeft: "-4px", marginRight: "-4px" }}>
                     <div style={{ width: `${Math.max(100, weightChartData.length * 52)}px`, minWidth: "100%" }}>
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <ComposedChart data={weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
@@ -886,6 +901,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="#4ade80" stopOpacity={0.12} />
                             <stop offset="95%" stopColor="#4ade80" stopOpacity={0.03} />
+                          </linearGradient>
+                          <linearGradient id="gapGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#f87171" stopOpacity={0.22} />
+                            <stop offset="95%" stopColor="#f87171" stopOpacity={0.06} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -906,23 +925,33 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             const seen = new Set<string>();
                             const entries = payload.filter(p => {
                               const key = String(p.dataKey);
-                              if (["projLow","projHigh"].includes(key)) return false;
+                              if (["projLow","projHigh","gapTop","gapBottom"].includes(key)) return false;
                               if (p.value == null) return false;
                               if (seen.has(key)) return false;
                               seen.add(key);
                               return true;
                             });
                             if (!entries.length) return null;
+                            const actualEntry = entries.find(p => p.dataKey === "actual");
+                            const projEntry   = entries.find(p => p.dataKey === "projected");
+                            const gap = (actualEntry?.value != null && projEntry?.value != null)
+                              ? ((projEntry.value as number) - (actualEntry.value as number))
+                              : null;
                             return (
                               <div className="px-3 py-2 rounded-xl text-[11px] space-y-1"
                                 style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                 {entries.map((p, i) => (
-                                  <p key={i} className="font-semibold" style={{ color: p.color ?? "var(--text-primary)" }}>
-                                    {p.dataKey === "actual" ? "Mesuré" : p.dataKey === "projected" ? "Simulé" : "Calories"} :{" "}
+                                  <p key={i} className="font-semibold" style={{ color: p.dataKey === "actual" ? "var(--protein)" : p.dataKey === "projected" ? "#4ade80" : "var(--calories)" }}>
+                                    {p.dataKey === "actual" ? "● Mesuré" : p.dataKey === "projected" ? "- Simulé" : "Calories"} :{" "}
                                     {p.dataKey === "calories" ? `${p.value} kcal` : `${(p.value as number).toFixed(1)} kg`}
                                   </p>
                                 ))}
+                                {gap != null && (
+                                  <p className="text-[10px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "#f87171" }}>
+                                    Écart : {gap > 0 ? "+" : ""}{gap.toFixed(1)} kg {gap > 0 ? "sous objectif" : "au-dessus"}
+                                  </p>
+                                )}
                               </div>
                             );
                           }}
@@ -949,7 +978,25 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <Area yAxisId="w" type="monotone" dataKey="projLow"
                           stroke="none" fill="var(--bg)" fillOpacity={1}
                           dot={false} activeDot={false} connectNulls legendType="none" />
-                        {/* Actual weight (solid area) */}
+                        {/* Gap shading between actual and projected (past) */}
+                        <Area yAxisId="w" type="monotone" dataKey="gapTop"
+                          stroke="none" fill="url(#gapGrad)" fillOpacity={1}
+                          dot={false} activeDot={false} connectNulls={false} legendType="none" />
+                        <Area yAxisId="w" type="monotone" dataKey="gapBottom"
+                          stroke="none" fill="var(--bg)" fillOpacity={1}
+                          dot={false} activeDot={false} connectNulls={false} legendType="none" />
+                        {/* Projected weight (dashed line, always shown) — drawn BEFORE actual so actual is on top */}
+                        <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
+                          stroke="#4ade80" strokeWidth={2.5} strokeDasharray="6 3"
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          dot={(props: any) => {
+                            const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
+                            if (payload.projected == null) return <g key={`p-${payload.date}`} />;
+                            if (!payload.isFuture) return <g key={`p-${payload.date}`} />;
+                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={3} fill="#4ade80" stroke="var(--bg)" strokeWidth={1.5} />;
+                          }}
+                          activeDot={{ r: 4, fill: "#4ade80" }} connectNulls />
+                        {/* Actual weight (solid area, on top) */}
                         <Area yAxisId="w" type="monotone" dataKey="actual" name="actual"
                           stroke="var(--protein)" strokeWidth={2.5} fill="url(#actualGrad)"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -959,34 +1006,28 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 5 : 3} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1.5} />;
                           }}
                           activeDot={{ r: 5 }} connectNulls={false} />
-                        {/* Projected weight (dashed line, non-linear decay) */}
-                        <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
-                          stroke="#4ade80" strokeWidth={2} strokeDasharray="6 3"
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          dot={(props: any) => {
-                            const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
-                            if (!payload.isFuture || payload.projected == null) return <g key={`p-${payload.date}`} />;
-                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={3} fill="#4ade80" stroke="var(--bg)" strokeWidth={1.5} />;
-                          }}
-                          activeDot={{ r: 4 }} connectNulls />
                       </ComposedChart>
                     </ResponsiveContainer>
                     </div>{/* inner width */}
                     </div>{/* scroll wrapper */}
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 mt-2 justify-center flex-wrap">
+                    <div className="flex items-center gap-3 mt-2.5 justify-center flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
                         <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0" style={{ borderTop: "2px dashed #4ade80" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulation</span>
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-3 rounded-sm opacity-70" style={{ background: "rgba(248,113,113,0.35)" }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Écart réel/simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-3 rounded-sm opacity-60" style={{ background: "rgba(74,222,128,0.35)" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fourchette</span>
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fourchette future</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(249,115,22,0.5)" }} />

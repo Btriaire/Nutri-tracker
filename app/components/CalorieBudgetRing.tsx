@@ -3,15 +3,16 @@
 import { motion } from "framer-motion";
 
 interface Props {
-  consumed:       number;
-  goal:           number;
-  burned?:        number | null;
-  activeMinutes?: number | null;
-  sessionCount?:  number;
-  size?:          number;
+  consumed:        number;
+  goal:            number;
+  burned?:         number | null;
+  activeMinutes?:  number | null;
+  sessionCount?:   number;
+  size?:           number;
+  onBurnedClick?:  () => void;
 }
 
-export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, size = 172 }: Props) {
+export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, size = 172, onBurnedClick }: Props) {
   const burnedVal  = burned ?? 0;
   const remaining  = goal - consumed;             // restantes brutes (sans activité)
   const net        = consumed - burnedVal;        // net = consommé − brûlé
@@ -202,11 +203,18 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
         {burnedVal > 0 && (
           <>
             <div className="w-px" style={{ background: "var(--border)" }} />
-            <div>
+            <button
+              onClick={onBurnedClick}
+              className="flex flex-col items-center transition-opacity active:opacity-60"
+              style={{ cursor: onBurnedClick ? "pointer" : "default" }}
+            >
               <p className="text-[15px] font-semibold tabular-nums" style={{ color: "rgba(52,211,153,0.9)" }}>
                 −{Math.round(burnedVal)}
               </p>
-              <p className="label-xs mt-0.5">Brûlées</p>
+              <p className="label-xs mt-0.5 flex items-center gap-0.5">
+                Brûlées
+                {onBurnedClick && <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>ℹ</span>}
+              </p>
               {(activeMinutes != null || sessionCount != null) && (
                 <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                   {[
@@ -215,7 +223,7 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
                   ].filter(Boolean).join(" · ") || "activité"}
                 </p>
               )}
-            </div>
+            </button>
           </>
         )}
       </div>

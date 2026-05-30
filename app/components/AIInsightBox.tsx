@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkle, ArrowsClockwise } from "@phosphor-icons/react";
+import { Sparkle, ArrowsClockwise, CaretDown, CaretUp } from "@phosphor-icons/react";
 
 interface Props {
   type:       "journal" | "dashboard" | "activity" | "progress";
@@ -14,10 +14,11 @@ interface Props {
 }
 
 export default function AIInsightBox({ type, data, label, delay = 600, autoLoad = false }: Props) {
-  const [text,    setText]    = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(false);
-  const [launched, setLaunched] = useState(false);
+  const [text,      setText]      = useState<string | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState(false);
+  const [launched,  setLaunched]  = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const didLoad = useRef(false);
 
   const load = useCallback(async () => {
@@ -93,9 +94,13 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
 
       <div className="relative p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-6 h-6 rounded-lg"
+        <div className={`flex items-center justify-between ${text && collapsed ? "" : "mb-3"}`}>
+          <button
+            className="flex items-center gap-2 flex-1 min-w-0 text-left"
+            onClick={() => text && setCollapsed(c => !c)}
+            style={{ cursor: text ? "pointer" : "default" }}
+          >
+            <div className="flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0"
               style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2))" }}>
               <Sparkle size={12} weight="fill" style={{ color: "#a78bfa" }} />
             </div>
@@ -103,33 +108,43 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               style={{ color: "#a78bfa", letterSpacing: "0.06em" }}>
               ✨ IA
             </span>
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
               · {displayLabel}
             </span>
-          </div>
-
-          {/* Refresh button */}
-          <button
-            onClick={load}
-            disabled={loading}
-            className="flex items-center justify-center w-6 h-6 rounded-lg transition-all"
-            style={{
-              background: "rgba(139,92,246,0.1)",
-              border: "1px solid rgba(139,92,246,0.2)",
-              opacity: loading ? 0.5 : 1,
-            }}
-            title="Actualiser l'analyse"
-          >
-            <ArrowsClockwise
-              size={11}
-              style={{ color: "#a78bfa" }}
-              className={loading ? "animate-spin" : ""}
-            />
+            {text && (
+              <span className="ml-1 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                {collapsed
+                  ? <CaretDown size={10} />
+                  : <CaretUp size={10} />
+                }
+              </span>
+            )}
           </button>
+
+          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+            {/* Refresh button */}
+            <button
+              onClick={load}
+              disabled={loading}
+              className="flex items-center justify-center w-6 h-6 rounded-lg transition-all"
+              style={{
+                background: "rgba(139,92,246,0.1)",
+                border: "1px solid rgba(139,92,246,0.2)",
+                opacity: loading ? 0.5 : 1,
+              }}
+              title="Actualiser l'analyse"
+            >
+              <ArrowsClockwise
+                size={11}
+                style={{ color: "#a78bfa" }}
+                className={loading ? "animate-spin" : ""}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Bouton initial si pas encore lancé */}
-        {!launched && !autoLoad && (
+        {!launched && !autoLoad && !collapsed && (
           <button
             onClick={load}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-medium transition-all"
@@ -144,9 +159,26 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
           </button>
         )}
 
+        {/* Content — hidden when collapsed (but kept in DOM for perf) */}
+        <AnimatePresence>
+          {collapsed && text && (
+            <motion.div
+              key="collapsed-hint"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mt-1"
+            >
+              <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>
+                {icon} {text.slice(0, 60)}…
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Content */}
         <AnimatePresence mode="wait">
-          {loading && !text && (
+          {!collapsed && loading && !text && (
             <motion.div
               key="skeleton"
               initial={{ opacity: 0 }}
@@ -168,7 +200,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
             </motion.div>
           )}
 
-          {error && !loading && (
+          {!collapsed && error && !loading && (
             <motion.p
               key="error"
               initial={{ opacity: 0 }}
@@ -181,7 +213,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
             </motion.p>
           )}
 
-          {text && (
+          {!collapsed && text && (
             <motion.div
               key="text"
               initial={{ opacity: 0, y: 4 }}

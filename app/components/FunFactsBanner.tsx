@@ -39,7 +39,7 @@ export default function FunFactsBanner() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(next, 7000);
+    const t = setInterval(next, 18000);
     return () => clearInterval(t);
   }, [next]);
 

@@ -24,9 +24,12 @@ import SleepHypnogram from "@/app/components/SleepHypnogram";
 import MoodTrendChart from "@/app/components/MoodTrendChart";
 import PixelWall from "@/app/components/PixelWall";
 import type { MoodPoint } from "@/app/components/MoodTrendChart";
+import BodyMeasurementsTab from "@/app/components/BodyMeasurementsTab";
+import HealthFactsBanner from "@/app/components/HealthFactsBanner";
+import MeditationPlayer from "@/app/components/MeditationPlayer";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
-type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre";
+type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre" | "mensurations";
 
 // ─── Symptom categories ──────────────────────────────────────────────────────
 
@@ -501,16 +504,17 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         </motion.div>
 
         {/* Tab bar */}
-        <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+        <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4 overflow-x-auto"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", scrollbarWidth: "none" }}>
           {([
-            { id: "synthese",     label: "🩺 Synthèse" },
-            { id: "cardiaque",    label: "❤️ Cardiaque" },
-            { id: "medical",      label: "🏥 Médical" },
-            { id: "bienetre",     label: "🧠 Bien-être" },
+            { id: "synthese",      label: "🩺 Synthèse" },
+            { id: "cardiaque",     label: "❤️ Cœur" },
+            { id: "medical",       label: "🏥 Médical" },
+            { id: "bienetre",      label: "🧠 Bien-être" },
+            { id: "mensurations",  label: "📏 Mesures" },
           ] as const).map(({ id, label }) => (
             <button key={id} onClick={() => setActiveTab(id)}
-              className="flex-1 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+              className="flex-shrink-0 flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap px-2"
               style={{
                 background: activeTab === id ? "var(--surface-active)" : "transparent",
                 color:      activeTab === id ? "var(--text-primary)"   : "var(--text-muted)",
@@ -524,6 +528,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         {/* ── TAB: VITAUX ── */}
         {activeTab === "synthese" && (
           <>
+            {/* Health facts banner */}
+            <HealthFactsBanner />
+
             {/* ── Composition corporelle (Withings) ── */}
             <motion.div {...fade(0.03)} className="glass p-5 mb-4">
               <div className="flex items-center justify-between mb-4">
@@ -1605,6 +1612,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           <BienEtreTab date={date} />
         )}
 
+        {/* ── TAB: MENSURATIONS ── */}
+        {activeTab === "mensurations" && (
+          <BodyMeasurementsTab />
+        )}
+
       </div>
 
       {/* ── BP Add Modal ── */}
@@ -1999,6 +2011,11 @@ function BienEtreTab({ date }: { date: string }) {
 
       {/* Breathing */}
       <BreathingGuide />
+
+      {/* Meditation */}
+      <div className="glass p-4">
+        <MeditationPlayer />
+      </div>
     </motion.div>
   );
 }

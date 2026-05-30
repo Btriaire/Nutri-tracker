@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp, ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp, ArrowsClockwise, X, Fire, Footprints as FootprintsIcon } from "@phosphor-icons/react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import WeightWidget from "@/app/components/WeightWidget";
@@ -21,7 +21,7 @@ import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoin
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
 import { levelBarBg, levelBarClip, levelColor, levelColorPct } from "@/app/lib/colors";
 
-interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
+interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number; calories?: number | null }
 
 interface Props {
   date:              string;
@@ -111,6 +111,7 @@ export default function DashboardClient({
   const [bilanMode, setBilanMode] = useState<"%" | "g">("%");
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const [burnedDetailOpen, setBurnedDetailOpen] = useState(false);
   const router = useRouter();
   const hasSynced = useRef(false);
 
@@ -385,6 +386,7 @@ export default function DashboardClient({
               burned={burned}
               activeMinutes={activeMinutes}
               sessionCount={sessions.length}
+              onBurnedClick={burned ? () => setBurnedDetailOpen(true) : undefined}
             />
 
             {/* Macro progress bars */}
@@ -653,6 +655,124 @@ export default function DashboardClient({
             </div>
           </motion.div>
         )}
+
+        {/* ── Burned calories detail modal ── */}
+        <AnimatePresence>
+          {burnedDetailOpen && burned && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                className="fixed inset-0 z-40"
+                style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setBurnedDetailOpen(false)}
+              />
+              {/* Sheet */}
+              <motion.div
+                className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto"
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 400, damping: 40 }}
+              >
+                <div className="rounded-t-2xl p-5 pb-8"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none" }}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(52,211,153,0.12)" }}>
+                        <Fire size={14} style={{ color: "rgba(52,211,153,0.9)" }} />
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                          Calories brûlées
+                        </p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Détail de la dépense active</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setBurnedDetailOpen(false)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <X size={13} style={{ color: "var(--text-muted)" }} />
+                    </button>
+                  </div>
+
+                  {/* Total */}
+                  <div className="rounded-xl px-4 py-3 mb-4 flex items-center justify-between"
+                    style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }}>
+                    <span className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Total actif</span>
+                    <span className="text-[22px] font-bold tabular-nums" style={{ color: "rgba(52,211,153,0.9)" }}>
+                      −{Math.round(burned)} kcal
+                    </span>
+                  </div>
+
+                  {/* Sources */}
+                  <p className="label-xs mb-2">Sources</p>
+                  <div className="space-y-2">
+
+                    {/* Steps contribution */}
+                    {steps && steps > 0 && (() => {
+                      const stepKcal = Math.round(steps * 0.04);
+                      return (
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                            style={{ background: "rgba(255,255,255,0.05)" }}>👟</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Marche · {steps.toLocaleString("fr-FR")} pas</p>
+                            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>≈ 0.04 kcal/pas</p>
+                          </div>
+                          <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
+                            style={{ color: "rgba(52,211,153,0.8)" }}>~{stepKcal} kcal</span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Activity sessions */}
+                    {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
+                      <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                          style={{ background: "rgba(255,255,255,0.05)" }}>
+                          {activityEmoji(s.activityType)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
+                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {s.durationMin} min
+                          </p>
+                        </div>
+                        <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
+                          style={{ color: s.calories ? "rgba(52,211,153,0.8)" : "var(--text-muted)" }}>
+                          {s.calories ? `${Math.round(s.calories)} kcal` : "—"}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Active minutes context */}
+                    {activeMinutes && activeMinutes > 0 && (
+                      <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                          style={{ background: "rgba(255,255,255,0.05)" }}>⚡</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Minutes actives</p>
+                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Intensité globale du jour</p>
+                        </div>
+                        <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
+                          style={{ color: "var(--text-secondary)" }}>{activeMinutes} min</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Note */}
+                  <p className="mt-3 text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    💡 Valeur issue de Google Fit · Dépense basale (métabolisme de repos) non incluse
+                  </p>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Water tracker */}
         <motion.div {...fade(0.19)} className="mb-4">
