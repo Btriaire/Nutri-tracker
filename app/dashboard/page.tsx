@@ -94,7 +94,7 @@ export default async function DashboardPage() {
       stepsGoal={goals.stepsGoal ?? 10000}
       activeMinutes={fitnessDay?.googleFit?.activeMinutes ?? null}
       heartRate={fitnessDay?.googleFit?.heartRateAvg ?? null}
-      sleepMinutes={fitnessDay?.googleFit?.sleepMinutes ?? null}
+      sleepMinutes={fitnessDay?.manualSleep?.sleepMinutes ?? fitnessDay?.googleFit?.sleepMinutes ?? null}
       sleepGoalMin={goals.sleepGoalMin ?? 420}
       sessions={fitnessDay?.googleFit?.sessions ?? []}
       weight={recentWeight[0] ?? null}

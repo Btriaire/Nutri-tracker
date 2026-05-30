@@ -13,10 +13,13 @@ interface Props {
 
 export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, size = 172 }: Props) {
   const burnedVal  = burned ?? 0;
-  const remaining  = goal - consumed;            // calories restantes (avant activité)
-  const net        = consumed - burnedVal;        // net = consommé - brûlé
-  const netRemain  = goal - net;                  // restantes nettes (compte l'activité)
-  const over       = consumed > goal;
+  const remaining  = goal - consumed;             // restantes brutes (sans activité)
+  const net        = consumed - burnedVal;        // net = consommé − brûlé
+  const netRemain  = goal - net;                  // restantes nettes (avec activité)
+  const hasActivity = burnedVal > 0;
+  // What the center shows: net when activity data is present, raw otherwise
+  const centerVal  = hasActivity ? netRemain : remaining;
+  const over       = hasActivity ? net > goal : consumed > goal;
 
   // ── Outer ring: burned calories ────────────────────────────────────────────
   const swOuter = 8;
@@ -25,12 +28,14 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
   const burnPct = burnedVal > 0 ? Math.min(burnedVal / goal, 1) : 0;
   const burnDash = circOut * burnPct;
 
-  // ── Inner ring: consumed calories ─────────────────────────────────────────
+  // ── Inner ring: net calories consumed (consumed − burned) ─────────────────
   const gap    = 10;                             // space between rings
   const swInner = 12;
   const rInner  = rOuter - swOuter / 2 - gap - swInner / 2;
   const circIn  = 2 * Math.PI * rInner;
-  const consPct = Math.min(consumed / goal, 1);
+  // Ring fills based on net consumption when activity data present
+  const netForRing = hasActivity ? Math.max(net, 0) : consumed;
+  const consPct  = Math.min(netForRing / goal, 1);
   const consDash = circIn * consPct;
 
   return (
@@ -78,7 +83,7 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
             fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={swInner} />
 
           {/* ── Remaining indicator (light fill on remaining arc) ── */}
-          {remaining > 0 && remaining < goal && (
+          {centerVal > 0 && centerVal < goal && (
             <motion.circle
               cx={size/2} cy={size/2} r={rInner}
               fill="none"
@@ -131,20 +136,31 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
             className="text-[30px] font-bold leading-none tabular-nums"
             style={{ color: over ? "#ef4444" : "var(--text-primary)" }}
           >
-            {over ? `+${Math.round(Math.abs(remaining))}` : Math.round(remaining > 0 ? remaining : 0)}
+            {over ? `+${Math.round(Math.abs(centerVal))}` : Math.round(centerVal > 0 ? centerVal : 0)}
           </motion.span>
           <span className="text-[10px] font-medium" style={{ color: over ? "#ef4444" : "var(--text-muted)" }}>
             {over ? "dépassé" : "restantes"}
           </span>
-          {burnedVal > 0 && (
+          {hasActivity && (
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-[9px] mt-0.5"
-              style={{ color: "rgba(52,211,153,0.7)" }}
+              className="text-[9px] mt-0.5 px-1.5 py-0.5 rounded-full"
+              style={{ color: "rgba(52,211,153,0.9)", background: "rgba(52,211,153,0.08)" }}
             >
-              net {Math.round(netRemain) > 0 ? Math.round(netRemain) : 0} avec activité
+              🔥 −{Math.round(burnedVal)} activité
+            </motion.span>
+          )}
+          {hasActivity && remaining > 0 && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="text-[8px]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              sans activité : {Math.round(remaining)}
             </motion.span>
           )}
         </div>

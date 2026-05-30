@@ -317,6 +317,7 @@ export interface FitnessDay {
   googleFit?:   GoogleFitDay;
   withings?:    WithingsDay;
   appleHealth?: AppleHealthDay;
+  manualSleep?: { sleepMinutes: number | null };  // manual override, never overwritten by sync
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────

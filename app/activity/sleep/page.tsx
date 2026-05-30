@@ -32,12 +32,13 @@ export default async function SleepPage() {
   const sleepGoalMin = profile?.goals?.sleepGoalMin ?? 420;
 
   const points: SleepPoint[] = snaps.map((snap, i) => {
-    const gf = snap.exists
-      ? (snap.data() as { googleFit?: GoogleFitDay }).googleFit
-      : undefined;
+    const data = snap.exists ? snap.data() as { googleFit?: GoogleFitDay; manualSleep?: { sleepMinutes: number | null } } : undefined;
+    const gf   = data?.googleFit;
+    // Manual entry takes priority over Google Fit sync
+    const sleepMin = data?.manualSleep?.sleepMinutes ?? gf?.sleepMinutes ?? null;
     return {
       date:             dates[i],
-      sleepMinutes:     gf?.sleepMinutes     ?? null,
+      sleepMinutes:     sleepMin,
       timeInBedMinutes: gf?.timeInBedMinutes ?? null,
       lightSleepMin:    gf?.lightSleepMin    ?? null,
       deepSleepMin:     gf?.deepSleepMin     ?? null,

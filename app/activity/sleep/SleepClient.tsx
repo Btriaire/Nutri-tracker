@@ -71,6 +71,9 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
   const lastSavedRef   = useRef<number | undefined>(current ?? undefined);
   // Only start debouncing after the user's first interaction
   const interactedRef  = useRef(false);
+  // Always-current ref so the unmount effect can read latest value
+  const totalMinRef    = useRef(totalMin);
+  useEffect(() => { totalMinRef.current = totalMin; });
 
   // Auto-save helper — robust: only marks saved AFTER successful fetch
   async function doSave(min: number) {
@@ -97,10 +100,24 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
     if (!interactedRef.current || totalMin < 1) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => { doSave(totalMin); }, 700);
-    // Cleanup: cancel debounce on deps-change, but NOT on unmount (close handles that)
     return () => { if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; } };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hours, minutes]);
+
+  // Fire-and-forget save on unmount (handles navigation away without closing the modal)
+  useEffect(() => {
+    return () => {
+      const min = totalMinRef.current;
+      if (interactedRef.current && min >= 1 && min !== lastSavedRef.current) {
+        fetch("/api/sleep", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date, sleepMinutes: min }),
+        }).catch(() => {});
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Called when user touches H or M
   function markInteracted() { interactedRef.current = true; }
