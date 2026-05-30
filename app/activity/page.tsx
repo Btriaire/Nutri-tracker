@@ -6,6 +6,22 @@ import { defaultGoals } from "@/app/lib/nutrition";
 import { format } from "date-fns";
 import ActivityClient from "./ActivityClient";
 
+/**
+ * Recursively converts every Firestore Timestamp to a plain number (ms since epoch),
+ * so the object is safe to pass as a Server→Client Component prop.
+ */
+function stripTimestamps(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== "object") return obj;
+  // Firestore Timestamp has toMillis()
+  const maybeTs = obj as { toMillis?: () => number };
+  if (typeof maybeTs.toMillis === "function") return maybeTs.toMillis();
+  if (Array.isArray(obj)) return obj.map(stripTimestamps);
+  return Object.fromEntries(
+    Object.entries(obj as Record<string, unknown>).map(([k, v]) => [k, stripTimestamps(v)])
+  );
+}
+
 export default async function ActivityPage() {
   const userId = "owner";
   const today = format(new Date(), "yyyy-MM-dd");
@@ -23,26 +39,13 @@ export default async function ActivityPage() {
       db.doc(`users/${userId}`).get(),
     ]);
     if (fitSnap.exists) {
-      const raw = fitSnap.data() as FitnessDay;
-      // Strip all Firestore Timestamps — not serializable to Client Components
-      if (raw.googleFit) {
-        const gf = raw.googleFit as unknown as Record<string, unknown>;
-        gf.syncedAt = null;
-      }
-      if (raw.withings) {
-        const w = raw.withings as unknown as Record<string, unknown>;
-        w.syncedAt   = null;
-        // measuredAt is also a Timestamp — convert to ms number for safe serialization
-        const mt = w.measuredAt as { toMillis?: () => number } | null;
-        w.measuredAt = mt?.toMillis?.() ?? null;
-      }
-      fitnessDay = raw;
+      // Strip ALL Timestamps recursively — any Firestore Timestamp in the tree
+      // will throw "Only plain objects" if passed to a Client Component as-is.
+      fitnessDay = stripTimestamps(fitSnap.data()) as FitnessDay;
     }
     manualActivities = actSnap.docs.map((d) => {
-      const data = d.data();
-      // Convert loggedAt Timestamp to plain { _seconds } so client can sort
-      const loggedAt = data.loggedAt as { seconds?: number } | null | undefined;
-      return { ...data, id: d.id, loggedAt: loggedAt ? { _seconds: loggedAt.seconds ?? 0 } : null };
+      const data = stripTimestamps(d.data()) as Record<string, unknown>;
+      return { ...data, id: d.id };
     });
     if (profileSnap.exists) {
       goals = (profileSnap.data() as UserProfile).goals ?? defaultGoals();

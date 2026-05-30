@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -110,13 +111,22 @@ export default function DashboardClient({
   const [bilanMode, setBilanMode] = useState<"%" | "g">("%");
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
+  const router = useRouter();
+  const hasSynced = useRef(false);
 
-  // Silent background sync — both services — on every dashboard open
+  // Auto-sync both services on every dashboard open, then refresh data
   useEffect(() => {
+    if (hasSynced.current) return;
+    hasSynced.current = true;
     const opts = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) };
-    fetch("/api/google-fit/sync", opts).catch(() => {});
-    fetch("/api/withings/sync",   { ...opts, body: JSON.stringify({ date }) }).catch(() => {});
-  }, [date]);
+    Promise.allSettled([
+      fetch("/api/google-fit/sync", opts),
+      fetch("/api/withings/sync", { ...opts, body: JSON.stringify({ date }) }),
+    ]).then(() => {
+      // Refresh server component data to show newly synced values
+      router.refresh();
+    }).catch(() => {});
+  }, [date, router]);
 
   const handleForceSync = async () => {
     setSyncing(true);
