@@ -15,6 +15,7 @@ import { Check } from "@phosphor-icons/react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import type { DayPhoto } from "@/app/api/photos/route";
+import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
@@ -26,20 +27,18 @@ function TrackedNutrientPill({
 }) {
   const fraction = goal > 0 ? value / goal : 0;
   const over = fraction > 1;
-  const barColor = over && invertAlert ? "#ef4444" : color;
-  const valColor = over && invertAlert ? "#ef4444" : color;
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1 mb-1">
         <span className="text-[11px]">{emoji}</span>
         <span className="text-[9px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
-        <span className="ml-auto text-[10px] font-semibold tabular-nums flex-shrink-0" style={{ color: valColor }}>
+        <span className="ml-auto text-[10px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
           {value}<span className="font-normal text-[8px]">{unit}</span>
         </span>
       </div>
       <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.min(fraction * 100, 100)}%`, background: barColor }} />
+          style={{ width: `${Math.min(fraction * 100, 100)}%`, background: over && invertAlert ? "#ef4444" : LEVEL_GRADIENT }} />
       </div>
       <p className="text-[8px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
     </div>
@@ -221,9 +220,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <motion.div
                   className="h-full rounded-full"
                   style={{
-                    background: remaining >= 0
-                      ? "linear-gradient(90deg, var(--calories), rgba(249,115,22,0.6))"
-                      : "#ef4444",
+                    background: remaining >= 0 ? LEVEL_GRADIENT : "#ef4444",
                   }}
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(pct(totals.calories, goals.dailyCalories), 100)}%` }}
@@ -253,12 +250,12 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               <div key={label}>
                 <div className="flex justify-between text-[11px] mb-1">
                   <span style={{ color: "var(--text-muted)" }}>{label}</span>
-                  <span style={{ color }}>{Math.round(val)}g</span>
+                  <span style={{ color: levelColor(goal > 0 ? val / goal : 0) }}>{Math.round(val)}g</span>
                 </div>
                 <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: color }}
+                    style={{ background: LEVEL_GRADIENT }}
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(pct(val, goal), 100)}%` }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { levelColor } from "@/app/lib/colors";
 
 interface MacroRingProps {
   value: number;
@@ -17,9 +18,12 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
   const strokeW = 5;
   const r = (size - strokeW) / 2;
   const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / goal, 1);
+  const fraction = value / goal;
+  const pct = Math.min(fraction, 1);
   const dash = circ * pct;
   const over = value > goal;
+  const ringColor = over ? "#ef4444" : levelColor(fraction);
+  const ringGlow  = over ? "rgba(239,68,68,0.3)" : `${ringColor}44`;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -34,7 +38,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
             <motion.circle
               cx={size / 2} cy={size / 2} r={r}
               fill="none"
-              stroke={over ? "rgba(239,68,68,0.3)" : glow}
+              stroke={ringGlow}
               strokeWidth={strokeW + 4}
               strokeLinecap="round"
               strokeDasharray={circ}
@@ -47,7 +51,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
           <motion.circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none"
-            stroke={over ? "#ef4444" : color}
+            stroke={ringColor}
             strokeWidth={strokeW}
             strokeLinecap="round"
             strokeDasharray={circ}
@@ -59,7 +63,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className="text-[11px] font-semibold tabular-nums"
-            style={{ color: over ? "#ef4444" : color }}
+            style={{ color: ringColor }}
           >
             {Math.round(value)}
           </span>

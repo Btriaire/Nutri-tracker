@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
+import { LEVEL_GRADIENT, levelColor, levelColorPct } from "@/app/lib/colors";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -71,18 +72,13 @@ function hrZoneLabel(bpm: number, maxHr: number): { label: string; color: string
   return               { label: "Maximal",       color: "#EA4335" };
 }
 
-function pctColor(pct: number | null): string {
-  if (pct === null) return "var(--text-muted)";
-  if (pct >= 80) return "#34A853";
-  if (pct >= 50) return "#FBBC04";
-  return "#EA4335";
-}
+// pctColor → levelColorPct from @/app/lib/colors
 
 function ScoreRing({ score }: { score: number }) {
   const SIZE = 56, R = 22, SW = 5;
   const circ = 2 * Math.PI * R;
   const dash = Math.min(score / 100, 1) * circ;
-  const color = pctColor(score);
+  const color = levelColorPct(score);
   return (
     <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
       <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={SW} />
@@ -381,20 +377,21 @@ export default function DashboardClient({
             {/* Macro progress bars */}
             <div className="w-full grid grid-cols-4 gap-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
               {macros.map(({ label, value, goal, color }) => {
-                const pct = Math.min((value / goal) * 100, 100);
+                const fraction = goal > 0 ? value / goal : 0;
+                const pct = Math.min(fraction * 100, 100);
                 const over = value > goal;
                 return (
                   <div key={label} className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
-                      <span className="text-[10px] tabular-nums" style={{ color: over ? "#ef4444" : "var(--text-muted)" }}>
+                      <span className="text-[10px] tabular-nums" style={{ color: over ? "#ef4444" : levelColor(fraction) }}>
                         {Math.round(value)}g
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ background: over ? "#ef4444" : color }}
+                        style={{ background: over ? "#ef4444" : LEVEL_GRADIENT }}
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
@@ -441,11 +438,11 @@ export default function DashboardClient({
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
                   {bilanMode === "%" ? (
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
                       {pct !== null ? `${Math.round(pct)}%` : "—"}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: pctColor(pct) }}>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
                       {value !== null
                         ? unit === "" ? value.toLocaleString("fr-FR")
                           : `${value}${unit !== "kcal" ? "" : " "}${unit}`
@@ -462,9 +459,9 @@ export default function DashboardClient({
                   {pct !== null && (
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: pctColor(pct) }}
+                      style={{ background: LEVEL_GRADIENT }}
                       initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
+                      animate={{ width: `${Math.min(pct ?? 0, 100)}%` }}
                       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                     />
                   )}
@@ -500,7 +497,7 @@ export default function DashboardClient({
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, var(--steps), rgba(34,211,238,0.6))" }}
+                style={{ background: LEVEL_GRADIENT }}
                 initial={{ width: 0 }}
                 animate={{ width: `${stepsPct}%` }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -538,14 +535,14 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: sleepOk ? "#34A853" : "#7986CB" }}
+                  style={{ background: LEVEL_GRADIENT }}
                   initial={{ width: 0 }}
                   animate={{ width: `${sleepPct}%` }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: sleepOk ? "#34A853" : "var(--text-muted)" }}>
+                <span className="text-[10px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
                   {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
                 </span>
                 <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
@@ -599,14 +596,14 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: activePct >= 100 ? "#34A853" : "var(--fit-green)" }}
+                  style={{ background: LEVEL_GRADIENT }}
                   initial={{ width: 0 }}
                   animate={{ width: `${activePct}%` }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: activePct >= 100 ? "#34A853" : "var(--text-muted)" }}>
+                <span className="text-[10px]" style={{ color: activePct >= 100 ? levelColor(1) : "var(--text-muted)" }}>
                   {activeMinutes
                     ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
                     : "Aucune donnée"}
@@ -674,14 +671,14 @@ export default function DashboardClient({
                       <div className="flex items-center gap-1.5 mb-1.5">
                         <span className="text-sm">{emoji}</span>
                         <span className="text-[11px] font-medium flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{label}</span>
-                        <span className="text-[11px] font-semibold tabular-nums" style={{ color: over && invertAlert ? "#ef4444" : color }}>
+                        <span className="text-[11px] font-semibold tabular-nums" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
                           {value}{unit}
                         </span>
                       </div>
                       <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
                           className="h-full rounded-full"
-                          style={{ background: barColor }}
+                          style={{ background: fraction > 1 ? "#ef4444" : LEVEL_GRADIENT }}
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(fraction * 100, 100)}%` }}
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -768,13 +765,14 @@ export default function DashboardClient({
               { label: "Glucides",  value: consumed.carbsG,   goal: goals.carbsGrams,  color: "var(--carbs)" },
               { label: "Lipides",   value: consumed.fatG,     goal: goals.fatGrams,    color: "var(--fat)" },
               { label: "Fibres",    value: consumed.fiberG,   goal: goals.fiberGrams,  color: "var(--fiber)" },
-            ].map(({ label, value, goal, color }) => {
-              const pct = Math.min((value / goal) * 100, 100);
+            ].map(({ label, value, goal }) => {
+              const fraction = goal > 0 ? value / goal : 0;
+              const pct = Math.min(fraction * 100, 100);
               return (
                 <div key={label}>
                   <div className="flex justify-between text-[12px] mb-1">
                     <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-                    <span style={{ color }}>
+                    <span style={{ color: levelColor(fraction) }}>
                       {Math.round(value)}g
                       <span style={{ color: "var(--text-muted)" }}> / {goal}g</span>
                     </span>
@@ -782,7 +780,7 @@ export default function DashboardClient({
                   <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: color }}
+                      style={{ background: LEVEL_GRADIENT }}
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}

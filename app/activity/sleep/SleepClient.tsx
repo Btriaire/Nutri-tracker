@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
 } from "recharts";
 import SleepHypnogram from "@/app/components/SleepHypnogram";
+import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
 import type { SleepPoint } from "./page";
 
 interface Props { points: SleepPoint[]; sleepGoalMin: number }
@@ -32,12 +33,8 @@ const fade = (delay = 0) => ({
 });
 
 function sleepColor(min: number | null, goal: number): string {
-  if (!min) return "rgba(121,134,203,0.25)";
-  const pct = min / goal;
-  if (pct >= 1.0) return "#34A853";
-  if (pct >= 0.8) return "#7986CB";
-  if (pct >= 0.6) return "#FBBC04";
-  return "#ef4444";
+  if (!min) return "rgba(255,255,255,0.12)";
+  return levelColor(min / goal);
 }
 
 function fmtSleep(min: number): string {
@@ -345,7 +342,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           </div>
           <div className="w-full h-2.5 rounded-full mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full"
-              style={{ background: sleepColor(avgMin, sleepGoalMin) }}
+              style={{ background: avgMin ? LEVEL_GRADIENT : "rgba(255,255,255,0.06)" }}
               initial={{ width: 0 }}
               animate={{ width: `${avgMin ? Math.min(avgMin / sleepGoalMin * 100, 100) : 0}%` }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}

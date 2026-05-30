@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid, Cell,
 } from "recharts";
 import type { StepsPoint } from "./page";
+import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
 
 interface Props { points: StepsPoint[]; stepsGoal: number }
 
@@ -30,19 +31,15 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.35, ease, delay },
 });
 
-function stepsColor(steps: number, goal: number): string {
-  const pct = steps / goal;
-  if (pct >= 1.0) return "#34A853";
-  if (pct >= 0.7) return "#FBBC04";
-  return "var(--fit-red)";
-}
+function stepsColor(steps: number, goal: number): string { return levelColor(steps / goal); }
 
 function stepsLabel(steps: number, goal: number): { label: string; color: string } {
   const pct = steps / goal;
-  if (pct >= 1.0) return { label: "Objectif atteint 🎉", color: "#34A853" };
-  if (pct >= 0.8) return { label: "Presque !", color: "#FBBC04" };
-  if (pct >= 0.5) return { label: "En bonne voie", color: "#FBBC04" };
-  return { label: "Encore un effort", color: "var(--fit-red)" };
+  const color = levelColor(pct);
+  if (pct >= 1.0) return { label: "Objectif atteint 🎉", color };
+  if (pct >= 0.8) return { label: "Presque !", color };
+  if (pct >= 0.5) return { label: "En bonne voie", color };
+  return { label: "Encore un effort", color };
 }
 
 export default function StepsClient({ points, stepsGoal }: Props) {
@@ -156,7 +153,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, var(--steps), ${stepsColor(todaySteps, stepsGoal)})` }}
+                  style={{ background: LEVEL_GRADIENT }}
                   initial={{ width: 0 }}
                   animate={{ width: `${pctToday}%` }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
