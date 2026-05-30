@@ -31,19 +31,32 @@ export function levelColorPct(pct: number | null): string {
 }
 
 /**
- * Returns inline style for a gradient-filled progress bar div.
- *
- * IMPORTANT — scaleX approach:
- * The fill div must be 100% wide (className="w-full") and the parent must
- * have overflow:hidden. Animate `scaleX` (0 → fraction) instead of `width`.
- * This way the gradient always spans the full parent width; scaleX reveals
- * only the correct colour slice — 30% shows only blue, 70% shows
- * blue→green→yellow, 100% shows the full spectrum.
+ * Background color for a progress bar fill div.
+ * Use with levelBarClip() for Framer Motion bars,
+ * or levelBarStyle() for plain CSS-transition bars.
+ */
+export function levelBarBg(fraction: number): string {
+  return fraction > 1 ? "#ef4444" : LEVEL_GRADIENT;
+}
+
+/**
+ * clipPath value that reveals only the left `fraction` portion of the bar.
+ * The gradient spans the full element width; clipping the right side exposes
+ * only the correct colour slice — 30% shows blue, 70% shows blue→green→yellow.
+ */
+export function levelBarClip(fraction: number): string {
+  const rightPct = (Math.max(0, 1 - Math.min(fraction, 1)) * 100).toFixed(1);
+  return `inset(0 ${rightPct}% 0 0)`;
+}
+
+/**
+ * Inline style for a plain <div> progress bar (CSS transition, no Framer Motion).
+ * The clip-path approach correctly reveals only the left colour portion.
  */
 export function levelBarStyle(fraction: number): React.CSSProperties {
-  if (fraction > 1.0) {
-    // Over limit: solid red
-    return { background: "#ef4444", transformOrigin: "left center", willChange: "transform" };
-  }
-  return { background: LEVEL_GRADIENT, transformOrigin: "left center", willChange: "transform" };
+  return {
+    background:  levelBarBg(fraction),
+    clipPath:    levelBarClip(fraction),
+    transition:  "clip-path 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+  };
 }

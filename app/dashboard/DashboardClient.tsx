@@ -19,7 +19,7 @@ import {
 } from "recharts";
 import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
-import { levelBarStyle, levelColor, levelColorPct } from "@/app/lib/colors";
+import { levelBarBg, levelBarClip, levelColor, levelColorPct } from "@/app/lib/colors";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -404,9 +404,9 @@ export default function DashboardClient({
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                       <motion.div
                         className="h-full rounded-full w-full"
-                        style={levelBarStyle(over ? 1.1 : fraction)}
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: Math.min(fraction, 1) }}
+                        style={{ background: levelBarBg(over ? 1.1 : fraction) }}
+                        initial={{ clipPath: "inset(0 100% 0 0)" }}
+                        animate={{ clipPath: levelBarClip(fraction) }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                       />
                     </div>
@@ -472,9 +472,9 @@ export default function DashboardClient({
                   {pct !== null && (
                     <motion.div
                       className="h-full rounded-full w-full"
-                      style={levelBarStyle((pct ?? 0) / 100)}
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: Math.min((pct ?? 0) / 100, 1) }}
+                      style={{ background: levelBarBg((pct ?? 0) / 100) }}
+                      initial={{ clipPath: "inset(0 100% 0 0)" }}
+                      animate={{ clipPath: levelBarClip((pct ?? 0) / 100) }}
                       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                     />
                   )}
@@ -510,9 +510,9 @@ export default function DashboardClient({
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
               <motion.div
                 className="h-full rounded-full w-full"
-                style={levelBarStyle(stepsPct / 100)}
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: Math.min(stepsPct / 100, 1) }}
+                style={{ background: levelBarBg(stepsPct / 100) }}
+                initial={{ clipPath: "inset(0 100% 0 0)" }}
+                animate={{ clipPath: levelBarClip(stepsPct / 100) }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
@@ -548,9 +548,9 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full w-full"
-                  style={levelBarStyle(sleepPct / 100)}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: Math.min(sleepPct / 100, 1) }}
+                  style={{ background: levelBarBg(sleepPct / 100) }}
+                  initial={{ clipPath: "inset(0 100% 0 0)" }}
+                  animate={{ clipPath: levelBarClip(sleepPct / 100) }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
@@ -609,9 +609,9 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full w-full"
-                  style={levelBarStyle(activePct / 100)}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: Math.min(activePct / 100, 1) }}
+                  style={{ background: levelBarBg(activePct / 100) }}
+                  initial={{ clipPath: "inset(0 100% 0 0)" }}
+                  animate={{ clipPath: levelBarClip(activePct / 100) }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
@@ -685,9 +685,9 @@ export default function DashboardClient({
                       <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
                           className="h-full rounded-full w-full"
-                          style={levelBarStyle(over && invertAlert ? 1.1 : fraction)}
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: Math.min(fraction, 1) }}
+                          style={{ background: levelBarBg(over && invertAlert ? 1.1 : fraction) }}
+                          initial={{ clipPath: "inset(0 100% 0 0)" }}
+                          animate={{ clipPath: levelBarClip(fraction) }}
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         />
                       </div>
@@ -790,9 +790,9 @@ export default function DashboardClient({
                   <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                     <motion.div
                       className="h-full rounded-full w-full"
-                      style={levelBarStyle(fraction)}
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: Math.min(fraction, 1) }}
+                      style={{ background: levelBarBg(fraction) }}
+                      initial={{ clipPath: "inset(0 100% 0 0)" }}
+                      animate={{ clipPath: levelBarClip(fraction) }}
                       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>

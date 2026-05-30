@@ -14,7 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
 } from "recharts";
 import SleepHypnogram from "@/app/components/SleepHypnogram";
-import { levelBarStyle, levelColor } from "@/app/lib/colors";
+import { levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
 import type { SleepPoint } from "./page";
 
 interface Props { points: SleepPoint[]; sleepGoalMin: number }
@@ -359,9 +359,9 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           </div>
           <div className="w-full h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full w-full"
-              style={avgMin ? levelBarStyle(avgMin / sleepGoalMin) : { background: "rgba(255,255,255,0.06)", transformOrigin: "left center" }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: avgMin ? Math.min(avgMin / sleepGoalMin, 1) : 0 }}
+              style={{ background: avgMin ? levelBarBg(avgMin / sleepGoalMin) : "rgba(255,255,255,0.06)" }}
+              initial={{ clipPath: "inset(0 100% 0 0)" }}
+              animate={{ clipPath: levelBarClip(avgMin ? avgMin / sleepGoalMin : 0) }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
