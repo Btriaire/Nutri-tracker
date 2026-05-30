@@ -274,7 +274,12 @@ export interface GoogleFitDay {
   activeMinutes:         number;
   heartRateAvg:          number | null;
   weightKg:              number | null;
-  sleepMinutes:          number | null;
+  sleepMinutes:          number | null;    // actual sleep (light+deep+REM)
+  timeInBedMinutes:      number | null;    // total in-bed (includes awake)
+  lightSleepMin:         number | null;
+  deepSleepMin:          number | null;
+  remSleepMin:           number | null;
+  sleepSyncedAt?:        string;           // ISO date of the sleep session
   sessions:              { id: string; name: string; activityType: number; durationMin: number; startMs: number; endMs: number; calories: number | null }[];
   syncedAt:              Timestamp;
 }

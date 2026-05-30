@@ -225,11 +225,6 @@ export default function DashboardClient({
         style={{ paddingBottom: "80px" }}
       >
 
-        {/* ── Photo strip (positive memories) ── */}
-        {recentPhotos.length > 0 && (
-          <PhotoStrip photos={recentPhotos} />
-        )}
-
         {/* ── Header ── */}
         <motion.div {...fade(0)} className="mb-5">
 
@@ -277,6 +272,11 @@ export default function DashboardClient({
               }
             </button>
           </div>
+
+          {/* Photo strip — below date */}
+          {recentPhotos.length > 0 && (
+            <PhotoStrip photos={recentPhotos} />
+          )}
 
           {/* Row 2 — daily objectives pill */}
           <div className="flex items-center gap-2">
@@ -659,32 +659,29 @@ export default function DashboardClient({
           if (trackedNutrients.sugar)        rows.push({ key: "sugar",        emoji: "🍬", label: "Sucres",        unit: "g",  value: Math.round(consumed.sugarG ?? 0),     goal: goals.sugarGrams ?? 50,     color: "#ec4899", invertAlert: true });
           if (trackedNutrients.saturatedFat) rows.push({ key: "saturatedFat", emoji: "🧈", label: "Lip. saturés",  unit: "g",  value: Math.round(consumed.saturatedFatG ?? 0), goal: goals.saturatedFatGrams ?? 20, color: "var(--fat)", invertAlert: true });
           return (
-            <motion.div {...fade(0.185)} className="glass p-4 mb-4">
-              <p className="label-xs mb-3">Paramètres suivis</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {rows.map(({ key, emoji, label, unit, value, goal, color, invertAlert }) => {
+            <motion.div {...fade(0.185)} className="glass px-4 py-3 mb-4">
+              <p className="label-xs mb-2">Paramètres suivis</p>
+              <div className="space-y-2">
+                {rows.map(({ key, emoji, label, unit, value, goal, invertAlert }) => {
                   const fraction = goal > 0 ? value / goal : 0;
                   const over = fraction > 1;
-                  const barColor = over && invertAlert ? "#ef4444" : color;
                   return (
-                    <div key={key} className="rounded-xl p-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="text-sm">{emoji}</span>
-                        <span className="text-[11px] font-medium flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{label}</span>
-                        <span className="text-[11px] font-semibold tabular-nums" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
-                          {value}{unit}
-                        </span>
-                      </div>
-                      <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div key={key} className="flex items-center gap-2.5">
+                      <span className="text-[13px] flex-shrink-0 w-4 text-center">{emoji}</span>
+                      <span className="text-[11px] w-[88px] flex-shrink-0 truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
                           className="h-full rounded-full"
-                          style={{ background: fraction > 1 ? "#ef4444" : LEVEL_GRADIENT }}
+                          style={{ background: over && invertAlert ? "#ef4444" : LEVEL_GRADIENT }}
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(fraction * 100, 100)}%` }}
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         />
                       </div>
-                      <p className="text-[9px] mt-1 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+                      <span className="text-[10px] font-semibold tabular-nums flex-shrink-0 w-[48px] text-right"
+                        style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
+                        {value}<span className="font-normal opacity-60">/{goal}{unit}</span>
+                      </span>
                     </div>
                   );
                 })}

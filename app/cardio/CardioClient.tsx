@@ -273,7 +273,8 @@ export default function CardioClient({ points, age }: Props) {
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                tickFormatter={(v: number) => `${Math.round(v / 60)}h`} />
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
                 return (

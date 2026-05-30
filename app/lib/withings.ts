@@ -32,9 +32,14 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
   let   accessToken  = decrypt(d.accessToken  as string);
 
   if (Date.now() > expiresAt - 120_000) {
-    const fresh = await refreshAccessToken(refreshToken);
-    await saveTokens(userId, fresh);
-    accessToken = fresh.accessToken;
+    try {
+      const fresh = await refreshAccessToken(refreshToken);
+      await saveTokens(userId, fresh);
+      accessToken = fresh.accessToken;
+    } catch (err) {
+      console.error("Withings token refresh failed — token likely expired:", err);
+      return null;
+    }
   }
 
   return { accessToken, refreshToken, expiresAt };
@@ -109,15 +114,22 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
   const startdate = Math.floor(new Date(from + "T00:00:00").getTime() / 1000);
   const enddate   = Math.floor(new Date(to   + "T23:59:59").getTime() / 1000);
 
-  const url = new URL("https://wbsapi.withings.net/measure");
-  url.searchParams.set("action",    "getmeas");
-  url.searchParams.set("meastype",  MEAS_TYPES);
-  url.searchParams.set("category",  "1");
-  url.searchParams.set("startdate", String(startdate));
-  url.searchParams.set("enddate",   String(enddate));
+  // Withings measure API requires POST with form-encoded body (not GET)
+  const formBody = new URLSearchParams({
+    action:    "getmeas",
+    meastype:  MEAS_TYPES,
+    category:  "1",
+    startdate: String(startdate),
+    enddate:   String(enddate),
+  });
 
-  const res  = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${tokens.accessToken}` },
+  const res = await fetch("https://wbsapi.withings.net/measure", {
+    method:  "POST",
+    headers: {
+      "Authorization":  `Bearer ${tokens.accessToken}`,
+      "Content-Type":   "application/x-www-form-urlencoded",
+    },
+    body: formBody,
   });
   const json = await res.json() as WithingsMeasResponse;
   if (json.status !== 0) {

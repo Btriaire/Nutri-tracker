@@ -29,19 +29,19 @@ export default function PhotoStrip({ photos }: Props) {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="mb-5"
+        className="mb-2"
       >
         {/* Header */}
-        <div className="flex items-center gap-1.5 mb-2 px-1">
-          <span style={{ fontSize: 13 }}>🌟</span>
-          <p className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>
-            Souvenirs de la semaine
+        <div className="flex items-center gap-1.5 mb-1.5 px-1">
+          <span style={{ fontSize: 11 }}>🌟</span>
+          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+            Souvenirs
           </p>
         </div>
 
         {/* Horizontal scroll */}
         <div
-          className="flex gap-2 overflow-x-auto pb-1"
+          className="flex gap-1.5 overflow-x-auto pb-0.5"
           style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
         >
           {photos.map(({ date, photo }) => (
@@ -50,24 +50,24 @@ export default function PhotoStrip({ photos }: Props) {
               whileTap={{ scale: 0.94 }}
               onClick={() => setLightbox({ dataUrl: photo.dataUrl, date })}
               className="flex-shrink-0 relative group"
-              style={{ width: 68, height: 68 }}
+              style={{ width: 44, height: 44 }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.dataUrl}
                 alt={`souvenir ${date}`}
-                className="w-full h-full object-cover rounded-2xl"
-                style={{ border: "1.5px solid rgba(255,255,255,0.1)" }}
+                className="w-full h-full object-cover rounded-xl"
+                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
               />
               {/* Date label on hover / always on mobile */}
               <div
-                className="absolute bottom-0 left-0 right-0 rounded-b-2xl text-center"
+                className="absolute bottom-0 left-0 right-0 rounded-b-xl text-center"
                 style={{
                   background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
-                  padding: "6px 2px 3px",
+                  padding: "4px 2px 2px",
                 }}
               >
-                <span style={{ fontSize: 7, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
+                <span style={{ fontSize: 6, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
                   {fmtDate(date)}
                 </span>
               </div>

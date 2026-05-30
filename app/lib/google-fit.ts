@@ -106,7 +106,12 @@ interface DayFitnessData {
   activeMinutes:       number;
   heartRateAvg:        number | null;
   weightKg:            number | null;
-  sleepMinutes:        number | null;
+  sleepMinutes:        number | null;      // actual sleep (light+deep+REM)
+  timeInBedMinutes:    number | null;      // total session time (in bed)
+  lightSleepMin:       number | null;
+  deepSleepMin:        number | null;
+  remSleepMin:         number | null;
+  sleepSyncedAt:       string | null;      // ISO date of sleep session start
   sessions:            WorkoutSession[];
 }
 
@@ -178,20 +183,26 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     return pts.length ? (pts[pts.length - 1].value?.[0]?.fpVal ?? null) : null;
   };
 
-  // Sleep + sessions — calculated from session data (millisecond precision, no BigInt issues)
-  const SLEEP_TYPES = [72, 110, 111, 112, 113, 114];
-  let sleepMinutes: number | null = null;
+  // Sleep: sessions → timeInBedMinutes; segments → phases + sleepMinutes
+  let timeInBedMinutes: number | null = null;
+  let lightSleepMin:    number | null = null;
+  let deepSleepMin:     number | null = null;
+  let remSleepMin:      number | null = null;
+  let sleepSyncedAt:    string | null = null;
   const sessions: WorkoutSession[] = [];
+
+  // Sessions API: type 72 = sleep session = full in-bed time
   if (sessionsRes.ok) {
     const sessJson = await sessionsRes.json() as { session?: RawSession[] };
-    let sleepMs = 0;
+    let inBedMs = 0;
     for (const s of sessJson.session ?? []) {
       const durationMin = Math.round((Number(s.endTimeMillis) - Number(s.startTimeMillis)) / 60_000);
       if (durationMin < 1) continue;
-      if (SLEEP_TYPES.includes(s.activityType ?? 0) && Number(s.endTimeMillis) >= startMs) {
-        // Only count sleep that ends on/after today's midnight (cross-midnight sessions included)
-        sleepMs += Number(s.endTimeMillis) - Number(s.startTimeMillis);
-      } else {
+      if ((s.activityType ?? 0) === 72 && Number(s.endTimeMillis) >= startMs) {
+        // Full sleep session = in-bed duration
+        inBedMs += Number(s.endTimeMillis) - Number(s.startTimeMillis);
+        if (!sleepSyncedAt) sleepSyncedAt = new Date(Number(s.startTimeMillis)).toISOString();
+      } else if ((s.activityType ?? 0) !== 72) {
         sessions.push({
           id:           s.id,
           name:         s.name || activityLabel(s.activityType ?? 0),
@@ -203,7 +214,36 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         });
       }
     }
-    if (sleepMs > 0) sleepMinutes = Math.round(sleepMs / 60_000);
+    if (inBedMs > 0) timeInBedMinutes = Math.round(inBedMs / 60_000);
+  }
+
+  // Sleep segments: classify phases (light=4, deep=5, REM=6, awake=1, unspecified=2)
+  let sleepMinutes: number | null = null;
+  if (sleepRes.ok) {
+    const sleepJson = await sleepRes.json() as { bucket?: { dataset?: { point?: SleepSegmentPoint[] }[] }[] };
+    const sleepBucket = sleepJson.bucket?.[0];
+    if (sleepBucket?.dataset?.[0]?.point?.length) {
+      let light = 0, deep = 0, rem = 0;
+      for (const pt of sleepBucket.dataset[0].point) {
+        const stage = pt.value?.[0]?.intVal ?? 0;
+        const durMs = (Number(pt.endTimeNanos ?? 0) - Number(pt.startTimeNanos ?? 0)) / 1_000_000;
+        const durMin = Math.round(durMs / 60_000);
+        if (durMin < 1) continue;
+        if (stage === 4) light += durMin;
+        if (stage === 5) deep  += durMin;
+        if (stage === 6) rem   += durMin;
+      }
+      if (light + deep + rem > 0) {
+        lightSleepMin = light || null;
+        deepSleepMin  = deep  || null;
+        remSleepMin   = rem   || null;
+        sleepMinutes  = light + deep + rem;
+      }
+    }
+  }
+  // Fallback: if no segment data, estimate from in-bed time (85% sleep efficiency)
+  if (sleepMinutes === null && timeInBedMinutes !== null) {
+    sleepMinutes = Math.round(timeInBedMinutes * 0.85);
   }
 
   return {
@@ -213,6 +253,11 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     weightKg:            getLastFp(3) ? Math.round(getLastFp(3)! * 10) / 10 : null,
     activeMinutes:       getInt(4),
     sleepMinutes,
+    timeInBedMinutes,
+    lightSleepMin,
+    deepSleepMin,
+    remSleepMin,
+    sleepSyncedAt,
     sessions,
   };
 }
@@ -233,6 +278,11 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
       heartRateAvg:        data.heartRateAvg,
       weightKg:            data.weightKg,
       sleepMinutes:        data.sleepMinutes,
+      timeInBedMinutes:    data.timeInBedMinutes,
+      lightSleepMin:       data.lightSleepMin,
+      deepSleepMin:        data.deepSleepMin,
+      remSleepMin:         data.remSleepMin,
+      sleepSyncedAt:       data.sleepSyncedAt,
       sessions:            data.sessions,
       syncedAt:            FieldValue.serverTimestamp(),
     },
@@ -259,4 +309,10 @@ interface RawSession {
   activityType?:  number;
   startTimeMillis: string;
   endTimeMillis:   string;
+}
+
+interface SleepSegmentPoint {
+  startTimeNanos?: string;
+  endTimeNanos?:   string;
+  value?:          { intVal?: number }[];
 }

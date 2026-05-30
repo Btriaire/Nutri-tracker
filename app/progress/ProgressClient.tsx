@@ -152,6 +152,7 @@ function buildWeightChartData(
   currentKg: number | null,
   targetKg: number | null,
   targetDate: string | undefined,
+  plan?: NutritionPlan | undefined,
 ): WeightChartPoint[] {
   const today    = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
@@ -159,7 +160,7 @@ function buildWeightChartData(
   const calMap = new Map(calorieData.map(p => [p.date, p.calories]));
 
   // Past: actual measured weight
-  const past: WeightChartPoint[] = weightData
+  const actualPoints: WeightChartPoint[] = weightData
     .filter(p => (p.weightKg ?? 0) > 0)
     .map(p => ({
       date:      p.date,
@@ -171,53 +172,76 @@ function buildWeightChartData(
       calories:  calMap.get(p.date) ?? null,
     }));
 
-  if (!targetKg || !targetDate) return past;
+  if (!targetKg || !targetDate) return actualPoints;
+
+  // Simulation start: use plan start for full retrospective view
+  const simStartKg   = plan?.startWeightKg ?? actualPoints[0]?.actual ?? currentKg;
+  const simStartDate = plan?.startDate ?? actualPoints[0]?.date ?? todayStr;
+  if (!simStartKg) return actualPoints;
+
+  const simStart  = new Date(simStartDate + "T00:00:00");
+  const endDate   = new Date(targetDate   + "T00:00:00");
+  const totalDays = Math.max(14, Math.round((endDate.getTime() - simStart.getTime()) / 86400000));
+
+  // Build full simulation from plan start to target date
+  const dailyKg = buildPlateauDailyKg(simStartKg, targetKg, totalDays);
+
+  // Helper: get simulated kg for any date string
+  function getProjected(dateStr: string): number | null {
+    const d         = new Date(dateStr + "T00:00:00");
+    const dayOffset = Math.round((d.getTime() - simStart.getTime()) / 86400000);
+    if (dayOffset < 0 || dayOffset >= dailyKg.length) return null;
+    return Math.round(dailyKg[dayOffset] * 10) / 10;
+  }
+
+  const isLoss = (simStartKg - targetKg) >= 0;
+
+  // Past points with projected overlay for retrospective comparison
+  const past: WeightChartPoint[] = actualPoints.map(p => ({
+    ...p,
+    projected: getProjected(p.date),
+  }));
 
   const lastActual = past[past.length - 1]?.actual ?? currentKg;
   if (!lastActual) return past;
 
-  const endDate   = new Date(targetDate + "T00:00:00");
-  const totalDays = Math.max(14, Math.round((endDate.getTime() - today.getTime()) / 86400000));
-
-  // Build daily plateau simulation
-  const dailyKg = buildPlateauDailyKg(lastActual, targetKg, totalDays);
-
-  // Bridge point: today
+  // Bridge point: today (if no actual weight recorded)
+  const todayHasActual = past.some(p => p.date === todayStr);
   const todayBridge: WeightChartPoint = {
     date:      todayStr,
     label:     "Auj.",
-    actual:    lastActual,
-    projected: lastActual,
+    actual:    todayHasActual ? null : lastActual,
+    projected: getProjected(todayStr) ?? lastActual,
     projLow:   lastActual,
     projHigh:  lastActual,
     calories:  calMap.get(todayStr) ?? null,
     isToday:   true,
   };
 
-  // Sample: one point per week, plus the final target date
+  // Future points — one per week from today to target
   const future: WeightChartPoint[] = [];
-  const gap   = Math.abs(lastActual - targetKg);
-  const weeksTotal = Math.ceil(totalDays / 7);
+  const daysUntilTarget = Math.round((endDate.getTime() - today.getTime()) / 86400000);
+  const weeksTotal      = Math.ceil(daysUntilTarget / 7);
 
   for (let w = 1; w <= weeksTotal; w++) {
-    const daysFromNow = Math.min(w * 7, totalDays);
+    const daysFromNow = Math.min(w * 7, daysUntilTarget);
     const d           = new Date(today.getTime() + daysFromNow * 86400000);
-    const proj        = dailyKg[daysFromNow] ?? (dailyKg[dailyKg.length - 1]);
-    // Uncertainty band widens over time
-    const bandKg      = Math.min(0.25 + (daysFromNow / totalDays) * 0.75, 1.0);
-    const isLoss      = (lastActual - targetKg) >= 0;
+    const dateStr     = format(d, "yyyy-MM-dd");
+    const proj        = getProjected(dateStr) ?? dailyKg[dailyKg.length - 1];
+    const daysInSim   = Math.round((d.getTime() - simStart.getTime()) / 86400000);
+    const bandKg      = Math.min(0.25 + (daysInSim / Math.max(totalDays, 1)) * 0.75, 1.0);
 
     future.push({
-      date:      format(d, "yyyy-MM-dd"),
-      label:     daysFromNow >= totalDays ? format(endDate, "dd/MM/yy") : format(d, "dd/MM"),
+      date:      dateStr,
+      label:     daysFromNow >= daysUntilTarget ? format(endDate, "dd/MM/yy") : format(d, "dd/MM"),
       actual:    null,
       projected: Math.round(proj * 10) / 10,
-      projLow:   Math.round((proj + (isLoss ? bandKg : -bandKg)) * 10) / 10,
-      projHigh:  Math.round((proj - (isLoss ? bandKg : -bandKg)) * 10) / 10,
+      projLow:   Math.round((proj + (isLoss ?  bandKg : -bandKg)) * 10) / 10,
+      projHigh:  Math.round((proj - (isLoss ?  bandKg : -bandKg)) * 10) / 10,
       calories:  null,
       isFuture:  true,
     });
-    if (daysFromNow >= totalDays) break;
+    if (daysFromNow >= daysUntilTarget) break;
   }
 
   const filteredPast = past.filter(p => p.date !== todayStr);
@@ -305,6 +329,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     currentWeightKg,
     targetWeightKg,
     targetDate || undefined,
+    plan,
   );
   const allWeightValues = weightChartData.flatMap(p =>
     [p.actual, p.projected, p.projLow, p.projHigh].filter((v): v is number => v != null && v > 0 && v < 999)
