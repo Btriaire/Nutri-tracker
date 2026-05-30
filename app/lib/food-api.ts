@@ -132,7 +132,10 @@ function parseServingGrams(s: string | undefined): number | null {
 function offToResult(product: Record<string, unknown>): FoodSearchResult | null {
   const nm = product.nutriments as Record<string, number> | undefined;
   if (!nm) return null;
-  const cal100 = nm["energy-kcal_100g"] ?? nm["energy_100g"] ?? null;
+  // Prefer kcal field; fall back to kJ converted to kcal (never use energy_100g which may be kJ)
+  const cal100 = nm["energy-kcal_100g"]
+    ?? (nm["energy-kj_100g"] != null ? Math.round(nm["energy-kj_100g"] / 4.184) : null)
+    ?? null;
   if (cal100 === null || cal100 <= 0) return null;
 
   const servingSize = product.serving_size as string | undefined;
@@ -204,7 +207,7 @@ function usdaToResult(item: Record<string, unknown>): FoodSearchResult {
     servingSizeG: servingG, servingLabel,
     servingOptions: servingOptions.length > 0 ? servingOptions : undefined,
     nutrition: {
-      calories:       Math.round(getN(1008) * ratio),
+      calories:       Math.round((getN(1008) || getN(2047)) * ratio),
       proteinG:       Math.round(getN(1003) * ratio * 10) / 10,
       carbsG:         Math.round(getN(1005) * ratio * 10) / 10,
       fatG:           Math.round(getN(1004) * ratio * 10) / 10,
