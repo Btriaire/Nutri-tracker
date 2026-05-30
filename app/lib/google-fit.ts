@@ -195,24 +195,25 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   let sleepSyncedAt:    string | null = null;
   const sessions: WorkoutSession[] = [];
 
-  // Sessions API: type 72 = sleep session = full in-bed time
-  // Only count NIGHT SLEEP: sessions that end after midnight AND before noon
-  // (this excludes afternoon naps and only captures the previous night's sleep).
+  // Sessions API: type 72 = sleep session = full in-bed time.
+  // IMPORTANT: some trackers (Garmin, Samsung…) create multiple overlapping
+  // sessions for the same night (one master + one per phase). We must merge
+  // overlapping intervals to avoid double-counting.
   if (sessionsRes.ok) {
     const sessJson = await sessionsRes.json() as { session?: RawSession[] };
-    let inBedMs = 0;
+    const nightIntervals: [number, number][] = [];
+
     for (const s of sessJson.session ?? []) {
       const sessStart   = Number(s.startTimeMillis);
       const sessEnd     = Number(s.endTimeMillis);
       const durationMin = Math.round((sessEnd - sessStart) / 60_000);
       if (durationMin < 1) continue;
+
       if ((s.activityType ?? 0) === 72) {
-        // Night sleep: must end after midnight AND before noon of sync date
-        // → excludes afternoon naps; multiple night sub-sessions (e.g. from Garmin
-        //   splitting light/deep blocks) are correctly summed
+        // Night sleep: session must END after midnight AND before noon
+        // → excludes afternoon naps; captures the previous night's sleep.
         if (sessEnd >= startMs && sessEnd <= noonMs) {
-          inBedMs += sessEnd - sessStart;
-          if (!sleepSyncedAt) sleepSyncedAt = new Date(sessStart).toISOString();
+          nightIntervals.push([sessStart, sessEnd]);
         }
       } else {
         sessions.push({
@@ -226,23 +227,51 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         });
       }
     }
-    if (inBedMs > 0) timeInBedMinutes = Math.round(inBedMs / 60_000);
+
+    // Merge overlapping / nested intervals so sub-sessions aren't double-counted
+    if (nightIntervals.length > 0) {
+      nightIntervals.sort((a, b) => a[0] - b[0]);
+      sleepSyncedAt = new Date(nightIntervals[0][0]).toISOString();
+
+      const merged: [number, number][] = [nightIntervals[0]];
+      for (let i = 1; i < nightIntervals.length; i++) {
+        const last = merged[merged.length - 1];
+        if (nightIntervals[i][0] <= last[1]) {
+          // Overlapping or nested — extend the end if needed
+          last[1] = Math.max(last[1], nightIntervals[i][1]);
+        } else {
+          merged.push(nightIntervals[i]);
+        }
+      }
+
+      const inBedMs = merged.reduce((s, [st, en]) => s + en - st, 0);
+      timeInBedMinutes = Math.round(inBedMs / 60_000);
+    }
   }
 
   // Sleep segments: classify phases (light=4, deep=5, REM=6, awake=1, unspecified=2)
   // Only count stages that end before noon (excludes afternoon naps).
+  // Use a Set keyed by "startNanos-endNanos-stage" to deduplicate identical points
+  // (some trackers may sync the same segment multiple times).
   let sleepMinutes: number | null = null;
   if (sleepRes.ok) {
     const sleepJson = await sleepRes.json() as { bucket?: { dataset?: { point?: SleepSegmentPoint[] }[] }[] };
-    // Buckets may span multiple days — iterate all
     let light = 0, deep = 0, rem = 0;
+    const seen = new Set<string>();
+
     for (const bkt of sleepJson.bucket ?? []) {
       for (const pt of bkt.dataset?.[0]?.point ?? []) {
-        const ptEndMs = Number(pt.endTimeNanos ?? 0) / 1_000_000;
+        const ptStartMs = Number(pt.startTimeNanos ?? 0) / 1_000_000;
+        const ptEndMs   = Number(pt.endTimeNanos ?? 0)   / 1_000_000;
         // Only include stages from the night window (before noon of sync date)
         if (ptEndMs > noonMs) continue;
         const stage  = pt.value?.[0]?.intVal ?? 0;
-        const durMs  = (Number(pt.endTimeNanos ?? 0) - Number(pt.startTimeNanos ?? 0)) / 1_000_000;
+        // Deduplicate identical points
+        const key = `${ptStartMs}-${ptEndMs}-${stage}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const durMs  = ptEndMs - ptStartMs;
         const durMin = Math.round(durMs / 60_000);
         if (durMin < 1) continue;
         if (stage === 4) light += durMin;   // light sleep
