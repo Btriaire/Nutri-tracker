@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
-import { LEVEL_GRADIENT, levelColor, levelColorPct } from "@/app/lib/colors";
+import { levelBarStyle, levelColor, levelColorPct } from "@/app/lib/colors";
 
 interface Session { id: string; name: string; activityType: number; durationMin: number; startMs: number }
 
@@ -391,7 +391,7 @@ export default function DashboardClient({
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ background: over ? "#ef4444" : LEVEL_GRADIENT }}
+                        style={levelBarStyle(over ? 1.1 : fraction)}
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
@@ -459,7 +459,7 @@ export default function DashboardClient({
                   {pct !== null && (
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: LEVEL_GRADIENT }}
+                      style={levelBarStyle((pct ?? 0) / 100)}
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(pct ?? 0, 100)}%` }}
                       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
@@ -497,7 +497,7 @@ export default function DashboardClient({
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: LEVEL_GRADIENT }}
+                style={levelBarStyle(stepsPct / 100)}
                 initial={{ width: 0 }}
                 animate={{ width: `${stepsPct}%` }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -535,7 +535,7 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: LEVEL_GRADIENT }}
+                  style={levelBarStyle(sleepPct / 100)}
                   initial={{ width: 0 }}
                   animate={{ width: `${sleepPct}%` }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -596,7 +596,7 @@ export default function DashboardClient({
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: LEVEL_GRADIENT }}
+                  style={levelBarStyle(activePct / 100)}
                   initial={{ width: 0 }}
                   animate={{ width: `${activePct}%` }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -672,7 +672,7 @@ export default function DashboardClient({
                       <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
                           className="h-full rounded-full"
-                          style={{ background: over && invertAlert ? "#ef4444" : LEVEL_GRADIENT }}
+                          style={levelBarStyle(over && invertAlert ? 1.1 : fraction)}
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(fraction * 100, 100)}%` }}
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -777,7 +777,7 @@ export default function DashboardClient({
                   <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: LEVEL_GRADIENT }}
+                      style={levelBarStyle(fraction)}
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}

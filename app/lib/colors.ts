@@ -33,11 +33,19 @@ export function levelColorPct(pct: number | null): string {
 /**
  * Returns inline style for a gradient-filled progress bar div.
  * Apply this to the fill element; set `width` separately via animation.
+ *
+ * The trick: backgroundSize scales the gradient so it appears to span
+ * the full parent bar width. Only the relevant colour slice is visible
+ * in the fill div — so a 30% bar shows only blue, a 70% bar shows
+ * blue→green→yellow, and 100% shows the full spectrum.
  */
 export function levelBarStyle(fraction: number): React.CSSProperties {
   if (fraction > 1.0) {
     // Over limit: solid red
     return { background: "#ef4444" };
   }
-  return { background: LEVEL_GRADIENT };
+  const clampedFraction = Math.max(fraction, 0.005);
+  // backgroundSize = 100/fraction % → gradient spans the whole parent bar
+  const sizeStr = `${Math.min(Math.ceil(100 / clampedFraction), 4000)}% 100%`;
+  return { background: LEVEL_GRADIENT, backgroundSize: sizeStr };
 }

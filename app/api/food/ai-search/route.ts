@@ -32,14 +32,20 @@ interface GroqResult {
 }
 
 function toFoodResult(r: GroqResult, index: number): FoodSearchResult {
-  const s = Math.max(1, r.serving_g ?? 100);
+  const s     = Math.max(1, r.serving_g ?? 100);
   const scale = s / 100;
+  const label = r.serving_label ?? `${s}g`;
   return {
-    id:           `ai:${r.name.toLowerCase().replace(/\s+/g, "-")}-${index}`,
+    id:           `ai:${r.name.toLowerCase().replace(/[\s']/g, "-")}-${index}`,
     source:       "ai",
     name:         r.name,
     servingSizeG: s,
-    servingLabel: r.serving_label ?? `${s}g`,
+    servingLabel: label,
+    // Include the AI's native serving as the default option + 100g fallback
+    servingOptions: [
+      { label, grams: s, isDefault: true },
+      ...(s !== 100 ? [{ label: "100 g", grams: 100 }] : []),
+    ],
     nutrition: {
       calories: Math.round((r.calories_100g ?? 0) * scale),
       proteinG: Math.round((r.protein_100g  ?? 0) * scale * 10) / 10,

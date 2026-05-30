@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, CaretDown, Camera, Trash, ChartBar } from "@phosphor-icons/react";
+import { Plus, CaretDown, Camera, Trash, ChartBar, X } from "@phosphor-icons/react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
@@ -193,25 +194,7 @@ export default function MealSection({
           >
             {/* Photo thumbnail */}
             {photoUrl && (
-              <div className="flex justify-end px-4 pt-2">
-                <div className="relative rounded-xl overflow-hidden flex-shrink-0"
-                  style={{ width: 56, height: 56, border: "1px solid var(--border)" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photoUrl}
-                    alt="Photo du repas"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={handleDeletePhoto}
-                    className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,0.55)", color: "#f87171" }}
-                    aria-label="Supprimer la photo"
-                  >
-                    <Trash size={13} />
-                  </button>
-                </div>
-              </div>
+              <PhotoThumb url={photoUrl} onDelete={handleDeletePhoto} />
             )}
 
             <div className="px-4 pb-3">
@@ -324,6 +307,89 @@ export default function MealSection({
       </AnimatePresence>
 
       <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded} />
+    </div>
+  );
+}
+
+// ── Photo thumbnail with lightbox + delete ────────────────────────────────────
+
+function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  const lightbox = open && typeof document !== "undefined" && createPortal(
+    <AnimatePresence>
+      <motion.div
+        key="photo-lb"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[300] flex flex-col items-center justify-center gap-4"
+        style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(6px)" }}
+        onClick={() => setOpen(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.88, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.88, opacity: 0 }}
+          transition={{ duration: 0.22, ease: [0.34, 1.56, 0.64, 1] }}
+          onClick={e => e.stopPropagation()}
+          className="flex flex-col items-center gap-3"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="Photo du repas"
+            className="max-w-[90vw] max-h-[72vh] rounded-2xl object-contain"
+            style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }} />
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { onDelete(); setOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium"
+              style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }}
+            >
+              <Trash size={14} /> Supprimer
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="px-4 py-2.5 rounded-xl text-[13px] font-medium"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-secondary)" }}
+            >
+              Fermer
+            </button>
+          </div>
+        </motion.div>
+        {/* Close X */}
+        <button onClick={() => setOpen(false)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(255,255,255,0.12)" }}>
+          <X size={14} style={{ color: "white" }} />
+        </button>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
+  );
+
+  return (
+    <div className="flex items-center gap-2 px-4 pt-2">
+      {lightbox}
+      {/* Thumbnail — click to enlarge */}
+      <button onClick={() => setOpen(true)} className="relative rounded-xl overflow-hidden flex-shrink-0 group"
+        style={{ width: 64, height: 64, border: "1px solid var(--border)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt="Photo du repas" className="w-full h-full object-cover" />
+        {/* Expand hint */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ background: "rgba(0,0,0,0.35)" }}>
+          <span className="text-white text-[18px]">🔍</span>
+        </div>
+      </button>
+      {/* Inline delete */}
+      <button onClick={onDelete}
+        className="flex items-center justify-center w-7 h-7 rounded-lg transition-all"
+        style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}
+        title="Supprimer la photo">
+        <Trash size={13} />
+      </button>
     </div>
   );
 }

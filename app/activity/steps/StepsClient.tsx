@@ -14,7 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid, Cell,
 } from "recharts";
 import type { StepsPoint } from "./page";
-import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
+import { levelBarStyle, levelColor } from "@/app/lib/colors";
 
 interface Props { points: StepsPoint[]; stepsGoal: number }
 
@@ -153,7 +153,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: LEVEL_GRADIENT }}
+                  style={levelBarStyle(pctToday / 100)}
                   initial={{ width: 0 }}
                   animate={{ width: `${pctToday}%` }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}

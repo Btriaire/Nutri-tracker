@@ -14,7 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
 } from "recharts";
 import SleepHypnogram from "@/app/components/SleepHypnogram";
-import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
+import { levelBarStyle, levelColor } from "@/app/lib/colors";
 import type { SleepPoint } from "./page";
 
 interface Props { points: SleepPoint[]; sleepGoalMin: number }
@@ -342,7 +342,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           </div>
           <div className="w-full h-2.5 rounded-full mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full"
-              style={{ background: avgMin ? LEVEL_GRADIENT : "rgba(255,255,255,0.06)" }}
+              style={avgMin ? levelBarStyle(avgMin / sleepGoalMin) : { background: "rgba(255,255,255,0.06)" }}
               initial={{ width: 0 }}
               animate={{ width: `${avgMin ? Math.min(avgMin / sleepGoalMin * 100, 100) : 0}%` }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}

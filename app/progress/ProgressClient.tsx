@@ -1,5 +1,5 @@
 "use client";
-import { LEVEL_GRADIENT } from "@/app/lib/colors";
+import { levelBarStyle } from "@/app/lib/colors";
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -463,7 +463,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
                     <div className="h-full rounded-full transition-all"
-                      style={{ width: `${progressPct}%`, background: LEVEL_GRADIENT }} />
+                      style={{ width: `${progressPct}%`, ...levelBarStyle(progressPct / 100) }} />
                   </div>
                 </div>
               )}

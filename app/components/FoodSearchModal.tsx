@@ -54,7 +54,8 @@ const MEAL_ICONS = ["🍽️","☕","🥗","🍱","🍜","🥙","🥪","🍛","�
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getNutritionPer100g(food: FoodSearchResult): FoodNutrition {
-  return scaleNutrition(food.nutrition, 100 / food.servingSizeG * food.servingSizeG);
+  // nutrition is per servingSizeG — divide to get per 100g
+  return scaleNutrition(food.nutrition, 100 / Math.max(food.servingSizeG, 1));
 }
 
 function getServingOptions(food: FoodSearchResult): ServingOption[] {

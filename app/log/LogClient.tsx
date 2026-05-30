@@ -15,7 +15,7 @@ import { Check } from "@phosphor-icons/react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import type { DayPhoto } from "@/app/api/photos/route";
-import { LEVEL_GRADIENT, levelColor } from "@/app/lib/colors";
+import { levelBarStyle, levelColor } from "@/app/lib/colors";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
@@ -38,7 +38,7 @@ function TrackedNutrientPill({
       </div>
       <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.min(fraction * 100, 100)}%`, background: over && invertAlert ? "#ef4444" : LEVEL_GRADIENT }} />
+          style={{ width: `${Math.min(fraction * 100, 100)}%`, ...levelBarStyle(over && invertAlert ? 1.1 : fraction) }} />
       </div>
       <p className="text-[8px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
     </div>
@@ -219,9 +219,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
                   className="h-full rounded-full"
-                  style={{
-                    background: remaining >= 0 ? LEVEL_GRADIENT : "#ef4444",
-                  }}
+                  style={levelBarStyle(remaining >= 0 ? pct(totals.calories, goals.dailyCalories) / 100 : 1.1)}
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(pct(totals.calories, goals.dailyCalories), 100)}%` }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -255,7 +253,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: LEVEL_GRADIENT }}
+                    style={levelBarStyle(goal > 0 ? val / goal : 0)}
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(pct(val, goal), 100)}%` }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
