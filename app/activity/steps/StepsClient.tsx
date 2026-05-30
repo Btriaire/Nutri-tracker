@@ -152,10 +152,10 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <div className="mt-4">
               <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
                 <motion.div
-                  className="h-full rounded-full"
+                  className="h-full rounded-full w-full"
                   style={levelBarStyle(pctToday / 100)}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pctToday}%` }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: Math.min(pctToday / 100, 1) }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>

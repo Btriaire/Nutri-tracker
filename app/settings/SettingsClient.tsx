@@ -181,6 +181,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           </div>
         </motion.div>
 
+        {/* Data safety banner */}
+        <DataSafetyBanner />
+
         {/* Profile photo — TOP */}
         <PhotoPanel initialPhotoUrl={initialPhotoUrl} />
 
@@ -512,6 +515,72 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   );
 }
 
+// ─── Data Safety Banner ──────────────────────────────────────────────────────
+
+function DataSafetyBanner() {
+  const [downloading, setDownloading] = useState(false);
+  const [done,        setDone]        = useState(false);
+
+  const handleQuickExport = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/export?format=json");
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const cd   = res.headers.get("Content-Disposition") ?? "";
+      const fnMatch = cd.match(/filename="(.+?)"/);
+      const filename = fnMatch?.[1] ?? `nutri-tracker-backup.json`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      setDone(true);
+      setTimeout(() => setDone(false), 4000);
+    } catch { /* ignore */ }
+    finally { setDownloading(false); }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.05 }}
+      className="flex items-center gap-3 px-4 py-3 rounded-2xl mb-4"
+      style={{
+        background: "linear-gradient(135deg,rgba(52,211,153,0.08),rgba(96,165,250,0.06))",
+        border: "1px solid rgba(52,211,153,0.2)",
+      }}
+    >
+      <span className="text-[18px] flex-shrink-0">🔒</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold" style={{ color: "#34d399" }}>
+          Tes données sont en sécurité
+        </p>
+        <p className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
+          Stockées dans Firestore · accessibles uniquement par toi
+        </p>
+      </div>
+      <button
+        onClick={handleQuickExport}
+        disabled={downloading}
+        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
+        style={{
+          background: done ? "rgba(52,211,153,0.15)" : "rgba(96,165,250,0.12)",
+          border: `1px solid ${done ? "rgba(52,211,153,0.3)" : "rgba(96,165,250,0.3)"}`,
+          color: done ? "#34d399" : "#60a5fa",
+        }}
+      >
+        {downloading ? (
+          <Spinner size={10} className="animate-spin" />
+        ) : done ? (
+          <><CheckCircle size={11} weight="fill" /> OK</>
+        ) : (
+          <><Database size={11} /> Sauvegarder</>
+        )}
+      </button>
+    </motion.div>
+  );
+}
+
 // ─── Photo Panel ─────────────────────────────────────────────────────────────
 
 function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
@@ -527,13 +596,28 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         canvas.width = 128; canvas.height = 128;
         const ctx = canvas.getContext("2d")!;
         const size = Math.min(img.width, img.height);
         ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 128, 128);
-        setPhotoUrl(canvas.toDataURL("image/jpeg", 0.85));
+        const url = canvas.toDataURL("image/jpeg", 0.85);
+        setPhotoUrl(url);
+        // Auto-save immediately — no need to click "Sauvegarder"
+        setSaving(true);
+        try {
+          const res = await fetch("/api/goals", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ photoUrl: url }),
+          });
+          if (res.ok) {
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+          }
+        } catch { /* ignore */ }
+        finally { setSaving(false); }
       };
       img.src = ev.target?.result as string;
     };
@@ -544,14 +628,17 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
     if (!photoUrl) return;
     setSaving(true);
     try {
-      await fetch("/api/goals", {
+      const res = await fetch("/api/goals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoUrl }),
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } finally { setSaving(false); }
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
   };
 
   return (
@@ -609,18 +696,28 @@ function PhotoPanel({ initialPhotoUrl }: { initialPhotoUrl?: string }) {
           <button onClick={() => fileRef.current?.click()} className="btn btn-ghost w-full text-[12.5px]">
             Choisir une photo
           </button>
+          {/* Status row — auto-save feedback */}
           {photoUrl && (
-            <button onClick={handleSave} disabled={saving}
-              className="btn btn-primary w-full text-[12.5px]" style={{ height: "36px" }}>
-              {saved
-                ? <><CheckCircle size={13} weight="fill" /> Sauvegardée</>
-                : saving
-                  ? <><Spinner size={11} className="animate-spin" /> Sauvegarde…</>
-                  : <><FloppyDisk size={13} /> Sauvegarder</>}
-            </button>
+            <div className="flex items-center gap-2 px-1">
+              {saving ? (
+                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  <Spinner size={11} className="animate-spin" /> Sauvegarde…
+                </span>
+              ) : saved ? (
+                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "#34d399" }}>
+                  <CheckCircle size={12} weight="fill" /> Sauvegardée ✓
+                </span>
+              ) : (
+                <button onClick={handleSave}
+                  className="flex items-center gap-1.5 text-[11px] underline underline-offset-2"
+                  style={{ color: "var(--text-muted)" }}>
+                  <FloppyDisk size={11} /> Sauvegarder manuellement
+                </button>
+              )}
+            </div>
           )}
           <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            Recadrée automatiquement à 128×128 px (JPEG)
+            Sauvegarde automatique · 128×128 px JPEG
           </p>
         </div>
       </div>

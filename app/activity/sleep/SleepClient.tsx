@@ -340,11 +340,11 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               </div>
             )}
           </div>
-          <div className="w-full h-2.5 rounded-full mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <motion.div className="h-full rounded-full"
-              style={avgMin ? levelBarStyle(avgMin / sleepGoalMin) : { background: "rgba(255,255,255,0.06)" }}
-              initial={{ width: 0 }}
-              animate={{ width: `${avgMin ? Math.min(avgMin / sleepGoalMin * 100, 100) : 0}%` }}
+          <div className="w-full h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <motion.div className="h-full rounded-full w-full"
+              style={avgMin ? levelBarStyle(avgMin / sleepGoalMin) : { background: "rgba(255,255,255,0.06)", transformOrigin: "left center" }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: avgMin ? Math.min(avgMin / sleepGoalMin, 1) : 0 }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>

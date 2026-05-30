@@ -111,25 +111,28 @@ export default function DashboardClient({
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
 
-  // Silent background sync on every dashboard open
+  // Silent background sync — both services — on every dashboard open
   useEffect(() => {
-    fetch("/api/google-fit/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    }).catch(() => {});
+    const opts = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) };
+    fetch("/api/google-fit/sync", opts).catch(() => {});
+    fetch("/api/withings/sync",   { ...opts, body: JSON.stringify({ date }) }).catch(() => {});
   }, [date]);
 
   const handleForceSync = async () => {
     setSyncing(true);
     setSyncMsg("");
     try {
-      await Promise.all([
+      const [fitRes, wRes] = await Promise.all([
         fetch("/api/google-fit/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }),
         fetch("/api/withings/sync",   { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date }) }),
       ]);
-      setSyncMsg("✓");
-      setTimeout(() => { window.location.reload(); }, 600);
+      // Read response bodies (don't throw if not ok)
+      const fitJson = fitRes.ok   ? await fitRes.json() as { ok: boolean } : { ok: false };
+      const wJson   = wRes.ok     ? await wRes.json()   as { ok: boolean } : { ok: false };
+      // Show per-service indicator: ✓ = synced, · = not connected / no new data
+      const label = `${fitJson.ok ? "✓" : "·"}F  ${wJson.ok ? "✓" : "·"}W`;
+      setSyncMsg(label);
+      setTimeout(() => { window.location.reload(); }, 900);
     } catch {
       setSyncMsg("!");
       setSyncing(false);
@@ -262,12 +265,12 @@ export default function DashboardClient({
               style={{
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid var(--border)",
-                color: syncMsg === "✓" ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)",
+                color: syncMsg.includes("✓") ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)",
               }}>
               {syncing
                 ? <ArrowsClockwise size={15} className="animate-spin" />
                 : syncMsg
-                  ? <span className="text-[12px] font-bold">{syncMsg}</span>
+                  ? <span className="text-[10px] font-bold leading-none">{syncMsg}</span>
                   : <ArrowsClockwise size={15} />
               }
             </button>
@@ -390,10 +393,10 @@ export default function DashboardClient({
                     </div>
                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                       <motion.div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full w-full"
                         style={levelBarStyle(over ? 1.1 : fraction)}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: Math.min(fraction, 1) }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                       />
                     </div>
@@ -458,10 +461,10 @@ export default function DashboardClient({
                 <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                   {pct !== null && (
                     <motion.div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full w-full"
                       style={levelBarStyle((pct ?? 0) / 100)}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(pct ?? 0, 100)}%` }}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: Math.min((pct ?? 0) / 100, 1) }}
                       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                     />
                   )}
@@ -496,10 +499,10 @@ export default function DashboardClient({
             </span>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
               <motion.div
-                className="h-full rounded-full"
+                className="h-full rounded-full w-full"
                 style={levelBarStyle(stepsPct / 100)}
-                initial={{ width: 0 }}
-                animate={{ width: `${stepsPct}%` }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: Math.min(stepsPct / 100, 1) }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
@@ -534,10 +537,10 @@ export default function DashboardClient({
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
-                  className="h-full rounded-full"
+                  className="h-full rounded-full w-full"
                   style={levelBarStyle(sleepPct / 100)}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${sleepPct}%` }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: Math.min(sleepPct / 100, 1) }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
@@ -595,10 +598,10 @@ export default function DashboardClient({
               </div>
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                 <motion.div
-                  className="h-full rounded-full"
+                  className="h-full rounded-full w-full"
                   style={levelBarStyle(activePct / 100)}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${activePct}%` }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: Math.min(activePct / 100, 1) }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
@@ -671,10 +674,10 @@ export default function DashboardClient({
                       <span className="text-[11px] w-[88px] flex-shrink-0 truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
                       <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
-                          className="h-full rounded-full"
+                          className="h-full rounded-full w-full"
                           style={levelBarStyle(over && invertAlert ? 1.1 : fraction)}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(fraction * 100, 100)}%` }}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: Math.min(fraction, 1) }}
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         />
                       </div>
@@ -776,10 +779,10 @@ export default function DashboardClient({
                   </div>
                   <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                     <motion.div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full w-full"
                       style={levelBarStyle(fraction)}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: Math.min(fraction, 1) }}
                       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>

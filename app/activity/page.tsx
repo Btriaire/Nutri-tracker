@@ -24,9 +24,18 @@ export default async function ActivityPage() {
     ]);
     if (fitSnap.exists) {
       const raw = fitSnap.data() as FitnessDay;
-      // Strip Firestore Timestamp (syncedAt) — not serializable to Client Component
-      if (raw.googleFit) (raw.googleFit as unknown as Record<string, unknown>).syncedAt = null;
-      if (raw.withings)  (raw.withings  as unknown as Record<string, unknown>).syncedAt = null;
+      // Strip all Firestore Timestamps — not serializable to Client Components
+      if (raw.googleFit) {
+        const gf = raw.googleFit as unknown as Record<string, unknown>;
+        gf.syncedAt = null;
+      }
+      if (raw.withings) {
+        const w = raw.withings as unknown as Record<string, unknown>;
+        w.syncedAt   = null;
+        // measuredAt is also a Timestamp — convert to ms number for safe serialization
+        const mt = w.measuredAt as { toMillis?: () => number } | null;
+        w.measuredAt = mt?.toMillis?.() ?? null;
+      }
       fitnessDay = raw;
     }
     manualActivities = actSnap.docs.map((d) => {

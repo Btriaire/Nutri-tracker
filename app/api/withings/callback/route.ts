@@ -48,10 +48,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/settings?withings=error", req.url));
   }
 
-  // Sync last 30 days in background
+  // Sync last 7 days synchronously so weight shows up immediately on dashboard
   const today = format(new Date(), "yyyy-MM-dd");
-  const from  = format(subDays(new Date(), 30), "yyyy-MM-dd");
-  syncRange("owner", from, today).catch(console.error);
+  const from7 = format(subDays(new Date(), 6), "yyyy-MM-dd");
+  try { await syncRange("owner", from7, today); } catch { /* ignore */ }
+
+  // Continue syncing 30 days in the background after redirect
+  const from30 = format(subDays(new Date(), 30), "yyyy-MM-dd");
+  syncRange("owner", from30, today).catch(console.error);
 
   return NextResponse.redirect(new URL("/settings?withings=connected", req.url));
 }

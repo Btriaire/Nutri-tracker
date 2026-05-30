@@ -462,8 +462,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <span>{targetKg} kg</span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
-                    <div className="h-full rounded-full transition-all"
-                      style={{ width: `${progressPct}%`, ...levelBarStyle(progressPct / 100) }} />
+                    <div className="h-full rounded-full w-full transition-all"
+                      style={{ transform: `scaleX(${Math.min(progressPct / 100, 1)})`, ...levelBarStyle(progressPct / 100) }} />
                   </div>
                 </div>
               )}

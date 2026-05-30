@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { saveTokens, syncDay } from "@/app/lib/google-fit";
 import { format } from "date-fns";
@@ -47,8 +49,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/settings?fit=error", req.url));
   }
 
-  // Sync today in background (don't fail the redirect if it errors)
-  syncDay("owner", format(new Date(), "yyyy-MM-dd")).catch(console.error);
+  // Sync today synchronously so data shows immediately on dashboard
+  try { await syncDay("owner", format(new Date(), "yyyy-MM-dd")); } catch { /* ignore */ }
 
   return NextResponse.redirect(new URL("/settings?fit=connected", req.url));
 }
