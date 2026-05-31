@@ -40,8 +40,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
   // Withings
   const [withings, setWithings]         = useState(initialWithings);
-  const [wSyncing, setWSyncing]         = useState(false);
-  const [wSyncMsg, setWSyncMsg]         = useState("");
+  const [wSyncing,  setWSyncing]  = useState(false);
+  const [wSyncMsg,  setWSyncMsg]  = useState("");
+  const [wDebug,    setWDebug]    = useState(false);
+  const [wDebugRes, setWDebugRes] = useState<string | null>(null);
   const [wDisconnecting, setWDisconnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncingHistory, setSyncingHistory] = useState(false);
@@ -146,6 +148,16 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         : "Aucune mesure trouvée");
     } catch { setWSyncMsg("Erreur réseau"); }
     finally { setWSyncing(false); }
+  };
+
+  const handleWithingsDebug = async () => {
+    setWDebug(true); setWDebugRes(null);
+    try {
+      const res  = await fetch("/api/withings/test");
+      const json = await res.json();
+      setWDebugRes(JSON.stringify(json, null, 2));
+    } catch (e) { setWDebugRes(`Erreur: ${e}`); }
+    finally { setWDebug(false); }
   };
 
   const handleWithingsDisconnect = async () => {
@@ -468,6 +480,25 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   {wDisconnecting ? <IconLoader2 size={12} className="animate-spin" /> : "Déconnecter"}
                 </button>
               </div>
+
+              {/* Debug button */}
+              <button onClick={handleWithingsDebug} disabled={wDebug}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-medium transition-all"
+                style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24" }}>
+                {wDebug
+                  ? <><IconLoader2 size={11} className="animate-spin" /> Diagnostic en cours…</>
+                  : <>🔍 Diagnostic Withings — voir ce que l&apos;API renvoie</>}
+              </button>
+
+              {wDebugRes && (
+                <div className="rounded-xl p-3 overflow-x-auto"
+                  style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(251,191,36,0.2)" }}>
+                  <pre className="text-[10px] leading-relaxed whitespace-pre-wrap"
+                    style={{ color: "#fbbf24", fontFamily: "monospace" }}>
+                    {wDebugRes}
+                  </pre>
+                </div>
+              )}
             </div>
           ) : (
             <a href="/api/withings/auth" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
