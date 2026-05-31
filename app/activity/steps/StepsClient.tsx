@@ -6,9 +6,9 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  ArrowLeft, Footprints, Lightning, Fire, CheckCircle, Trophy,
-  ArrowUp, ArrowDown, Minus, Flame, Target,
-} from "@phosphor-icons/react";
+  IconChevronLeft, IconShoe, IconBolt, IconFlame, IconCircleCheck, IconTrophy,
+  IconArrowUp, IconArrowDown, IconMinus, IconTarget,
+} from "@tabler/icons-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid, Cell,
@@ -98,7 +98,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         <motion.div {...fade(0)} className="flex items-center gap-3 mb-6">
           <Link href="/dashboard" className="p-2 rounded-xl transition-opacity active:opacity-60"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
-            <ArrowLeft size={16} style={{ color: "var(--text-secondary)" }} />
+            <IconChevronLeft size={16} style={{ color: "var(--text-secondary)" }} />
           </Link>
           <div>
             <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -140,7 +140,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     background: delta === 0 ? "rgba(255,255,255,0.05)" : delta > 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
                     color: delta === 0 ? "var(--text-muted)" : delta > 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
-                  {delta > 0 ? <ArrowUp size={12} weight="bold" /> : delta < 0 ? <ArrowDown size={12} weight="bold" /> : <Minus size={12} weight="bold" />}
+                  {delta > 0 ? <IconArrowUp size={12} /> : delta < 0 ? <IconArrowDown size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta).toLocaleString("fr-FR")}
                 </div>
                 <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
@@ -174,10 +174,10 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {/* Stats grid */}
         <motion.div {...fade(0.08)} className="grid grid-cols-4 gap-2.5 mb-4">
           {[
-            { label: "Moyenne", value: avgSteps > 0 ? avgSteps.toLocaleString("fr-FR") : "—", icon: <Footprints size={13} style={{ color: "var(--steps)" }} />, color: "var(--steps)" },
-            { label: "Record",  value: bestDay  > 0 ? bestDay.toLocaleString("fr-FR")  : "—", icon: <Trophy size={13} style={{ color: "#FBBC04" }} />, color: "#FBBC04" },
-            { label: "Jours obj.", value: `${goalDays}j`, icon: <Target size={13} style={{ color: "#34A853" }} />, color: "#34A853" },
-            { label: "Streak", value: streak > 0 ? `${streak}j` : "—", icon: <Flame size={13} style={{ color: "#f97316" }} />, color: "#f97316" },
+            { label: "Moyenne", value: avgSteps > 0 ? avgSteps.toLocaleString("fr-FR") : "—", icon: <IconShoe size={13} style={{ color: "var(--steps)" }} />, color: "var(--steps)" },
+            { label: "Record",  value: bestDay  > 0 ? bestDay.toLocaleString("fr-FR")  : "—", icon: <IconTrophy size={13} style={{ color: "#FBBC04" }} />, color: "#FBBC04" },
+            { label: "Jours obj.", value: `${goalDays}j`, icon: <IconTarget size={13} style={{ color: "#34A853" }} />, color: "#34A853" },
+            { label: "Streak", value: streak > 0 ? `${streak}j` : "—", icon: <IconFlame size={13} style={{ color: "#f97316" }} />, color: "#f97316" },
           ].map(({ label, value, icon, color }) => (
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2.5">
               <div className="flex items-center gap-1">{icon}</div>
@@ -190,9 +190,9 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {/* Secondary stats */}
         <motion.div {...fade(0.09)} className="grid grid-cols-3 gap-2.5 mb-4">
           {[
-            { label: "Taux objectif", value: `${goalRate}%`, icon: <CheckCircle size={12} style={{ color: goalRate >= 70 ? "#34A853" : "#FBBC04" }} />, color: goalRate >= 70 ? "#34A853" : "#FBBC04" },
-            { label: "Min. actives", value: avgActive > 0 ? `${avgActive} min` : "—", icon: <Lightning size={12} weight="fill" style={{ color: "var(--fit-green)" }} />, color: "var(--fit-green)" },
-            { label: "Kcal actives", value: totalCal > 0 ? `${Math.round(totalCal).toLocaleString("fr-FR")}` : "—", icon: <Fire size={12} weight="fill" style={{ color: "var(--calories)" }} />, color: "var(--calories)" },
+            { label: "Taux objectif", value: `${goalRate}%`, icon: <IconCircleCheck size={12} style={{ color: goalRate >= 70 ? "#34A853" : "#FBBC04" }} />, color: goalRate >= 70 ? "#34A853" : "#FBBC04" },
+            { label: "Min. actives", value: avgActive > 0 ? `${avgActive} min` : "—", icon: <IconBolt size={12} style={{ color: "var(--fit-green)" }} />, color: "var(--fit-green)" },
+            { label: "Kcal actives", value: totalCal > 0 ? `${Math.round(totalCal).toLocaleString("fr-FR")}` : "—", icon: <IconFlame size={12} style={{ color: "var(--calories)" }} />, color: "var(--calories)" },
           ].map(({ label, value, icon, color }) => (
             <div key={label} className="card flex flex-col gap-1">
               <div className="flex items-center gap-1">{icon}<span className="label-xs">{label}</span></div>
@@ -206,10 +206,10 @@ export default function StepsClient({ points, stepsGoal }: Props) {
           <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
             {weekDelta === 0
-              ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
+              ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta > 0
-                ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>+<strong style={{ color: "var(--fit-green)" }}>{weekDelta.toLocaleString("fr-FR")}</strong> pas/j en moyenne cette semaine</span></>
-                : <><ArrowDown size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}><strong style={{ color: "#fbbf24" }}>{Math.abs(weekDelta).toLocaleString("fr-FR")}</strong> pas/j de moins cette semaine</span></>
+                ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>+<strong style={{ color: "var(--fit-green)" }}>{weekDelta.toLocaleString("fr-FR")}</strong> pas/j en moyenne cette semaine</span></>
+                : <><IconArrowDown size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}><strong style={{ color: "#fbbf24" }}>{Math.abs(weekDelta).toLocaleString("fr-FR")}</strong> pas/j de moins cette semaine</span></>
             }
           </motion.div>
         )}
@@ -218,7 +218,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {bestDate && bestDay > 0 && (
           <motion.div {...fade(0.11)} className="flex items-center gap-2.5 px-3 py-2 rounded-xl mb-4"
             style={{ background: "rgba(251,188,4,0.06)", border: "1px solid rgba(251,188,4,0.2)" }}>
-            <Trophy size={18} style={{ color: "#FBBC04" }} />
+            <IconTrophy size={18} style={{ color: "#FBBC04" }} />
             <div>
               <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                 Record sur {rangeDays} jours : <strong style={{ color: "#FBBC04" }}>{bestDay.toLocaleString("fr-FR")} pas</strong>
@@ -388,7 +388,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     </span>
                     {/* Steps */}
                     <div className="flex items-center gap-1 flex-1">
-                      <Footprints size={11} style={{ color }} />
+                      <IconShoe size={11} style={{ color }} />
                       <span className="text-[13px] font-semibold tabular-nums" style={{ color }}>
                         {p.steps > 0 ? p.steps.toLocaleString("fr-FR") : "—"}
                       </span>
@@ -396,20 +396,20 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     {/* Active min */}
                     {p.activeMinutes > 0 && (
                       <div className="flex items-center gap-1">
-                        <Lightning size={11} style={{ color: "var(--fit-green)" }} />
+                        <IconBolt size={11} style={{ color: "var(--fit-green)" }} />
                         <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{p.activeMinutes}min</span>
                       </div>
                     )}
                     {/* Calories */}
                     {p.activeCalories > 0 && (
                       <div className="flex items-center gap-1">
-                        <Fire size={11} style={{ color: "var(--calories)" }} />
+                        <IconFlame size={11} style={{ color: "var(--calories)" }} />
                         <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{Math.round(p.activeCalories)}</span>
                       </div>
                     )}
                     {/* Goal badge */}
                     {p.steps >= stepsGoal && (
-                      <CheckCircle size={14} weight="fill" style={{ color: "#34A853", flexShrink: 0 }} />
+                      <IconCircleCheck size={14} style={{ color: "#34A853", flexShrink: 0 }} />
                     )}
                   </div>
                   {/* Mini progress bar */}

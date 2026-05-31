@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, MagnifyingGlass, Plus, Spinner, Trash, Check,
-} from "@phosphor-icons/react";
+  IconX, IconSearch, IconPlus, IconLoader2, IconTrash, IconCheck,
+} from "@tabler/icons-react";
 import type {
   FoodNutrition, FoodSearchResult, FoodSource, Lang, ServingOption,
 } from "@/app/lib/types";
@@ -200,7 +200,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-2.5 flex-shrink-0"
               style={{ borderBottom: "1px solid var(--border)" }}>
-              <button onClick={onClose} className="btn-icon flex-shrink-0"><X size={13} /></button>
+              <button onClick={onClose} className="btn-icon flex-shrink-0"><IconX size={13} stroke={2} /></button>
               <p className="flex-1 font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
                 Créer un repas
               </p>
@@ -210,8 +210,8 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                 className="btn btn-primary px-3 py-1.5 text-[12px] gap-1.5"
               >
                 {saving
-                  ? <Spinner size={12} className="animate-spin" />
-                  : <Check size={12} weight="bold" />}
+                  ? <IconLoader2 size={12} stroke={2} className="animate-spin" />
+                  : <IconCheck size={12} stroke={2} />}
                 Sauvegarder
               </button>
             </div>
@@ -279,7 +279,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                         <button onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
                           className="btn-icon w-7 h-7 flex-shrink-0"
                           style={{ color: "#f87171" }}>
-                          <Trash size={13} />
+                          <IconTrash size={13} stroke={2} />
                         </button>
                       </div>
                     ))}
@@ -302,7 +302,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                       )}
                     </div>
                     <button onClick={() => setEditingFood(null)} className="btn-icon w-7 h-7 flex-shrink-0">
-                      <X size={12} />
+                      <IconX size={12} stroke={2} />
                     </button>
                   </div>
 
@@ -348,7 +348,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                   </div>
 
                   <button onClick={addFoodToMeal} className="btn btn-primary w-full gap-2">
-                    <Plus size={14} weight="bold" />
+                    <IconPlus size={14} stroke={2} />
                     Ajouter au repas
                   </button>
                 </div>
@@ -358,9 +358,9 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                   <p className="label-xs mb-2">Ajouter un aliment</p>
                   <div className="relative mb-3">
                     {searching
-                      ? <Spinner size={13} className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin"
+                      ? <IconLoader2 size={13} stroke={2} className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin"
                           style={{ color: "var(--text-muted)" }} />
-                      : <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2"
+                      : <IconSearch size={13} stroke={1.5} className="absolute left-3 top-1/2 -translate-y-1/2"
                           style={{ color: "var(--text-muted)" }} />
                     }
                     <input
@@ -392,7 +392,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                             </p>
                             <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                           </div>
-                          <Plus size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                          <IconPlus size={14} stroke={1.5} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                         </button>
                       ))}
                     </div>

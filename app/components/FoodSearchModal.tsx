@@ -135,42 +135,61 @@ interface Props {
   onAdded: (info: AddedInfo) => void;
 }
 
-// ─── BarcodeScanner subcomponent ─────────────────────────────────────────────
+// ─── BarcodeScanner subcomponent (ZXing — cross-browser incl. iOS Safari) ────
 
 function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef   = useRef<HTMLVideoElement>(null);
+  const readerRef  = useRef<import("@zxing/browser").BrowserMultiFormatReader | null>(null);
   const [error, setError] = useState("");
+  const [hint,  setHint]  = useState("Pointez la caméra vers un code-barre");
 
   useEffect(() => {
-    let detector: { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } | null = null;
-    let stream: MediaStream | null = null;
-    let raf: number;
+    let cancelled = false;
 
     async function start() {
       try {
-        if (!("BarcodeDetector" in window)) { setError("Scanner non supporté sur ce navigateur"); return; }
-        // @ts-expect-error
-        detector = new BarcodeDetector({ formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"] });
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
+        const { BrowserMultiFormatReader } = await import("@zxing/browser");
+        const reader = new BrowserMultiFormatReader();
+        readerRef.current = reader;
+
+        // Get back camera
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+        const back = devices.find(d =>
+          /back|rear|environment/i.test(d.label)
+        ) ?? devices[devices.length - 1];
+
+        if (!back) { setError("Aucune caméra détectée"); return; }
+        if (cancelled) return;
+
+        setHint("Caméra active — scannez un code-barre EAN/QR");
+        await reader.decodeFromVideoDevice(
+          back.deviceId,
+          videoRef.current!,
+          (result, err) => {
+            if (cancelled) return;
+            if (result) {
+              onDetect(result.getText());
+            }
+            if (err && !(err.message?.includes("No MultiFormat"))) {
+              // Non-fatal decode attempt
+            }
+          }
+        );
+      } catch (e: unknown) {
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setError(msg.includes("Permission") || msg.includes("NotAllowed")
+            ? "Accès caméra refusé — autorisez-le dans les réglages"
+            : "Caméra inaccessible");
         }
-        const scan = async () => {
-          if (!videoRef.current || !detector) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes.length > 0) { onDetect(barcodes[0].rawValue); return; }
-          } catch {}
-          raf = requestAnimationFrame(scan);
-        };
-        raf = requestAnimationFrame(scan);
-      } catch { setError("Caméra inaccessible"); }
+      }
     }
+
     start();
+
     return () => {
-      cancelAnimationFrame(raf);
-      stream?.getTracks().forEach(t => t.stop());
+      cancelled = true;
+      readerRef.current = null; // ZXing cleanup handled by stream stopping
     };
   }, [onDetect]);
 
@@ -194,7 +213,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
             </div>
           </div>
         )}
-        <p className="text-center text-[12px]" style={{ color: "rgba(255,255,255,0.5)" }}>Pointez la caméra vers le code-barre</p>
+        <p className="text-center text-[12px]" style={{ color: "rgba(255,255,255,0.5)" }}>{hint}</p>
       </div>
     </div>
   );
@@ -367,15 +386,30 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
   const handlePhotoRecognize = useCallback(async (file: File) => {
     setPhotoLoading(true);
+    setScanError("");
     try {
       const fd = new FormData();
       fd.append("image", file);
       const res  = await fetch("/api/food/photo", { method: "POST", body: fd });
-      const json = await res.json() as { results: FoodSearchResult[] };
+      const json = await res.json() as { results: FoodSearchResult[]; error?: string };
+      if (!res.ok || json.error) {
+        setScanError(json.error?.includes("ANTHROPIC")
+          ? "Clé API manquante — configurez ANTHROPIC_API_KEY dans Vercel"
+          : "Reconnaissance échouée");
+        setTimeout(() => setScanError(""), 5000);
+        return;
+      }
       if (json.results?.length) {
         setResults(json.results);
         setQuery("📷 Reconnaissance photo");
+        setStep("browse");
+      } else {
+        setScanError("Aucun aliment reconnu sur cette photo");
+        setTimeout(() => setScanError(""), 4000);
       }
+    } catch {
+      setScanError("Erreur réseau lors de la reconnaissance");
+      setTimeout(() => setScanError(""), 4000);
     } finally {
       setPhotoLoading(false);
     }

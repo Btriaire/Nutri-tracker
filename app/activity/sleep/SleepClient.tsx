@@ -6,9 +6,9 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  ArrowLeft, Moon, CheckCircle, Trophy, ArrowUp, ArrowDown, Minus,
-  Plus, X, PencilSimple, Trash, Spinner,
-} from "@phosphor-icons/react";
+  IconChevronLeft, IconMoon, IconCircleCheck, IconTrophy, IconArrowUp, IconArrowDown, IconMinus,
+  IconPlus, IconX, IconPencil, IconTrash, IconLoader2,
+} from "@tabler/icons-react";
 import {
   ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
@@ -177,13 +177,13 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
                 <button onClick={remove} disabled={deleting}
                   className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
                   style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-                  {deleting ? <Spinner size={13} className="animate-spin" /> : <Trash size={13} />}
+                  {deleting ? <IconLoader2 size={13} className="animate-spin" /> : <IconTrash size={13} />}
                 </button>
               )}
               <button onClick={handleClose}
                 className="w-8 h-8 flex items-center justify-center rounded-lg"
                 style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-                {saving ? <Spinner size={14} className="animate-spin" /> : <X size={16} />}
+                {saving ? <IconLoader2 size={14} className="animate-spin" /> : <IconX size={16} />}
               </button>
             </div>
           </div>
@@ -248,11 +248,11 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
               style={{ background: "rgba(121,134,203,0.1)", border: "1px solid rgba(121,134,203,0.25)" }}>
-              <Moon size={14} weight="fill" style={{ color: "#7986CB" }} />
+              <IconMoon size={14} style={{ color: "#7986CB" }} />
               <span className="flex-1 text-[12px]" style={{ color: "#7986CB" }}>
                 {fmtSleep(totalMin)} · {saving ? "enregistrement…" : saved ? "✓ enregistré" : "sauvegarde auto"}
               </span>
-              {saving && <Spinner size={13} className="animate-spin" style={{ color: "#7986CB" }} />}
+              {saving && <IconLoader2 size={13} className="animate-spin" style={{ color: "#7986CB" }} />}
             </motion.div>
           )}
         </motion.div>
@@ -318,10 +318,10 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
         style={{ background: "var(--nav-bg)", borderBottom: "1px solid var(--nav-border)", backdropFilter: "blur(16px)" }}>
         <Link href="/dashboard" className="flex items-center justify-center w-8 h-8 rounded-lg"
           style={{ background: "var(--surface)" }}>
-          <ArrowLeft size={16} style={{ color: "var(--text-secondary)" }} />
+          <IconChevronLeft size={16} style={{ color: "var(--text-secondary)" }} />
         </Link>
         <div className="flex items-center gap-2 flex-1">
-          <Moon size={18} weight="fill" style={{ color: "#7986CB" }} />
+          <IconMoon size={18} style={{ color: "#7986CB" }} />
           <span className="text-[15px] font-semibold">Sommeil</span>
         </div>
         {/* Add today */}
@@ -329,7 +329,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           onClick={() => setModal({ date: today, current: points.find(p => p.date === today)?.sleepMinutes ?? null })}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
           style={{ background: "rgba(121,134,203,0.15)", color: "#7986CB", border: "1px solid rgba(121,134,203,0.3)" }}>
-          <Plus size={13} />
+          <IconPlus size={13} />
           Saisir
         </button>
       </div>
@@ -352,7 +352,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
             {avgP7 > 0 && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
                 style={{ background: trendDiff >= 0 ? "rgba(52,168,83,0.1)" : "rgba(239,68,68,0.1)", color: trendDiff >= 0 ? "#34A853" : "#ef4444" }}>
-                {trendDiff >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
+                {trendDiff >= 0 ? <IconArrowUp size={11} /> : <IconArrowDown size={11} />}
                 {fmtSleep(Math.abs(trendDiff))} vs sem. préc.
               </div>
             )}
@@ -379,7 +379,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Record</span>
             <div className="flex items-center gap-1.5">
-              <Trophy size={14} weight="fill" style={{ color: "#FBBC04" }} />
+              <IconTrophy size={14} style={{ color: "#FBBC04" }} />
               <span className="text-[18px] font-bold">{maxPoint ? fmtSleep(maxPoint.sleepMinutes!) : "—"}</span>
             </div>
             {maxPoint && (
@@ -391,7 +391,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Objectif atteint</span>
             <div className="flex items-center gap-1.5">
-              <CheckCircle size={14} weight="fill" style={{ color: "#34A853" }} />
+              <IconCircleCheck size={14} style={{ color: "#34A853" }} />
               <span className="text-[18px] font-bold">{goalDays} <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>/ {withData.length}j</span></span>
             </div>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -408,7 +408,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Tendance 7j</span>
             <div className="flex items-center gap-1.5">
-              {avg7 && avgP7 ? (trendDiff > 0 ? <ArrowUp size={12} style={{ color: "#34A853" }} /> : trendDiff < 0 ? <ArrowDown size={12} style={{ color: "#ef4444" }} /> : <Minus size={12} style={{ color: "var(--text-muted)" }} />) : null}
+              {avg7 && avgP7 ? (trendDiff > 0 ? <IconArrowUp size={12} style={{ color: "#34A853" }} /> : trendDiff < 0 ? <IconArrowDown size={12} style={{ color: "#ef4444" }} /> : <IconMinus size={12} style={{ color: "var(--text-muted)" }} />) : null}
               <span className="text-[18px] font-bold">{avg7 ? fmtSleep(avg7) : "—"}</span>
             </div>
             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -586,7 +586,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                     </span>
                     <div className="flex items-center gap-1.5 w-[72px]">
                       {min
-                        ? <><Moon size={11} weight="fill" style={{ color }} /><span className="text-[13px] font-semibold" style={{ color }}>{fmtSleep(min)}</span></>
+                        ? <><IconMoon size={11} style={{ color }} /><span className="text-[13px] font-semibold" style={{ color }}>{fmtSleep(min)}</span></>
                         : <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>— saisir</span>
                       }
                     </div>
@@ -602,7 +602,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                         </div>
                       ) : min
                         ? <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{pct}%</span>
-                        : <PencilSimple size={11} style={{ color: "var(--text-muted)" }} />
+                        : <IconPencil size={11} style={{ color: "var(--text-muted)" }} />
                       }
                     </div>
                   </button>
@@ -615,7 +615,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
         {/* Empty state */}
         {withData.length === 0 && (
           <motion.div {...fade(0.1)} className="glass p-8 flex flex-col items-center gap-4 text-center">
-            <Moon size={36} weight="thin" style={{ color: "var(--text-muted)" }} />
+            <IconMoon size={36} style={{ color: "var(--text-muted)" }} />
             <div>
               <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Aucune donnée de sommeil</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -626,7 +626,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               onClick={() => setModal({ date: today, current: null })}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
               style={{ background: "rgba(121,134,203,0.2)", color: "#7986CB", border: "1px solid rgba(121,134,203,0.4)" }}>
-              <Plus size={15} />
+              <IconPlus size={15} />
               Saisir la nuit dernière
             </button>
           </motion.div>

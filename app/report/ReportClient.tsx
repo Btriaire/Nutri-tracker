@@ -5,10 +5,10 @@ import { format, subDays, subMonths, subYears, startOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FilePdf, Spinner, CalendarBlank, User, ChartBar,
-  Heart, Barbell, Leaf, Drop, Footprints, Moon, Fire,
-  ArrowDown, ArrowUp, Minus, Warning,
-} from "@phosphor-icons/react";
+  IconFileTypePdf, IconLoader2, IconCalendar, IconUser, IconChartBar,
+  IconHeart, IconBarbell, IconLeaf, IconDroplet, IconShoe, IconMoon, IconFlame,
+  IconArrowDown, IconArrowUp, IconMinus, IconAlertCircle,
+} from "@tabler/icons-react";
 import { format as dateFnsFormat, parseISO } from "date-fns";
 import type { ReportData, DayNutrition, DayActivity } from "@/app/api/report/route";
 
@@ -254,13 +254,13 @@ export default function ReportClient() {
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Rapport de santé
             </h1>
-            <FilePdf size={20} style={{ color: "#f97316" }} />
+            <IconFileTypePdf size={20} style={{ color: "#f97316" }} />
           </div>
 
           {/* Period selector */}
           <div className="glass p-4 mb-4 space-y-4">
             <div className="flex items-center gap-2 mb-1">
-              <CalendarBlank size={14} style={{ color: "var(--text-muted)" }} />
+              <IconCalendar size={14} style={{ color: "var(--text-muted)" }} />
               <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Sélectionner la période</p>
             </div>
 
@@ -305,8 +305,8 @@ export default function ReportClient() {
                 color: "#f97316",
               }}>
               {loading
-                ? <><Spinner size={14} className="animate-spin" />Génération en cours…</>
-                : <><ChartBar size={14} />Générer le rapport</>
+                ? <><IconLoader2 size={14} className="animate-spin" />Génération en cours…</>
+                : <><IconChartBar size={14} />Générer le rapport</>
               }
             </button>
           </div>
@@ -314,7 +314,7 @@ export default function ReportClient() {
           {error && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[12px] mb-4"
               style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
-              <Warning size={13} weight="fill" /> Erreur de génération. Vérifiez la connexion et réessayez.
+              <IconAlertCircle size={13} /> Erreur de génération. Vérifiez la connexion et réessayez.
             </div>
           )}
         </div>
@@ -335,7 +335,7 @@ export default function ReportClient() {
                     border: "1px solid rgba(248,113,113,0.4)",
                     color: "#f87171",
                   }}>
-                  <FilePdf size={16} weight="fill" />
+                  <IconFileTypePdf size={16} />
                   Télécharger PDF
                 </button>
               </div>
@@ -371,7 +371,7 @@ export default function ReportClient() {
                     ) : (
                       <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(249,115,22,0.15)", border: "2px solid rgba(249,115,22,0.3)" }}>
-                        <User size={28} style={{ color: "#f97316" }} />
+                        <IconUser size={28} style={{ color: "#f97316" }} />
                       </div>
                     )}
                     <div>
@@ -411,7 +411,7 @@ export default function ReportClient() {
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <KpiCard
-                    icon={<Fire size={14} style={{ color: "#f97316" }} />}
+                    icon={<IconFlame size={14} style={{ color: "#f97316" }} />}
                     label="Calories moy / jour"
                     value={fmtN(data.nutrition.avgCalories)}
                     unit="kcal"
@@ -420,7 +420,7 @@ export default function ReportClient() {
                     pct={data.nutrition.pctCalGoal}
                   />
                   <KpiCard
-                    icon={<Leaf size={14} style={{ color: "#a78bfa" }} />}
+                    icon={<IconLeaf size={14} style={{ color: "#a78bfa" }} />}
                     label="Protéines moy / jour"
                     value={fmtN(data.nutrition.avgProteinG)}
                     unit="g"
@@ -429,7 +429,7 @@ export default function ReportClient() {
                     pct={data.profile.goals.proteinGrams ? Math.round(data.nutrition.avgProteinG / data.profile.goals.proteinGrams * 100) : 0}
                   />
                   <KpiCard
-                    icon={<Footprints size={14} style={{ color: "#4285F4" }} />}
+                    icon={<IconShoe size={14} style={{ color: "#4285F4" }} />}
                     label="Pas moy / jour"
                     value={data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—"}
                     sub={`Objectif : ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`}
@@ -437,7 +437,7 @@ export default function ReportClient() {
                     pct={data.activity.pctStepsGoal}
                   />
                   <KpiCard
-                    icon={<Moon size={14} style={{ color: "#7986CB" }} />}
+                    icon={<IconMoon size={14} style={{ color: "#7986CB" }} />}
                     label="Sommeil moy / nuit"
                     value={fmtN(data.activity.avgSleepH, "h", 1)}
                     sub={`Objectif : ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`}
@@ -445,7 +445,7 @@ export default function ReportClient() {
                     pct={data.activity.pctSleepGoal}
                   />
                   <KpiCard
-                    icon={<Heart size={14} weight="fill" style={{ color: "#EA4335" }} />}
+                    icon={<IconHeart size={14} style={{ color: "#EA4335" }} />}
                     label="FC moyenne"
                     value={fmtN(data.health.avgHR)}
                     unit="bpm"
@@ -453,7 +453,7 @@ export default function ReportClient() {
                     color="#EA4335"
                   />
                   <KpiCard
-                    icon={<Drop size={14} weight="fill" style={{ color: "#60a5fa" }} />}
+                    icon={<IconDroplet size={14} style={{ color: "#60a5fa" }} />}
                     label="Hydratation moy"
                     value={fmtN(data.nutrition.avgWaterMl)}
                     unit="mL"
@@ -583,10 +583,10 @@ export default function ReportClient() {
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { icon: <Footprints size={13} style={{ color: "#4285F4" }} />, label: "Pas / jour", val: data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—", sub: `/ ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`, color: "#4285F4", pct: data.activity.pctStepsGoal },
-                    { icon: <Moon size={13} style={{ color: "#7986CB" }} />,       label: "Sommeil",   val: fmtN(data.activity.avgSleepH, "h", 1),                                          sub: `/ ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`,    color: "#7986CB", pct: data.activity.pctSleepGoal },
-                    { icon: <Fire size={13} style={{ color: "#EA4335" }} />,       label: "Cal. brûlées", val: fmtN(data.activity.avgCaloriesBurned, " kcal"),                              sub: "moyenne / jour",                                             color: "#EA4335" },
-                    { icon: <Barbell size={13} style={{ color: "#34A853" }} />,    label: "Séances",   val: String(data.activity.totalSessions),                                            sub: "sur la période",                                             color: "#34A853" },
+                    { icon: <IconShoe size={13} style={{ color: "#4285F4" }} />, label: "Pas / jour", val: data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—", sub: `/ ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`, color: "#4285F4", pct: data.activity.pctStepsGoal },
+                    { icon: <IconMoon size={13} style={{ color: "#7986CB" }} />,       label: "Sommeil",   val: fmtN(data.activity.avgSleepH, "h", 1),                                          sub: `/ ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`,    color: "#7986CB", pct: data.activity.pctSleepGoal },
+                    { icon: <IconFlame size={13} style={{ color: "#EA4335" }} />,       label: "Cal. brûlées", val: fmtN(data.activity.avgCaloriesBurned, " kcal"),                              sub: "moyenne / jour",                                             color: "#EA4335" },
+                    { icon: <IconBarbell size={13} style={{ color: "#34A853" }} />,    label: "Séances",   val: String(data.activity.totalSessions),                                            sub: "sur la période",                                             color: "#34A853" },
                   ].map(({ icon, label, val, sub, color, pct }) => (
                     <KpiCard key={label} icon={icon} label={label} value={val} sub={sub} color={color} pct={pct} />
                   ))}
@@ -654,9 +654,9 @@ export default function ReportClient() {
                               background: data.health.weightDelta < 0 ? "rgba(52,211,153,0.1)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.05)",
                               border: `1px solid ${data.health.weightDelta < 0 ? "rgba(52,211,153,0.3)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.3)" : "var(--border)"}`,
                             }}>
-                            {data.health.weightDelta < 0 ? <ArrowDown size={11} weight="bold" style={{ color: "#34d399" }} /> :
-                             data.health.weightDelta > 0 ? <ArrowUp size={11} weight="bold" style={{ color: "#f87171" }} /> :
-                             <Minus size={11} weight="bold" style={{ color: "var(--text-muted)" }} />}
+                            {data.health.weightDelta < 0 ? <IconArrowDown size={11} style={{ color: "#34d399" }} /> :
+                             data.health.weightDelta > 0 ? <IconArrowUp size={11} style={{ color: "#f87171" }} /> :
+                             <IconMinus size={11} style={{ color: "var(--text-muted)" }} />}
                             <span className="text-[11px] font-semibold"
                               style={{ color: data.health.weightDelta < 0 ? "#34d399" : data.health.weightDelta > 0 ? "#f87171" : "var(--text-muted)" }}>
                               {data.health.weightDelta > 0 ? "+" : ""}{data.health.weightDelta} kg
@@ -910,7 +910,7 @@ export default function ReportClient() {
                     {s.consulter && (
                       <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
                         style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
-                        <Warning size={14} weight="fill" style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
+                        <IconAlertCircle size={14} style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
                         <p className="text-[12px] leading-relaxed" style={{ color: "#f87171" }}>{s.consulter}</p>
                       </div>
                     )}

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ results: [] });
+  if (!apiKey) return NextResponse.json({ error: "ANTHROPIC_API_KEY non configurée", results: [] }, { status: 503 });
 
   const formData = await req.formData();
   const file = formData.get("image") as File | null;
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-haiku-4-5",
         max_tokens: 1024,
         messages: [{
           role: "user",

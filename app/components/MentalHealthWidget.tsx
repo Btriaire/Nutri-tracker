@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Brain, Check, Spinner } from "@phosphor-icons/react";
+import { IconX, IconBrain, IconCheck, IconLoader2 } from "@tabler/icons-react";
 import type { MentalHealthEntry } from "@/app/api/mental-health/route";
 
 interface Props { date: string }
@@ -136,12 +136,12 @@ export default function MentalHealthWidget({ date }: Props) {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Brain size={16} weight="fill" style={{ color: "#818cf8" }} />
+                <IconBrain size={16} stroke={1.5} style={{ color: "#818cf8" }} />
                 <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Comment tu vas ?</p>
               </div>
               <button onClick={handleClose} className="p-1.5 rounded-lg"
                 style={{ background: "rgba(255,255,255,0.06)" }}>
-                <X size={13} style={{ color: "var(--text-muted)" }} />
+                <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
               </button>
             </div>
 
@@ -238,8 +238,8 @@ export default function MentalHealthWidget({ date }: Props) {
             <button onClick={handleSave} disabled={saving || saved}
               className="btn btn-primary w-full gap-2"
               style={{ height: "42px" }}>
-              {saved   ? <><Check size={15} weight="bold" /> Enregistré !</>
-               : saving ? <><Spinner size={13} className="animate-spin" /> Sauvegarde…</>
+              {saved   ? <><IconCheck size={15} stroke={2} /> Enregistré !</>
+               : saving ? <><IconLoader2 size={13} stroke={2} className="animate-spin" /> Sauvegarde…</>
                : "Enregistrer"}
             </button>
           </div>
@@ -266,7 +266,7 @@ export default function MentalHealthWidget({ date }: Props) {
             : <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Comment tu te sens ?</p>
           }
         </div>
-        <Brain size={17} weight={entry ? "fill" : "regular"} style={{ color: "#818cf8", flexShrink: 0 }} />
+        <IconBrain size={17} stroke={entry ? 2 : 1.5} style={{ color: "#818cf8", flexShrink: 0 }} />
       </button>
     </>
   );

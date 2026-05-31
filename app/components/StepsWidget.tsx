@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Footprints } from "@phosphor-icons/react";
+import { IconShoe } from "@tabler/icons-react";
 
 interface Props {
   steps: number | null;
@@ -15,7 +15,7 @@ export default function StepsWidget({ steps, goal = 10000 }: Props) {
     <div className="card flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Footprints size={14} style={{ color: "var(--steps)" }} />
+          <IconShoe size={14} stroke={1.5} style={{ color: "var(--steps)" }} />
           <span className="label-xs">Pas aujourd'hui</span>
         </div>
         <span className="label-xs">{goal.toLocaleString("fr-FR")}</span>

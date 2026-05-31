@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Ruler, ArrowUp, ArrowDown, Minus, Check, X, Info, ChartLine } from "@phosphor-icons/react";
+import { IconRuler, IconArrowUp, IconArrowDown, IconMinus, IconCheck, IconX, IconInfoCircle, IconChartLine } from "@tabler/icons-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -273,7 +273,7 @@ export default function BodyMeasurementsTab() {
             color: "#a78bfa",
           }}
         >
-          <Ruler size={13} />
+          <IconRuler size={13} stroke={2} />
           {currentEntry ? "Modifier" : "Saisir"}
         </button>
       </div>
@@ -284,7 +284,7 @@ export default function BodyMeasurementsTab() {
           className="flex items-center gap-2 px-3 py-2 rounded-xl"
           style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)" }}
         >
-          <Check size={13} style={{ color: "#34d399" }} />
+          <IconCheck size={13} stroke={2} style={{ color: "#34d399" }} />
           <span className="text-[12px]" style={{ color: "#34d399" }}>Mensurations enregistrées !</span>
         </motion.div>
       )}
@@ -356,7 +356,7 @@ export default function BodyMeasurementsTab() {
         <div className="glass p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ChartLine size={13} style={{ color: activeField.color }} />
+              <IconChartLine size={13} stroke={1.5} style={{ color: activeField.color }} />
               <p className="label-xs">Évolution · {activeField.label}</p>
             </div>
           </div>
@@ -424,7 +424,7 @@ export default function BodyMeasurementsTab() {
                   <button onClick={() => setShowForm(false)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(255,255,255,0.06)" }}>
-                    <X size={13} style={{ color: "var(--text-muted)" }} />
+                    <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
                   </button>
                 </div>
 
@@ -471,7 +471,7 @@ export default function BodyMeasurementsTab() {
                   {saving ? (
                     <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
-                    <Check size={16} />
+                    <IconCheck size={16} stroke={1.5} />
                   )}
                   Enregistrer
                 </button>

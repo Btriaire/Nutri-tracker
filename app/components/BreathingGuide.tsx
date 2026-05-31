@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Stop, Timer, CaretDown, CaretUp, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+import { IconPlayerPlay, IconPlayerStop, IconClock, IconChevronDown, IconChevronUp, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 
 // ─── Web Audio zen sound engine ───────────────────────────────────────────────
 
@@ -249,8 +249,8 @@ export default function BreathingGuide() {
       >
         <p className="label-xs">🫁 Respiration guidée</p>
         {collapsed
-          ? <CaretDown size={14} style={{ color: "var(--text-muted)" }} />
-          : <CaretUp   size={14} style={{ color: "var(--text-muted)" }} />
+          ? <IconChevronDown size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+          : <IconChevronUp   size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
         }
       </button>
 
@@ -388,7 +388,7 @@ export default function BreathingGuide() {
       <div className="space-y-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
         {/* Duration chips */}
         <div className="flex items-center gap-1.5">
-          <Timer size={12} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+          <IconClock size={12} stroke={2} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
           {DURATIONS.map(d => {
             const sel = duration === d.value;
             return (
@@ -419,8 +419,8 @@ export default function BreathingGuide() {
             className="flex items-center gap-1.5 text-[11px] transition-all"
             style={{ color: soundOn ? prog.color : "var(--text-muted)" }}>
             {soundOn
-              ? <SpeakerHigh size={13} weight="fill" />
-              : <SpeakerSlash size={13} weight="fill" />}
+              ? <IconVolume size={13} stroke={2} />
+              : <IconVolumeOff size={13} stroke={2} />}
             {soundOn ? "Sons zen activés" : "Sons désactivés"}
           </button>
           {soundOn && !active && (
@@ -435,7 +435,7 @@ export default function BreathingGuide() {
           <button onClick={handleStop}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
             style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }}>
-            <Stop size={14} weight="fill" />
+            <IconPlayerStop size={14} stroke={2} />
             Arrêter
           </button>
         ) : (
@@ -443,7 +443,7 @@ export default function BreathingGuide() {
             whileTap={{ scale: 0.97 }}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
             style={{ background: `${prog.color}22`, border: `1px solid ${prog.color}55`, color: prog.color }}>
-            <Play size={14} weight="fill" />
+            <IconPlayerPlay size={14} stroke={2} />
             Commencer
           </motion.button>
         )}

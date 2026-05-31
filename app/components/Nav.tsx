@@ -7,15 +7,18 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
-import { HouseSimple, Book, ChartLine, Gear, PersonSimpleRun, Heart, SignOut } from "@phosphor-icons/react";
+import {
+  IconLayoutDashboard, IconNotebook, IconHeartbeat,
+  IconFlame, IconTrendingUp, IconSettings2, IconLogout,
+} from "@tabler/icons-react";
 
 const TABS = [
-  { href: "/dashboard", icon: HouseSimple,      label: "Accueil"   },
-  { href: "/log",       icon: Book,             label: "Journal"   },
-  { href: "/health",    icon: Heart,            label: "Santé"     },
-  { href: "/activity",  icon: PersonSimpleRun,  label: "Activité"  },
-  { href: "/progress",  icon: ChartLine,        label: "Progrès"   },
-  { href: "/settings",  icon: Gear,             label: "Réglages"  },
+  { href: "/dashboard", Icon: IconLayoutDashboard, label: "Accueil",  color: "#f97316", bg: "rgba(249,115,22,0.14)" },
+  { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "#3b82f6", bg: "rgba(59,130,246,0.14)" },
+  { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "#f43f5e", bg: "rgba(244,63,94,0.14)"  },
+  { href: "/activity",  Icon: IconFlame,           label: "Activité", color: "#34d399", bg: "rgba(52,211,153,0.14)" },
+  { href: "/progress",  Icon: IconTrendingUp,      label: "Progrès",  color: "#a78bfa", bg: "rgba(167,139,250,0.14)"},
+  { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "#94a3b8", bg: "rgba(148,163,184,0.12)"},
 ] as const;
 
 export default function Nav() {
@@ -63,31 +66,28 @@ export default function Nav() {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        {TABS.map(({ href, icon: Icon, label }) => {
+        {TABS.map(({ href, Icon, label, color, bg }) => {
           const active = path.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
-              style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-all"
             >
-              <Icon
-                size={22}
-                weight={active ? "fill" : "regular"}
-              />
-              <span
-                className="text-[10px] font-medium"
-                style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                style={{
+                  background: active ? bg : "transparent",
+                  transform: active ? "scale(1.08)" : "scale(1)",
+                }}
               >
+                <Icon size={22} stroke={active ? 2.2 : 1.6}
+                  style={{ color: active ? color : "var(--text-muted)" }} />
+              </div>
+              <span className="text-[9.5px] font-medium leading-none"
+                style={{ color: active ? color : "var(--text-muted)" }}>
                 {label}
               </span>
-              {active && (
-                <span
-                  className="absolute bottom-0 w-4 h-0.5 rounded-full"
-                  style={{ background: "var(--calories)" }}
-                />
-              )}
             </Link>
           );
         })}
@@ -95,54 +95,40 @@ export default function Nav() {
 
       {/* Side nav (desktop) */}
       <nav
-        className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 flex-col w-[220px] py-6 px-3 gap-1"
+        className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 flex-col w-[220px] py-6 px-3 gap-0.5"
         style={{
           background: "var(--nav-bg)",
           borderRight: "1px solid var(--nav-border)",
           backdropFilter: "blur(20px)",
         }}
       >
-        {/* Logo */}
         <div className="flex items-center px-2 mb-6">
-          <Image
-            src="/logo.png"
-            alt="Nutri-Tracker"
-            width={390}
-            height={103}
-            className="w-full max-w-[180px] h-auto"
-            priority
-          />
+          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103}
+            className="w-full max-w-[180px] h-auto" priority />
         </div>
 
-        {TABS.map(({ href, icon: Icon, label }) => {
+        {TABS.map(({ href, Icon, label, color, bg }) => {
           const active = path.startsWith(href);
           return (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all"
-              style={{
-                background: active ? "var(--surface-active)" : "transparent",
-                color: active ? "var(--text-primary)" : "var(--text-secondary)",
-                border: active ? "1px solid var(--border-strong)" : "1px solid transparent",
-              }}
+            <Link key={href} href={href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+              style={{ background: active ? bg : "transparent", color: active ? color : "var(--text-secondary)" }}
             >
-              <Icon size={18} weight={active ? "fill" : "regular"} />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: active ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)" }}>
+                <Icon size={17} stroke={active ? 2.2 : 1.6}
+                  style={{ color: active ? color : "var(--text-muted)" }} />
+              </div>
               {label}
             </Link>
           );
         })}
 
-        {/* Profile + logout at bottom */}
         <div className="mt-auto pt-3" style={{ borderTop: "1px solid var(--nav-border)" }}>
           <div className="flex items-center gap-1">
-            <Link
-              href="/settings"
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all flex-1 min-w-0"
-              style={{
-                background: path.startsWith("/settings") ? "var(--surface-active)" : "transparent",
-                border: "1px solid transparent",
-              }}
+            <Link href="/settings"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all flex-1 min-w-0"
+              style={{ background: path.startsWith("/settings") ? "rgba(148,163,184,0.1)" : "transparent" }}
             >
               <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
                 style={{ border: "1.5px solid var(--border-strong)" }}>
@@ -159,15 +145,13 @@ export default function Nav() {
                 {displayName ? displayName.split(" ")[0] : "Mon profil"}
               </span>
             </Link>
-            <button
-              onClick={handleLogout}
-              title="Se déconnecter"
+            <button onClick={handleLogout} title="Se déconnecter"
               className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors flex-shrink-0"
               style={{ color: "var(--text-muted)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+              onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
             >
-              <SignOut size={16} />
+              <IconLogout size={16} stroke={1.8} />
             </button>
           </div>
         </div>

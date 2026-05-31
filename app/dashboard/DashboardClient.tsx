@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowRight, Moon, Heart, Lightning, Timer, TrendUp, Footprints, ArrowUp, ArrowsClockwise, X, Fire, Footprints as FootprintsIcon } from "@phosphor-icons/react";
+import { IconChevronRight, IconMoon, IconHeart, IconBolt, IconClock, IconTrendingUp, IconShoe, IconArrowUp, IconRefresh, IconX, IconFlame } from "@tabler/icons-react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
 import WelcomeChime from "@/app/components/WelcomeChime";
+import StreakWidget from "@/app/components/StreakWidget";
 import PhotoStrip from "@/app/components/PhotoStrip";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -279,10 +280,10 @@ export default function DashboardClient({
                 color: syncMsg.includes("✓") ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)",
               }}>
               {syncing
-                ? <ArrowsClockwise size={15} className="animate-spin" />
+                ? <IconRefresh size={15} stroke={1.5} className="animate-spin" />
                 : syncMsg
                   ? <span className="text-[10px] font-bold leading-none">{syncMsg}</span>
-                  : <ArrowsClockwise size={15} />
+                  : <IconRefresh size={15} stroke={1.5} />
               }
             </button>
           </div>
@@ -421,7 +422,7 @@ export default function DashboardClient({
             {/* Journal link */}
             <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
               Ouvrir le journal
-              <ArrowRight size={14} weight="bold" />
+              <IconChevronRight size={14} stroke={2} />
             </Link>
           </div>
         </motion.div>
@@ -498,7 +499,7 @@ export default function DashboardClient({
           <Link href="/activity/steps" className="card flex flex-col gap-2 transition-opacity active:opacity-70">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Footprints size={13} style={{ color: "var(--steps)" }} />
+                <IconShoe size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
                 <span className="label-xs">Pas</span>
               </div>
               <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -524,7 +525,7 @@ export default function DashboardClient({
                   ? stepsPct >= 100 ? "🎉 Objectif atteint !" : `${Math.round((1 - stepsPct / 100) * stepsGoal).toLocaleString("fr-FR")} restants`
                   : "Sync Google Fit"}
               </span>
-              <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+              <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
             </div>
           </Link>
 
@@ -538,7 +539,7 @@ export default function DashboardClient({
             {/* Sleep */}
             <Link href="/activity/sleep" className="flex flex-col gap-2 pr-4 transition-opacity active:opacity-70" style={{ borderRight: "1px solid var(--border)" }}>
               <div className="flex items-center gap-1.5">
-                <Moon size={12} weight="fill" style={{ color: "#7986CB" }} />
+                <IconMoon size={12} stroke={2} style={{ color: "#7986CB" }} />
                 <span className="label-xs">Sommeil</span>
               </div>
               <div className="flex items-end gap-1 leading-none">
@@ -560,7 +561,7 @@ export default function DashboardClient({
                 <span className="text-[10px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
                   {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
                 </span>
-                <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+                <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
               </div>
             </Link>
 
@@ -569,10 +570,10 @@ export default function DashboardClient({
               style={{ borderRight: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Heart size={12} weight="fill" style={{ color: "#EA4335" }} />
+                  <IconHeart size={12} stroke={2} style={{ color: "#EA4335" }} />
                   <span className="label-xs">FC moy.</span>
                 </div>
-                <ArrowRight size={9} style={{ color: "var(--text-muted)" }} />
+                <IconChevronRight size={9} stroke={1.5} style={{ color: "var(--text-muted)" }} />
               </div>
               <span className="text-[22px] font-bold leading-none"
                 style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
@@ -596,7 +597,7 @@ export default function DashboardClient({
             {/* Active minutes */}
             <Link href="/activity" className="flex flex-col gap-2 pl-4 transition-opacity active:opacity-70">
               <div className="flex items-center gap-1.5">
-                <Lightning size={12} weight="fill" style={{ color: "#34A853" }} />
+                <IconBolt size={12} stroke={2} style={{ color: "#34A853" }} />
                 <span className="label-xs">Min. actives</span>
               </div>
               <div className="flex items-end gap-1 leading-none">
@@ -623,7 +624,7 @@ export default function DashboardClient({
                     ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
                     : "Aucune donnée"}
                 </span>
-                <ArrowRight size={10} style={{ color: "var(--text-muted)" }} />
+                <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
               </div>
             </Link>
           </div>
@@ -647,7 +648,7 @@ export default function DashboardClient({
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Timer size={14} style={{ color: "var(--text-muted)" }} />
+                    <IconClock size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.durationMin} min</span>
                   </div>
                 </div>
@@ -680,7 +681,7 @@ export default function DashboardClient({
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                         style={{ background: "rgba(52,211,153,0.12)" }}>
-                        <Fire size={14} style={{ color: "rgba(52,211,153,0.9)" }} />
+                        <IconFlame size={14} stroke={1.5} style={{ color: "rgba(52,211,153,0.9)" }} />
                       </div>
                       <div>
                         <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -692,7 +693,7 @@ export default function DashboardClient({
                     <button onClick={() => setBurnedDetailOpen(false)}
                       className="w-7 h-7 rounded-full flex items-center justify-center"
                       style={{ background: "rgba(255,255,255,0.06)" }}>
-                      <X size={13} style={{ color: "var(--text-muted)" }} />
+                      <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
                     </button>
                   </div>
 
@@ -784,6 +785,11 @@ export default function DashboardClient({
           />
         </motion.div>
 
+        {/* Streak & régularité */}
+        <motion.div {...fade(0.21)} className="mb-4">
+          <StreakWidget />
+        </motion.div>
+
         {/* ── Tracked nutrients ── */}
         {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (() => {
           const rows: { key: keyof TrackedNutrients; emoji: string; label: string; unit: string; value: number; goal: number; color: string; invertAlert?: boolean }[] = [];
@@ -828,7 +834,7 @@ export default function DashboardClient({
           <motion.div {...fade(0.19)} className="glass p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <p className="label-xs">Tendance 14 jours</p>
-              <TrendUp size={13} style={{ color: "var(--calories)" }} />
+              <IconTrendingUp size={13} stroke={1.5} style={{ color: "var(--calories)" }} />
             </div>
             <ResponsiveContainer width="100%" height={100}>
               <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>

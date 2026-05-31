@@ -10,12 +10,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts";
 import {
-  ArrowDown, ArrowUp, Minus, Lightning, Scales, ChartBar, ChartLine,
-  CalendarBlank, Footprints, Fire, Heart, Moon, Drop, PersonSimpleRun,
-} from "@phosphor-icons/react";
+  IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
+  IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
+} from "@tabler/icons-react";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
-import { Spinner } from "@phosphor-icons/react";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -445,7 +444,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     className="btn btn-ghost text-[11px] px-2 py-1 gap-1"
                     style={{ height: "auto" }}>
                     {planRecalcLoading
-                      ? <Spinner size={11} className="animate-spin" />
+                      ? <IconLoader2 size={11} stroke={2} className="animate-spin" />
                       : "Recalculer"
                     }
                   </button>
@@ -568,7 +567,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Nutrition */}
                 <div className="glass p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Fire size={16} weight="fill" style={{ color: "var(--calories)" }} />
+                    <IconFlame size={16} stroke={1.5} style={{ color: "var(--calories)" }} />
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutrition</p>
                   </div>
                   {todayPoint?.calories ? (
@@ -613,19 +612,19 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Activité */}
                 <div className="glass p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <PersonSimpleRun size={16} weight="fill" style={{ color: "var(--steps)" }} />
+                    <IconRun size={16} stroke={1.5} style={{ color: "var(--steps)" }} />
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Activité</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { icon: Footprints,    label: "Pas",            val: todayPoint?.steps ? todayPoint.steps.toLocaleString("fr-FR") : "—",             color: "var(--steps)",    goal: "/ 10 000" },
-                      { icon: Lightning,     label: "Min. actives",   val: todayPoint?.activeMinutes ?? "—",                                                color: "var(--fit-green)", goal: "/ 30 min" },
-                      { icon: Fire,          label: "Kcal brûlées",   val: todayPoint?.burned ?? "—",                                                       color: "var(--fit-red)",   goal: "actives" },
-                      { icon: Heart,         label: "FC moy.",         val: todayPoint?.heartRateAvg ? `${todayPoint.heartRateAvg} bpm` : "—",               color: "var(--fit-red)",   goal: todayPoint?.heartRateAvg ? (todayPoint.heartRateAvg < 60 ? "Repos" : todayPoint.heartRateAvg < 100 ? "Normal" : "Élevé") : "" },
+                      { icon: IconShoe,    label: "Pas",            val: todayPoint?.steps ? todayPoint.steps.toLocaleString("fr-FR") : "—",             color: "var(--steps)",    goal: "/ 10 000" },
+                      { icon: IconBolt,     label: "Min. actives",   val: todayPoint?.activeMinutes ?? "—",                                                color: "var(--fit-green)", goal: "/ 30 min" },
+                      { icon: IconFlame,    label: "Kcal brûlées",   val: todayPoint?.burned ?? "—",                                                       color: "var(--fit-red)",   goal: "actives" },
+                      { icon: IconHeart,    label: "FC moy.",         val: todayPoint?.heartRateAvg ? `${todayPoint.heartRateAvg} bpm` : "—",               color: "var(--fit-red)",   goal: todayPoint?.heartRateAvg ? (todayPoint.heartRateAvg < 60 ? "Repos" : todayPoint.heartRateAvg < 100 ? "Normal" : "Élevé") : "" },
                     ].map(({ icon: Icon, label, val, color, goal }) => (
                       <div key={label} className="flex items-center gap-3 p-3 rounded-xl"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <Icon size={22} weight="fill" style={{ color, flexShrink: 0 }} />
+                        <Icon size={22} stroke={1.5} style={{ color, flexShrink: 0 }} />
                         <div>
                           <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color }}>{val}</p>
                           <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</p>
@@ -639,13 +638,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Récupération */}
                 <div className="glass p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Moon size={16} weight="fill" style={{ color: "var(--fit-indigo)" }} />
+                    <IconMoon size={16} stroke={1.5} style={{ color: "var(--fit-indigo)" }} />
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Récupération</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-3 p-3 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <Moon size={24} weight="fill" style={{ color: "var(--fit-indigo)", flexShrink: 0 }} />
+                      <IconMoon size={24} stroke={1.5} style={{ color: "var(--fit-indigo)", flexShrink: 0 }} />
                       <div>
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--fit-indigo)" }}>
                           {fmtSleep(todayPoint?.sleepMinutes)}
@@ -660,7 +659,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <Drop size={24} weight="fill" style={{ color: "#38bdf8", flexShrink: 0 }} />
+                      <IconDroplet size={24} stroke={1.5} style={{ color: "#38bdf8", flexShrink: 0 }} />
                       <div>
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "#38bdf8" }}>
                           {todayPoint?.waterMl ? `${(todayPoint.waterMl / 1000).toFixed(1)}L` : "—"}
@@ -677,7 +676,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Weight today */}
                 {todayPoint?.weightKg && (
                   <div className="glass p-4 flex items-center gap-4">
-                    <Scales size={28} weight="fill" style={{ color: "var(--protein)" }} />
+                    <IconScale size={28} stroke={1.5} style={{ color: "var(--protein)" }} />
                     <div className="flex-1">
                       <p className="text-[26px] font-bold" style={{ color: "var(--protein)" }}>
                         {todayPoint.weightKg.toFixed(1)} kg
@@ -725,14 +724,14 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Fire size={14} weight="fill" style={{ color: "var(--calories)" }} />
+                  <IconFlame size={14} stroke={1.5} style={{ color: "var(--calories)" }} />
                   <p className="label-xs">Calories &amp; Activité</p>
                 </div>
                 <div className="flex gap-1.5">
                   {(["area", "bar"] as CalChart[]).map((t) => (
                     <button key={t} onClick={() => setCalChart(t)} className="btn-icon w-7 h-7"
                       style={{ color: calChart === t ? "var(--calories)" : "var(--text-muted)" }}>
-                      {t === "area" ? <ChartLine size={13} /> : <ChartBar size={13} />}
+                      {t === "area" ? <IconChartLine size={13} stroke={1.5} /> : <IconChartBar size={13} stroke={1.5} />}
                     </button>
                   ))}
                 </div>
@@ -783,7 +782,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <>
                   <div className="h-px my-4" style={{ background: "var(--border)" }} />
                   <div className="flex items-center gap-2 mb-3">
-                    <PersonSimpleRun size={13} weight="fill" style={{ color: "var(--steps)" }} />
+                    <IconRun size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
                     <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
                     {avgSteps > 0 && (
                       <span className="ml-auto text-[10px] tabular-nums" style={{ color: "var(--steps)" }}>
@@ -840,13 +839,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Scales size={15} style={{ color: "var(--protein)" }} />
+                    <IconScale size={15} stroke={1.5} style={{ color: "var(--protein)" }} />
                     <p className="label-xs">Poids &amp; Simulation</p>
                   </div>
                   {weightDelta !== null && (
                     <span className="flex items-center gap-1 text-[12px] font-medium"
                       style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "#f87171" : "var(--text-muted)" }}>
-                      {weightDelta < -0.1 ? <ArrowDown size={11} weight="bold" /> : weightDelta > 0.1 ? <ArrowUp size={11} weight="bold" /> : <Minus size={11} />}
+                      {weightDelta < -0.1 ? <IconArrowDown size={11} stroke={2} /> : weightDelta > 0.1 ? <IconArrowUp size={11} stroke={2} /> : <IconMinus size={11} stroke={2} />}
                       {Math.abs(weightDelta).toFixed(1)} kg sur la période
                     </span>
                   )}
@@ -874,7 +873,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
                 {/* Editable target date */}
                 <div className="flex items-center gap-2 mb-3">
-                  <CalendarBlank size={12} style={{ color: "var(--text-muted)" }} />
+                  <IconCalendar size={12} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                   <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
                   <input
                     type="date" value={targetDate}

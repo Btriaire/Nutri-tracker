@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Play, Pause, Stop, MusicNote, CheckCircle, Flower, Timer,
-  ArrowLeft, SpeakerHigh, SpeakerSlash,
-} from "@phosphor-icons/react";
+  IconPlayerPlay, IconPlayerPause, IconPlayerStop, IconMusic, IconCircleCheck, IconFlower, IconClock,
+  IconChevronLeft, IconVolume, IconVolumeOff,
+} from "@tabler/icons-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -394,17 +394,17 @@ export default function MeditationPlayer() {
               <button onClick={toggleSound}
                 className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(52,211,153,0.1)" }}>
-                {soundOn ? <SpeakerHigh size={14} style={{ color: "#34d399" }} /> : <SpeakerSlash size={14} style={{ color: "var(--text-muted)" }} />}
+                {soundOn ? <IconVolume size={14} stroke={1.5} style={{ color: "#34d399" }} /> : <IconVolumeOff size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />}
               </button>
               <button onClick={togglePause}
                 className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(52,211,153,0.12)" }}>
-                {paused ? <Play size={14} style={{ color: "#34d399" }} /> : <Pause size={14} style={{ color: "#34d399" }} />}
+                {paused ? <IconPlayerPlay size={14} stroke={1.5} style={{ color: "#34d399" }} /> : <IconPlayerPause size={14} stroke={1.5} style={{ color: "#34d399" }} />}
               </button>
               <button onClick={stopSession}
                 className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(239,68,68,0.1)" }}>
-                <Stop size={14} style={{ color: "#f87171" }} />
+                <IconPlayerStop size={14} stroke={1.5} style={{ color: "#f87171" }} />
               </button>
             </div>
           </div>
@@ -468,7 +468,7 @@ export default function MeditationPlayer() {
         style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.08) 0%, rgba(16,185,129,0.05) 100%)", border: "1px solid rgba(52,211,153,0.25)" }}>
         <div className="text-[40px] mb-2">{prog.emoji}</div>
         <div className="flex justify-center mb-3">
-          <CheckCircle size={32} weight="fill" style={{ color: "#34d399" }} />
+          <IconCircleCheck size={32} stroke={1.5} style={{ color: "#34d399" }} />
         </div>
         <p className="text-[16px] font-semibold mb-1" style={{ color: "#34d399" }}>Séance complète ✨</p>
         <p className="text-[13px] mb-1" style={{ color: "var(--text-secondary)" }}>{prog.label} · {prog.durationMin} min</p>
@@ -478,7 +478,7 @@ export default function MeditationPlayer() {
         <button onClick={() => { setSelected(null); setCompleted([]); }}
           className="flex items-center gap-2 mx-auto px-4 py-2 rounded-xl text-[13px]"
           style={{ background: "rgba(52,211,153,0.12)", color: "#34d399", border: "1px solid rgba(52,211,153,0.3)" }}>
-          <ArrowLeft size={13} /> Retour aux programmes
+          <IconChevronLeft size={13} stroke={2} /> Retour aux programmes
         </button>
       </motion.div>
     );
@@ -591,7 +591,7 @@ export default function MeditationPlayer() {
                   color: program.color,
                 }}
               >
-                <Play size={14} weight="fill" />
+                <IconPlayerPlay size={14} stroke={2} />
                 Commencer · {program.durationMin} min
               </button>
             </div>

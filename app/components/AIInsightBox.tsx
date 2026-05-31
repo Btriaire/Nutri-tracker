@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkle, ArrowsClockwise, CaretDown, CaretUp } from "@phosphor-icons/react";
+import { IconSparkles, IconRefresh, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 
 interface Props {
   type:       "journal" | "dashboard" | "activity" | "progress";
@@ -102,7 +102,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
           >
             <div className="flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0"
               style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2))" }}>
-              <Sparkle size={12} weight="fill" style={{ color: "#a78bfa" }} />
+              <IconSparkles size={12} stroke={2} style={{ color: "#a78bfa" }} />
             </div>
             <span className="text-[11px] font-semibold tracking-wide uppercase"
               style={{ color: "#a78bfa", letterSpacing: "0.06em" }}>
@@ -114,8 +114,8 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
             {text && (
               <span className="ml-1 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                 {collapsed
-                  ? <CaretDown size={10} />
-                  : <CaretUp size={10} />
+                  ? <IconChevronDown size={10} stroke={2} />
+                  : <IconChevronUp size={10} stroke={2} />
                 }
               </span>
             )}
@@ -134,8 +134,9 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               }}
               title="Actualiser l'analyse"
             >
-              <ArrowsClockwise
+              <IconRefresh
                 size={11}
+                stroke={2}
                 style={{ color: "#a78bfa" }}
                 className={loading ? "animate-spin" : ""}
               />
@@ -154,7 +155,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               color: "#a78bfa",
             }}
           >
-            <Sparkle size={12} weight="fill" />
+            <IconSparkles size={12} stroke={2} />
             Lancer l&apos;analyse IA
           </button>
         )}

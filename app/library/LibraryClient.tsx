@@ -3,9 +3,9 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MagnifyingGlass, X, Spinner, ArrowLeft, Plus, CalendarBlank,
-  Check,
-} from "@phosphor-icons/react";
+  IconSearch, IconX, IconLoader2, IconChevronLeft, IconPlus, IconCalendar,
+  IconCheck,
+} from "@tabler/icons-react";
 import type { FoodNutrition, FoodSearchResult, MealType } from "@/app/lib/types";
 import { COMMON_SERVING_UNITS } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
@@ -171,8 +171,8 @@ export default function LibraryClient() {
             {/* Search bar */}
             <div className="relative mb-5">
               {searching
-                ? <Spinner size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
-                : <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                ? <IconLoader2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
+                : <IconSearch size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
               }
               <input
                 value={query}
@@ -186,7 +186,7 @@ export default function LibraryClient() {
                   onClick={() => { setQuery(""); setResults([]); setActiveCat(null); }}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 btn-icon"
                 >
-                  <X size={12} />
+                  <IconX size={12} />
                 </button>
               )}
             </div>
@@ -245,7 +245,7 @@ export default function LibraryClient() {
                         onClick={() => { setQuery(""); setResults([]); setActiveCat(null); }}
                         className="btn-icon"
                       >
-                        <ArrowLeft size={13} />
+                        <IconChevronLeft size={13} />
                       </button>
                       <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
                         {CATEGORIES.find((c) => c.id === activeCat)?.emoji}{" "}
@@ -256,7 +256,7 @@ export default function LibraryClient() {
 
                   {searching && results.length === 0 && (
                     <div className="flex justify-center py-12">
-                      <Spinner size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                      <IconLoader2 size={20} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                     </div>
                   )}
 
@@ -444,9 +444,9 @@ export default function LibraryClient() {
                         style={{ height: "42px" }}
                       >
                         {added ? (
-                          <><Check size={14} weight="bold" /> Ajouté !</>
+                          <><IconCheck size={14} /> Ajouté !</>
                         ) : (
-                          <><Plus size={14} weight="bold" /> Ajouter au journal</>
+                          <><IconPlus size={14} /> Ajouter au journal</>
                         )}
                       </button>
                     ) : (
@@ -458,7 +458,7 @@ export default function LibraryClient() {
                         {/* Date picker */}
                         <div>
                           <label className="label-xs block mb-1.5 flex items-center gap-1.5">
-                            <CalendarBlank size={11} /> Date
+                            <IconCalendar size={11} /> Date
                           </label>
                           <input
                             type="date"
@@ -495,8 +495,8 @@ export default function LibraryClient() {
                           </button>
                           <button onClick={handleAdd} disabled={adding} className="btn btn-primary flex-1 gap-1.5 text-[12px]">
                             {adding
-                              ? <Spinner size={12} className="animate-spin" />
-                              : <><Check size={12} weight="bold" /> Confirmer</>
+                              ? <IconLoader2 size={12} className="animate-spin" />
+                              : <><IconCheck size={12} /> Confirmer</>
                             }
                           </button>
                         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Spinner, Check } from "@phosphor-icons/react";
+import { IconX, IconLoader2, IconCheck } from "@tabler/icons-react";
 import type { CustomFood, FoodNutrition } from "@/app/lib/types";
 
 interface Props {
@@ -200,11 +200,11 @@ export default function CustomFoodForm({ existing, onSaved, onCancel }: Props) {
       {/* Actions */}
       <div className="flex gap-2 pt-1">
         <button onClick={onCancel} className="btn btn-ghost flex-1 gap-2">
-          <X size={12} />
+          <IconX size={12} stroke={2} />
           Annuler
         </button>
         <button onClick={handleSave} disabled={saving} className="btn btn-primary flex-1 gap-2">
-          {saving ? <Spinner size={13} className="animate-spin" /> : <Check size={12} />}
+          {saving ? <IconLoader2 size={13} stroke={2} className="animate-spin" /> : <IconCheck size={12} stroke={2} />}
           {existing ? "Mettre à jour" : "Créer l'aliment"}
         </button>
       </div>

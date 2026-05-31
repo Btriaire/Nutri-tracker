@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, ArrowsClockwise, Lightning, Spinner, Database, CaretDown, CaretUp, Trash, Warning, Sun, Moon, Ruler, Person, Heartbeat, Footprints, Calculator, FloppyDisk, SignOut, FilePdf } from "@phosphor-icons/react";
+import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconTrash, IconAlertCircle, IconSun, IconMoon, IconRuler, IconUser, IconHeartbeat, IconShoe, IconCalculator, IconDeviceFloppy, IconLogout, IconFileTypePdf } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
@@ -176,7 +176,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 border: "1px solid rgba(249,115,22,0.35)",
                 color: "#f97316",
               }}>
-              <FilePdf size={15} weight="fill" />
+              <IconFileTypePdf size={15} />
               Rapport PDF
             </Link>
           </div>
@@ -199,8 +199,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: theme === "light" ? "rgba(249,115,22,0.12)" : "rgba(139,92,246,0.12)" }}>
                 {theme === "light"
-                  ? <Sun size={18} weight="fill" style={{ color: "var(--calories)" }} />
-                  : <Moon size={18} weight="fill" style={{ color: "#818cf8" }} />
+                  ? <IconSun size={18} style={{ color: "var(--calories)" }} />
+                  : <IconMoon size={18} style={{ color: "#818cf8" }} />
                 }
               </div>
               <div>
@@ -228,8 +228,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 }}
               >
                 {theme === "light"
-                  ? <Sun size={11} weight="fill" style={{ color: "var(--calories)" }} />
-                  : <Moon size={11} weight="fill" style={{ color: "#818cf8" }} />
+                  ? <IconSun size={11} style={{ color: "var(--calories)" }} />
+                  : <IconMoon size={11} style={{ color: "#818cf8" }} />
                 }
               </span>
             </button>
@@ -246,17 +246,17 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           <button className="w-full flex items-center gap-3" onClick={() => setFitOpen(v => !v)}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
               style={{ background: "linear-gradient(135deg, #4285f4 0%, #34a853 50%, #ea4335 100%)" }}>
-              <Lightning size={18} weight="fill" color="white" />
+              <IconBolt size={18} color="white" />
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Google Fit</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Pas · Calories · Sommeil · Poids · Séances</p>
             </div>
             {fit
-              ? <CheckCircle size={18} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <XCircle    size={18} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              ? <IconCircleCheck size={18} style={{ color: "var(--fiber)", flexShrink: 0 }} />
+              : <IconCircleX    size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             }
-            {fitOpen ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+            {fitOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
           <AnimatePresence initial={false}>
@@ -268,7 +268,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
                 style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                <CheckCircle size={13} style={{ color: "var(--fiber)" }} />
+                <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
                 <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
               </div>
 
@@ -280,18 +280,18 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <div className="flex gap-2">
                 <button onClick={handleSync} disabled={syncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
-                  {syncing ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  {syncing ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
                   Aujourd'hui
                 </button>
                 <button onClick={handleSyncHistory} disabled={syncingHistory}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
-                  {syncingHistory ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  {syncingHistory ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
                   90 jours
                 </button>
                 <button onClick={handleDisconnect} disabled={disconnecting}
                   className="btn btn-ghost text-[12px] px-3"
                   style={{ color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
-                  {disconnecting ? <Spinner size={12} className="animate-spin" /> : "Déconnecter"}
+                  {disconnecting ? <IconLoader2 size={12} className="animate-spin" /> : "Déconnecter"}
                 </button>
               </div>
 
@@ -303,10 +303,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   style={{ color: "var(--text-secondary)", background: "rgba(255,255,255,0.03)" }}
                 >
                   <span className="flex items-center gap-2">
-                    <Database size={13} />
+                    <IconDatabase size={13} />
                     Synchroniser tout l'historique
                   </span>
-                  {showFullSync ? <CaretUp size={11} /> : <CaretDown size={11} />}
+                  {showFullSync ? <IconChevronUp size={11} /> : <IconChevronDown size={11} />}
                 </button>
 
                 <AnimatePresence>
@@ -349,9 +349,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                             {yearProgress.map(p => (
                               <div key={p.year} className="flex items-center gap-2">
                                 <div className="w-3 h-3 flex-shrink-0 flex items-center justify-center">
-                                  {p.status === "running" && <Spinner size={11} className="animate-spin" style={{ color: "var(--accent)" }} />}
-                                  {p.status === "done"    && <CheckCircle size={11} weight="fill" style={{ color: "var(--fiber)" }} />}
-                                  {p.status === "error"   && <XCircle     size={11} weight="fill" style={{ color: "#f87171" }} />}
+                                  {p.status === "running" && <IconLoader2 size={11} className="animate-spin" style={{ color: "var(--accent)" }} />}
+                                  {p.status === "done"    && <IconCircleCheck size={11} style={{ color: "var(--fiber)" }} />}
+                                  {p.status === "error"   && <IconCircleX     size={11} style={{ color: "#f87171" }} />}
                                   {p.status === "pending" && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--border)" }} />}
                                 </div>
                                 <span className="text-[11px] flex-1" style={{
@@ -383,8 +383,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                           style={{ height: "36px" }}
                         >
                           {fullSyncRunning
-                            ? <><Spinner size={12} className="animate-spin" /> Synchronisation en cours…</>
-                            : <><Database size={12} /> Lancer la synchronisation complète</>
+                            ? <><IconLoader2 size={12} className="animate-spin" /> Synchronisation en cours…</>
+                            : <><IconDatabase size={12} /> Lancer la synchronisation complète</>
                           }
                         </button>
 
@@ -401,7 +401,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             </div>
           ) : (
             <a href="/api/google-fit/auth" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
-              <Lightning size={14} weight="fill" />
+              <IconBolt size={14} />
               Connecter Google Fit
             </a>
           )}
@@ -428,10 +428,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · % graisse · Masse musculaire</p>
             </div>
             {withings
-              ? <CheckCircle size={18} weight="fill" style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <XCircle    size={18} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              ? <IconCircleCheck size={18} style={{ color: "var(--fiber)", flexShrink: 0 }} />
+              : <IconCircleX    size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             }
-            {withingsOpen ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+            {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
           <AnimatePresence initial={false}>
@@ -443,7 +443,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
                 style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                <CheckCircle size={13} style={{ color: "var(--fiber)" }} />
+                <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
                 <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
               </div>
 
@@ -454,18 +454,18 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <div className="flex gap-2">
                 <button onClick={() => handleWithingsSync()} disabled={wSyncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
-                  {wSyncing ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  {wSyncing ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
                   Aujourd'hui
                 </button>
                 <button onClick={() => handleWithingsSync(90)} disabled={wSyncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
-                  {wSyncing ? <Spinner size={12} className="animate-spin" /> : <ArrowsClockwise size={12} />}
+                  {wSyncing ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
                   90 jours
                 </button>
                 <button onClick={handleWithingsDisconnect} disabled={wDisconnecting}
                   className="btn btn-ghost text-[12px] px-3"
                   style={{ color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
-                  {wDisconnecting ? <Spinner size={12} className="animate-spin" /> : "Déconnecter"}
+                  {wDisconnecting ? <IconLoader2 size={12} className="animate-spin" /> : "Déconnecter"}
                 </button>
               </div>
             </div>
@@ -506,7 +506,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.12)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.06)")}
           >
-            <SignOut size={15} />
+            <IconLogout size={15} />
             Se déconnecter / Changer de compte
           </button>
         </motion.div>
@@ -571,11 +571,11 @@ function DataSafetyBanner() {
         }}
       >
         {downloading ? (
-          <Spinner size={10} className="animate-spin" />
+          <IconLoader2 size={10} className="animate-spin" />
         ) : done ? (
-          <><CheckCircle size={11} weight="fill" /> OK</>
+          <><IconCircleCheck size={11} /> OK</>
         ) : (
-          <><Database size={11} /> Sauvegarder</>
+          <><IconDatabase size={11} /> Sauvegarder</>
         )}
       </button>
     </motion.div>
@@ -657,7 +657,7 @@ function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
             ? <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
             : <div className="w-full h-full flex items-center justify-center text-[18px]"
                 style={{ background: "rgba(249,115,22,0.12)" }}>
-                <Person size={18} style={{ color: "var(--calories)" }} />
+                <IconUser size={18} style={{ color: "var(--calories)" }} />
               </div>
           }
         </div>
@@ -669,7 +669,7 @@ function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
             {[computedAge ? `${computedAge} ans` : null, initialGoals.gender === "male" ? "Homme" : initialGoals.gender === "female" ? "Femme" : null, initialGoals.heightCm ? `${initialGoals.heightCm} cm` : null].filter(Boolean).join(" · ") || "Photo · Prénom · Âge"}
           </p>
         </div>
-        {open ? <CaretUp size={14} style={{ color: "var(--text-muted)" }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)" }} />}
+        {open ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -707,17 +707,17 @@ function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
             <div className="flex items-center gap-2 px-1">
               {saving ? (
                 <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  <Spinner size={11} className="animate-spin" /> Sauvegarde…
+                  <IconLoader2 size={11} className="animate-spin" /> Sauvegarde…
                 </span>
               ) : saved ? (
                 <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "#34d399" }}>
-                  <CheckCircle size={12} weight="fill" /> Sauvegardée ✓
+                  <IconCircleCheck size={12} /> Sauvegardée ✓
                 </span>
               ) : (
                 <button onClick={handleSave}
                   className="flex items-center gap-1.5 text-[11px] underline underline-offset-2"
                   style={{ color: "var(--text-muted)" }}>
-                  <FloppyDisk size={11} /> Sauvegarder manuellement
+                  <IconDeviceFloppy size={11} /> Sauvegarder manuellement
                 </button>
               )}
             </div>
@@ -800,11 +800,11 @@ function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
         <button onClick={handleSave} disabled={saving}
           className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
           {saving ? (
-            <><Spinner size={14} className="animate-spin" /> Sauvegarde…</>
+            <><IconLoader2 size={14} className="animate-spin" /> Sauvegarde…</>
           ) : saved ? (
-            <><CheckCircle size={14} weight="fill" /> Profil sauvegardé ✓</>
+            <><IconCircleCheck size={14} /> Profil sauvegardé ✓</>
           ) : (
-            <><FloppyDisk size={14} /> Sauvegarder le profil</>
+            <><IconDeviceFloppy size={14} /> Sauvegarder le profil</>
           )}
         </button>
       </div>
@@ -1184,13 +1184,13 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
         onClick={() => setExpanded(v => !v)}
       >
         <div className="flex items-center gap-2">
-          <Person size={18} style={{ color: "var(--calories)" }} />
+          <IconUser size={18} style={{ color: "var(--calories)" }} />
           <div className="text-left">
             <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Objectifs & Profil</p>
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Calories, macros, pas, sommeil</p>
           </div>
         </div>
-        {expanded ? <CaretUp size={14} style={{ color: "var(--text-muted)" }} /> : <CaretDown size={14} style={{ color: "var(--text-muted)" }} />}
+        {expanded ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
       </button>
 
       <AnimatePresence>
@@ -1207,7 +1207,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
               {/* ── Profil ── */}
               <div>
                 <p className="label-xs mb-3 flex items-center gap-1.5">
-                  <Ruler size={11} />
+                  <IconRuler size={11} />
                   Profil corporel
                 </p>
 
@@ -1362,8 +1362,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </span>
                     )}
                     {activityLevelOpen
-                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
-                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
+                      ? <IconChevronUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <IconChevronDown size={12} style={{ color: "var(--text-muted)" }} />}
                   </div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -1385,7 +1385,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                               </p>
                               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
                             </div>
-                            {activity === level && <CheckCircle size={14} weight="fill" style={{ color: "var(--calories)" }} />}
+                            {activity === level && <IconCircleCheck size={14} style={{ color: "var(--calories)" }} />}
                           </button>
                         ))}
                       </div>
@@ -1418,7 +1418,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 <button className="w-full flex items-center justify-between mb-2"
                   onClick={() => setActivityOpen(o => !o)}>
                   <p className="label-xs flex items-center gap-1.5">
-                    <Lightning size={11} />
+                    <IconBolt size={11} />
                     Plan d&apos;activité
                   </p>
                   <div className="flex items-center gap-2">
@@ -1428,8 +1428,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </span>
                     )}
                     {activityOpen
-                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
-                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />
+                      ? <IconChevronUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <IconChevronDown size={12} style={{ color: "var(--text-muted)" }} />
                     }
                   </div>
                 </button>
@@ -1507,7 +1507,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                                 </p>
                                 <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                                   style={{ background: isSelected ? "var(--calories)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
-                                  {isSelected && <CheckCircle size={10} weight="fill" color="#fff" />}
+                                  {isSelected && <IconCircleCheck size={10} color="#fff" />}
                                 </div>
                               </div>
                               <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
@@ -1556,7 +1556,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 <button className="w-full flex items-center justify-between mb-2"
                   onClick={() => setProgramOpen(o => !o)}>
                   <p className="label-xs flex items-center gap-1.5">
-                    <Lightning size={11} />
+                    <IconBolt size={11} />
                     Programme nutritionnel
                   </p>
                   <div className="flex items-center gap-2">
@@ -1566,8 +1566,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </span>
                     )}
                     {programOpen
-                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
-                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />
+                      ? <IconChevronUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <IconChevronDown size={12} style={{ color: "var(--text-muted)" }} />
                     }
                   </div>
                 </button>
@@ -1642,7 +1642,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 <button className="w-full flex items-center justify-between mb-2"
                   onClick={() => setTdeeOpen(o => !o)}>
                   <p className="label-xs flex items-center gap-1.5">
-                    <Calculator size={11} />
+                    <IconCalculator size={11} />
                     Calcul TDEE
                   </p>
                   <div className="flex items-center gap-2">
@@ -1652,8 +1652,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </span>
                     )}
                     {tdeeOpen
-                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
-                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
+                      ? <IconChevronUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <IconChevronDown size={12} style={{ color: "var(--text-muted)" }} />}
                   </div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -1723,7 +1723,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                             border: "none",
                             opacity: age && height && gender ? 1 : 0.5,
                           }}>
-                          <Calculator size={12} />
+                          <IconCalculator size={12} />
                           {tdeeCalc ? `Recalculer (${tdeeCalc} kcal)` : "Calculer TDEE → appliquer aux macros"}
                         </button>
                       </div>
@@ -1797,7 +1797,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       opacity: age && height && gender ? 1 : 0.5,
                     }}>
                     {planLoading
-                      ? <><Spinner size={12} className="animate-spin" /> Calcul…</>
+                      ? <><IconLoader2 size={12} className="animate-spin" /> Calcul…</>
                       : <>🚀 Démarrer le plan</>
                     }
                   </button>
@@ -1831,7 +1831,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 <button className="w-full flex items-center justify-between mb-2"
                   onClick={() => setMacroOpen(o => !o)}>
                   <p className="label-xs flex items-center gap-1.5">
-                    <Heartbeat size={11} />
+                    <IconHeartbeat size={11} />
                     Calories & Macros
                   </p>
                   <div className="flex items-center gap-2">
@@ -1847,8 +1847,8 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </span>
                     )}
                     {macroOpen
-                      ? <CaretUp size={12} style={{ color: "var(--text-muted)" }} />
-                      : <CaretDown size={12} style={{ color: "var(--text-muted)" }} />}
+                      ? <IconChevronUp size={12} style={{ color: "var(--text-muted)" }} />
+                      : <IconChevronDown size={12} style={{ color: "var(--text-muted)" }} />}
                   </div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -1877,7 +1877,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
               {/* ── Steps & Sleep ── */}
               <div>
                 <p className="label-xs mb-4 flex items-center gap-1.5">
-                  <Footprints size={11} />
+                  <IconShoe size={11} />
                   Activité & Récupération
                 </p>
                 <div className="space-y-4">
@@ -1892,10 +1892,10 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
               <button onClick={handleSave} disabled={saving}
                 className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px" }}>
                 {saved
-                  ? <><CheckCircle size={14} weight="fill" /> Sauvegardé</>
+                  ? <><IconCircleCheck size={14} /> Sauvegardé</>
                   : saving
-                    ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</>
-                    : <><FloppyDisk size={14} /> Sauvegarder les objectifs</>
+                    ? <><IconLoader2 size={12} className="animate-spin" /> Sauvegarde…</>
+                    : <><IconDeviceFloppy size={14} /> Sauvegarder les objectifs</>
                 }
               </button>
             </div>
@@ -1926,7 +1926,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: "rgba(239,68,68,0.12)" }}>
-                  <Warning size={20} weight="fill" style={{ color: "#ef4444" }} />
+                  <IconAlertCircle size={20} style={{ color: "#ef4444" }} />
                 </div>
                 <div>
                   <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>
@@ -2051,8 +2051,8 @@ function ChartPrefsPanel() {
           </div>
         </div>
         {open
-          ? <CaretUp  size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-          : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+          ? <IconChevronUp  size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+          : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -2158,7 +2158,7 @@ function ChartPrefsPanel() {
               {/* ── Save ── */}
               <button onClick={handleSave} disabled={saving}
                 className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "42px" }}>
-                {saved ? "✓ Préférences sauvegardées" : saving ? <><Spinner size={12} className="animate-spin" /> Sauvegarde…</> : "Appliquer les préférences"}
+                {saved ? "✓ Préférences sauvegardées" : saving ? <><IconLoader2 size={12} className="animate-spin" /> Sauvegarde…</> : "Appliquer les préférences"}
               </button>
             </div>
           </motion.div>
@@ -2321,8 +2321,8 @@ function TrackedNutrientsPanel() {
               : `${activeCount} paramètre${activeCount > 1 ? "s" : ""} actif${activeCount > 1 ? "s" : ""} · références internationales`}
           </p>
         </div>
-        {open ? <CaretUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-               : <CaretDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+        {open ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+               : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
       </button>
 
       <AnimatePresence initial={false}>
@@ -2484,7 +2484,7 @@ function TrackedNutrientsPanel() {
               color: saved ? "#22c55e" : "#ec4899",
             }}
           >
-            {saving ? <Spinner size={13} className="animate-spin" /> : saved ? <CheckCircle size={13} weight="fill" /> : <FloppyDisk size={13} />}
+            {saving ? <IconLoader2 size={13} className="animate-spin" /> : saved ? <IconCircleCheck size={13} /> : <IconDeviceFloppy size={13} />}
             {saved ? "Enregistré !" : "Enregistrer"}
           </button>
         </div>
@@ -2559,13 +2559,13 @@ function ExportPanel() {
       >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: "linear-gradient(135deg,rgba(96,165,250,0.15),rgba(167,139,250,0.15))" }}>
-          <Database size={17} style={{ color: "#60a5fa" }} />
+          <IconDatabase size={17} style={{ color: "#60a5fa" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-semibold">Exporter mes données</p>
           <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Export exhaustif de tous tes paramètres</p>
         </div>
-        <CaretDown
+        <IconChevronDown
           size={16}
           style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s" }}
         />
@@ -2663,11 +2663,11 @@ function ExportPanel() {
           color:      done ? "#34d399" : "#60a5fa",
         }}>
         {loading ? (
-          <><Spinner size={14} className="animate-spin" /> Préparation du fichier…</>
+          <><IconLoader2 size={14} className="animate-spin" /> Préparation du fichier…</>
         ) : done ? (
           <>✓ Téléchargement démarré</>
         ) : (
-          <><Database size={14} /> Télécharger {exportFmt.toUpperCase()}</>
+          <><IconDatabase size={14} /> Télécharger {exportFmt.toUpperCase()}</>
         )}
       </button>
 
@@ -2730,13 +2730,13 @@ function ResetPanel() {
       >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: "rgba(248,113,113,0.1)" }}>
-          <Trash size={17} style={{ color: "#f87171" }} />
+          <IconTrash size={17} style={{ color: "#f87171" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Remise à zéro</p>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Supprimer des données définitivement</p>
         </div>
-        <CaretDown
+        <IconChevronDown
           size={16}
           style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s" }}
         />
@@ -2757,7 +2757,7 @@ function ResetPanel() {
       {done && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3 text-[12px]"
           style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", color: "var(--fiber)" }}>
-          <CheckCircle size={13} weight="fill" />
+          <IconCircleCheck size={13} />
           Réinitialisation effectuée
         </div>
       )}
@@ -2779,7 +2779,7 @@ function ResetPanel() {
               </div>
               <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{ background: checked ? "#f87171" : "rgba(255,255,255,0.06)", border: `1px solid ${checked ? "#f87171" : "var(--border)"}` }}>
-                {checked && <CheckCircle size={13} weight="fill" color="#fff" />}
+                {checked && <IconCircleCheck size={13} color="#fff" />}
               </div>
             </button>
           );
@@ -2797,14 +2797,14 @@ function ResetPanel() {
             border: `1px solid ${selected.size > 0 ? "rgba(248,113,113,0.4)" : "var(--border)"}`,
             color: selected.size > 0 ? "#f87171" : "var(--text-muted)",
           }}>
-          <Trash size={13} />
+          <IconTrash size={13} />
           Réinitialiser ({selected.size} sélectionné{selected.size > 1 ? "s" : ""})
         </button>
       ) : (
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px]"
             style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)" }}>
-            <Warning size={14} style={{ color: "#f87171" }} />
+            <IconAlertCircle size={14} style={{ color: "#f87171" }} />
             <p style={{ color: "#f87171" }}>
               Cette action est <strong>irréversible</strong>. Confirmer la suppression ?
             </p>
@@ -2816,7 +2816,7 @@ function ResetPanel() {
             <button onClick={handleReset} disabled={resetting}
               className="flex-1 btn gap-1.5 text-[12px]"
               style={{ height: "36px", background: "#f87171", color: "#fff", border: "none" }}>
-              {resetting ? <><Spinner size={12} className="animate-spin" /> Suppression…</> : <><Trash size={12} /> Confirmer</>}
+              {resetting ? <><IconLoader2 size={12} className="animate-spin" /> Suppression…</> : <><IconTrash size={12} /> Confirmer</>}
             </button>
           </div>
         </div>

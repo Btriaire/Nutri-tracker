@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { addDays, format, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 interface Props {
   date: string;
@@ -28,7 +28,7 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
         className="btn-icon"
         aria-label="Jour précédent"
       >
-        <CaretLeft size={13} weight="bold" />
+        <IconChevronLeft size={13} stroke={2.5} />
       </button>
 
       <div className="text-center flex-1">
@@ -51,7 +51,7 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
         className="btn-icon disabled:opacity-30"
         aria-label="Jour suivant"
       >
-        <CaretRight size={13} weight="bold" />
+        <IconChevronRight size={13} stroke={2.5} />
       </button>
     </div>
   );

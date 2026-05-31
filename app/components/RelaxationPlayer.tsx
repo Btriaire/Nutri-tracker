@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Play, Pause, SpeakerHigh, SpeakerLow, SpeakerX, Timer } from "@phosphor-icons/react";
+import { IconPlayerPlay, IconPlayerPause, IconVolume, IconVolume2, IconVolumeOff, IconClock } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Sound definitions ─────────────────────────────────────────────────────
@@ -358,7 +358,7 @@ export default function RelaxationPlayer() {
         {timerLeft !== null && (
           <span className="text-[11px] font-medium tabular-nums px-2 py-0.5 rounded-full"
             style={{ background: "rgba(167,139,250,0.15)", color: "var(--protein)" }}>
-            <Timer size={11} className="inline mr-1" />{fmtTime(timerLeft)}
+            <IconClock size={11} stroke={2} className="inline mr-1" />{fmtTime(timerLeft)}
           </span>
         )}
       </div>
@@ -388,8 +388,8 @@ export default function RelaxationPlayer() {
               </div>
               <div className="ml-auto flex-shrink-0">
                 {active
-                  ? <Pause size={14} weight="fill" style={{ color: s.color }} />
-                  : <Play  size={14} weight="fill" style={{ color: "var(--text-muted)" }} />
+                  ? <IconPlayerPause size={14} stroke={2} style={{ color: s.color }} />
+                  : <IconPlayerPlay  size={14} stroke={2} style={{ color: "var(--text-muted)" }} />
                 }
               </div>
             </motion.button>
@@ -410,7 +410,7 @@ export default function RelaxationPlayer() {
             <div className="pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
               {/* Volume */}
               <div className="flex items-center gap-2.5">
-                <SpeakerLow size={14} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                <IconVolume2 size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
                 <input
                   type="range" min={0} max={1} step={0.01}
                   value={volume}
@@ -418,12 +418,12 @@ export default function RelaxationPlayer() {
                   className="flex-1 accent-violet-400"
                   style={{ height: "4px" }}
                 />
-                <SpeakerHigh size={14} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                <IconVolume size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
               </div>
 
               {/* Timer chips */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <Timer size={12} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
+                <IconClock size={12} stroke={2} style={{ color: "var(--text-muted)" }} className="flex-shrink-0" />
                 {TIMERS.map(({ label, value }) => {
                   const active = timer === value;
                   return (

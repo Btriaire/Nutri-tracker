@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  Plus, Trash, Timer, Lightning, Heart, Moon, Footprints, Fire,
-  BookmarkSimple, X, Check, Spinner,
-} from "@phosphor-icons/react";
+  IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
+  IconBookmark, IconX, IconCheck, IconLoader2,
+} from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
@@ -243,7 +243,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
             </h1>
           </div>
           <button onClick={() => setShowForm((x) => !x)} className="btn btn-primary gap-2 px-3 py-2 text-[13px]">
-            <Plus size={14} weight="bold" /> Ajouter
+            <IconPlus size={14} /> Ajouter
           </button>
         </motion.div>
 
@@ -253,13 +253,13 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           className="grid grid-cols-4 gap-2 mb-5"
         >
           {[
-            { icon: Footprints, label: "Pas",         value: gf?.steps ? gf.steps.toLocaleString("fr-FR") : "—", color: "var(--steps)" },
-            { icon: Fire,       label: "Kcal brûlées", value: totalBurned || "—",                                   color: "var(--fit-red)" },
-            { icon: Lightning,  label: "Min. actives", value: gf?.activeMinutes ?? "—",                              color: "var(--fit-green)" },
-            { icon: Heart,      label: "FC moy.",       value: gf?.heartRateAvg ? `${gf.heartRateAvg} bpm` : "—",  color: "var(--fit-red)" },
+            { icon: IconShoe,   label: "Pas",         value: gf?.steps ? gf.steps.toLocaleString("fr-FR") : "—", color: "var(--steps)" },
+            { icon: IconFlame,  label: "Kcal brûlées", value: totalBurned || "—",                                   color: "var(--fit-red)" },
+            { icon: IconBolt,   label: "Min. actives", value: gf?.activeMinutes ?? "—",                              color: "var(--fit-green)" },
+            { icon: IconHeart,  label: "FC moy.",       value: gf?.heartRateAvg ? `${gf.heartRateAvg} bpm` : "—",  color: "var(--fit-red)" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2">
-              <Icon size={18} weight="fill" style={{ color }} />
+              <Icon size={18} style={{ color }} />
               <span className="text-[14px] font-bold tabular-nums" style={{ color }}>{value}</span>
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
@@ -287,7 +287,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                 <p className="label-xs">Nouvelle activité</p>
                 <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
                   className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <X size={13} style={{ color: "var(--text-muted)" }} />
+                  <IconX size={13} style={{ color: "var(--text-muted)" }} />
                 </button>
               </div>
 
@@ -307,7 +307,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                 <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); setSaveError(false); }} className="flex-1 btn btn-ghost">Annuler</button>
                 <button onClick={handleSave} disabled={saving || !form.duration}
                   className="flex-1 btn btn-primary gap-2">
-                  {saving ? <><Spinner size={13} className="animate-spin" /> Sauvegarde…</> : <><Check size={13} weight="bold" />Ajouter</>}
+                  {saving ? <><IconLoader2 size={13} className="animate-spin" /> Sauvegarde…</> : <><IconCheck size={13} />Ajouter</>}
                 </button>
               </div>
             </motion.div>
@@ -321,7 +321,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <BookmarkSimple size={15} weight="fill" style={{ color: "var(--protein)" }} />
+              <IconBookmark size={15} style={{ color: "var(--protein)" }} />
               <p className="label-xs">Séances types</p>
             </div>
             <button
@@ -332,7 +332,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                 border:     `1px solid ${showTplForm ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                 color:      showTplForm ? "var(--protein)" : "var(--text-secondary)",
               }}>
-              <Plus size={11} weight="bold" />
+              <IconPlus size={11} />
               Créer
             </button>
           </div>
@@ -375,9 +375,9 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                       disabled={savingTpl || savedTpl || !tplForm.customName.trim()}
                       className="flex-1 btn btn-primary gap-1.5 text-[12px]"
                     >
-                      {savedTpl   ? <><Check size={12} weight="bold" /> Sauvegardé !</>
-                       : savingTpl ? <><Spinner size={12} className="animate-spin" /> …</>
-                       : <><BookmarkSimple size={12} /> Sauvegarder</>}
+                      {savedTpl   ? <><IconCheck size={12} /> Sauvegardé !</>
+                       : savingTpl ? <><IconLoader2 size={12} className="animate-spin" /> …</>
+                       : <><IconBookmark size={12} /> Sauvegarder</>}
                     </button>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           {/* Template list */}
           {loadingTpl ? (
             <div className="flex justify-center py-4">
-              <Spinner size={16} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+              <IconLoader2 size={16} className="animate-spin" style={{ color: "var(--text-muted)" }} />
             </div>
           ) : templates.length === 0 ? (
             <p className="text-[12px] py-3 text-center" style={{ color: "var(--text-muted)" }}>
@@ -418,12 +418,12 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
                     style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}
                     disabled={saving}>
-                    {saving ? <Spinner size={11} className="animate-spin" /> : <Check size={12} weight="bold" />}
+                    {saving ? <IconLoader2 size={11} className="animate-spin" /> : <IconCheck size={12} />}
                     Enregistrer
                   </button>
                   <button onClick={() => handleDeleteTemplate(tpl.id)}
                     className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                    <Trash size={12} />
+                    <IconTrash size={12} />
                   </button>
                 </div>
               ))}
@@ -452,7 +452,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Timer size={14} style={{ color: "var(--text-muted)" }} />
+                    <IconClock size={14} style={{ color: "var(--text-muted)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{s.durationMin} min</span>
                   </div>
                 </div>
@@ -487,7 +487,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                     </div>
                     <button onClick={() => handleDelete(a.id)} className="btn-icon w-7 h-7 flex-shrink-0"
                       style={{ color: "#f87171" }}>
-                      <Trash size={12} />
+                      <IconTrash size={12} />
                     </button>
                   </motion.div>
                 ))}
@@ -502,7 +502,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}
             className="card flex items-center gap-3 mb-4"
           >
-            <Moon size={16} weight="fill" style={{ color: "#818cf8" }} />
+            <IconMoon size={16} style={{ color: "#818cf8" }} />
             <div>
               <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                 {Math.floor(gf.sleepMinutes / 60)}h{String(gf.sleepMinutes % 60).padStart(2, "0")} de sommeil

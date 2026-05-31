@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { EnvelopeSimple, Lock, ArrowRight, Spinner } from "@phosphor-icons/react";
+import { IconMail, IconLock, IconChevronRight, IconLoader2 } from "@tabler/icons-react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
           >
             {googleLoad ? (
-              <Spinner size={14} className="animate-spin" />
+              <IconLoader2 size={14} className="animate-spin" />
             ) : (
               <GoogleIcon />
             )}
@@ -121,7 +121,7 @@ export default function LoginPage() {
             <div>
               <label className="label-xs block mb-1.5">E-mail</label>
               <div className="relative">
-                <EnvelopeSimple size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
+                <IconMail size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
                   style={{ color: "var(--text-muted)" }} />
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   className="input pl-9" placeholder="vous@exemple.com"
@@ -132,7 +132,7 @@ export default function LoginPage() {
             <div>
               <label className="label-xs block mb-1.5">Mot de passe</label>
               <div className="relative">
-                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
+                <IconLock size={14} className="absolute left-3 top-1/2 -translate-y-1/2"
                   style={{ color: "var(--text-muted)" }} />
                 <input type="password" value={pass} onChange={(e) => setPass(e.target.value)}
                   className="input pl-9" placeholder="••••••••"
@@ -151,8 +151,8 @@ export default function LoginPage() {
             <button type="submit" disabled={loading || googleLoad}
               className="btn btn-primary w-full mt-1" style={{ height: "38px" }}>
               {loading
-                ? <Spinner size={14} className="animate-spin" />
-                : <><span>Connexion</span><ArrowRight size={13} weight="bold" /></>
+                ? <IconLoader2 size={14} className="animate-spin" />
+                : <><span>Connexion</span><IconChevronRight size={13} /></>
               }
             </button>
           </form>

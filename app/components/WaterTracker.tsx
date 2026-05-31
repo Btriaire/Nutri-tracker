@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Drop, Plus, Minus } from "@phosphor-icons/react";
+import { IconDroplet, IconPlus, IconMinus } from "@tabler/icons-react";
 
 interface Props {
   date:     string;
@@ -41,7 +41,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Drop size={14} weight="fill" style={{ color: "var(--steps)" }} />
+          <IconDroplet size={14} stroke={1.5} style={{ color: "var(--steps)" }} />
           <p className="label-xs">Hydratation</p>
         </div>
         <p className="text-[12px] tabular-nums" style={{ color: "var(--steps)" }}>
@@ -73,7 +73,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
             style={{ color: i < glasses ? "var(--steps)" : "var(--text-muted)" }}
             title={i < glasses ? "Retirer 250ml" : "Ajouter 250ml"}
           >
-            <Drop size={16} weight={i < glasses ? "fill" : "regular"} />
+            <IconDroplet size={16} stroke={i < glasses ? 2 : 1.5} />
           </button>
         ))}
       </div>
@@ -92,7 +92,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
               color: "var(--text-secondary)",
             }}
           >
-            <Plus size={9} weight="bold" />
+            <IconPlus size={9} stroke={2} />
             {ml >= 1000 ? `${ml / 1000}L` : `${ml}ml`}
           </button>
         ))}
@@ -106,7 +106,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
             color: "var(--text-muted)",
           }}
         >
-          <Minus size={9} weight="bold" />
+          <IconMinus size={9} stroke={2} />
           250ml
         </button>
       </div>

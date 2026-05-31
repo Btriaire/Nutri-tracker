@@ -6,9 +6,9 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  ArrowLeft, Heart, Lightning, Moon, Footprints, Warning,
-  CheckCircle, ArrowUp, ArrowDown, Minus,
-} from "@phosphor-icons/react";
+  IconChevronLeft, IconHeart, IconBolt, IconMoon, IconShoe, IconAlertCircle,
+  IconCircleCheck, IconArrowUp, IconArrowDown, IconMinus,
+} from "@tabler/icons-react";
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line,
   XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid,
@@ -99,7 +99,7 @@ export default function CardioClient({ points, age }: Props) {
         <motion.div {...fade(0)} className="flex items-center gap-3 mb-6">
           <Link href="/dashboard" className="p-2 rounded-xl transition-opacity active:opacity-60"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
-            <ArrowLeft size={16} style={{ color: "var(--text-secondary)" }} />
+            <IconChevronLeft size={16} style={{ color: "var(--text-secondary)" }} />
           </Link>
           <div>
             <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -138,7 +138,7 @@ export default function CardioClient({ points, age }: Props) {
                     background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
                     color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
-                  {delta < 0 ? <ArrowDown size={12} weight="bold" /> : delta > 0 ? <ArrowUp size={12} weight="bold" /> : <Minus size={12} weight="bold" />}
+                  {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta)} bpm
                 </div>
                 <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
@@ -150,9 +150,9 @@ export default function CardioClient({ points, age }: Props) {
         {/* Stats strip */}
         <motion.div {...fade(0.08)} className="grid grid-cols-3 gap-3 mb-4">
           {[
-            { label: "Moyenne",  value: avgHr ? `${avgHr} bpm` : "—", icon: <Heart size={14} weight="fill" style={{ color: "var(--fit-red)" }} /> },
-            { label: "Min",      value: minHr ? `${minHr} bpm` : "—", icon: <ArrowDown size={14} weight="bold" style={{ color: "var(--fit-green)" }} /> },
-            { label: "Max",      value: maxHr ? `${maxHr} bpm` : "—", icon: <ArrowUp size={14} weight="bold" style={{ color: "#f97316" }} /> },
+            { label: "Moyenne",  value: avgHr ? `${avgHr} bpm` : "—", icon: <IconHeart size={14} style={{ color: "var(--fit-red)" }} /> },
+            { label: "Min",      value: minHr ? `${minHr} bpm` : "—", icon: <IconArrowDown size={14} style={{ color: "var(--fit-green)" }} /> },
+            { label: "Max",      value: maxHr ? `${maxHr} bpm` : "—", icon: <IconArrowUp size={14} style={{ color: "#f97316" }} /> },
           ].map(({ label, value, icon }) => (
             <div key={label} className="card flex flex-col gap-1">
               <div className="flex items-center gap-1">{icon}<span className="label-xs">{label}</span></div>
@@ -166,10 +166,10 @@ export default function CardioClient({ points, age }: Props) {
           <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
             {weekDelta === 0
-              ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
+              ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta < 0
-                ? <><CheckCircle size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>En baisse de <strong style={{ color: "var(--fit-green)" }}>{Math.abs(weekDelta)} bpm</strong> cette semaine</span></>
-                : <><Warning size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}>En hausse de <strong style={{ color: "#fbbf24" }}>{weekDelta} bpm</strong> cette semaine</span></>
+                ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>En baisse de <strong style={{ color: "var(--fit-green)" }}>{Math.abs(weekDelta)} bpm</strong> cette semaine</span></>
+                : <><IconAlertCircle size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}>En hausse de <strong style={{ color: "#fbbf24" }}>{weekDelta} bpm</strong> cette semaine</span></>
             }
           </motion.div>
         )}
@@ -306,7 +306,7 @@ export default function CardioClient({ points, age }: Props) {
                   </span>
                   {/* HR */}
                   <div className="flex items-center gap-1 w-[60px]">
-                    <Heart size={11} weight="fill" style={{ color: z?.color ?? "var(--text-muted)" }} />
+                    <IconHeart size={11} style={{ color: z?.color ?? "var(--text-muted)" }} />
                     <span className="text-[12px] font-medium" style={{ color: z?.color ?? "var(--text-muted)" }}>
                       {p.hrAvg ? `${p.hrAvg}` : "—"}
                     </span>
@@ -314,12 +314,12 @@ export default function CardioClient({ points, age }: Props) {
                   </div>
                   {/* Active min */}
                   <div className="flex items-center gap-1 w-[52px]">
-                    <Lightning size={11} style={{ color: "var(--fit-green)" }} />
+                    <IconBolt size={11} style={{ color: "var(--fit-green)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{p.activeMin}min</span>
                   </div>
                   {/* Sleep */}
                   <div className="flex items-center gap-1 flex-1">
-                    <Moon size={11} style={{ color: "var(--fit-indigo)" }} />
+                    <IconMoon size={11} style={{ color: "var(--fit-indigo)" }} />
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{fmtSleep(p.sleepMinutes)}</span>
                   </div>
                 </div>

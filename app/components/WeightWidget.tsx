@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Scales } from "@phosphor-icons/react";
+import { IconScale } from "@tabler/icons-react";
 import type { WeightPoint } from "@/app/lib/types";
 
 interface Props {
@@ -21,7 +21,7 @@ export default function WeightWidget({ weight, previous }: Props) {
   return (
     <div className="card flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Scales size={14} style={{ color: "var(--weight)" }} />
+        <IconScale size={14} stroke={1.5} style={{ color: "var(--weight)" }} />
         <span className="label-xs">Poids</span>
       </div>
 

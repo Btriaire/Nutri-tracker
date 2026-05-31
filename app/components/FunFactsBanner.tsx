@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lightbulb } from "@phosphor-icons/react";
+import { IconBulb } from "@tabler/icons-react";
 
 const FACTS = [
   { emoji: "🧠", text: "Le cerveau consomme 20 % de l'énergie totale du corps malgré seulement 2 % de la masse corporelle." },
@@ -56,7 +56,7 @@ export default function FunFactsBanner() {
 
       <div className="flex items-start gap-3 relative z-10">
         <div className="flex-shrink-0 mt-0.5">
-          <Lightbulb size={16} weight="fill" style={{ color: "#fbbf24" }} />
+          <IconBulb size={16} stroke={2} style={{ color: "#fbbf24" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#fbbf24" }}>

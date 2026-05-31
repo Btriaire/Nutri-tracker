@@ -85,8 +85,8 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
 
 // ─── Measures fetch ───────────────────────────────────────────────────────────
 
-// meastype: 1=weight(kg) 6=fat% 8=fat-free-mass 76=muscle-mass
-const MEAS_TYPES = "1,6,8,76";
+// meastype: 1=weight(kg) 6=fat% 8=fat-free-mass 11=resting-HR 54=SpO2 71=body-temp 76=muscle-mass
+const MEAS_TYPES = "1,6,8,11,54,71,76";
 
 interface MeasureGroup {
   date:     number;    // unix timestamp
@@ -100,6 +100,9 @@ interface DayMeasure {
   bmi:          number | null;
   muscleMassKg: number | null;
   fatMassKg:    number | null;
+  spO2Pct:      number | null;
+  restingHR:    number | null;
+  tempCelsius:  number | null;
   measuredAt:   number | null; // unix ms
 }
 
@@ -144,7 +147,7 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
   for (const grp of groups) {
     const date = new Date(grp.date * 1000).toISOString().slice(0, 10);
     if (!byDate[date]) {
-      byDate[date] = { date, weightKg: null, bodyFatPct: null, bmi: null, muscleMassKg: null, fatMassKg: null, measuredAt: grp.date * 1000 };
+      byDate[date] = { date, weightKg: null, bodyFatPct: null, bmi: null, muscleMassKg: null, fatMassKg: null, spO2Pct: null, restingHR: null, tempCelsius: null, measuredAt: grp.date * 1000 };
     }
     const day = byDate[date];
     for (const m of grp.measures) {
@@ -152,6 +155,9 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
       if (m.type === 1)  day.weightKg     = Math.round(v * 100) / 100;
       if (m.type === 6)  day.bodyFatPct   = Math.round(v * 10)  / 10;
       if (m.type === 8)  day.fatMassKg    = null; // type 8 is fat-free mass — store separately
+      if (m.type === 11) day.restingHR    = Math.round(v);
+      if (m.type === 54) day.spO2Pct      = Math.round(v * 10) / 10;
+      if (m.type === 71) day.tempCelsius  = Math.round(v * 10) / 10;
       if (m.type === 76) day.muscleMassKg = Math.round(v * 100) / 100;
     }
     // Compute fatMassKg from weight - fatFreeMass
@@ -188,11 +194,38 @@ export async function syncRange(userId: string, from: string, to: string): Promi
           bmi:          day.bmi,
           muscleMassKg: day.muscleMassKg,
           fatMassKg:    day.fatMassKg,
+          spO2Pct:      day.spO2Pct      ?? null,
+          restingHR:    day.restingHR    ?? null,
+          tempCelsius:  day.tempCelsius  ?? null,
           measuredAt:   day.measuredAt ? new Date(day.measuredAt) : null,
           syncedAt:     ts,
         },
       }, { merge: true });
       written++;
+    }
+    await batch.commit();
+  }
+
+  // Also sync sleep summary
+  const sleepDays = await fetchSleepSummary(userId, from, to);
+  for (let i = 0; i < sleepDays.length; i += CHUNK) {
+    const batch = db.batch();
+    for (const s of sleepDays.slice(i, i + CHUNK)) {
+      const ref = db.doc(`users/${userId}/fitnessData/${s.date}`);
+      batch.set(ref, {
+        date: s.date,
+        withingsSleep: {
+          totalSleepSec: s.totalSleepSec,
+          deepSleepSec:  s.deepSleepSec,
+          lightSleepSec: s.lightSleepSec,
+          remSleepSec:   s.remSleepSec,
+          sleepScore:    s.sleepScore,
+          hrAvgSleep:    s.hrAvgSleep,
+          snoringSec:    s.snoringSec,
+          wakeupCount:   s.wakeupCount,
+          syncedAt:      ts,
+        },
+      }, { merge: true });
     }
     await batch.commit();
   }
@@ -208,6 +241,57 @@ export async function syncRange(userId: string, from: string, to: string): Promi
 export async function syncDay(userId: string, date: string): Promise<boolean> {
   const n = await syncRange(userId, date, date);
   return n > 0;
+}
+
+// ─── Sleep Summary ─────────────────────────────────────────────────────────────
+
+interface SleepSummaryDay {
+  date:          string;
+  totalSleepSec: number | null;
+  deepSleepSec:  number | null;
+  lightSleepSec: number | null;
+  remSleepSec:   number | null;
+  sleepScore:    number | null;
+  hrAvgSleep:    number | null;
+  snoringSec:    number | null;
+  wakeupCount:   number | null;
+}
+
+export async function fetchSleepSummary(userId: string, from: string, to: string): Promise<SleepSummaryDay[]> {
+  const tokens = await getTokens(userId);
+  if (!tokens) return [];
+
+  const formBody = new URLSearchParams({
+    action:       "getsummary",
+    startdateymd: from,
+    enddateymd:   to,
+    data_fields:  "total_sleep_time,deepsleepduration,lightsleepduration,remsleepduration,sleep_score,heart_rate_average,snoring,wakeupcount",
+  });
+
+  const res = await fetch("https://wbsapi.withings.net/v2/sleep", {
+    method:  "POST",
+    headers: {
+      "Authorization": `Bearer ${tokens.accessToken}`,
+      "Content-Type":  "application/x-www-form-urlencoded",
+    },
+    body: formBody,
+  });
+
+  if (!res.ok) return [];
+  const json = await res.json() as { status: number; body?: { series: { date: string; data: Record<string, number> }[] } };
+  if (json.status !== 0 || !json.body?.series) return [];
+
+  return json.body.series.map(s => ({
+    date:          s.date,
+    totalSleepSec: s.data.total_sleep_time   ?? null,
+    deepSleepSec:  s.data.deepsleepduration  ?? null,
+    lightSleepSec: s.data.lightsleepduration ?? null,
+    remSleepSec:   s.data.remsleepduration   ?? null,
+    sleepScore:    s.data.sleep_score        ?? null,
+    hrAvgSleep:    s.data.heart_rate_average ?? null,
+    snoringSec:    s.data.snoring            ?? null,
+    wakeupCount:   s.data.wakeupcount        ?? null,
+  }));
 }
 
 // ─── Internal types ────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf } from "@phosphor-icons/react";
+import { IconLeaf } from "@tabler/icons-react";
 
 // Evidence-based nutrition & health facts (inspired by nutritional medicine research)
 const HEALTH_FACTS = [
@@ -63,7 +63,7 @@ export default function HealthFactsBanner() {
 
       <div className="flex items-start gap-3 relative z-10">
         <div className="flex-shrink-0 mt-0.5">
-          <Leaf size={14} weight="fill" style={{ color: "#34d399" }} />
+          <IconLeaf size={14} stroke={2} style={{ color: "#34d399" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#34d399" }}>

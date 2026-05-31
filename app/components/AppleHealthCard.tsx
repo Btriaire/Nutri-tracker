@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, XCircle, Copy, Check, ArrowsClockwise, Warning, Spinner, UploadSimple } from "@phosphor-icons/react";
+import { IconCircleCheck, IconCircleX, IconCopy, IconCheck, IconRefresh, IconAlertCircle, IconLoader2, IconUpload } from "@tabler/icons-react";
 
 interface Props {
   connected?:    boolean;
@@ -257,7 +257,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
         border: `1px solid ${copied === k ? "rgba(52,211,153,0.3)" : "var(--border)"}`,
         color: copied === k ? "#34d399" : "var(--text-secondary)",
       }}>
-      {copied === k ? <Check size={11} weight="bold" /> : <Copy size={11} />}
+      {copied === k ? <IconCheck size={11} stroke={2} /> : <IconCopy size={11} stroke={1.5} />}
       {copied === k ? "Copié !" : label}
     </button>
   );
@@ -279,8 +279,8 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           </div>
         </div>
         {connected
-          ? <CheckCircle size={18} weight="fill" style={{ color: "#34d399", flexShrink: 0 }} />
-          : <XCircle    size={18} weight="fill" style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+          ? <IconCircleCheck size={18} stroke={1.5} style={{ color: "#34d399", flexShrink: 0 }} />
+          : <IconCircleX    size={18} stroke={1.5} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
         }
       </div>
 
@@ -321,8 +321,8 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             <button onClick={generateToken} disabled={genLoading}
               className="btn btn-ghost gap-1.5 text-[12px] mt-2" style={{ height: "32px" }}>
               {genLoading
-                ? <Spinner size={12} className="animate-spin" />
-                : <ArrowsClockwise size={12} />
+                ? <IconLoader2 size={12} stroke={2} className="animate-spin" />
+                : <IconRefresh size={12} stroke={1.5} />
               }
               {token ? "Regénérer" : "Générer un token"}
             </button>
@@ -404,8 +404,8 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-xl transition-all text-[13px] font-medium"
                   style={{ background: "rgba(255,149,0,0.08)", border: "2px dashed rgba(255,149,0,0.35)", color: "#ff9500" }}>
                   {parseState === "idle"
-                    ? <><UploadSimple size={16} /> Sélectionner export.xml ou .zip</>
-                    : <><Spinner size={14} className="animate-spin" />
+                    ? <><IconUpload size={16} stroke={1.5} /> Sélectionner export.xml ou .zip</>
+                    : <><IconLoader2 size={14} stroke={1.5} className="animate-spin" />
                       {parseState === "reading" ? "Lecture du fichier…" : "Analyse des données…"}</>
                   }
                 </button>
@@ -454,7 +454,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             {parseState === "sent" && (
               <motion.div key="sent" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center gap-2 py-6">
-                <CheckCircle size={36} weight="fill" style={{ color: "#34d399" }} />
+                <IconCircleCheck size={36} stroke={1.5} style={{ color: "#34d399" }} />
                 <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
                   {parsedDays.length} jours importés !
                 </p>
@@ -468,7 +468,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           {parseError && (
             <div className="flex items-center gap-2 p-3 rounded-xl"
               style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
-              <Warning size={14} style={{ color: "#f87171" }} />
+              <IconAlertCircle size={14} stroke={1.5} style={{ color: "#f87171" }} />
               <p className="text-[11px]" style={{ color: "#f87171" }}>{parseError}</p>
             </div>
           )}

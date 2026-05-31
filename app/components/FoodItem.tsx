@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trash, CaretDown, X, Spinner, Check } from "@phosphor-icons/react";
+import { IconTrash, IconChevronDown, IconX, IconLoader2, IconCheck } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
@@ -185,7 +185,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
             className="flex flex-col items-center gap-0.5"
             style={{ color: "#f87171" }}
           >
-            <Trash size={18} weight="fill" />
+            <IconTrash size={18} stroke={2} />
             <span className="text-[10px] font-semibold">Supprimer</span>
           </button>
         </div>
@@ -236,7 +236,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                 >
                   <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.18 }}
                     style={{ display: "inline-flex" }}>
-                    <CaretDown size={12} />
+                    <IconChevronDown size={12} stroke={2} />
                   </motion.span>
                 </button>
               )}
@@ -250,7 +250,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                 onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                 aria-label="Supprimer"
               >
-                <Trash size={14} />
+                <IconTrash size={14} stroke={1.5} />
               </button>
             </div>
           </div>
@@ -306,13 +306,13 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                   disabled={editSaving}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{ background: "var(--protein)", color: "#fff" }}>
-                  {editSaving ? <Spinner size={10} className="animate-spin" /> : <Check size={11} weight="bold" />}
+                  {editSaving ? <IconLoader2 size={10} stroke={2} className="animate-spin" /> : <IconCheck size={11} stroke={2} />}
                 </button>
                 <button
                   onClick={() => setEditing(false)}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
-                  <X size={11} />
+                  <IconX size={11} stroke={2} />
                 </button>
               </div>
 
