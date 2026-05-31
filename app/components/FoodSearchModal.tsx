@@ -138,10 +138,14 @@ interface Props {
 // ─── BarcodeScanner subcomponent (ZXing — cross-browser incl. iOS Safari) ────
 
 function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
-  const videoRef   = useRef<HTMLVideoElement>(null);
-  const readerRef  = useRef<import("@zxing/browser").BrowserMultiFormatReader | null>(null);
-  const [error, setError] = useState("");
-  const [hint,  setHint]  = useState("Pointez la caméra vers un code-barre");
+  const videoRef    = useRef<HTMLVideoElement>(null);
+  const readerRef   = useRef<import("@zxing/browser").BrowserMultiFormatReader | null>(null);
+  const firedRef    = useRef(false); // prevent double-fire
+  const [error,     setError]    = useState("");
+  const [hint,      setHint]     = useState("Pointez la caméra vers un code-barre");
+  const [detected,  setDetected] = useState<string | null>(null);
+  const [manualCode,setManualCode] = useState("");
+  const [showManual,setShowManual] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,35 +156,37 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
         const reader = new BrowserMultiFormatReader();
         readerRef.current = reader;
 
-        // Get back camera
         const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-        const back = devices.find(d =>
-          /back|rear|environment/i.test(d.label)
-        ) ?? devices[devices.length - 1];
-
-        if (!back) { setError("Aucune caméra détectée"); return; }
+        if (!devices.length) { setError("Aucune caméra détectée"); return; }
+        const back = devices.find(d => /back|rear|environment/i.test(d.label)) ?? devices[devices.length - 1];
         if (cancelled) return;
 
-        setHint("Caméra active — scannez un code-barre EAN/QR");
+        setHint("Centrez le code-barre dans le cadre vert");
         await reader.decodeFromVideoDevice(
           back.deviceId,
           videoRef.current!,
-          (result, err) => {
-            if (cancelled) return;
+          (result) => {
+            if (cancelled || firedRef.current) return;
             if (result) {
-              onDetect(result.getText());
-            }
-            if (err && !(err.message?.includes("No MultiFormat"))) {
-              // Non-fatal decode attempt
+              firedRef.current = true;
+              const code = result.getText();
+              setDetected(code);
+              setHint(`✅ Code détecté !`);
+              // Brief visual feedback before closing
+              setTimeout(() => { if (!cancelled) onDetect(code); }, 700);
             }
           }
         );
       } catch (e: unknown) {
         if (!cancelled) {
           const msg = e instanceof Error ? e.message : String(e);
-          setError(msg.includes("Permission") || msg.includes("NotAllowed")
-            ? "Accès caméra refusé — autorisez-le dans les réglages"
-            : "Caméra inaccessible");
+          setError(
+            msg.includes("Permission") || msg.includes("NotAllowed")
+              ? "Accès caméra refusé — autorisez-le dans les réglages"
+              : msg.includes("Requested device") || msg.includes("OverconstrainedError")
+              ? "Caméra arrière non disponible"
+              : "Caméra inaccessible — essayez la saisie manuelle"
+          );
         }
       }
     }
@@ -189,32 +195,118 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
 
     return () => {
       cancelled = true;
-      readerRef.current = null; // ZXing cleanup handled by stream stopping
+      // Stop media tracks explicitly
+      if (videoRef.current?.srcObject instanceof MediaStream) {
+        videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      }
+      readerRef.current = null;
     };
-  }, [onDetect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.92)" }}>
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.94)" }}>
       <div className="w-full max-w-sm p-4 space-y-3">
-        <div className="flex items-center justify-between mb-2">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <p className="text-[15px] font-semibold text-white">Scanner un code-barre</p>
           <button onClick={onClose} className="p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}>
             <IconX size={16} />
           </button>
         </div>
+
         {error ? (
-          <div className="rounded-xl p-4 text-center text-[13px]" style={{ background: "rgba(239,68,68,0.15)", color: "#f87171" }}>{error}</div>
+          <div className="rounded-xl p-4 text-center space-y-2">
+            <p className="text-[13px]" style={{ color: "#f87171" }}>{error}</p>
+          </div>
         ) : (
           <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "4/3", background: "#000" }}>
-            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
-            {/* Viewfinder overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2/3 h-16 rounded-lg" style={{ border: "2px solid rgba(52,211,153,0.8)", boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" }} />
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted autoPlay />
+            {/* Viewfinder */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-2/3 h-20 rounded-xl relative"
+                style={{
+                  border: `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.85)"}`,
+                  boxShadow: detected
+                    ? "0 0 0 9999px rgba(0,0,0,0.55), 0 0 30px rgba(52,211,153,0.6)"
+                    : "0 0 0 9999px rgba(0,0,0,0.5)",
+                  transition: "box-shadow 0.2s, border-color 0.2s",
+                }}
+              >
+                {/* Animated scan line (only when not detected) */}
+                {!detected && (
+                  <div className="absolute inset-x-0 h-0.5 rounded-full"
+                    style={{
+                      background: "rgba(52,211,153,0.7)",
+                      animation: "scanLine 1.8s ease-in-out infinite",
+                      top: "50%",
+                    }}
+                  />
+                )}
+                {/* Corner accents */}
+                {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
+                  <div key={i} className={`absolute w-3 h-3 ${pos}`}
+                    style={{
+                      borderTop:    i < 2 ? `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.9)"}` : "none",
+                      borderBottom: i >= 2 ? `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.9)"}` : "none",
+                      borderLeft:   i % 2 === 0 ? `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.9)"}` : "none",
+                      borderRight:  i % 2 === 1 ? `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.9)"}` : "none",
+                    }}
+                  />
+                ))}
+              </div>
             </div>
+            {/* Detection flash */}
+            {detected && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                style={{ background: "rgba(52,211,153,0.15)" }}>
+                <span className="text-5xl">✅</span>
+                <span className="text-white text-[13px] font-semibold px-3 py-1 rounded-full"
+                  style={{ background: "rgba(52,211,153,0.3)" }}>{detected}</span>
+              </div>
+            )}
           </div>
         )}
-        <p className="text-center text-[12px]" style={{ color: "rgba(255,255,255,0.5)" }}>{hint}</p>
+
+        <p className="text-center text-[12px]" style={{ color: detected ? "#34d399" : "rgba(255,255,255,0.55)" }}>{hint}</p>
+
+        {/* Manual entry fallback */}
+        {!detected && (
+          <div className="space-y-2">
+            <button onClick={() => setShowManual(v => !v)}
+              className="w-full text-[11px] py-1"
+              style={{ color: "rgba(255,255,255,0.4)" }}>
+              {showManual ? "▲ Masquer" : "Saisie manuelle du code ▼"}
+            </button>
+            {showManual && (
+              <div className="flex gap-2">
+                <input
+                  value={manualCode}
+                  onChange={e => setManualCode(e.target.value)}
+                  placeholder="Ex: 3017624010701"
+                  className="flex-1 px-3 py-2 rounded-xl text-[13px] text-white"
+                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+                  onKeyDown={e => { if (e.key === "Enter" && manualCode.trim()) onDetect(manualCode.trim()); }}
+                />
+                <button
+                  onClick={() => { if (manualCode.trim()) onDetect(manualCode.trim()); }}
+                  disabled={!manualCode.trim()}
+                  className="px-3 py-2 rounded-xl text-[13px] font-semibold"
+                  style={{ background: "rgba(52,211,153,0.2)", color: "#34d399", border: "1px solid rgba(52,211,153,0.4)" }}>
+                  OK
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+      <style>{`
+        @keyframes scanLine {
+          0%   { top: 10%; opacity: 0.8; }
+          50%  { top: 90%; opacity: 1;   }
+          100% { top: 10%; opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 }
