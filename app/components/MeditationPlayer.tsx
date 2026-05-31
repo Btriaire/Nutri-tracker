@@ -106,14 +106,14 @@ const PROGRAMS: Program[] = [
 ];
 
 // ─── YouTube URL builder ──────────────────────────────────────────────────────
-// Always muted + enablejsapi so we can postMessage to unmute later.
-// Never reload src to toggle mute — postMessage avoids gesture-context issues.
+// No mute by default — user tap inside the iframe starts with sound directly.
+// enablejsapi=1 lets us postMessage mute/unmute after playback starts.
 
 function buildYTUrl(videoId: string) {
   const p = new URLSearchParams({
     autoplay: "1", loop: "1", playlist: videoId,
-    controls: "1", rel: "0", modestbranding: "1",
-    mute: "1", enablejsapi: "1",
+    controls: "0", rel: "0", modestbranding: "1",
+    mute: "0", enablejsapi: "1",
   });
   return `https://www.youtube.com/embed/${videoId}?${p}`;
 }
@@ -132,11 +132,11 @@ function NowPlaying({
   onChangeTrack: (t: Track) => void;
   tracks:        Track[];
 }) {
-  const iframeRef                        = useRef<HTMLIFrameElement>(null);
-  const [isPlaying,    setIsPlaying]     = useState(false);
-  const [audioEnabled, setAudioEnabled]  = useState(false);
+  const iframeRef              = useRef<HTMLIFrameElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [muted,     setMuted]     = useState(false);
 
-  // postMessage helper — unmute/mute without reloading src
+  // postMessage helper
   const sendCmd = useCallback((func: string, args: unknown[] = []) => {
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: "command", func, args }),
@@ -144,15 +144,15 @@ function NowPlaying({
     );
   }, []);
 
-  // Listen for YouTube player state events (requires enablejsapi=1)
+  // Listen for YouTube player state (enablejsapi=1)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (!String(e.origin).includes("youtube.com")) return;
       try {
         const d = JSON.parse(e.data as string) as { event?: string; info?: number };
         if (d.event === "onStateChange") {
-          if (d.info === 1)                  setIsPlaying(true);  // playing
-          if (d.info === 0 || d.info === 2)  setIsPlaying(false); // ended / paused
+          if (d.info === 1)                  setIsPlaying(true);
+          if (d.info === 0 || d.info === 2)  setIsPlaying(false);
         }
       } catch { /* not a YT message */ }
     };
@@ -163,7 +163,7 @@ function NowPlaying({
   // Reset on track / session change
   useEffect(() => {
     setIsPlaying(false);
-    setAudioEnabled(false);
+    setMuted(false);
     if (iframeRef.current) {
       iframeRef.current.src = active ? buildYTUrl(track.videoId) : "about:blank";
     }
@@ -175,80 +175,92 @@ function NowPlaying({
     if (!active && iframeRef.current) {
       iframeRef.current.src = "about:blank";
       setIsPlaying(false);
-      setAudioEnabled(false);
     }
   }, [active]);
 
-  const handleActivate = () => {
-    // postMessage — no src reload, no gesture-context issue
-    sendCmd("unMute");
-    sendCmd("setVolume", [100]);
-    setAudioEnabled(true);
-  };
-
-  const handleMute = () => {
-    sendCmd("mute");
-    setAudioEnabled(false);
+  const toggleMute = () => {
+    if (muted) { sendCmd("unMute"); sendCmd("setVolume", [100]); }
+    else        { sendCmd("mute"); }
+    setMuted(m => !m);
   };
 
   return (
     <div className="rounded-xl overflow-hidden"
       style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.2)" }}>
 
-      {/* Player area
-          • iframe at real size (180px) — browser keeps audio running
-          • filter:brightness(0.07) makes it visually black without hiding it
-          • overlay has pointer-events:none → taps fall through to the iframe
-            (needed on iOS so the user can tap the hidden ▶ to start playback)
-          • once playing, the sound button appears with pointer-events:auto       */}
-      <div style={{ position: "relative", height: 180 }}>
+      {/* Player area — iframe darkened by CSS filter, meditation overlay on top.
+          overlay has pointer-events:none so the first tap reaches YouTube directly
+          and starts playback with sound (iOS requires direct iframe interaction).  */}
+      <div style={{ position: "relative", height: 190 }}>
+
+        {/* iframe — visually hidden but rendered at real size so audio works */}
         <iframe
           ref={iframeRef}
           src={active ? buildYTUrl(track.videoId) : "about:blank"}
           allow="autoplay; encrypted-media"
           style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
-            border: "none",
-            filter: "brightness(0.07)",   // nearly black — audio unaffected
+            border: "none", filter: "brightness(0.05)",
           }}
           title={track.label}
         />
 
-        {/* Overlay — pointer-events:none so taps reach the iframe */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-          style={{ pointerEvents: "none", zIndex: 1 }}>
-          <span style={{ fontSize: 36 }}>{track.emoji}</span>
-          <p className="text-[13px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-            {track.label}
-          </p>
+        {/* Meditation overlay — full cover, pointer-events:none */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center"
+          style={{
+            pointerEvents: "none", zIndex: 1,
+            background: "radial-gradient(ellipse at 50% 35%, rgba(88,28,135,0.55) 0%, rgba(13,13,17,0.9) 72%)",
+          }}>
 
-          {active && !isPlaying && (
-            <p className="text-[11px] text-center px-6" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Appuyez ici pour démarrer
+          {/* Pulsing aura behind the figure */}
+          {!isPlaying && (
+            <motion.div
+              animate={{ scale: [1, 1.22, 1], opacity: [0.25, 0.08, 0.25] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute",
+                width: 100, height: 100, borderRadius: "50%",
+                background: "rgba(139,92,246,0.35)",
+                border: "1px solid rgba(139,92,246,0.5)",
+              }}
+            />
+          )}
+
+          {/* Central figure */}
+          <div style={{ position: "relative", zIndex: 2, textAlign: "center" }}>
+            <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 10 }}>🧘</div>
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+              {track.label}
             </p>
-          )}
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              {track.emoji} {isPlaying ? "♪ en lecture" : "toucher pour démarrer"}
+            </p>
+          </div>
 
-          {active && isPlaying && (
-            /* Only the button needs pointer-events */
-            <div style={{ pointerEvents: "auto" }}>
-              {audioEnabled ? (
-                <button onClick={handleMute}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-                  style={{ background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.4)", color: "#34d399" }}>
-                  <IconVolume size={15} stroke={1.5} />
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>Son actif</span>
-                </button>
-              ) : (
-                <button onClick={handleActivate}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
-                  <IconVolumeOff size={15} stroke={1.5} />
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>Activer le son</span>
-                </button>
-              )}
-            </div>
-          )}
+          {/* Decorative mandala rings */}
+          <div style={{
+            position: "absolute", inset: 0, pointerEvents: "none",
+            background: "repeating-radial-gradient(circle at 50% 50%, transparent 30px, rgba(139,92,246,0.04) 31px, transparent 32px)",
+          }} />
         </div>
+
+        {/* Mute button — only shown when playing, needs pointer-events:auto */}
+        {isPlaying && active && (
+          <div className="absolute bottom-3 right-3" style={{ zIndex: 2 }}>
+            <button onClick={toggleMute}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
+              style={{
+                background: muted ? "rgba(239,68,68,0.15)"  : "rgba(52,211,153,0.12)",
+                border:     muted ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(52,211,153,0.35)",
+                color:      muted ? "#f87171" : "#34d399",
+              }}>
+              {muted
+                ? <><IconVolumeOff size={13} stroke={1.5} /><span style={{ fontSize: 10, fontWeight: 600 }}>Muet</span></>
+                : <><IconVolume    size={13} stroke={1.5} /><span style={{ fontSize: 10, fontWeight: 600 }}>Son</span></>
+              }
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Track switcher */}
