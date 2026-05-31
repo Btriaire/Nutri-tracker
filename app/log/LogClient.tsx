@@ -11,7 +11,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { Check } from "@phosphor-icons/react";
+import { IconCheck } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import type { DayPhoto } from "@/app/api/photos/route";
@@ -277,7 +277,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               cursor: validated ? "default" : "pointer",
             }}
           >
-            <Check size={14} weight={validated ? "fill" : "regular"} />
+            <IconCheck size={14} stroke={validated ? 2.5 : 1.5} />
             {validated ? "Journée validée" : "Valider la journée"}
           </button>
         </motion.div>
@@ -352,6 +352,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 lang={lang}
                 photoUrl={mealPhotos[meal]}
                 hunger={mealHunger[meal]}
+                goals={goals}
+                alreadyKcal={Math.round(totals.calories)}
                 onEntriesChange={handleMealChange}
                 onFoodAdded={showToast}
                 onPhotoChange={handlePhotoChange}
@@ -431,7 +433,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   className="flex-1 btn btn-primary gap-2">
                   {validating
                     ? <span className="animate-spin">⏳</span>
-                    : <Check size={14} weight="bold" />
+                    : <IconCheck size={14} />
                   }
                   Valider
                 </button>
@@ -460,7 +462,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <span className="flex items-center justify-center w-5 h-5 rounded-full"
               style={{ background: "var(--protein)" }}>
-              <Check size={11} weight="bold" color="#fff" />
+              <IconCheck size={11} color="#fff" />
             </span>
             <span className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
               {toast.name}

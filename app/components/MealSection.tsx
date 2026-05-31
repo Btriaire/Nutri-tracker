@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, CaretDown, Camera, Trash, ChartBar, X } from "@phosphor-icons/react";
+import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2 } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
+import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
-import type { FoodEntry, MealType, Lang, HungerLevel } from "@/app/lib/types";
+import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
   breakfast: { fr: "Petit-déjeuner", en: "Breakfast", icon: "🌅" },
@@ -24,6 +25,8 @@ interface Props {
   lang?:           Lang;
   photoUrl?:       string;
   hunger?:         HungerLevel;
+  goals?:          NutritionGoals;
+  alreadyKcal?:    number;
   onEntriesChange: (meal: MealType, entries: FoodEntry[]) => void;
   onFoodAdded?:    (info: AddedInfo) => void;
   onPhotoChange?:  (meal: MealType, url: string | null) => void;
@@ -32,10 +35,12 @@ interface Props {
 
 export default function MealSection({
   meal, entries, date, lang = "fr",
-  photoUrl, hunger, onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
+  photoUrl, hunger, goals, alreadyKcal = 0,
+  onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
+  const [menuModal,     setMenuModal]     = useState(false);
   const [uploading,     setUploading]     = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -123,7 +128,7 @@ export default function MealSection({
             style={{ display: "inline-flex", color: "var(--text-muted)" }}
             className="shrink-0"
           >
-            <CaretDown size={14} />
+            <IconChevronDown size={14} stroke={1.5} />
           </motion.span>
         </button>
 
@@ -141,7 +146,7 @@ export default function MealSection({
         >
           {uploading
             ? <span className="animate-spin text-[10px]">⏳</span>
-            : <Camera size={16} weight={photoUrl ? "fill" : "regular"} />
+            : <IconCamera size={16} stroke={photoUrl ? 2 : 1.5} />
           }
         </button>
 
@@ -157,7 +162,24 @@ export default function MealSection({
             }}
             aria-label="Détail nutritionnel"
           >
-            <ChartBar size={16} weight={showNutrition ? "fill" : "regular"} />
+            <IconChartBar size={16} stroke={showNutrition ? 2 : 1.5} />
+          </button>
+        )}
+
+        {/* Menu suggestion button */}
+        {goals && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuModal(true); }}
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+            style={{
+              background: menuModal ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${menuModal ? "rgba(139,92,246,0.4)" : "var(--border)"}`,
+              color: menuModal ? "#a78bfa" : "var(--text-muted)",
+            }}
+            aria-label="Suggestions de repas"
+            title="Idées de repas"
+          >
+            <IconToolsKitchen2 size={16} stroke={menuModal ? 2 : 1.5} />
           </button>
         )}
 
@@ -179,7 +201,7 @@ export default function MealSection({
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}
         >
-          <Plus size={17} weight="bold" />
+          <IconPlus size={17} stroke={2} />
         </button>
       </div>
 
@@ -307,6 +329,16 @@ export default function MealSection({
       </AnimatePresence>
 
       <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded} />
+
+      {goals && (
+        <MenuSuggestionModal
+          open={menuModal}
+          meal={meal}
+          goals={goals}
+          alreadyKcal={alreadyKcal}
+          onClose={() => setMenuModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -347,7 +379,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium"
               style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }}
             >
-              <Trash size={14} /> Supprimer
+              <IconTrash size={14} stroke={1.5} /> Supprimer
             </button>
             <button
               onClick={() => setOpen(false)}
@@ -362,7 +394,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
         <button onClick={() => setOpen(false)}
           className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
           style={{ background: "rgba(255,255,255,0.12)" }}>
-          <X size={14} style={{ color: "white" }} />
+          <IconX size={14} stroke={2} style={{ color: "white" }} />
         </button>
       </motion.div>
     </AnimatePresence>,
@@ -388,7 +420,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
         className="flex items-center justify-center w-7 h-7 rounded-lg transition-all"
         style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}
         title="Supprimer la photo">
-        <Trash size={13} />
+        <IconTrash size={13} stroke={2} />
       </button>
     </div>
   );
