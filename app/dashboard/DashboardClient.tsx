@@ -113,6 +113,17 @@ export default function DashboardClient({
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [burnedDetailOpen, setBurnedDetailOpen] = useState(false);
+  const [deductBurned, setDeductBurned] = useState(goals.deductBurnedCalories !== false);
+
+  const toggleDeductBurned = async () => {
+    const next = !deductBurned;
+    setDeductBurned(next);
+    await fetch("/api/goals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ "goals.deductBurnedCalories": next }),
+    }).catch(() => {});
+  };
   const router = useRouter();
   const hasSynced = useRef(false);
 
@@ -384,13 +395,34 @@ export default function DashboardClient({
             <CalorieBudgetRing
               consumed={consumed.calories}
               goal={goals.dailyCalories}
-              burned={burned}
+              burned={deductBurned ? burned : null}
               activeMinutes={activeMinutes}
               sessionCount={sessions.length}
               steps={steps}
               stepsGoal={stepsGoal}
-              onBurnedClick={burned ? () => setBurnedDetailOpen(true) : undefined}
+              onBurnedClick={burned && deductBurned ? () => setBurnedDetailOpen(true) : undefined}
             />
+
+            {/* ── Deduct-burned toggle ── */}
+            {burned != null && burned > 0 && (
+              <button
+                onClick={toggleDeductBurned}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                style={{
+                  background: deductBurned ? "rgba(52,211,153,0.10)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${deductBurned ? "rgba(52,211,153,0.35)" : "var(--border)"}`,
+                  color: deductBurned ? "rgba(52,211,153,0.9)" : "var(--text-muted)",
+                }}
+              >
+                {/* Mini pill switch */}
+                <div className="relative w-7 h-4 rounded-full flex-shrink-0 transition-colors"
+                  style={{ background: deductBurned ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.12)" }}>
+                  <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform"
+                    style={{ transform: deductBurned ? "translateX(15px)" : "translateX(2px)" }} />
+                </div>
+                Retrancher {Math.round(burned)} kcal brûlées
+              </button>
+            )}
 
             {/* Macro progress bars */}
             <div className="w-full grid grid-cols-4 gap-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
