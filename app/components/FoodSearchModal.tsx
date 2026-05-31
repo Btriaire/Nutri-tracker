@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, MagnifyingGlass, Plus, ArrowLeft, Spinner, CaretDown,
-  ForkKnife, BookBookmark, CookingPot, Trash, Check,
-} from "@phosphor-icons/react";
+  IconX, IconSearch, IconPlus, IconChevronLeft, IconLoader2, IconChevronDown,
+  IconToolsKitchen2, IconBookmark, IconToolsKitchen, IconTrash, IconCheck,
+  IconBarcode, IconCamera,
+} from "@tabler/icons-react";
 import MealBuilderModal from "./MealBuilderModal";
 import FoodPictogram from "./FoodPictogram";
 import type {
@@ -134,6 +135,71 @@ interface Props {
   onAdded: (info: AddedInfo) => void;
 }
 
+// ─── BarcodeScanner subcomponent ─────────────────────────────────────────────
+
+function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let detector: { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } | null = null;
+    let stream: MediaStream | null = null;
+    let raf: number;
+
+    async function start() {
+      try {
+        if (!("BarcodeDetector" in window)) { setError("Scanner non supporté sur ce navigateur"); return; }
+        // @ts-expect-error
+        detector = new BarcodeDetector({ formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"] });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+        const scan = async () => {
+          if (!videoRef.current || !detector) return;
+          try {
+            const barcodes = await detector.detect(videoRef.current);
+            if (barcodes.length > 0) { onDetect(barcodes[0].rawValue); return; }
+          } catch {}
+          raf = requestAnimationFrame(scan);
+        };
+        raf = requestAnimationFrame(scan);
+      } catch { setError("Caméra inaccessible"); }
+    }
+    start();
+    return () => {
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach(t => t.stop());
+    };
+  }, [onDetect]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center" style={{ background: "rgba(0,0,0,0.92)" }}>
+      <div className="w-full max-w-sm p-4 space-y-3">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[15px] font-semibold text-white">Scanner un code-barre</p>
+          <button onClick={onClose} className="p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}>
+            <IconX size={16} />
+          </button>
+        </div>
+        {error ? (
+          <div className="rounded-xl p-4 text-center text-[13px]" style={{ background: "rgba(239,68,68,0.15)", color: "#f87171" }}>{error}</div>
+        ) : (
+          <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "4/3", background: "#000" }}>
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+            {/* Viewfinder overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-2/3 h-16 rounded-lg" style={{ border: "2px solid rgba(52,211,153,0.8)", boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" }} />
+            </div>
+          </div>
+        )}
+        <p className="text-center text-[12px]" style={{ color: "rgba(255,255,255,0.5)" }}>Pointez la caméra vers le code-barre</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose, onAdded }: Props) {
@@ -178,8 +244,14 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   // Portal mount (escape .glass backdrop-filter stacking context)
   const [mounted, setMounted] = useState(false);
 
+  const [scanMode, setScanMode]     = useState(false);
+  const [scanError, setScanError]   = useState("");
+  const [photoMode, setPhotoMode]   = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
+
   const inputRef    = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -273,6 +345,41 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     } catch { /* silent */ }
     finally { setAiSearching(false); }
   };
+
+  const handleBarcodeDetect = useCallback(async (code: string) => {
+    setScanMode(false);
+    setScanError("");
+    setSearching(true);
+    try {
+      const res  = await fetch(`/api/food/barcode?code=${encodeURIComponent(code)}`);
+      const json = await res.json() as { found: boolean; product: FoodSearchResult | null };
+      if (json.found && json.product) {
+        setResults([json.product]);
+        setQuery(json.product.name);
+      } else {
+        setScanError("Produit non trouvé dans la base");
+        setTimeout(() => setScanError(""), 3000);
+      }
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  const handlePhotoRecognize = useCallback(async (file: File) => {
+    setPhotoLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const res  = await fetch("/api/food/photo", { method: "POST", body: fd });
+      const json = await res.json() as { results: FoodSearchResult[] };
+      if (json.results?.length) {
+        setResults(json.results);
+        setQuery("📷 Reconnaissance photo");
+      }
+    } finally {
+      setPhotoLoading(false);
+    }
+  }, []);
 
   const handleSaveAiToDb = async (r: FoodSearchResult) => {
     if (savingAiId || savedAiIds.has(r.id)) return;
@@ -515,7 +622,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             <div className="flex items-center justify-between pt-3 pb-1.5 px-4 flex-shrink-0">
               <div className="w-6" />
               <div className="w-8 h-1 rounded-full" style={{ background: "var(--border-strong)" }} />
-              <button onClick={onClose} className="btn-icon w-6 h-6 flex-shrink-0"><X size={13} /></button>
+              <button onClick={onClose} className="btn-icon w-6 h-6 flex-shrink-0"><IconX size={13} stroke={2} /></button>
             </div>
 
             {/* Tab bar — always at the top */}
@@ -523,9 +630,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               <div className="flex gap-1 p-1 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                 {([
-                  { id: "aliments",  label: "Aliments",  Icon: ForkKnife },
-                  { id: "repas",     label: "Repas",     Icon: CookingPot },
-                  { id: "recettes",  label: "Recettes",  Icon: BookBookmark },
+                  { id: "aliments",  label: "Aliments",  Icon: IconToolsKitchen2 },
+                  { id: "repas",     label: "Repas",     Icon: IconToolsKitchen },
+                  { id: "recettes",  label: "Recettes",  Icon: IconBookmark },
                 ] as const).map(({ id, label, Icon }) => (
                   <button key={id} onClick={() => setTab(id)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
@@ -534,7 +641,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       color:      tab === id ? "var(--protein)" : "var(--text-muted)",
                       border:     tab === id ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
                     }}>
-                    <Icon size={12} weight={tab === id ? "fill" : "regular"} />
+                    <Icon size={12} stroke={tab === id ? 2 : 1.5} />
                     {label}
                   </button>
                 ))}
@@ -547,8 +654,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 {/* Input row */}
                 <div className="relative">
                   {searching
-                    ? <Spinner size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
-                    : <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+                    ? <IconLoader2 size={14} stroke={2} className="absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin" style={{ color: "var(--text-muted)" }} />
+                    : <IconSearch size={14} stroke={1.5} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
                   }
                   <input
                     ref={inputRef}
@@ -558,6 +665,38 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     className="input pl-10 text-[14px]"
                     style={{ height: "44px" }}
                   />
+                </div>
+
+                {/* Barcode + Photo buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setScanMode(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex-shrink-0"
+                    style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}
+                    title="Scanner un code-barre"
+                  >
+                    <IconBarcode size={13} stroke={1.8} />
+                    <span className="hidden sm:inline">Scan</span>
+                  </button>
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex-shrink-0"
+                    style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa" }}
+                    title="Reconnaître des aliments par photo"
+                  >
+                    {photoLoading ? <IconLoader2 size={13} stroke={2} className="animate-spin" /> : <IconCamera size={13} stroke={1.8} />}
+                    <span className="hidden sm:inline">Photo</span>
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoRecognize(f); e.target.value = ""; }}
+                  />
+                  {scanError && <p className="text-[11px] flex-1" style={{ color: "#f87171" }}>{scanError}</p>}
                 </div>
 
                 {/* AI search pill — always visible when query is non-empty */}
@@ -584,7 +723,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           }}
                         >
                           {aiSearching
-                            ? <Spinner size={11} className="animate-spin" />
+                            ? <IconLoader2 size={11} stroke={2} className="animate-spin" />
                             : <span className="text-[13px] leading-none">✨</span>
                           }
                           {aiSearching
@@ -698,8 +837,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 style={{ background: isAdding ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.1)", borderLeft: "1px solid rgba(168,85,247,0.2)" }}
                               >
                                   {isAdding
-                                  ? <Spinner size={14} className="animate-spin" style={{ color: "#a855f7" }} />
-                                  : <Plus size={16} weight="bold" style={{ color: "#a855f7" }} />
+                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#a855f7" }} />
+                                  : <IconPlus size={16} stroke={2} style={{ color: "#a855f7" }} />
                                 }
                               </button>
                               {/* Save to custom foods */}
@@ -718,10 +857,10 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     }}
                                   >
                                     {saving
-                                      ? <Spinner size={12} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                                      ? <IconLoader2 size={12} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                                       : saved
-                                        ? <Check size={13} weight="bold" style={{ color: "#34d399" }} />
-                                        : <BookBookmark size={13} style={{ color: "var(--text-muted)" }} />
+                                        ? <IconCheck size={13} stroke={2} style={{ color: "#34d399" }} />
+                                        : <IconBookmark size={13} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                                     }
                                   </button>
                                 );
@@ -770,8 +909,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
                           >
                             {isAdding
-                              ? <Spinner size={15} className="animate-spin" style={{ color: "var(--protein)" }} />
-                              : <Plus size={17} weight="bold" style={{ color: "var(--protein)" }} />
+                              ? <IconLoader2 size={15} stroke={2} className="animate-spin" style={{ color: "var(--protein)" }} />
+                              : <IconPlus size={17} stroke={2} style={{ color: "var(--protein)" }} />
                             }
                           </button>
                         </motion.div>
@@ -794,13 +933,13 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       color: "var(--protein)",
                     }}
                   >
-                    <Plus size={14} weight="bold" />
+                    <IconPlus size={14} stroke={2} />
                     Créer un repas personnalisé
                   </button>
 
                   {loadingMeals && (
                     <div className="flex justify-center py-12">
-                      <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                      <IconLoader2 size={18} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                     </div>
                   )}
                   {!loadingMeals && savedMeals.length === 0 && (
@@ -827,13 +966,13 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           <button onClick={() => handleLogMeal(m)}
                             disabled={addingMealId === m.id}
                             className="btn btn-primary px-3 py-1 text-[11px]" style={{ height: "28px" }}>
-                            {addingMealId === m.id ? <Spinner size={11} className="animate-spin" /> : <><Plus size={11} /> Ajouter</>}
+                            {addingMealId === m.id ? <IconLoader2 size={11} stroke={2} className="animate-spin" /> : <><IconPlus size={11} stroke={2} /> Ajouter</>}
                           </button>
                           <button onClick={() => handleDeleteMeal(m.id)}
                             disabled={deletingMealId === m.id}
                             className="btn btn-ghost px-2 py-1 text-[11px]"
                             style={{ height: "24px", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
-                            {deletingMealId === m.id ? <Spinner size={10} className="animate-spin" /> : <Trash size={11} />}
+                            {deletingMealId === m.id ? <IconLoader2 size={10} stroke={2} className="animate-spin" /> : <IconTrash size={11} stroke={2} />}
                           </button>
                         </div>
                       </div>
@@ -847,7 +986,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 <div className="px-4 py-4">
                   {loadingRecipes && (
                     <div className="flex justify-center py-12">
-                      <Spinner size={18} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                      <IconLoader2 size={18} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                     </div>
                   )}
                   {!loadingRecipes && recipes.length === 0 && (
@@ -874,7 +1013,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             {Math.round(r.nutrition.calories)} kcal / portion
                           </p>
                         </div>
-                        <Plus size={14} style={{ color: "var(--text-muted)" }} />
+                        <IconPlus size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                       </motion.button>
                     ))}
                   </div>
@@ -915,11 +1054,11 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     style={{ borderBottom: "1px solid var(--border)" }}>
                     {step === "save-meal" ? (
                       <button onClick={() => setStep("configure")} className="btn-icon flex-shrink-0">
-                        <ArrowLeft size={13} />
+                        <IconChevronLeft size={13} stroke={2} />
                       </button>
                     ) : (
                       <button onClick={closeOverlay} className="btn-icon flex-shrink-0">
-                        <X size={13} />
+                        <IconX size={13} stroke={2} />
                       </button>
                     )}
                     <div className="flex-1 min-w-0">
@@ -1061,7 +1200,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             >
                               <motion.span animate={{ rotate: showDetails ? 180 : 0 }} transition={{ duration: 0.2 }}
                                 style={{ display: "inline-flex" }}>
-                                <CaretDown size={10} />
+                                <IconChevronDown size={10} stroke={2} />
                               </motion.span>
                               {showDetails ? "Masquer les détails" : "Voir les détails nutritionnels"}
                             </button>
@@ -1141,13 +1280,13 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         <div className="flex gap-2">
                           <button onClick={handleAddFood} disabled={adding}
                             className="btn btn-primary flex-1 gap-2">
-                            {adding ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
+                            {adding ? <IconLoader2 size={14} stroke={2} className="animate-spin" /> : <IconPlus size={14} stroke={2} />}
                             Ajouter au journal
                           </button>
                           <button onClick={() => setStep("save-meal")}
                             className="btn btn-ghost gap-1.5 text-[12px] px-3"
                             title="Sauvegarder comme repas">
-                            <CookingPot size={14} />
+                            <IconToolsKitchen size={14} stroke={1.5} />
                             Sauver
                           </button>
                         </div>
@@ -1183,7 +1322,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         </div>
                         <button onClick={handleSaveMeal} disabled={savingMeal || !newMealName.trim()}
                           className="btn btn-primary w-full gap-2">
-                          {savingMeal ? <Spinner size={14} className="animate-spin" /> : <Check size={14} weight="bold" />}
+                          {savingMeal ? <IconLoader2 size={14} stroke={2} className="animate-spin" /> : <IconCheck size={14} stroke={2} />}
                           Sauvegarder le repas
                         </button>
                       </div>
@@ -1236,7 +1375,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         })()}
                         <button onClick={handleAddRecipe} disabled={addingRecipe}
                           className="btn btn-primary w-full gap-2">
-                          {addingRecipe ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} weight="bold" />}
+                          {addingRecipe ? <IconLoader2 size={14} stroke={2} className="animate-spin" /> : <IconPlus size={14} stroke={2} />}
                           Ajouter au journal
                         </button>
                       </div>
@@ -1246,6 +1385,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 </div>
             )}
 
+          {scanMode && <BarcodeScanner onDetect={handleBarcodeDetect} onClose={() => setScanMode(false)} />}
         </>
       )}
     </AnimatePresence>,
