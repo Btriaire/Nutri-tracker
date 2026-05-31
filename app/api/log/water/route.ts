@@ -14,7 +14,9 @@ export async function PATCH(request: Request) {
   const db  = getAdminFirestore();
   const ref = db.doc(`users/${session.userId}/foodLog/${date}`);
 
-  await ref.set({ waterMl, updatedAt: new Date() }, { merge: true });
+  // Always include `date` so Firestore range queries on the date field work
+  // (documents created with merge:true and no date field are invisible to progress queries)
+  await ref.set({ date, waterMl, updatedAt: new Date() }, { merge: true });
 
   return NextResponse.json({ ok: true, waterMl });
 }

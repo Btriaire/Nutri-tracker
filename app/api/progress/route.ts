@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { DayLog, FitnessDay, DayTrendPoint } from "@/app/lib/types";
 
@@ -16,11 +17,20 @@ export async function GET(req: NextRequest) {
 
   const db = getAdminFirestore();
 
+  // Query by document ID (which IS the date string YYYY-MM-DD).
+  // This is more reliable than querying on a "date" field which may be
+  // missing from documents created via merge:true paths (e.g. water-only days).
   const [logSnap, fitnessSnap] = await Promise.all([
     db.collection(`users/${USER}/foodLog`)
-      .where("date", ">=", from).where("date", "<=", to).orderBy("date", "asc").get(),
+      .where(FieldPath.documentId(), ">=", from)
+      .where(FieldPath.documentId(), "<=", to)
+      .orderBy(FieldPath.documentId(), "asc")
+      .get(),
     db.collection(`users/${USER}/fitnessData`)
-      .where("date", ">=", from).where("date", "<=", to).orderBy("date", "asc").get(),
+      .where(FieldPath.documentId(), ">=", from)
+      .where(FieldPath.documentId(), "<=", to)
+      .orderBy(FieldPath.documentId(), "asc")
+      .get(),
   ]);
 
   const fitnessMap = new Map<string, FitnessDay>();
@@ -28,10 +38,10 @@ export async function GET(req: NextRequest) {
 
   const points: DayTrendPoint[] = logSnap.docs.map((d) => {
     const log     = d.data() as DayLog;
-    const fitness = fitnessMap.get(log.date);
+    const fitness = fitnessMap.get(d.id); // use doc ID — log.date may be missing
     const gf      = fitness?.googleFit;
     return {
-      date:          log.date,
+      date:          d.id,   // document ID is always correct; log.date may be absent
       calories:      Math.round(log.totals?.calories ?? 0),
       proteinG:      Math.round(log.totals?.proteinG ?? 0),
       carbsG:        Math.round(log.totals?.carbsG ?? 0),
