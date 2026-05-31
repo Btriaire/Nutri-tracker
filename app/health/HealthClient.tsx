@@ -10,7 +10,7 @@ import {
   IconChevronLeft, IconChevronRight, IconChevronUp, IconChevronDown, IconPlus, IconX, IconHeartbeat, IconThermometer,
   IconDroplet, IconLoader2, IconTrash, IconPencil, IconHeart, IconNote,
   IconBolt, IconMoon, IconAlertCircle, IconCircleCheck, IconArrowDown, IconArrowUp, IconMinus, IconRefresh,
-  IconPill, IconCheck,
+  IconPill, IconCheck, IconPlayerStop, IconClock,
 } from "@tabler/icons-react";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
@@ -140,6 +140,23 @@ const MOMENT_LABELS: Record<BPMoment, string> = {
 function nowHHMM() {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function calcSymptomDuration(startHHMM: string, endHHMM: string): number {
+  const [sh, sm] = startHHMM.split(":").map(Number);
+  const [eh, em] = endHHMM.split(":").map(Number);
+  let startMin = sh * 60 + sm;
+  let endMin   = eh * 60 + em;
+  if (endMin < startMin) endMin += 24 * 60; // spans midnight
+  return Math.max(0, endMin - startMin);
+}
+
+function fmtDuration(min: number): string {
+  if (min < 1)  return "< 1 min";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
 }
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -376,6 +393,15 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
   const handleDeleteSymptom = async (id: string) => {
     await saveSymptoms(symptoms.filter(s => s.id !== id));
+  };
+
+  const handleEndSymptom = async (id: string) => {
+    const end = nowHHMM();
+    await saveSymptoms(symptoms.map(s => {
+      if (s.id !== id) return s;
+      const durationMin = s.time ? calcSymptomDuration(s.time, end) : undefined;
+      return { ...s, endTime: end, durationMin };
+    }));
   };
 
   // AI Synthesis ────────────────────────────────────────────────────────────────
@@ -1140,47 +1166,97 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               {symptoms.length > 0 && (
                 <div className="space-y-2 mb-3">
                   {symptoms.map(s => {
-                    const cat = SYMPTOM_CATEGORIES.find(c => c.key === s.category);
+                    const cat      = SYMPTOM_CATEGORIES.find(c => c.key === s.category);
+                    const isEnded  = !!s.endTime;
                     const sev: SymptomSeverity[] = ["léger", "modéré", "sévère"];
                     const sevColor: Record<SymptomSeverity, string> = {
-                      "léger": "#34d399",
+                      "léger":  "#34d399",
                       "modéré": "#fbbf24",
                       "sévère": "#f87171",
                     };
+                    const borderCol = isEnded ? "rgba(52,211,153,0.25)" : "var(--border)";
                     return (
                       <div key={s.id}
-                        className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <span className="text-[14px] flex-shrink-0 mt-0.5">{cat?.icon ?? "🩺"}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>
-                            {s.name}
-                          </p>
-                          <div className="flex items-center gap-1 mt-1.5">
-                            {sev.map(sv => (
-                              <button key={sv}
-                                onClick={() => handleSetSeverity(s.id, sv)}
-                                className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide transition-all"
-                                style={{
-                                  background: s.severity === sv ? `${sevColor[sv]}22` : "rgba(255,255,255,0.04)",
-                                  border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
-                                  color: s.severity === sv ? sevColor[sv] : "var(--text-muted)",
-                                }}>
-                                {sv}
-                              </button>
-                            ))}
+                        className="px-3 py-2.5 rounded-xl"
+                        style={{
+                          background: isEnded ? "rgba(52,211,153,0.04)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${borderCol}`,
+                        }}>
+                        {/* Top row */}
+                        <div className="flex items-start gap-2.5">
+                          <span className="text-[14px] flex-shrink-0 mt-0.5">{cat?.icon ?? "🩺"}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-[13px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>
+                                {s.name}
+                              </p>
+                              {isEnded && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                                  style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
+                                  ✓ Terminé
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                              {sev.map(sv => (
+                                <button key={sv}
+                                  onClick={() => handleSetSeverity(s.id, sv)}
+                                  className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide transition-all"
+                                  style={{
+                                    background: s.severity === sv ? `${sevColor[sv]}22` : "rgba(255,255,255,0.04)",
+                                    border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
+                                    color: s.severity === sv ? sevColor[sv] : "var(--text-muted)",
+                                  }}>
+                                  {sv}
+                                </button>
+                              ))}
+                            </div>
                           </div>
+                          {/* Trash */}
+                          <button onClick={() => handleDeleteSymptom(s.id)}
+                            className="p-1 rounded-md flex-shrink-0 transition-colors self-start"
+                            style={{ color: "var(--text-muted)" }}
+                            onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+                            onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}>
+                            <IconTrash size={13} />
+                          </button>
                         </div>
-                        {s.time && (
-                          <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{s.time}</span>
-                        )}
-                        <button onClick={() => handleDeleteSymptom(s.id)}
-                          className="p-1 rounded-md flex-shrink-0 transition-colors self-start"
-                          style={{ color: "var(--text-muted)" }}
-                          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-                          onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}>
-                          <IconTrash size={13} />
-                        </button>
+
+                        {/* Time row — start → end + duration */}
+                        <div className="flex items-center gap-2 mt-2 pl-6">
+                          {s.time && (
+                            <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                              <IconClock size={10} stroke={1.5} />
+                              {s.time}
+                            </span>
+                          )}
+                          {isEnded && (
+                            <>
+                              <span className="text-[10px]" style={{ color: "var(--border-strong)" }}>→</span>
+                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.endTime}</span>
+                              {s.durationMin != null && (
+                                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md"
+                                  style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+                                  {fmtDuration(s.durationMin)}
+                                </span>
+                              )}
+                            </>
+                          )}
+                          {/* "Terminer" button — only when not yet ended */}
+                          {!isEnded && (
+                            <button
+                              onClick={() => handleEndSymptom(s.id)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ml-auto"
+                              style={{
+                                background: "rgba(251,191,36,0.1)",
+                                border:     "1px solid rgba(251,191,36,0.35)",
+                                color:      "#fbbf24",
+                              }}>
+                              <IconPlayerStop size={9} stroke={2} />
+                              Terminer
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1316,14 +1392,20 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               <span key={s.id}
                                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                                 style={{
-                                  background: `${sevColor}12`,
-                                  border: `1px solid ${sevColor}44`,
-                                  color: sevColor,
+                                  background: s.endTime ? "rgba(52,211,153,0.08)" : `${sevColor}12`,
+                                  border: `1px solid ${s.endTime ? "rgba(52,211,153,0.3)" : `${sevColor}44`}`,
+                                  color: s.endTime ? "#34d399" : sevColor,
                                 }}>
                                 <span>{cat?.icon ?? "🩺"}</span>
                                 {s.name}
                                 {s.severity && <span style={{ opacity: 0.7 }}>· {s.severity}</span>}
-                                {s.time && <span style={{ opacity: 0.5 }}>· {s.time}</span>}
+                                {s.time && !s.endTime && <span style={{ opacity: 0.5 }}>· {s.time}</span>}
+                                {s.durationMin != null
+                                  ? <span style={{ opacity: 0.85 }}>· {fmtDuration(s.durationMin)}</span>
+                                  : s.endTime && s.time
+                                    ? <span style={{ opacity: 0.6 }}>· {s.time}→{s.endTime}</span>
+                                    : null
+                                }
                               </span>
                             );
                           })}

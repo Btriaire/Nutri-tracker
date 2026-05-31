@@ -105,69 +105,24 @@ const PROGRAMS: Program[] = [
   },
 ];
 
-// ─── YouTube IFrame Player API ────────────────────────────────────────────────
-// Using the YT IFrame API allows calling player.unMute() synchronously inside
-// a click handler (user gesture) → works on mobile Safari where src-swap doesn't.
+// ─── YouTube URL builder ──────────────────────────────────────────────────────
 
-interface YTPlayer {
-  playVideo:    () => void;
-  pauseVideo:   () => void;
-  stopVideo:    () => void;
-  mute:         () => void;
-  unMute:       () => void;
-  setVolume:    (v: number) => void;
-  isMuted:      () => boolean;
-  loadVideoById:(id: string) => void;
-  destroy:      () => void;
-}
-
-declare global {
-  interface Window {
-    YT?: {
-      Player: new (
-        el: HTMLElement | string,
-        opts: {
-          videoId?: string;
-          width?: number | string;
-          height?: number | string;
-          playerVars?: Record<string, unknown>;
-          events?: Record<string, (e: { target: YTPlayer; data?: number }) => void>;
-        },
-      ) => YTPlayer;
-    };
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-let ytApiLoaded  = false;
-let ytApiResolvers: (() => void)[] = [];
-
-function loadYTApi(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (ytApiLoaded && window.YT?.Player) return Promise.resolve();
-
-  return new Promise<void>((resolve) => {
-    ytApiResolvers.push(resolve);
-    if (ytApiResolvers.length > 1) return; // already loading
-
-    const prev = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      prev?.();
-      ytApiLoaded = true;
-      ytApiResolvers.forEach(r => r());
-      ytApiResolvers = [];
-    };
-
-    const script = document.createElement("script");
-    script.src   = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(script);
+function buildYTUrl(videoId: string, muted: boolean) {
+  const p = new URLSearchParams({
+    autoplay: "1", loop: "1", playlist: videoId,
+    controls: "1", rel: "0", modestbranding: "1",
+    mute: muted ? "1" : "0",
   });
+  return `https://www.youtube.com/embed/${videoId}?${p}`;
 }
 
-// ─── NowPlaying — uses YT IFrame API for reliable mobile audio ───────────────
+// ─── NowPlaying ────────────────────────────────────────────────────────────────
+// Key insight: setting iframe.src directly inside the click handler is synchronous
+// and preserves the user-gesture context → allows autoplay with sound on mobile.
+// React setState → re-render → new src loses the gesture because of async gap.
 
 function NowPlaying({
-  track, iframeKey: _iframeKey, active, onChangeTrack, tracks,
+  track, iframeKey, active, onChangeTrack, tracks,
 }: {
   track:         Track;
   iframeKey:     number;
@@ -175,121 +130,90 @@ function NowPlaying({
   onChangeTrack: (t: Track) => void;
   tracks:        Track[];
 }) {
-  const playerDivRef = useRef<HTMLDivElement>(null);
-  const playerRef    = useRef<YTPlayer | null>(null);
-  const [muted,       setMuted]       = useState(true);
-  const [playerReady, setPlayerReady] = useState(false);
+  const iframeRef            = useRef<HTMLIFrameElement>(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
-  // (Re)create player when track or active changes
+  // Reset when track or session changes
   useEffect(() => {
-    let cancelled = false;
-
-    if (!active) {
-      playerRef.current?.stopVideo();
-      playerRef.current?.destroy();
-      playerRef.current = null;
-      setPlayerReady(false);
-      setMuted(true);
-      return;
+    setAudioEnabled(false);
+    if (iframeRef.current) {
+      iframeRef.current.src = active ? buildYTUrl(track.videoId, true) : "about:blank";
     }
+  }, [track.videoId, active, iframeKey]);
 
-    setMuted(true);
-    setPlayerReady(false);
-
-    loadYTApi().then(() => {
-      if (cancelled || !playerDivRef.current || !window.YT?.Player) return;
-      playerRef.current?.destroy();
-
-      playerRef.current = new window.YT.Player(playerDivRef.current, {
-        videoId: track.videoId,
-        width:   "1",
-        height:  "1",
-        playerVars: {
-          autoplay:       1,
-          mute:           1,          // autoplay requires mute on mobile
-          loop:           1,
-          playlist:       track.videoId,
-          controls:       0,
-          rel:            0,
-          modestbranding: 1,
-        },
-        events: {
-          onReady: (e) => {
-            if (!cancelled) {
-              e.target.playVideo();
-              setPlayerReady(true);
-            }
-          },
-          onStateChange: (e) => {
-            // Loop: replay when video ends (belt & suspenders alongside loop=1)
-            if (e.data === 0) e.target.playVideo();
-          },
-        },
-      });
-    });
-
-    return () => {
-      cancelled = true;
-      playerRef.current?.destroy();
-      playerRef.current = null;
-      setPlayerReady(false);
-      setMuted(true);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.videoId, active]);
-
-  const handleUnmute = () => {
-    if (playerRef.current) {
-      playerRef.current.unMute();
-      playerRef.current.setVolume(80);
-      setMuted(false);
+  // Stop audio when session ends
+  useEffect(() => {
+    if (!active && iframeRef.current) {
+      iframeRef.current.src = "about:blank";
+      setAudioEnabled(false);
     }
+  }, [active]);
+
+  // Direct DOM src change inside click handler — user gesture is preserved
+  const handleActivate = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = buildYTUrl(track.videoId, false); // muted=false, synchronous
+    }
+    setAudioEnabled(true);
   };
 
   return (
     <div className="rounded-xl overflow-hidden"
       style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.2)" }}>
 
-      {/* Invisible 1×1 YT player div — replaced by iframe by the API */}
-      <div style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
-        <div ref={playerDivRef} />
+      {/* iframe — always in DOM with real height so browser grants audio permission.
+          Before activation: 80px visible with overlay.
+          After activation: 1px so audio continues but video is hidden. */}
+      <div style={{ position: "relative", height: audioEnabled ? 1 : 80, overflow: "hidden", background: "#000" }}>
+        <iframe
+          ref={iframeRef}
+          src={active ? buildYTUrl(track.videoId, true) : "about:blank"}
+          allow="autoplay; encrypted-media"
+          style={{ width: "100%", height: 200, border: "none", display: "block" }}
+          title={track.label}
+        />
+        {/* Tap-to-activate overlay */}
+        {!audioEnabled && active && (
+          <button
+            onClick={handleActivate}
+            className="absolute inset-0 flex items-center justify-center gap-2.5"
+            style={{ background: "rgba(0,0,0,0.72)" }}
+          >
+            <span className="text-2xl">🔊</span>
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
+              Appuyez pour activer le son
+            </span>
+          </button>
+        )}
       </div>
-
-      {/* Audio activation banner */}
-      {active && muted && (
-        <button
-          onClick={handleUnmute}
-          className="w-full flex items-center justify-center gap-3 py-4"
-          style={{ background: "rgba(0,0,0,0.55)" }}
-        >
-          <span className="text-2xl">{playerReady ? "🔊" : "⏳"}</span>
-          <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
-            {playerReady ? "Appuyez pour activer le son" : "Chargement…"}
-          </span>
-        </button>
-      )}
 
       {/* Compact now-playing row */}
       <div className="flex items-center gap-2 px-3 py-2">
         <span className="text-[15px]">{track.emoji}</span>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-semibold"
-            style={{ color: active && !muted ? "#34d399" : "var(--text-muted)" }}>
-            {active && !muted ? "♪ En cours" : active && muted ? "Son coupé" : "—"}
+            style={{ color: audioEnabled ? "#34d399" : "var(--text-muted)" }}>
+            {audioEnabled ? "♪ En cours" : "Son inactif — appuyez ▲"}
           </p>
           <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>{track.label}</p>
         </div>
-        {active && !muted && (
-          <button onClick={() => { playerRef.current?.mute(); setMuted(true); }}
+        {audioEnabled && (
+          <button
+            onClick={() => {
+              setAudioEnabled(false);
+              if (iframeRef.current) iframeRef.current.src = buildYTUrl(track.videoId, true);
+            }}
             className="p-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+            style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}
+            title="Couper le son">
             <IconVolume size={13} stroke={1.5} />
           </button>
         )}
-        {active && muted && playerReady && (
-          <button onClick={handleUnmute}
+        {!audioEnabled && active && (
+          <button onClick={handleActivate}
             className="p-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}
+            title="Activer le son">
             <IconVolumeOff size={13} stroke={1.5} />
           </button>
         )}

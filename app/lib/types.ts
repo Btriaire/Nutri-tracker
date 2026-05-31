@@ -446,11 +446,14 @@ export interface MedicationEntry {
 export type SymptomSeverity = "léger" | "modéré" | "sévère";
 
 export interface SymptomEntry {
-  id:        string;
-  category:  string;  // e.g. "douleur"
-  name:      string;  // e.g. "Maux de tête"
-  severity?: SymptomSeverity;
-  time?:     string;  // "HH:MM"
+  id:           string;
+  category:     string;       // e.g. "douleur"
+  name:         string;       // e.g. "Maux de tête"
+  severity?:    SymptomSeverity;
+  time?:        string;       // "HH:MM" — heure de début
+  endTime?:     string;       // "HH:MM" — heure de fin
+  endDate?:     string;       // "YYYY-MM-DD" si fin un autre jour
+  durationMin?: number;       // durée calculée en minutes
 }
 
 export interface AISynthesisResult {

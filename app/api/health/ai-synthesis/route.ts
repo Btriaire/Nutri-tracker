@@ -136,7 +136,21 @@ export async function POST(req: NextRequest) {
   const symptoms   = health?.symptoms    ?? [];
   const medications = health?.medications ?? [];
 
-  const symLines = symptoms.map(s => `- ${s.name} (${s.category}) — sévérité : ${s.severity ?? "modéré"}`);
+  const symLines = symptoms.map(s => {
+    let line = `- ${s.name} (${s.category}) — sévérité : ${s.severity ?? "modéré"}`;
+    if (s.time) line += ` — début : ${s.time}`;
+    if (s.endTime) {
+      line += ` — fin : ${s.endTime}`;
+      if (s.durationMin != null) {
+        const h = Math.floor(s.durationMin / 60);
+        const m = s.durationMin % 60;
+        line += ` (durée : ${h > 0 ? `${h}h${m > 0 ? String(m).padStart(2,"0") : ""}` : `${m} min`})`;
+      }
+    } else {
+      line += " — en cours";
+    }
+    return line;
+  });
   const medLines = medications.map(m => `- ${m.name}${m.dose ? ` ${m.dose}` : ""}${m.taken ? " ✓ pris" : " (non pris)"}`);
 
   // ── Compose the user message ───────────────────────────────────────────────
