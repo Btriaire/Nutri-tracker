@@ -404,6 +404,7 @@ export interface ManualActivity {
   durationMin:    number;
   caloriesBurned: number | null;
   notes?:         string;
+  photoDataUrl?:  string;     // base64 JPEG 72×72 thumbnail
   loggedAt:       Timestamp;
   sets?:          number;
   reps?:          number;

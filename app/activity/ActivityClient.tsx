@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
-  IconBookmark, IconX, IconCheck, IconLoader2, IconCamera,
+  IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -126,12 +126,22 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   const [tplPhotoDataUrl, setTplPhotoDataUrl] = useState<string | undefined>(undefined);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Séances types collapsed by default
+  const [showTemplates,  setShowTemplates]  = useState(false);
+
   // ── Sport search modal
   const [showSportSearch, setShowSportSearch] = useState(false);
 
   // ── Template photo editing
   const tplPhotoEditRef  = useRef<HTMLInputElement>(null);
   const [editingTplId,   setEditingTplId]   = useState<string | null>(null);
+
+  // ── Activity editing + photo
+  const [editingActivityId,  setEditingActivityId]  = useState<string | null>(null);
+  const [editForm,           setEditForm]           = useState<FormState>(EMPTY_FORM);
+  const [editSaving,         setEditSaving]         = useState(false);
+  const actPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [photoForActivityId, setPhotoForActivityId] = useState<string | null>(null);
 
   // Load templates on mount
   useEffect(() => {
@@ -237,6 +247,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         setShowForm(false);
         setForm(EMPTY_FORM);
         setSaveErrDetail("");
+        setShowTemplates(false);
       } else {
         setSaveErrDetail("Réponse inattendue du serveur");
         setSaveError(true);
@@ -324,6 +335,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
       if (json.activity) {
         setActivities((prev) => [json.activity!, ...prev]);
         showToast(`✓ ${tpl.name} enregistré`, true);
+        setShowTemplates(false);
       } else {
         showToast("Réponse inattendue du serveur", false);
       }
@@ -454,6 +466,72 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
       const json = await res.json() as { template?: WorkoutTemplate };
       if (json.template) setTemplates((prev) => [json.template!, ...prev]);
     } catch { /* ignore */ }
+  };
+
+  // ── Save edit to existing activity
+  const handleEditSave = async (actId: string) => {
+    setEditSaving(true);
+    try {
+      const muscu = isMuscu(editForm.actType);
+      const body: Record<string, unknown> = {
+        name:           editForm.customName.trim() || undefined,
+        caloriesBurned: editForm.calories ? parseInt(editForm.calories, 10) : null,
+        durationMin:    muscu ? musculationDuration(editForm.sets) : parseInt(editForm.duration, 10),
+      };
+      if (muscu) {
+        body.sets     = parseInt(editForm.sets)  || 3;
+        body.reps     = parseInt(editForm.reps)  || 10;
+        body.weightKg = parseFloat(editForm.weightKg) || null;
+      }
+      const res = await fetch(`/api/activity/${actId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return;
+      setActivities((prev) => prev.map((a) => a.id !== actId ? a : {
+        ...a,
+        name:           (body.name as string) || a.name,
+        caloriesBurned: body.caloriesBurned as number | null,
+        durationMin:    body.durationMin as number,
+        ...(muscu ? { sets: body.sets as number, reps: body.reps as number, weightKg: body.weightKg as number } : {}),
+      }));
+      setEditingActivityId(null);
+    } catch { /* ignore */ }
+    finally { setEditSaving(false); }
+  };
+
+  // ── Upload + save photo for an activity
+  const handleActivityPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !photoForActivityId) return;
+    e.target.value = "";
+    const actId = photoForActivityId;
+    setPhotoForActivityId(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 72;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width  - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, 72, 72);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        await fetch(`/api/activity/${actId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoDataUrl: dataUrl }),
+        });
+        setActivities((prev) => prev.map((a) => a.id === actId ? { ...a, photoDataUrl: dataUrl } : a));
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
   };
 
   const totalBurned = [
@@ -594,13 +672,31 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           className="glass p-4 mb-4"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
+            {/* Clickable header to expand/collapse */}
+            <button
+              onClick={() => setShowTemplates((x) => !x)}
+              className="flex items-center gap-2 flex-1 min-w-0"
+              type="button"
+            >
               <IconBookmark size={15} style={{ color: "var(--protein)" }} />
               <p className="label-xs">Séances types</p>
-            </div>
+              {templates.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full ml-0.5"
+                  style={{ background: "rgba(167,139,250,0.15)", color: "var(--protein)" }}>
+                  {templates.length}
+                </span>
+              )}
+              <motion.span
+                animate={{ rotate: showTemplates ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: "inline-flex", marginLeft: "auto", color: "var(--text-muted)" }}
+              >
+                <IconChevronDown size={13} />
+              </motion.span>
+            </button>
             <button
               onClick={() => setShowTplForm((x) => !x)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ml-2"
               style={{
                 background: showTplForm ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.05)",
                 border:     `1px solid ${showTplForm ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
@@ -685,64 +781,74 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
             )}
           </AnimatePresence>
 
-          {/* Template list */}
-          {loadingTpl ? (
-            <div className="flex justify-center py-4">
-              <IconLoader2 size={16} className="animate-spin" style={{ color: "var(--text-muted)" }} />
-            </div>
-          ) : templates.length === 0 ? (
-            <p className="text-[12px] py-3 text-center" style={{ color: "var(--text-muted)" }}>
-              Aucune séance type — créez-en une pour accélérer vos saisies
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {templates.map((tpl) => (
-                <div key={tpl.id} className="flex items-center gap-3 py-2"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  {/* Photo thumbnail — clickable to change photo */}
-                  <button
-                    type="button"
-                    onClick={() => { setEditingTplId(tpl.id); tplPhotoEditRef.current?.click(); }}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
-                    title="Changer la photo"
-                  >
-                    {tpl.photoDataUrl
-                      ? <img src={tpl.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
-                      : activityEmoji(tpl.activityType)
-                    }
-                    {/* Camera overlay on hover */}
-                    <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "rgba(0,0,0,0.5)" }}>
-                      <IconCamera size={12} style={{ color: "white" }} />
-                    </div>
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                      {tpl.name}
-                    </p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                      {tpl.defaultDurationMin} min
-                      {tpl.defaultCalories ? ` · ${tpl.defaultCalories} kcal` : ""}
-                      {tpl.notes ? ` · ${tpl.notes}` : ""}
-                    </p>
+          {/* Template list — collapsible */}
+          <AnimatePresence initial={false}>
+            {showTemplates && (
+              <motion.div
+                key="tpl-list"
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.22 }}
+                style={{ overflow: "hidden" }}
+              >
+                {loadingTpl ? (
+                  <div className="flex justify-center py-4">
+                    <IconLoader2 size={16} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                   </div>
-                  <button
-                    onClick={() => launchTemplate(tpl)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
-                    style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}
-                    disabled={saving}>
-                    {saving ? <IconLoader2 size={11} className="animate-spin" /> : <IconCheck size={12} />}
-                    Enregistrer
-                  </button>
-                  <button onClick={() => handleDeleteTemplate(tpl.id)}
-                    className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                    <IconTrash size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                ) : templates.length === 0 ? (
+                  <p className="text-[12px] py-3 text-center" style={{ color: "var(--text-muted)" }}>
+                    Aucune séance type — créez-en une pour accélérer vos saisies
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {templates.map((tpl) => (
+                      <div key={tpl.id} className="flex items-center gap-3 py-2"
+                        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        {/* Photo thumbnail — clickable to change photo */}
+                        <button
+                          type="button"
+                          onClick={() => { setEditingTplId(tpl.id); tplPhotoEditRef.current?.click(); }}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+                          title="Changer la photo"
+                        >
+                          {tpl.photoDataUrl
+                            ? <img src={tpl.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
+                            : activityEmoji(tpl.activityType)
+                          }
+                          <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ background: "rgba(0,0,0,0.5)" }}>
+                            <IconCamera size={12} style={{ color: "white" }} />
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                            {tpl.name}
+                          </p>
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            {tpl.defaultDurationMin} min
+                            {tpl.defaultCalories ? ` · ${tpl.defaultCalories} kcal` : ""}
+                            {tpl.notes ? ` · ${tpl.notes}` : ""}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => launchTemplate(tpl)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
+                          style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}
+                          disabled={saving}>
+                          {saving ? <IconLoader2 size={11} className="animate-spin" /> : <IconCheck size={12} />}
+                          Enregistrer
+                        </button>
+                        <button onClick={() => handleDeleteTemplate(tpl.id)}
+                          className="btn-icon w-7 h-7 flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                          <IconTrash size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Google Fit sessions */}
@@ -797,23 +903,115 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                 {activities.map((a) => (
                   <motion.div key={a.id}
                     initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-3"
+                    className="flex flex-col gap-2"
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
-                      {activityEmoji(a.activityType)}
+                    <div className="flex items-center gap-3">
+                      {/* Photo thumbnail / emoji — click to upload photo */}
+                      <button
+                        type="button"
+                        onClick={() => { setPhotoForActivityId(a.id); actPhotoInputRef.current?.click(); }}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+                        title="Ajouter une photo"
+                      >
+                        {a.photoDataUrl
+                          ? <img src={a.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
+                          : activityEmoji(a.activityType)
+                        }
+                        <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ background: "rgba(0,0,0,0.5)" }}>
+                          <IconCamera size={12} style={{ color: "white" }} />
+                        </div>
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{a.name}</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          {a.sets ? `${a.sets}×${a.reps ?? "?"} reps${a.weightKg ? ` · ${a.weightKg}kg` : ""}` : `${a.durationMin} min`}
+                          {a.caloriesBurned ? ` · ${a.caloriesBurned} kcal` : ""}
+                        </p>
+                      </div>
+                      {/* Edit button */}
+                      <button
+                        onClick={() => {
+                          if (editingActivityId === a.id) { setEditingActivityId(null); return; }
+                          setEditingActivityId(a.id);
+                          setEditForm({
+                            actType:        a.activityType,
+                            duration:       String(a.durationMin),
+                            customName:     a.name,
+                            calories:       String(a.caloriesBurned ?? ""),
+                            sets:           String(a.sets ?? "3"),
+                            reps:           String(a.reps ?? "10"),
+                            weightKg:       String(a.weightKg ?? ""),
+                            variableWeight: false,
+                            weightPerSet:   [],
+                          });
+                        }}
+                        className="btn-icon w-7 h-7 flex-shrink-0"
+                        style={{ color: editingActivityId === a.id ? "var(--protein)" : "var(--text-muted)" }}
+                        title="Modifier"
+                      >
+                        <IconPencil size={12} />
+                      </button>
+                      <button onClick={() => handleDelete(a.id)} className="btn-icon w-7 h-7 flex-shrink-0"
+                        style={{ color: "#f87171" }}>
+                        <IconTrash size={12} />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{a.name}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                        {a.sets ? `${a.sets}×${a.reps ?? "?"} reps${a.weightKg ? ` · ${a.weightKg}kg` : ""}` : `${a.durationMin} min`}
-                        {a.caloriesBurned ? ` · ${a.caloriesBurned} kcal` : ""}
-                      </p>
-                    </div>
-                    <button onClick={() => handleDelete(a.id)} className="btn-icon w-7 h-7 flex-shrink-0"
-                      style={{ color: "#f87171" }}>
-                      <IconTrash size={12} />
-                    </button>
+
+                    {/* Inline edit form */}
+                    <AnimatePresence>
+                      {editingActivityId === a.id && (
+                        <motion.div
+                          key={`edit-${a.id}`}
+                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          <div className="pl-12 pt-1 pb-2 space-y-2">
+                            {/* Name */}
+                            <input
+                              value={editForm.customName}
+                              onChange={(e) => setEditForm((f) => ({ ...f, customName: e.target.value }))}
+                              placeholder="Nom de l'activité"
+                              className="input text-[12px] w-full"
+                            />
+                            <div className="flex gap-2">
+                              {!isMuscu(editForm.actType) && (
+                                <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                  <IconClock size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                                  <input
+                                    type="number" min="1" value={editForm.duration}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, duration: e.target.value }))}
+                                    className="w-full bg-transparent text-[12px] outline-none"
+                                    placeholder="min"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                <IconFlame size={12} style={{ color: "var(--fit-red)", flexShrink: 0 }} />
+                                <input
+                                  type="number" min="0" value={editForm.calories}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
+                                  className="w-full bg-transparent text-[12px] outline-none"
+                                  placeholder="kcal"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => setEditingActivityId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
+                              <button
+                                onClick={() => handleEditSave(a.id)}
+                                disabled={editSaving}
+                                className="flex-1 btn btn-primary gap-1.5 text-[11px]"
+                              >
+                                {editSaving ? <><IconLoader2 size={11} className="animate-spin" />…</> : <><IconCheck size={11} />Enregistrer</>}
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -889,6 +1087,15 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         ref={tplPhotoEditRef}
         className="hidden"
         onChange={handleTplPhotoEdit}
+      />
+
+      {/* Hidden input for activity photo */}
+      <input
+        type="file"
+        accept="image/*"
+        ref={actPhotoInputRef}
+        className="hidden"
+        onChange={handleActivityPhotoUpload}
       />
     </div>
   );

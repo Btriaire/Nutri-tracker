@@ -328,6 +328,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const lastWeight  = weightData[weightData.length - 1]?.weightKg;
   const weightDelta = (firstWeight && lastWeight) ? lastWeight - firstWeight : null;
 
+  // Use the last actual weight measurement from the chart data as "current" weight
+  // so the displayed stat always matches the last point on the curve.
+  // Fall back to the server-side prop when chart has no data yet.
+  const effectiveCurrentWeight = lastWeight ?? currentWeightKg;
+
   const avgSleepPts = points.filter((p) => (p.sleepMinutes ?? 0) > 0);
   const avgSleepH   = avgSleepPts.length
     ? Math.round(avgSleepPts.reduce((s, p) => s + (p.sleepMinutes ?? 0), 0) / avgSleepPts.length / 6) / 10
@@ -342,7 +347,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const weightChartData = buildWeightChartData(
     chartData.map(p => ({ label: p.label, date: p.date, weightKg: p.weightKg })),
     chartData.map(p => ({ date: p.date, calories: p.calories })),
-    currentWeightKg,
+    effectiveCurrentWeight,
     targetWeightKg,
     targetDate || undefined,
     plan,
@@ -359,8 +364,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     avgSteps,
     avgSleepH,
     avgHR,
-    startWeight:    currentWeightKg,  // start of range
-    currentWeight:  currentWeightKg,
+    startWeight:    firstWeight ?? currentWeightKg,  // start of range
+    currentWeight:  effectiveCurrentWeight,
     targetWeight:   targetWeightKg,
     weightTrend,
     calorieGoal:    goals.dailyCalories,
@@ -376,8 +381,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   };
 
   const tdee = estimateTDEE(goals);
-  const projectionDays = (currentWeightKg && targetWeightKg && avgCalories > 0)
-    ? calcProjection(currentWeightKg, targetWeightKg, avgCalories, tdee) : null;
+  const projectionDays = (effectiveCurrentWeight && targetWeightKg && avgCalories > 0)
+    ? calcProjection(effectiveCurrentWeight, targetWeightKg, avgCalories, tdee) : null;
   const projectionDate = projectionDays
     ? format(new Date(Date.now() + projectionDays * 86400000), "d MMMM yyyy", { locale: fr }) : null;
 
@@ -421,7 +426,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           const daysInPlan = Math.floor((Date.now() - new Date(plan.startDate + "T00:00:00").getTime()) / 86400000) + 1;
           const startKg    = plan.startWeightKg;
           const targetKg   = plan.targetWeightKg;
-          const currentKg  = currentWeightKg;
+          const currentKg  = effectiveCurrentWeight;
           const progressPct = (startKg && targetKg && currentKg && startKg !== targetKg)
             ? Math.max(0, Math.min(100, Math.abs(currentKg - startKg) / Math.abs(targetKg - startKg) * 100))
             : null;
@@ -834,7 +839,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </motion.div>
 
             {/* ── Dual-axis weight + simulation chart ── */}
-            {(weightData.length > 0 || currentWeightKg) && (
+            {(weightData.length > 0 || effectiveCurrentWeight) && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
 
@@ -856,11 +861,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Stats row */}
                 <div className="flex gap-2 mb-3">
                   {[
-                    { label: "Actuel",   value: currentWeightKg ? `${currentWeightKg.toFixed(1)} kg` : "—", color: "var(--protein)" },
+                    { label: "Actuel",   value: effectiveCurrentWeight ? `${effectiveCurrentWeight.toFixed(1)} kg` : "—", color: "var(--protein)" },
                     { label: "Objectif", value: targetWeightKg   ? `${targetWeightKg.toFixed(1)} kg`  : "—", color: "#4ade80" },
                     { label: "Écart",
-                      value: (currentWeightKg && targetWeightKg) ? `${Math.abs(currentWeightKg - targetWeightKg).toFixed(1)} kg` : "—",
-                      color: (currentWeightKg && targetWeightKg && currentWeightKg > targetWeightKg) ? "#f87171" : "#4ade80" },
+                      value: (effectiveCurrentWeight && targetWeightKg) ? `${Math.abs(effectiveCurrentWeight - targetWeightKg).toFixed(1)} kg` : "—",
+                      color: (effectiveCurrentWeight && targetWeightKg && effectiveCurrentWeight > targetWeightKg) ? "#f87171" : "#4ade80" },
                     { label: "Date cible",
                       value: targetDate ? format(new Date(targetDate + "T00:00:00"), "dd/MM/yy") : "—",
                       color: "var(--calories)" },
