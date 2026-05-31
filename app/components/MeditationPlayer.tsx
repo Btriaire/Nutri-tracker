@@ -326,7 +326,11 @@ export default function MeditationPlayer() {
               setRunning(false);
               setCompleted(c => [...new Set([...c, selected.id])]);
               const newSession = { programId: selected.id, date: format(new Date(), "yyyy-MM-dd"), completedAt: Date.now() };
-              saveSessions(prev => [...prev, newSession] as { programId: ProgramId; date: string; completedAt: number }[]);
+              setSessions(prev => {
+                const updated = [...prev, newSession];
+                try { localStorage.setItem("meditation_sessions", JSON.stringify(updated)); } catch {}
+                return updated;
+              });
               return si;
             }
             return nextSi;
