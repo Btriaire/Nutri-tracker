@@ -13,7 +13,6 @@ import {
   ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
 } from "recharts";
-import SleepHypnogram from "@/app/components/SleepHypnogram";
 import { levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
 import type { SleepPoint } from "./page";
 
@@ -563,7 +562,6 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               );
             })()}
 
-            <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
           </motion.div>
         )}
 

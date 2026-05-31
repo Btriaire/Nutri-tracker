@@ -130,7 +130,7 @@ function NowPlaying({
   onChangeTrack: (t: Track) => void;
   tracks:        Track[];
 }) {
-  const iframeRef            = useRef<HTMLIFrameElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
   // Reset when track or session changes
@@ -149,78 +149,75 @@ function NowPlaying({
     }
   }, [active]);
 
-  // Direct DOM src change inside click handler — user gesture is preserved
+  // Direct DOM src change inside click handler — preserves user gesture context for audio
   const handleActivate = () => {
     if (iframeRef.current) {
-      iframeRef.current.src = buildYTUrl(track.videoId, false); // muted=false, synchronous
+      iframeRef.current.src = buildYTUrl(track.videoId, false); // unmuted, synchronous
     }
     setAudioEnabled(true);
+  };
+
+  const handleMute = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = buildYTUrl(track.videoId, true);
+    }
+    setAudioEnabled(false);
   };
 
   return (
     <div className="rounded-xl overflow-hidden"
       style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.2)" }}>
 
-      {/* iframe — always in DOM with real height so browser grants audio permission.
-          Before activation: 80px visible with overlay.
-          After activation: 1px so audio continues but video is hidden. */}
-      <div style={{ position: "relative", height: audioEnabled ? 1 : 80, overflow: "hidden", background: "#000" }}>
+      {/* iframe container — FIXED height, never collapses.
+          The iframe stays at real dimensions so the browser keeps audio permission.
+          A full opaque cover hides the video completely at all times. */}
+      <div style={{ position: "relative", height: 88 }}>
+        {/* The actual iframe — fills the container, always rendered at real size */}
         <iframe
           ref={iframeRef}
           src={active ? buildYTUrl(track.videoId, true) : "about:blank"}
           allow="autoplay; encrypted-media"
-          style={{ width: "100%", height: 200, border: "none", display: "block" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
           title={track.label}
         />
-        {/* Tap-to-activate overlay */}
-        {!audioEnabled && active && (
-          <button
-            onClick={handleActivate}
-            className="absolute inset-0 flex items-center justify-center gap-2.5"
-            style={{ background: "rgba(0,0,0,0.72)" }}
-          >
-            <span className="text-2xl">🔊</span>
-            <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
-              Appuyez pour activer le son
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* Compact now-playing row */}
-      <div className="flex items-center gap-2 px-3 py-2">
-        <span className="text-[15px]">{track.emoji}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold"
-            style={{ color: audioEnabled ? "#34d399" : "var(--text-muted)" }}>
-            {audioEnabled ? "♪ En cours" : "Son inactif — appuyez ▲"}
-          </p>
-          <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>{track.label}</p>
+        {/* Permanent opaque cover — always hides the video, shows player UI */}
+        <div className="absolute inset-0 flex items-center justify-between px-4"
+          style={{ background: "rgba(13,13,17,0.97)", zIndex: 1 }}>
+          {/* Left: emoji + track name */}
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 26 }}>{track.emoji}</span>
+            <div>
+              <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>{track.label}</p>
+              {audioEnabled ? (
+                <p className="text-[10px]" style={{ color: "#34d399" }}>♪ En lecture</p>
+              ) : (
+                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Son coupé</p>
+              )}
+            </div>
+          </div>
+          {/* Right: activate / mute button */}
+          {active && (
+            audioEnabled ? (
+              <button onClick={handleMute}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
+                <IconVolume size={14} stroke={1.5} />
+                <span style={{ fontSize: 11, fontWeight: 600 }}>Son actif</span>
+              </button>
+            ) : (
+              <button onClick={handleActivate}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff" }}>
+                <IconVolumeOff size={14} stroke={1.5} />
+                <span style={{ fontSize: 11, fontWeight: 600 }}>Activer le son</span>
+              </button>
+            )
+          )}
         </div>
-        {audioEnabled && (
-          <button
-            onClick={() => {
-              setAudioEnabled(false);
-              if (iframeRef.current) iframeRef.current.src = buildYTUrl(track.videoId, true);
-            }}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}
-            title="Couper le son">
-            <IconVolume size={13} stroke={1.5} />
-          </button>
-        )}
-        {!audioEnabled && active && (
-          <button onClick={handleActivate}
-            className="p-1.5 rounded-lg transition-all"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}
-            title="Activer le son">
-            <IconVolumeOff size={13} stroke={1.5} />
-          </button>
-        )}
       </div>
 
       {/* Track switcher */}
-      <div className="flex gap-1.5 px-3 pb-2.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+      <div className="flex gap-1.5 px-3 py-2.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
         {tracks.map((t) => (
           <button key={t.id}
             onClick={() => onChangeTrack(t)}
