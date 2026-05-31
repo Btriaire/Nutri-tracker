@@ -328,6 +328,12 @@ export interface AppleHealthDay {
   syncedAt:         Timestamp;
 }
 
+export interface GFitSessionEdit {
+  name?:        string;
+  calories?:    number | null;
+  durationMin?: number;
+}
+
 export interface FitnessDay {
   date:           string;
   googleFit?:     GoogleFitDay;
@@ -335,6 +341,7 @@ export interface FitnessDay {
   withingsSleep?: WithingsSleepDay;
   appleHealth?:   AppleHealthDay;
   manualSleep?:   { sleepMinutes: number | null };  // manual override, never overwritten by sync
+  sessionEdits?:  Record<string, GFitSessionEdit>;  // user edits for GFit sessions — never overwritten by sync
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────
