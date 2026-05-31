@@ -221,10 +221,16 @@ export default function BodyCompChart() {
         <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
           <span className="text-3xl">📊</span>
           <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-            Aucune donnée Withings disponible
+            {tab === "sommeil"
+              ? "Aucune donnée de sommeil disponible"
+              : tab === "vitaux"
+                ? "Aucun signal vital disponible (SpO₂ nécessite un ScanWatch)"
+                : "Aucune donnée de composition corporelle"}
           </p>
           <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-            Synchronisez votre balance dans Réglages
+            {tab === "sommeil"
+              ? "Synchronisez Withings ou entrez le sommeil manuellement"
+              : "Synchronisez votre balance Withings dans Réglages"}
           </p>
         </div>
       )}
@@ -311,16 +317,44 @@ export default function BodyCompChart() {
             </ResponsiveContainer>
           </motion.div>
 
-          {/* Legend note */}
+          {/* Legend note + source badges */}
           {tab === "sommeil" && (
-            <p className="text-[10px] text-center pb-3" style={{ color: "var(--text-muted)" }}>
-              — 7h recommandées
-            </p>
+            <div className="flex items-center justify-center gap-3 pb-3">
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— 7h recommandées</p>
+              {/* Show which sources are used */}
+              {(() => {
+                const sources = new Set(chartData.map(p => p.sleepSource).filter(Boolean));
+                const SOURCE_LABEL: Record<string, string> = {
+                  withings:    "🛏 Withings",
+                  applehealth: "🍎 Apple",
+                  googlefit:   "💚 Google Fit",
+                  manual:      "✏️ Manuel",
+                };
+                return Array.from(sources).map(s => s && (
+                  <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                    {SOURCE_LABEL[s] ?? s}
+                  </span>
+                ));
+              })()}
+            </div>
           )}
           {tab === "vitaux" && (
-            <p className="text-[10px] text-center pb-3" style={{ color: "var(--text-muted)" }}>
-              — SpO₂ seuil normal 95%
-            </p>
+            <div className="flex items-center justify-center gap-3 pb-3">
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ seuil normal 95%</p>
+              {chartData.some(p => p.spO2Pct != null) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+                  style={{ background: "rgba(6,182,212,0.08)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.2)" }}>
+                  SpO₂ = saturation en oxygène
+                </span>
+              )}
+              {!chartData.some(p => p.spO2Pct != null) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                  SpO₂ requiert ScanWatch
+                </span>
+              )}
+            </div>
           )}
         </>
       )}

@@ -9,22 +9,23 @@ const USER = "owner";
 
 export interface BodyCompPoint {
   date:          string;
-  // Body composition
+  // Body composition (Withings scale only)
   bodyFatPct:    number | null;
   muscleMassKg:  number | null;
   fatMassKg:     number | null;
-  // Vital signs
-  spO2Pct:       number | null;
-  restingHR:     number | null;
-  tempCelsius:   number | null;
-  // Sleep
+  // Vital signs (Withings ScanWatch → fallback Apple Health)
+  spO2Pct:       number | null;   // %  — meastype 54 OR appleHealth.spO2
+  restingHR:     number | null;   // bpm — Withings only
+  tempCelsius:   number | null;   // °C  — Withings only
+  // Sleep (Withings > Apple Health > Google Fit > Manual)
   totalSleepH:   number | null;
   deepSleepH:    number | null;
   remSleepH:     number | null;
   lightSleepH:   number | null;
-  sleepScore:    number | null;
-  hrAvgSleep:    number | null;
-  wakeupCount:   number | null;
+  sleepScore:    number | null;   // Withings only
+  hrAvgSleep:    number | null;   // Withings only
+  wakeupCount:   number | null;   // Withings only
+  sleepSource:   "withings" | "applehealth" | "googlefit" | "manual" | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -47,28 +48,77 @@ export async function GET(req: NextRequest) {
 
   const points: BodyCompPoint[] = snap.docs
     .map((d) => {
-      const data   = d.data();
-      const w      = data.withings;
-      const s      = data.withingsSleep;
+      const data = d.data();
+      const w    = data.withings;       // WithingsDay (body comp + vitals)
+      const ws   = data.withingsSleep;  // WithingsSleepDay
+      const gf   = data.googleFit;      // GoogleFitDay
+      const ah   = data.appleHealth;    // AppleHealthDay
+      const ms   = data.manualSleep;    // { sleepMinutes }
 
-      // Only include days that have at least one Withings measurement
-      if (!w && !s) return null;
+      // ── SpO2: Withings ScanWatch → Apple Health fallback ─────────────────
+      const spO2Pct = w?.spO2Pct ?? ah?.spO2 ?? null;
+
+      // ── Sleep: Withings (best) → Apple Health → Google Fit → Manual ──────
+      let totalSleepH: number | null = null;
+      let deepSleepH:  number | null = null;
+      let remSleepH:   number | null = null;
+      let lightSleepH: number | null = null;
+      let sleepScore:  number | null = null;
+      let hrAvgSleep:  number | null = null;
+      let wakeupCount: number | null = null;
+      let sleepSource: BodyCompPoint["sleepSource"] = null;
+
+      if (ws?.totalSleepSec != null) {
+        // Withings sleep summary — most detailed
+        totalSleepH = Math.round(ws.totalSleepSec / 360) / 10;
+        deepSleepH  = ws.deepSleepSec  != null ? Math.round(ws.deepSleepSec  / 360) / 10 : null;
+        remSleepH   = ws.remSleepSec   != null ? Math.round(ws.remSleepSec   / 360) / 10 : null;
+        lightSleepH = ws.lightSleepSec != null ? Math.round(ws.lightSleepSec / 360) / 10 : null;
+        sleepScore  = ws.sleepScore    ?? null;
+        hrAvgSleep  = ws.hrAvgSleep    ?? null;
+        wakeupCount = ws.wakeupCount   ?? null;
+        sleepSource = "withings";
+      } else if (ah?.sleepMinutes != null && ah.sleepMinutes > 0) {
+        // Apple Health — has phases
+        totalSleepH = Math.round(ah.sleepMinutes / 60 * 10) / 10;
+        deepSleepH  = ah.sleepDeepMinutes != null ? Math.round(ah.sleepDeepMinutes / 60 * 10) / 10 : null;
+        remSleepH   = ah.sleepRemMinutes  != null ? Math.round(ah.sleepRemMinutes  / 60 * 10) / 10 : null;
+        sleepSource = "applehealth";
+      } else if (ms?.sleepMinutes != null && ms.sleepMinutes > 0) {
+        // Manual sleep entry (dashboard override)
+        totalSleepH = Math.round(ms.sleepMinutes / 60 * 10) / 10;
+        sleepSource = "manual";
+      } else if (gf?.sleepMinutes != null && gf.sleepMinutes > 0) {
+        // Google Fit — total only usually
+        totalSleepH = Math.round(gf.sleepMinutes / 60 * 10) / 10;
+        deepSleepH  = gf.deepSleepMin  != null ? Math.round(gf.deepSleepMin  / 60 * 10) / 10 : null;
+        remSleepH   = gf.remSleepMin   != null ? Math.round(gf.remSleepMin   / 60 * 10) / 10 : null;
+        lightSleepH = gf.lightSleepMin != null ? Math.round(gf.lightSleepMin / 60 * 10) / 10 : null;
+        sleepSource = "googlefit";
+      }
+
+      // ── Skip day if absolutely no relevant data ───────────────────────────
+      const hasBodyComp = w?.bodyFatPct != null || w?.muscleMassKg != null;
+      const hasVitals   = spO2Pct != null || w?.restingHR != null || w?.tempCelsius != null;
+      const hasSleep    = totalSleepH != null;
+      if (!hasBodyComp && !hasVitals && !hasSleep) return null;
 
       return {
         date:         d.id,
         bodyFatPct:   w?.bodyFatPct    ?? null,
         muscleMassKg: w?.muscleMassKg  ?? null,
         fatMassKg:    w?.fatMassKg     ?? null,
-        spO2Pct:      w?.spO2Pct       ?? null,
+        spO2Pct,
         restingHR:    w?.restingHR     ?? null,
         tempCelsius:  w?.tempCelsius   ?? null,
-        totalSleepH:  s?.totalSleepSec != null ? Math.round(s.totalSleepSec / 360) / 10 : null,
-        deepSleepH:   s?.deepSleepSec  != null ? Math.round(s.deepSleepSec  / 360) / 10 : null,
-        remSleepH:    s?.remSleepSec   != null ? Math.round(s.remSleepSec   / 360) / 10 : null,
-        lightSleepH:  s?.lightSleepSec != null ? Math.round(s.lightSleepSec / 360) / 10 : null,
-        sleepScore:   s?.sleepScore    ?? null,
-        hrAvgSleep:   s?.hrAvgSleep    ?? null,
-        wakeupCount:  s?.wakeupCount   ?? null,
+        totalSleepH,
+        deepSleepH,
+        remSleepH,
+        lightSleepH,
+        sleepScore,
+        hrAvgSleep,
+        wakeupCount,
+        sleepSource,
       } satisfies BodyCompPoint;
     })
     .filter((p): p is BodyCompPoint => p !== null);
