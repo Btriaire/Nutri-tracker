@@ -81,12 +81,13 @@ export async function POST(req: NextRequest) {
       activityType:   Number(body.activityType) || 0,
       durationMin,
       caloriesBurned: body.caloriesBurned != null ? Number(body.caloriesBurned) : null,
-      notes:          body.notes,
       loggedAt:       Timestamp.now(),
-      ...(body.sets       != null ? { sets:       Number(body.sets)       } : {}),
-      ...(body.reps       != null ? { reps:       Number(body.reps)       } : {}),
-      ...(body.weightKg   != null ? { weightKg:   Number(body.weightKg)   } : {}),
-      ...(body.weightPerSet       ? { weightPerSet: body.weightPerSet.map(Number) } : {}),
+      // Only include optional fields when they have a real value — Firestore rejects undefined
+      ...(body.notes?.trim()  ? { notes:        body.notes.trim()          } : {}),
+      ...(body.sets    != null ? { sets:         Number(body.sets)          } : {}),
+      ...(body.reps    != null ? { reps:         Number(body.reps)          } : {}),
+      ...(body.weightKg != null ? { weightKg:    Number(body.weightKg)      } : {}),
+      ...(body.weightPerSet   ? { weightPerSet: body.weightPerSet.map(Number) } : {}),
     };
 
     await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
