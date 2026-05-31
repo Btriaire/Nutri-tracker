@@ -105,6 +105,15 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   const [showForm,  setShowForm]  = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [saveErrDetail, setSaveErrDetail] = useState("");
+  // Global toast for background saves (NutriTrack-Sport direct, launchTemplate)
+  const [toast,    setToast]    = useState<{ msg: string; ok: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = (msg: string, ok: boolean) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, ok });
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  };
   const [form,      setForm]      = useState<FormState>(EMPTY_FORM);
 
   // ── Template creation form
@@ -215,16 +224,26 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) { setSaveError(true); return; }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("[activity save] HTTP", res.status, text);
+        setSaveErrDetail(`Erreur ${res.status}${text ? ` — ${text.slice(0, 80)}` : ""}`);
+        setSaveError(true);
+        return;
+      }
       const json = await res.json() as { activity?: ManualActivity };
       if (json.activity) {
         setActivities((prev) => [json.activity!, ...prev]);
         setShowForm(false);
         setForm(EMPTY_FORM);
+        setSaveErrDetail("");
       } else {
+        setSaveErrDetail("Réponse inattendue du serveur");
         setSaveError(true);
       }
-    } catch {
+    } catch (err) {
+      console.error("[activity save] catch", err);
+      setSaveErrDetail(String(err));
       setSaveError(true);
     } finally {
       setSaving(false);
@@ -283,7 +302,6 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   // ── Launch template → save directly (no extra click needed)
   const launchTemplate = async (tpl: WorkoutTemplate) => {
     setSaving(true);
-    setSaveError(false);
     try {
       const res = await fetch("/api/activity", {
         method: "POST",
@@ -296,15 +314,22 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           caloriesBurned: tpl.defaultCalories ?? null,
         }),
       });
-      if (!res.ok) { setSaveError(true); return; }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("[launchTemplate] HTTP", res.status, text);
+        showToast(`Erreur ${res.status} — ${text.slice(0, 60) || "sauvegarde échouée"}`, false);
+        return;
+      }
       const json = await res.json() as { activity?: ManualActivity };
       if (json.activity) {
         setActivities((prev) => [json.activity!, ...prev]);
+        showToast(`✓ ${tpl.name} enregistré`, true);
       } else {
-        setSaveError(true);
+        showToast("Réponse inattendue du serveur", false);
       }
-    } catch {
-      setSaveError(true);
+    } catch (err) {
+      console.error("[launchTemplate] catch", err);
+      showToast(`Erreur réseau`, false);
     } finally {
       setSaving(false);
     }
@@ -329,7 +354,6 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
     const durationMin = 30;
     const caloriesBurned = Math.round(exercise.met * userWeightKg * durationMin / 60);
     setSaving(true);
-    setSaveError(false);
     try {
       const res = await fetch("/api/activity", {
         method: "POST",
@@ -342,15 +366,22 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           caloriesBurned,
         }),
       });
-      if (!res.ok) { setSaveError(true); return; }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("[sport save] HTTP", res.status, text);
+        showToast(`Erreur ${res.status} — ${text.slice(0, 60) || "sauvegarde échouée"}`, false);
+        return;
+      }
       const json = await res.json() as { activity?: ManualActivity };
       if (json.activity) {
         setActivities((prev) => [json.activity!, ...prev]);
+        showToast(`✓ ${exercise.name} ajouté (30 min · ${caloriesBurned} kcal)`, true);
       } else {
-        setSaveError(true);
+        showToast("Réponse inattendue du serveur", false);
       }
-    } catch {
-      setSaveError(true);
+    } catch (err) {
+      console.error("[sport save] catch", err);
+      showToast(`Erreur réseau — ${String(err).slice(0, 60)}`, false);
     } finally {
       setSaving(false);
     }
@@ -540,7 +571,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
 
               {saveError && (
                 <p className="text-[12px] mt-2 text-center" style={{ color: "#f87171" }}>
-                  Erreur lors de la sauvegarde — réessaye
+                  {saveErrDetail || "Erreur lors de la sauvegarde — réessaye"}
                 </p>
               )}
               <div className="flex gap-3 mt-3">
@@ -818,6 +849,29 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
           </div>
         )}
       </div>
+
+      {/* ── Toast ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key="toast"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-24 left-1/2 z-50 max-w-xs w-[90vw] px-4 py-3 rounded-2xl text-[13px] font-medium text-center"
+            style={{
+              transform: "translateX(-50%)",
+              background: toast.ok ? "rgba(52,211,153,0.18)" : "rgba(239,68,68,0.18)",
+              border: `1px solid ${toast.ok ? "rgba(52,211,153,0.4)" : "rgba(239,68,68,0.4)"}`,
+              color: toast.ok ? "rgba(52,211,153,0.95)" : "#f87171",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sport Search Modal */}
       <SportSearchModal
