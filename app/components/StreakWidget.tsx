@@ -37,69 +37,66 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
     }
   });
 
-  const CELL = 9;
-  const GAP  = 2;
+  const GAP = 3;
+  const LEGEND_CELL = 9;
 
   return (
-    <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-      <div style={{ display: "inline-block", minWidth: "fit-content" }}>
-        {/* Month row */}
-        <div className="flex mb-1" style={{ gap: GAP }}>
-          {weeks.map((_, wi) => {
-            const label = monthLabels.find((m) => m.weekIdx === wi);
-            return (
-              <div key={wi} style={{ width: CELL, flexShrink: 0 }}>
-                {label && (
-                  <span className="text-[8px] capitalize" style={{ color: "var(--text-muted)" }}>
-                    {label.label}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Grid */}
-        <div className="flex" style={{ gap: GAP }}>
-          {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col" style={{ gap: GAP }}>
-              {week.map((day) => (
-                <motion.div
-                  key={day.date}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2, delay: wi * 0.01 }}
-                  title={`${day.date} · ${day.calories} kcal${day.pct > 0 ? ` (${day.pct}%)` : ""}`}
-                  style={{
-                    width:  CELL,
-                    height: CELL,
-                    borderRadius: 2,
-                    background: heatColor(day),
-                    flexShrink: 0,
-                    cursor: "default",
-                  }}
-                />
-              ))}
+    <div style={{ width: "100%" }}>
+      {/* Month row */}
+      <div className="flex mb-1" style={{ gap: GAP }}>
+        {weeks.map((_, wi) => {
+          const label = monthLabels.find((m) => m.weekIdx === wi);
+          return (
+            <div key={wi} style={{ flex: 1, minWidth: 0 }}>
+              {label && (
+                <span className="text-[8px] capitalize" style={{ color: "var(--text-muted)" }}>
+                  {label.label}
+                </span>
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>0%</span>
-          {[0, 0.25, 0.5, 0.75, 1].map((v) => (
-            <div key={v} style={{
-              width: CELL, height: CELL, borderRadius: 2, flexShrink: 0,
-              background: v === 0
-                ? "rgba(255,255,255,0.05)"
-                : v === 0.25 ? "rgba(249,115,22,0.25)"
-                : v === 0.5  ? "rgba(249,115,22,0.50)"
-                : v === 0.75 ? "rgba(249,115,22,0.75)"
-                : "var(--calories)",
-            }} />
-          ))}
-          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>100%+</span>
-        </div>
+      {/* Grid */}
+      <div className="flex" style={{ gap: GAP }}>
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col" style={{ gap: GAP, flex: 1, minWidth: 0 }}>
+            {week.map((day) => (
+              <motion.div
+                key={day.date}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2, delay: wi * 0.01 }}
+                title={`${day.date} · ${day.calories} kcal${day.pct > 0 ? ` (${day.pct}%)` : ""}`}
+                style={{
+                  width: "100%",
+                  aspectRatio: "1",
+                  borderRadius: 2,
+                  background: heatColor(day),
+                  cursor: "default",
+                }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>0%</span>
+        {[0, 0.25, 0.5, 0.75, 1].map((v) => (
+          <div key={v} style={{
+            width: LEGEND_CELL, height: LEGEND_CELL, borderRadius: 2, flexShrink: 0,
+            background: v === 0
+              ? "rgba(255,255,255,0.05)"
+              : v === 0.25 ? "rgba(249,115,22,0.25)"
+              : v === 0.5  ? "rgba(249,115,22,0.50)"
+              : v === 0.75 ? "rgba(249,115,22,0.75)"
+              : "var(--calories)",
+          }} />
+        ))}
+        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>100%+</span>
       </div>
     </div>
   );

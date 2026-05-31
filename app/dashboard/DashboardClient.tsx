@@ -387,6 +387,8 @@ export default function DashboardClient({
               burned={burned}
               activeMinutes={activeMinutes}
               sessionCount={sessions.length}
+              steps={steps}
+              stepsGoal={stepsGoal}
               onBurnedClick={burned ? () => setBurnedDetailOpen(true) : undefined}
             />
 

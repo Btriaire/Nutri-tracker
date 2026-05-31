@@ -94,6 +94,9 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const gf    = fitnessDay?.googleFit;
 
+  // Weight for MET calculations — prefer Withings measurement, fallback to goals, then 75kg
+  const userWeightKg = fitnessDay?.withings?.weightKg ?? goals?.currentWeightKg ?? 75;
+
   const [activities,  setActivities]  = useState<ManualActivity[]>(initialManualActivities as ManualActivity[]);
   const [templates,   setTemplates]   = useState<WorkoutTemplate[]>([]);
   const [loadingTpl,  setLoadingTpl]  = useState(true);
@@ -129,7 +132,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   // ── Form helpers
   const updateFormDuration = (val: string, f: FormState, setF: (v: FormState) => void) => {
     const d = parseInt(val, 10);
-    setF({ ...f, duration: val, calories: d > 0 ? String(estimateCalories(f.actType, d)) : f.calories });
+    setF({ ...f, duration: val, calories: d > 0 ? String(estimateCalories(f.actType, d, userWeightKg)) : f.calories });
   };
   const updateFormType = (type: number, f: FormState, setF: (v: FormState) => void) => {
     const d = parseInt(f.duration, 10);
@@ -137,7 +140,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
       const kcal = estimateMusculationCalories(f.sets, f.reps, f.weightKg);
       setF({ ...f, actType: type, calories: String(kcal) });
     } else {
-      setF({ ...f, actType: type, calories: d > 0 ? String(estimateCalories(type, d)) : f.calories });
+      setF({ ...f, actType: type, calories: d > 0 ? String(estimateCalories(type, d, userWeightKg)) : f.calories });
     }
   };
 
@@ -305,7 +308,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
 
   // ── Sport search: select exercise
   const handleSportSelect = (exercise: ExerciseEntry) => {
-    const kcal = Math.round(exercise.met * 75 * (parseInt(form.duration) || 30) / 60);
+    const kcal = Math.round(exercise.met * userWeightKg * (parseInt(form.duration) || 30) / 60);
     setForm((prev) => ({
       ...prev,
       actType:    exercise.activityType,

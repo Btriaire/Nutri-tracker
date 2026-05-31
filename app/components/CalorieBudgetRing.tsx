@@ -8,11 +8,13 @@ interface Props {
   burned?:         number | null;
   activeMinutes?:  number | null;
   sessionCount?:   number;
+  steps?:          number | null;
+  stepsGoal?:      number;
   size?:           number;
   onBurnedClick?:  () => void;
 }
 
-export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, size = 172, onBurnedClick }: Props) {
+export default function CalorieBudgetRing({ consumed, goal, burned, activeMinutes, sessionCount, steps, stepsGoal = 10000, size = 172, onBurnedClick }: Props) {
   const burnedVal  = burned ?? 0;
   const remaining  = goal - consumed;             // restantes brutes (sans activité)
   const net        = consumed - burnedVal;        // net = consommé − brûlé
@@ -38,6 +40,15 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
   const netForRing = hasActivity ? Math.max(net, 0) : consumed;
   const consPct  = Math.min(netForRing / goal, 1);
   const consDash = circIn * consPct;
+
+  // ── Activity ring: steps vs goal ──────────────────────────────────────────
+  const gap2   = 8;
+  const swAct  = 7;
+  const rAct   = rInner - swInner / 2 - gap2 - swAct / 2;
+  const circAct = 2 * Math.PI * rAct;
+  const stepsPct = (steps != null && stepsGoal > 0) ? Math.min(steps / stepsGoal, 1) : 0;
+  const stepsDash = circAct * stepsPct;
+  const stepsGoalReached = steps != null && steps >= stepsGoal;
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -126,6 +137,41 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
             animate={{ strokeDashoffset: circIn - consDash }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           />
+
+          {/* ── Steps track ── */}
+          <circle cx={size/2} cy={size/2} r={rAct}
+            fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={swAct} />
+
+          {/* ── Steps arc ── */}
+          {stepsPct > 0.01 && (
+            <>
+              {/* Glow */}
+              <motion.circle
+                cx={size/2} cy={size/2} r={rAct}
+                fill="none"
+                stroke={stepsGoalReached ? "rgba(167,139,250,0.25)" : "rgba(99,102,241,0.2)"}
+                strokeWidth={swAct + 6}
+                strokeLinecap="round"
+                strokeDasharray={circAct}
+                initial={{ strokeDashoffset: circAct }}
+                animate={{ strokeDashoffset: circAct - stepsDash }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                style={{ filter: "blur(4px)" }}
+              />
+              {/* Arc */}
+              <motion.circle
+                cx={size/2} cy={size/2} r={rAct}
+                fill="none"
+                stroke={stepsGoalReached ? "rgba(167,139,250,0.9)" : "rgba(99,102,241,0.75)"}
+                strokeWidth={swAct}
+                strokeLinecap="round"
+                strokeDasharray={circAct}
+                initial={{ strokeDashoffset: circAct }}
+                animate={{ strokeDashoffset: circAct - stepsDash }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+              />
+            </>
+          )}
         </svg>
 
         {/* Center text */}
@@ -181,6 +227,12 @@ export default function CalorieBudgetRing({ consumed, goal, burned, activeMinute
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(52,211,153,0.6)" }} />
               <span className="text-[7px]" style={{ color: "var(--text-muted)" }}>brûlé</span>
+            </div>
+          )}
+          {steps != null && steps > 0 && (
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: stepsGoalReached ? "rgba(167,139,250,0.9)" : "rgba(99,102,241,0.75)" }} />
+              <span className="text-[7px]" style={{ color: "var(--text-muted)" }}>pas</span>
             </div>
           )}
         </motion.div>
