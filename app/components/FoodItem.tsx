@@ -16,6 +16,14 @@ const SOURCE_DOT: Record<string, string> = {
 
 interface MicroRow { label: string; value: number | undefined; unit: string; color?: string }
 
+function formatLoggedTime(loggedAt: unknown): string {
+  if (!loggedAt || typeof loggedAt !== "object") return "";
+  const ts = loggedAt as { _seconds?: number; seconds?: number };
+  const sec = ts._seconds ?? ts.seconds;
+  if (!sec) return "";
+  return new Date(sec * 1000).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
 function formatMicro(v: number | undefined, unit: string): string {
   if (v == null || v === 0) return "—";
   return `${unit === "mg" ? (v < 1 ? "<1" : Math.round(v)) : v.toFixed(1)} ${unit}`;
@@ -205,9 +213,17 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
 
             {/* Food info — click to toggle edit */}
             <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
-              <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                {entry.name}
-              </p>
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>
+                  {entry.name}
+                </p>
+                {formatLoggedTime(entry.loggedAt) && (
+                  <span className="text-[10px] tabular-nums flex-shrink-0"
+                    style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                    {formatLoggedTime(entry.loggedAt)}
+                  </span>
+                )}
+              </div>
               <p className="text-[11px]" style={{ color: editing ? "var(--protein)" : "var(--text-muted)" }}>
                 {editing
                   ? "✏️ Modifier la quantité"

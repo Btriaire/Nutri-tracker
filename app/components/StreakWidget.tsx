@@ -37,7 +37,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
     }
   });
 
-  const CELL = 11;
+  const CELL = 9;
   const GAP  = 2;
 
   return (
@@ -109,13 +109,13 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
 
 function StatPill({ emoji, label, value, sub }: { emoji: string; label: string; value: string | number; sub?: string }) {
   return (
-    <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2">
-      <span className="text-base leading-none">{emoji}</span>
-      <span className="text-[18px] font-bold tabular-nums leading-tight" style={{ color: "var(--text-primary)" }}>
+    <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1.5">
+      <span className="text-[13px] leading-none">{emoji}</span>
+      <span className="text-[15px] font-bold tabular-nums leading-tight" style={{ color: "var(--text-primary)" }}>
         {value}
       </span>
-      {sub && <span className="text-[9px] tabular-nums" style={{ color: "var(--calories)" }}>{sub}</span>}
-      <span className="text-[9px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+      {sub && <span className="text-[8px] tabular-nums" style={{ color: "var(--calories)" }}>{sub}</span>}
+      <span className="text-[8px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }
@@ -156,24 +156,23 @@ export default function StreakWidget() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="glass p-4"
+      className="glass p-3"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-base">🔥</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[13px]">🔥</span>
           <div>
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-              Régularité
+            <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
+              Régularité · <span style={{ color: "var(--calories)" }}>{streakLabel}</span>
             </p>
-            <p className="text-[11px]" style={{ color: "var(--calories)" }}>{streakLabel}</p>
           </div>
         </div>
         {data.currentStreak >= 3 && (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl"
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
             style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.3)" }}>
-            <span className="text-[13px]">🔥</span>
-            <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
+            <span className="text-[11px]">🔥</span>
+            <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
               {data.currentStreak}
             </span>
           </div>
@@ -181,12 +180,12 @@ export default function StreakWidget() {
       </div>
 
       {/* Stats row */}
-      <div className="flex items-stretch mb-4"
-        style={{ borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+      <div className="flex items-stretch mb-3"
+        style={{ borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
         <StatPill emoji="🏆" label="Record" value={data.longestStreak} sub="jours" />
-        <div style={{ width: 1, background: "var(--border)", margin: "8px 0" }} />
+        <div style={{ width: 1, background: "var(--border)", margin: "6px 0" }} />
         <StatPill emoji="📅" label="Jours loggés" value={data.totalLoggedDays} />
-        <div style={{ width: 1, background: "var(--border)", margin: "8px 0" }} />
+        <div style={{ width: 1, background: "var(--border)", margin: "6px 0" }} />
         <StatPill emoji="📊" label="Moy/semaine" value={data.weeklyAvgDays} sub="j/sem" />
       </div>
 
