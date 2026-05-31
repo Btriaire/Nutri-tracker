@@ -166,23 +166,6 @@ export default function MealSection({
           </button>
         )}
 
-        {/* Menu suggestion button */}
-        {goals && (
-          <button
-            onClick={(e) => { e.stopPropagation(); setMenuModal(true); }}
-            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
-            style={{
-              background: menuModal ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${menuModal ? "rgba(139,92,246,0.4)" : "var(--border)"}`,
-              color: menuModal ? "#a78bfa" : "var(--text-muted)",
-            }}
-            aria-label="Suggestions de repas"
-            title="Idées de repas"
-          >
-            <IconToolsKitchen2 size={16} stroke={menuModal ? 2 : 1.5} />
-          </button>
-        )}
-
         {/* Hunger slider — compact version in header */}
         <div className="shrink-0" style={{ width: 100 }}>
           <HungerSlider
@@ -233,6 +216,24 @@ export default function MealSection({
                   style={{ color: "var(--text-muted)" }}
                 >
                   {lang === "fr" ? "Appuyer sur + pour ajouter un aliment" : "Tap + to add food"}
+                </button>
+              )}
+
+              {/* Menu suggestion button — toujours visible */}
+              {goals && (
+                <button
+                  onClick={() => setMenuModal(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-medium mt-1 transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))",
+                    border: "1px solid rgba(139,92,246,0.25)",
+                    color: "#a78bfa",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.18), rgba(59,130,246,0.14))")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))")}
+                >
+                  <IconToolsKitchen2 size={14} stroke={1.5} />
+                  Idées de repas IA
                 </button>
               )}
             </div>
