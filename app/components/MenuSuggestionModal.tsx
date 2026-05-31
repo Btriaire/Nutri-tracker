@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconX, IconRefresh, IconLoader2, IconClock, IconFlame, IconChefHat } from "@tabler/icons-react";
+import { IconX, IconRefresh, IconLoader2, IconClock, IconFlame, IconChefHat, IconPlus, IconCheck } from "@tabler/icons-react";
 import type { MealType, NutritionGoals } from "@/app/lib/types";
 import type { MealSuggestion, SuggestionIngredient } from "@/app/api/menu-suggestions/route";
 
@@ -77,8 +77,28 @@ function IngredientRow({ ing }: { ing: SuggestionIngredient }) {
 
 // ── Suggestion card ───────────────────────────────────────────────────────────
 
-function SuggestionCard({ suggestion, index }: { suggestion: MealSuggestion; index: number }) {
+function SuggestionCard({
+  suggestion, index, onAdd,
+}: {
+  suggestion: MealSuggestion;
+  index:      number;
+  onAdd?:     (s: MealSuggestion) => Promise<void>;
+}) {
   const [expanded, setExpanded] = useState(index === 1); // middle card open by default
+  const [adding,   setAdding]   = useState(false);
+  const [added,    setAdded]    = useState(false);
+
+  const handleAdd = async () => {
+    if (!onAdd || adding || added) return;
+    setAdding(true);
+    try {
+      await onAdd(suggestion);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2500);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <motion.div
@@ -186,7 +206,7 @@ function SuggestionCard({ suggestion, index }: { suggestion: MealSuggestion; ind
 
       {/* Tip */}
       {suggestion.tip && (
-        <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl"
+        <div className="mx-4 mb-3 px-3 py-2.5 rounded-xl"
           style={{
             background: "linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.06))",
             border: "1px solid rgba(139,92,246,0.2)",
@@ -196,6 +216,33 @@ function SuggestionCard({ suggestion, index }: { suggestion: MealSuggestion; ind
           </p>
         </div>
       )}
+
+      {/* Add to log button */}
+      {onAdd && (
+        <div className="px-4 pb-4">
+          <button
+            onClick={handleAdd}
+            disabled={adding || added}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+            style={{
+              background: added
+                ? "rgba(52,211,153,0.15)"
+                : adding
+                  ? "rgba(167,139,250,0.1)"
+                  : "rgba(167,139,250,0.18)",
+              border: `1px solid ${added ? "rgba(52,211,153,0.4)" : "rgba(167,139,250,0.4)"}`,
+              color: added ? "#34d399" : "var(--protein)",
+            }}
+          >
+            {adding
+              ? <IconLoader2 size={14} stroke={2} className="animate-spin" />
+              : added
+                ? <><IconCheck size={14} stroke={2} /> Ajouté au journal !</>
+                : <><IconPlus size={14} stroke={2} /> Ajouter ce repas</>
+            }
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -203,18 +250,55 @@ function SuggestionCard({ suggestion, index }: { suggestion: MealSuggestion; ind
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 interface Props {
-  open:    boolean;
-  meal:    MealType;
-  goals:   NutritionGoals;
+  open:        boolean;
+  meal:        MealType;
+  date?:       string;
+  goals:       NutritionGoals;
   alreadyKcal: number;
-  onClose: () => void;
+  onClose:     () => void;
+  onAdded?:    (info: { name: string; calories: number }) => void;
 }
 
-export default function MenuSuggestionModal({ open, meal, goals, alreadyKcal, onClose }: Props) {
+export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKcal, onClose, onAdded }: Props) {
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Add all ingredients of a suggestion to the log
+  const handleAddSuggestion = async (s: MealSuggestion) => {
+    if (!date) return;
+    const entries = s.ingredients.map((ing: SuggestionIngredient, i: number) => {
+      // Estimate grams: if unit is "g" or "ml" use quantity directly, else 100g default
+      const isWeightUnit = /^(g|ml|kg|l)$/i.test(ing.unit.trim());
+      const servingGrams = isWeightUnit ? ing.quantity : 100;
+      return {
+        meal,
+        foodId:       `ai:${s.id}:${i}`,
+        source:       "ai" as const,
+        name:         ing.name,
+        servingLabel: `${ing.quantity} ${ing.unit}`,
+        servingGrams,
+        servingQty:   ing.quantity,
+        servingUnit:  ing.unit,
+        nutrition: {
+          calories: ing.calories,
+          proteinG: ing.proteinG,
+          carbsG:   ing.carbsG,
+          fatG:     ing.fatG,
+          fiberG:   0,
+        },
+      };
+    });
+
+    const res = await fetch("/api/log/batch", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ date, entries }),
+    });
+    if (!res.ok) throw new Error("Batch log failed");
+    onAdded?.({ name: s.name, calories: Math.round(s.totalNutrition.calories) });
+  };
 
   const load = async () => {
     setLoading(true);
@@ -361,7 +445,11 @@ export default function MenuSuggestionModal({ open, meal, goals, alreadyKcal, on
 
               {!loading && !error && suggestions.map((s, i) => (
                 <div key={s.id} style={{ scrollSnapAlign: "center" }}>
-                  <SuggestionCard suggestion={s} index={i} />
+                  <SuggestionCard
+                    suggestion={s}
+                    index={i}
+                    onAdd={date ? handleAddSuggestion : undefined}
+                  />
                 </div>
               ))}
             </div>

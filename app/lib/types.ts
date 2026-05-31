@@ -290,8 +290,23 @@ export interface WithingsDay {
   bmi:          number | null;
   muscleMassKg: number | null;
   fatMassKg:    number | null;
+  spO2Pct:      number | null;
+  restingHR:    number | null;
+  tempCelsius:  number | null;
   measuredAt:   Timestamp | null;
   syncedAt:     Timestamp;
+}
+
+export interface WithingsSleepDay {
+  totalSleepSec: number | null;
+  deepSleepSec:  number | null;
+  lightSleepSec: number | null;
+  remSleepSec:   number | null;
+  sleepScore:    number | null;
+  hrAvgSleep:    number | null;
+  snoringSec:    number | null;
+  wakeupCount:   number | null;
+  syncedAt:      Timestamp;
 }
 
 export interface AppleHealthDay {
@@ -313,11 +328,12 @@ export interface AppleHealthDay {
 }
 
 export interface FitnessDay {
-  date:         string;
-  googleFit?:   GoogleFitDay;
-  withings?:    WithingsDay;
-  appleHealth?: AppleHealthDay;
-  manualSleep?: { sleepMinutes: number | null };  // manual override, never overwritten by sync
+  date:           string;
+  googleFit?:     GoogleFitDay;
+  withings?:      WithingsDay;
+  withingsSleep?: WithingsSleepDay;
+  appleHealth?:   AppleHealthDay;
+  manualSleep?:   { sleepMinutes: number | null };  // manual override, never overwritten by sync
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────

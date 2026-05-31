@@ -16,6 +16,7 @@ import {
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import MealTimingWidget from "@/app/components/MealTimingWidget";
+import BodyCompChart from "@/app/components/BodyCompChart";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -1106,6 +1107,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>Commencez à logger vos repas pour voir vos tendances.</p>
               </div>
             )}
+
+            {/* Body composition chart (Withings) */}
+            <BodyCompChart />
 
             {/* Meal timing widget */}
             <MealTimingWidget />

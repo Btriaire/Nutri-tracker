@@ -335,9 +335,11 @@ export default function MealSection({
         <MenuSuggestionModal
           open={menuModal}
           meal={meal}
+          date={date}
           goals={goals}
           alreadyKcal={alreadyKcal}
           onClose={() => setMenuModal(false)}
+          onAdded={(info) => { setMenuModal(false); handleAdded(info); }}
         />
       )}
     </div>
