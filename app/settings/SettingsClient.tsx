@@ -955,6 +955,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [water,    setWater]    = useState(initialGoals.waterMl.toString());
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
+  const [deductBurned, setDeductBurned] = useState(initialGoals.deductBurnedCalories !== false);
   const [weeklyGoal,     setWeeklyGoal]     = useState(initialGoals.weeklyGoal ?? "maintain");
   const [currentWeight,  setCurrentWeight]  = useState(initialGoals.currentWeightKg?.toString() ?? "");
   const [targetDate,     setTargetDate]     = useState<string>("");
@@ -1067,9 +1068,10 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
       fatGrams:       parseInt(fat)      || 65,
       fiberGrams:     parseInt(fiber)    || 30,
       waterMl:        parseInt(water)    || 2000,
-      stepsGoal:      parseInt(steps)    || 10000,
-      sleepGoalMin:   (parseInt(sleep)   || 7) * 60,
-      activityLevel:  activity,
+      stepsGoal:            parseInt(steps)    || 10000,
+      sleepGoalMin:         (parseInt(sleep)   || 7) * 60,
+      activityLevel:        activity,
+      deductBurnedCalories: deductBurned,
       weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
       targetWeightKg: parseFloat(weight) || null,
     };
@@ -1916,6 +1918,30 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                     color="var(--steps)" onChange={setSteps} />
                   <SliderField label="Objectif sommeil" unit="h" value={sleep} min={4} max={12} step={0.5}
                     color="var(--fit-indigo)" onChange={setSleep} />
+
+                  {/* Deduct burned calories toggle */}
+                  <div className="flex items-center justify-between py-1">
+                    <div>
+                      <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+                        Soustraire les calories brûlées
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {deductBurned
+                          ? "Budget = Objectif + activité — Budget net affiché"
+                          : "Budget = Objectif uniquement — Calories brûlées affichées en info"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setDeductBurned(v => !v)}
+                      className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
+                      style={{ background: deductBurned ? "var(--fit-green, #34d399)" : "rgba(255,255,255,0.12)" }}
+                    >
+                      <span
+                        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                        style={{ transform: deductBurned ? "translateX(20px)" : "translateX(0)" }}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
 

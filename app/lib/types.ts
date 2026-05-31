@@ -208,6 +208,7 @@ export interface NutritionGoals {
   currentWeightKg?: number;   // pour tracking
   plan?:            NutritionPlan;
   activityPlan?:    ActivityPlan;
+  deductBurnedCalories?: boolean;   // false = ne pas soustraire les calories brûlées du budget
 }
 
 export interface PlannedActivity {

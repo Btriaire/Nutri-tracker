@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import { nanoid } from "nanoid";
 import type { ManualActivity } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,8 @@ const ACTIVITY_NAMES: Record<number, string> = {
 };
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))
@@ -43,27 +45,40 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json() as {
-    date: string; name?: string; activityType: number;
-    durationMin: number; caloriesBurned?: number | null; notes?: string;
-  };
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let body: { date: string; name?: string; activityType: number; durationMin: number; caloriesBurned?: number | null; notes?: string };
+  try {
+    body = await req.json() as typeof body;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
   if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date))
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
 
-  const db = getAdminFirestore();
-  const id = nanoid();
-  const activity: ManualActivity = {
-    id,
-    date:           body.date,
-    name:           body.name?.trim() || ACTIVITY_NAMES[body.activityType] || "Activité",
-    activityType:   body.activityType,
-    durationMin:    Math.max(1, body.durationMin),
-    caloriesBurned: body.caloriesBurned ?? null,
-    notes:          body.notes,
-    loggedAt:       Timestamp.now(),
-  };
+  const durationMin = Math.max(1, Number(body.durationMin) || 1);
 
-  await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
-  return NextResponse.json({ activity }, { status: 201 });
+  try {
+    const db  = getAdminFirestore();
+    const id  = crypto.randomUUID();
+    const activity: ManualActivity = {
+      id,
+      date:           body.date,
+      name:           body.name?.trim() || ACTIVITY_NAMES[body.activityType] || "Activité",
+      activityType:   Number(body.activityType) || 0,
+      durationMin,
+      caloriesBurned: body.caloriesBurned != null ? Number(body.caloriesBurned) : null,
+      notes:          body.notes,
+      loggedAt:       Timestamp.now(),
+    };
+
+    await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
+    // Serialize loggedAt to plain object so JSON response is valid
+    return NextResponse.json({ activity: { ...activity, loggedAt: { seconds: activity.loggedAt.seconds, nanoseconds: activity.loggedAt.nanoseconds } } }, { status: 201 });
+  } catch (e) {
+    console.error("[activity POST]", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

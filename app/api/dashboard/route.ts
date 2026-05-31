@@ -52,7 +52,8 @@ export async function GET(req: NextRequest) {
   const weight = recentWeight[0] ?? null;
   const previous = recentWeight[1] ?? null;
 
-  const netCalories = consumed.calories - (burned ?? 0);
+  const deduct = goals.deductBurnedCalories !== false; // default true
+  const netCalories = consumed.calories - (deduct ? (burned ?? 0) : 0);
   const waterMl     = dayLog?.waterMl ?? 0;
 
   const data: DashboardData & { previous?: WeightPoint | null } = {
