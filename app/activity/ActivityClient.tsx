@@ -120,6 +120,10 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   // ── Sport search modal
   const [showSportSearch, setShowSportSearch] = useState(false);
 
+  // ── Template photo editing
+  const tplPhotoEditRef  = useRef<HTMLInputElement>(null);
+  const [editingTplId,   setEditingTplId]   = useState<string | null>(null);
+
   // Load templates on mount
   useEffect(() => {
     fetch("/api/workout-templates")
@@ -306,9 +310,58 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
     }
   };
 
-  // ── Sport search: select exercise
-  const handleSportSelect = (exercise: ExerciseEntry) => {
-    const kcal = Math.round(exercise.met * userWeightKg * (parseInt(form.duration) || 30) / 60);
+  // ── Sport search: select exercise — direct save for standard activities,
+  //    form pre-fill for musculation (needs sets/reps/weight)
+  const handleSportSelect = async (exercise: ExerciseEntry) => {
+    if (isMuscu(exercise.activityType)) {
+      // Musculation → pre-fill form so user can enter sets/reps/weight
+      const kcal = estimateMusculationCalories(EMPTY_FORM.sets, EMPTY_FORM.reps, "");
+      setForm((prev) => ({
+        ...prev,
+        actType:    exercise.activityType,
+        customName: exercise.name,
+        calories:   String(kcal),
+      }));
+      setShowForm(true);
+      return;
+    }
+    // Non-musculation → save directly with 30 min default
+    const durationMin = 30;
+    const caloriesBurned = Math.round(exercise.met * userWeightKg * durationMin / 60);
+    setSaving(true);
+    setSaveError(false);
+    try {
+      const res = await fetch("/api/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          name:           exercise.name,
+          activityType:   exercise.activityType,
+          durationMin,
+          caloriesBurned,
+        }),
+      });
+      if (!res.ok) { setSaveError(true); return; }
+      const json = await res.json() as { activity?: ManualActivity };
+      if (json.activity) {
+        setActivities((prev) => [json.activity!, ...prev]);
+      } else {
+        setSaveError(true);
+      }
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Sport search: "customize" — always pre-fills the form
+  const handleSportCustomize = (exercise: ExerciseEntry) => {
+    const durationMin = parseInt(form.duration) || 30;
+    const kcal = isMuscu(exercise.activityType)
+      ? estimateMusculationCalories(EMPTY_FORM.sets, EMPTY_FORM.reps, "")
+      : Math.round(exercise.met * userWeightKg * durationMin / 60);
     setForm((prev) => ({
       ...prev,
       actType:    exercise.activityType,
@@ -316,6 +369,41 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
       calories:   String(kcal),
     }));
     setShowForm(true);
+  };
+
+  // ── Template photo editing
+  const handleTplPhotoEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingTplId) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 72;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width  - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, 72, 72);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        // PATCH template
+        await fetch(`/api/workout-templates/${editingTplId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoDataUrl: dataUrl }),
+        });
+        setTemplates((prev) => prev.map((t) =>
+          t.id === editingTplId ? { ...t, photoDataUrl: dataUrl } : t
+        ));
+        setEditingTplId(null);
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
   };
 
   // ── Sport search: save as template
@@ -580,13 +668,24 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
               {templates.map((tpl) => (
                 <div key={tpl.id} className="flex items-center gap-3 py-2"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                  {/* Photo thumbnail — clickable to change photo */}
+                  <button
+                    type="button"
+                    onClick={() => { setEditingTplId(tpl.id); tplPhotoEditRef.current?.click(); }}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+                    title="Changer la photo"
+                  >
                     {tpl.photoDataUrl
                       ? <img src={tpl.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
                       : activityEmoji(tpl.activityType)
                     }
-                  </div>
+                    {/* Camera overlay on hover */}
+                    <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.5)" }}>
+                      <IconCamera size={12} style={{ color: "white" }} />
+                    </div>
+                  </button>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                       {tpl.name}
@@ -725,7 +824,17 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         open={showSportSearch}
         onClose={() => setShowSportSearch(false)}
         onSelect={handleSportSelect}
+        onCustomize={handleSportCustomize}
         onSave={handleSportSave}
+      />
+
+      {/* Hidden input for template photo editing */}
+      <input
+        type="file"
+        accept="image/*"
+        ref={tplPhotoEditRef}
+        className="hidden"
+        onChange={handleTplPhotoEdit}
       />
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconSearch, IconX, IconPlus, IconBookmark } from "@tabler/icons-react";
+import { IconSearch, IconX, IconPlus, IconBookmark, IconPencil } from "@tabler/icons-react";
 import { EXERCISE_CATALOG, type ExerciseEntry } from "@/app/lib/exercise-catalog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -11,8 +11,9 @@ import { EXERCISE_CATALOG, type ExerciseEntry } from "@/app/lib/exercise-catalog
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSelect: (e: ExerciseEntry) => void;
-  onSave: (e: ExerciseEntry) => void;
+  onSelect:    (e: ExerciseEntry) => void;   // direct save
+  onCustomize: (e: ExerciseEntry) => void;   // pre-fill form
+  onSave:      (e: ExerciseEntry) => void;   // save as template
 }
 
 // ─── Category tabs ────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ const CATEGORY_COLORS: Record<ExerciseEntry["category"], string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SportSearchModal({ open, onClose, onSelect, onSave }: Props) {
+export default function SportSearchModal({ open, onClose, onSelect, onCustomize, onSave }: Props) {
   const [query,    setQuery]    = useState("");
   const [category, setCategory] = useState<CategoryFilter>("tous");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -66,6 +67,11 @@ export default function SportSearchModal({ open, onClose, onSelect, onSave }: Pr
 
   const handleSelect = (e: ExerciseEntry) => {
     onSelect(e);
+    onClose();
+  };
+
+  const handleCustomize = (e: ExerciseEntry) => {
+    onCustomize(e);
     onClose();
   };
 
@@ -191,6 +197,7 @@ export default function SportSearchModal({ open, onClose, onSelect, onSave }: Pr
                       key={exercise.id}
                       exercise={exercise}
                       onSelect={() => handleSelect(exercise)}
+                      onCustomize={() => handleCustomize(exercise)}
                       onSave={() => onSave(exercise)}
                     />
                   ))}
@@ -210,10 +217,12 @@ export default function SportSearchModal({ open, onClose, onSelect, onSave }: Pr
 function ExerciseCard({
   exercise,
   onSelect,
+  onCustomize,
   onSave,
 }: {
   exercise: ExerciseEntry;
   onSelect: () => void;
+  onCustomize: () => void;
   onSave: () => void;
 }) {
   const color = CATEGORY_COLORS[exercise.category];
@@ -270,12 +279,21 @@ function ExerciseCard({
         >
           <IconBookmark size={14} style={{ color: "var(--text-muted)" }} />
         </button>
-        {/* Select */}
+        {/* Customize (pencil) — pre-fill form */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onCustomize(); }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
+          style={{ background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.35)" }}
+          title="Personnaliser avant d'ajouter"
+        >
+          <IconPencil size={13} style={{ color: "#fbbf24" }} />
+        </button>
+        {/* Direct add */}
         <button
           onClick={onSelect}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
           style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)" }}
-          title="Utiliser cet exercice"
+          title="Ajouter directement (30 min)"
         >
           <IconPlus size={14} style={{ color: "var(--protein)" }} />
         </button>
