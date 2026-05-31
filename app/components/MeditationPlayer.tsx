@@ -122,69 +122,83 @@ function buildYTUrl(videoId: string, muted: boolean) {
 
 // ─── Now Playing card — visible YouTube player ────────────────────────────────
 
+// ─── NowPlaying — iframe visible 1 tap puis masquée ─────────────────────────
+// Stratégie : iframe dans un wrapper overflow:hidden.
+// Avant activation → wrapper height=80px visible (pour l'autoplay grant).
+// Après activation → wrapper height=1px, iframe 200px → audio continue.
+// session terminée → src vide pour stopper YouTube.
+
 function NowPlaying({
-  track, iframeKey, onChangeTrack, tracks,
+  track, iframeKey, active, onChangeTrack, tracks,
 }: {
   track:         Track;
   iframeKey:     number;
+  active:        boolean;      // false = session terminée → stopper audio
   onChangeTrack: (t: Track) => void;
   tracks:        Track[];
 }) {
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const [activatingKey, setActivatingKey] = useState(iframeKey);
+  const [localKey, setLocalKey] = useState(iframeKey);
 
-  // When track changes from outside, sync key
-  const effectiveKey = audioEnabled ? activatingKey : iframeKey;
+  // Reset when track changes
+  useEffect(() => {
+    setAudioEnabled(false);
+    setLocalKey(k => k + 1);
+  }, [track.id]);
+
+  // Stop audio when session ends
+  const iframeSrc = !active
+    ? "about:blank"
+    : buildYTUrl(track.videoId, !audioEnabled);
 
   const handleActivate = () => {
     setAudioEnabled(true);
-    setActivatingKey(k => k + 1); // reload iframe without mute=1
+    setLocalKey(k => k + 1); // reload without mute=1
   };
 
-  // Reset audio-enabled state when track changes
-  useEffect(() => {
-    setAudioEnabled(false);
-  }, [track.id]);
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl overflow-hidden"
-      style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.2)" }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
-        <span className="text-[15px]">{track.emoji}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold" style={{ color: "#34d399" }}>Musique ambiante</p>
-          <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>{track.label}</p>
-        </div>
-      </div>
+    <div className="rounded-xl overflow-hidden"
+      style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.2)" }}>
 
-      {/* YouTube player — VISIBLE so browser allows audio */}
-      <div className="relative mx-3 mb-2 rounded-lg overflow-hidden" style={{ aspectRatio: "16/9", background: "#000" }}>
+      {/* iframe zone — visible avant activation, 1px après */}
+      <div style={{
+        height: audioEnabled ? 1 : 80,
+        overflow: "hidden",
+        transition: "height 0.3s ease",
+        position: "relative",
+        background: "#000",
+      }}>
         <iframe
-          key={`${track.videoId}-${effectiveKey}`}
-          src={buildYTUrl(track.videoId, !audioEnabled)}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-          style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+          key={`${track.videoId}-${localKey}`}
+          src={iframeSrc}
+          allow="autoplay; encrypted-media"
+          style={{ width: "100%", height: 200, border: "none", display: "block" }}
           title={track.label}
         />
-        {/* "Activer le son" overlay — shown until user taps */}
+        {/* Overlay activation — visible tant que audioEnabled=false */}
         {!audioEnabled && (
           <button
             onClick={handleActivate}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 transition-all"
-            style={{ background: "rgba(0,0,0,0.7)" }}
+            className="absolute inset-0 flex items-center justify-center gap-3"
+            style={{ background: "rgba(0,0,0,0.72)" }}
           >
-            <span className="text-4xl">🔊</span>
-            <span className="text-white text-[13px] font-semibold">Appuyez pour activer le son</span>
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-              Nécessite une interaction pour jouer l&apos;audio
+            <span className="text-3xl">🔊</span>
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>
+              Appuyez pour lancer la musique
             </span>
           </button>
         )}
+      </div>
+
+      {/* Compact now-playing row */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <span className="text-[15px]">{track.emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold" style={{ color: audioEnabled ? "#34d399" : "var(--text-muted)" }}>
+            {audioEnabled ? "♪ En cours" : "Son inactif — appuyez ▲"}
+          </p>
+          <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>{track.label}</p>
+        </div>
       </div>
 
       {/* Track switcher */}
@@ -203,7 +217,7 @@ function NowPlaying({
           </button>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -253,7 +267,7 @@ export default function MeditationPlayer() {
     setPaused(false);
     setStepIdx(0);
     setStepElapsed(0);
-    setCurrentTrack(null);
+    // NowPlaying reçoit active=false → src=about:blank → stoppe YouTube
   }, []);
 
   const togglePause = useCallback(() => {
@@ -291,6 +305,16 @@ export default function MeditationPlayer() {
                 try { localStorage.setItem("meditation_sessions", JSON.stringify(updated)); } catch {}
                 return updated;
               });
+              // Save to Firestore (fire-and-forget)
+              fetch("/api/meditation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  programId:    selected.id,
+                  programLabel: selected.label,
+                  durationMin:  selected.durationMin,
+                }),
+              }).catch(() => {});
               return si;
             }
             return nextSi;
@@ -407,10 +431,11 @@ export default function MeditationPlayer() {
             <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>En pause · appuyez ▶ pour reprendre</p>
           )}
 
-          {/* Now Playing — iframe visible pour que le navigateur autorise l'audio */}
+          {/* Now Playing */}
           <NowPlaying
             track={currentTrack}
             iframeKey={iframeKey}
+            active={running}
             onChangeTrack={handleChangeTrack}
             tracks={TRACKS[selected.soundCat]}
           />
