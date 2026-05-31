@@ -12,6 +12,7 @@ export interface WorkoutTemplate {
   defaultDurationMin: number;
   defaultCalories:    number | null;
   notes?:             string;
+  photoDataUrl?:      string;
   createdAt:          { seconds: number; nanoseconds: number };
 }
 

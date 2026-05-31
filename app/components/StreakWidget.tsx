@@ -109,13 +109,15 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
 
 function StatPill({ emoji, label, value, sub }: { emoji: string; label: string; value: string | number; sub?: string }) {
   return (
-    <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5 py-1.5">
-      <span className="text-[13px] leading-none">{emoji}</span>
-      <span className="text-[15px] font-bold tabular-nums leading-tight" style={{ color: "var(--text-primary)" }}>
-        {value}
-      </span>
-      {sub && <span className="text-[8px] tabular-nums" style={{ color: "var(--calories)" }}>{sub}</span>}
-      <span className="text-[8px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+    <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1">
+      <span className="text-[10px] leading-none flex-shrink-0">{emoji}</span>
+      <div className="min-w-0">
+        <span className="text-[12px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+          {value}
+        </span>
+        {sub && <span className="text-[9px] tabular-nums ml-0.5" style={{ color: "var(--calories)" }}>{sub}</span>}
+        <p className="text-[9px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
+      </div>
     </div>
   );
 }
@@ -180,13 +182,13 @@ export default function StreakWidget() {
       </div>
 
       {/* Stats row */}
-      <div className="flex items-stretch mb-3"
-        style={{ borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-        <StatPill emoji="🏆" label="Record" value={data.longestStreak} sub="jours" />
-        <div style={{ width: 1, background: "var(--border)", margin: "6px 0" }} />
+      <div className="flex items-stretch mb-2"
+        style={{ borderRadius: 8, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        <StatPill emoji="🏆" label="Record" value={data.longestStreak} sub="j" />
+        <div style={{ width: 1, background: "var(--border)", margin: "4px 0" }} />
         <StatPill emoji="📅" label="Jours loggés" value={data.totalLoggedDays} />
-        <div style={{ width: 1, background: "var(--border)", margin: "6px 0" }} />
-        <StatPill emoji="📊" label="Moy/semaine" value={data.weeklyAvgDays} sub="j/sem" />
+        <div style={{ width: 1, background: "var(--border)", margin: "4px 0" }} />
+        <StatPill emoji="📊" label="Moy/sem." value={data.weeklyAvgDays} sub="j" />
       </div>
 
       {/* Heatmap */}

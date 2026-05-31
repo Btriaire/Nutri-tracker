@@ -405,6 +405,10 @@ export interface ManualActivity {
   caloriesBurned: number | null;
   notes?:         string;
   loggedAt:       Timestamp;
+  sets?:          number;
+  reps?:          number;
+  weightKg?:      number | null;
+  weightPerSet?:  number[] | null;
 }
 
 // ─── Trend Data ───────────────────────────────────────────────────────────────

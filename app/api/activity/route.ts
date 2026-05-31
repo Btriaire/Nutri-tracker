@@ -48,7 +48,18 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { date: string; name?: string; activityType: number; durationMin: number; caloriesBurned?: number | null; notes?: string };
+  let body: {
+    date: string;
+    name?: string;
+    activityType: number;
+    durationMin: number;
+    caloriesBurned?: number | null;
+    notes?: string;
+    sets?: number;
+    reps?: number;
+    weightKg?: number | null;
+    weightPerSet?: number[] | null;
+  };
   try {
     body = await req.json() as typeof body;
   } catch {
@@ -72,6 +83,10 @@ export async function POST(req: NextRequest) {
       caloriesBurned: body.caloriesBurned != null ? Number(body.caloriesBurned) : null,
       notes:          body.notes,
       loggedAt:       Timestamp.now(),
+      ...(body.sets       != null ? { sets:       Number(body.sets)       } : {}),
+      ...(body.reps       != null ? { reps:       Number(body.reps)       } : {}),
+      ...(body.weightKg   != null ? { weightKg:   Number(body.weightKg)   } : {}),
+      ...(body.weightPerSet       ? { weightPerSet: body.weightPerSet.map(Number) } : {}),
     };
 
     await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
