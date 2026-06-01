@@ -17,7 +17,6 @@ import {
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import MealTimingWidget from "@/app/components/MealTimingWidget";
-import BodyCompChart from "@/app/components/BodyCompChart";
 import AlbumModal from "@/app/components/AlbumModal";
 import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
 
@@ -1153,8 +1152,6 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </div>
             )}
 
-            {/* Body composition chart (Withings) */}
-            <BodyCompChart />
 
             {/* Blood pressure trend */}
             {(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
@@ -11,7 +11,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -69,6 +69,32 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [mealPhotos, setMealPhotos] = useState<MealPhotos>({});
   const [dayPhotos,  setDayPhotos]  = useState<DayPhoto[]>([]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
+  const UNLOCK_TAPS = 3;
+  const [unlockTaps,    setUnlockTaps]    = useState(0);
+  const [unlockFlash,   setUnlockFlash]   = useState(false); // brief visual feedback
+  const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUnlockTap = useCallback(async () => {
+    const next = unlockTaps + 1;
+    setUnlockTaps(next);
+    setUnlockFlash(true);
+    setTimeout(() => setUnlockFlash(false), 150);
+    // Reset counter after 2 s of inactivity
+    if (unlockTimer.current) clearTimeout(unlockTimer.current);
+    unlockTimer.current = setTimeout(() => setUnlockTaps(0), 2000);
+    if (next >= UNLOCK_TAPS) {
+      setUnlockTaps(0);
+      if (unlockTimer.current) clearTimeout(unlockTimer.current);
+      setValidated(false);
+      await fetch("/api/log", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ date, validated: false }),
+      });
+    }
+  }, [unlockTaps, date]);
 
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
@@ -278,22 +304,50 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             ))}
           </div>
 
-          {/* Validate day button */}
-          <button
-            onClick={() => validated ? undefined : setShowValidateModal(true)}
-            className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-medium transition-all"
-            style={{
-              background: validated
-                ? "rgba(34,197,94,0.12)"
-                : "rgba(255,255,255,0.04)",
-              border: `1px solid ${validated ? "rgba(34,197,94,0.4)" : "var(--border)"}`,
-              color: validated ? "#22c55e" : "var(--text-secondary)",
-              cursor: validated ? "default" : "pointer",
-            }}
-          >
-            <IconCheck size={14} stroke={validated ? 2.5 : 1.5} />
-            {validated ? "Journée validée" : "Valider la journée"}
-          </button>
+          {/* Validate / Unlock button */}
+          {validated ? (
+            <div className="mt-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl"
+              style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
+              <div className="flex items-center gap-2">
+                <IconLock size={13} style={{ color: "#22c55e" }} />
+                <span className="text-[12px] font-medium" style={{ color: "#22c55e" }}>Journée validée</span>
+              </div>
+              {/* Unlock tap button — shows progress pips */}
+              <button
+                onClick={handleUnlockTap}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all active:scale-90"
+                style={{
+                  background: unlockFlash ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${unlockFlash ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}`,
+                  color: unlockFlash ? "#f87171" : "var(--text-muted)",
+                }}
+                title="Taper 3× pour déverrouiller"
+              >
+                <IconX size={11} />
+                <span className="text-[10px]">déverrouiller</span>
+                {/* tap pips */}
+                <div className="flex gap-0.5 ml-0.5">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="w-1 h-1 rounded-full transition-all"
+                      style={{ background: i <= unlockTaps ? "#f87171" : "rgba(255,255,255,0.15)" }} />
+                  ))}
+                </div>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowValidateModal(true)}
+              className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <IconCheck size={14} stroke={1.5} />
+              Valider la journée
+            </button>
+          )}
         </motion.div>
 
         {/* Tracked nutrients — compact strip */}
@@ -335,60 +389,83 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <AIInsightBox type="journal" data={journalInsightData} delay={800} />
         </motion.div>
 
-        {/* Water tracker */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.08 }}
-          className="mb-5"
-        >
-          <WaterTracker
-            date={date}
-            waterMl={waterMl}
-            goalMl={goals.waterMl ?? 2000}
-            onUpdate={setWaterMl}
-          />
-        </motion.div>
-
-        {/* Meal sections */}
-        <div className="space-y-3">
-          {MEALS.map((meal, i) => (
+        {/* Locked overlay wrapper — water + meals + hunger */}
+        <div className="relative">
+          {/* Lock overlay when validated */}
+          {validated && (
             <motion.div
-              key={meal}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.12 + i * 0.05 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="absolute inset-0 z-20 rounded-2xl flex flex-col items-center justify-start pt-16 gap-3"
+              style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", pointerEvents: "auto" }}
             >
-              <MealSection
-                meal={meal}
-                entries={entries.filter((e) => e.meal === meal)}
-                date={date}
-                lang={lang}
-                photoUrl={mealPhotos[meal]}
-                hunger={mealHunger[meal]}
-                goals={goals}
-                alreadyKcal={Math.round(totals.calories)}
-                onEntriesChange={handleMealChange}
-                onFoodAdded={showToast}
-                onPhotoChange={handlePhotoChange}
-                onHungerChange={handleHungerChange}
-              />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                  <IconLock size={22} style={{ color: "#22c55e" }} />
+                </div>
+                <p className="text-[13px] font-semibold" style={{ color: "#22c55e" }}>Journée verrouillée</p>
+                <p className="text-[11px] text-center px-8" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Tapez ✕ 3× sur « déverrouiller » pour modifier
+                </p>
+              </div>
             </motion.div>
-          ))}
-        </div>
+          )}
 
-        {/* Hunger timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.35 }}
-          className="mt-3"
-        >
-          <HungerTimeline
-            mealHunger={mealHunger}
-            onSetHunger={handleHungerChange}
-          />
-        </motion.div>
+          {/* Water tracker */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.08 }}
+            className="mb-5"
+          >
+            <WaterTracker
+              date={date}
+              waterMl={waterMl}
+              goalMl={goals.waterMl ?? 2000}
+              onUpdate={setWaterMl}
+            />
+          </motion.div>
+
+          {/* Meal sections */}
+          <div className="space-y-3">
+            {MEALS.map((meal, i) => (
+              <motion.div
+                key={meal}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.12 + i * 0.05 }}
+              >
+                <MealSection
+                  meal={meal}
+                  entries={entries.filter((e) => e.meal === meal)}
+                  date={date}
+                  lang={lang}
+                  photoUrl={mealPhotos[meal]}
+                  hunger={mealHunger[meal]}
+                  goals={goals}
+                  alreadyKcal={Math.round(totals.calories)}
+                  onEntriesChange={handleMealChange}
+                  onFoodAdded={showToast}
+                  onPhotoChange={handlePhotoChange}
+                  onHungerChange={handleHungerChange}
+                />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Hunger timeline */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.35 }}
+            className="mt-3"
+          >
+            <HungerTimeline
+              mealHunger={mealHunger}
+              onSetHunger={handleHungerChange}
+            />
+          </motion.div>
+        </div>
       </div>
 
       {/* Validate modal */}
