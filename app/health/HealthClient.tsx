@@ -20,7 +20,6 @@ import type { BloodPressureReading, BPMoment, HealthEntry, MedicationEntry, Symp
 import type { CardioPoint, WithingsPoint } from "@/app/api/cardio/route";
 import MentalHealthWidget from "@/app/components/MentalHealthWidget";
 import BreathingGuide from "@/app/components/BreathingGuide";
-import SleepHypnogram from "@/app/components/SleepHypnogram";
 import MoodTrendChart from "@/app/components/MoodTrendChart";
 import PixelWall from "@/app/components/PixelWall";
 import type { MoodPoint } from "@/app/components/MoodTrendChart";
@@ -898,7 +897,6 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>/ 7h objectif</span>
                         {sleepOk && <span className="text-[11px] font-medium ml-1" style={{ color: "#34A853" }}>✓ Objectif atteint</span>}
                       </div>
-                      <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
                     </>
                   ) : (
                     <div className="text-center py-4">
@@ -1656,17 +1654,6 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </ResponsiveContainer>
               </div>
             </motion.div>
-
-            {/* Sleep Hypnogram */}
-            {(() => {
-              const lastSleep = [...visible].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
-              if (!lastSleep) return null;
-              return (
-                <motion.div {...fade(0.25)} className="glass p-4">
-                  <SleepHypnogram sleepMinutes={lastSleep.sleepMinutes!} bedtimeHour={23} />
-                </motion.div>
-              );
-            })()}
 
             {/* Daily log table */}
             {visible.length > 0 && (
