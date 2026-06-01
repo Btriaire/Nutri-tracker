@@ -566,10 +566,8 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
   }));
 
   // Most recent sleep for hypnogram
-  // Prefer most recent night that has phase data; fallback to any night with sleep minutes
-  const lastSleep =
-    [...points].reverse().find(p => (p.lightSleepMin ?? 0) + (p.deepSleepMin ?? 0) + (p.remSleepMin ?? 0) > 0) ??
-    [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+  // Most recent night with sleep data — ring shows phases if available, single arc if not
+  const lastSleep = [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
 
   // Today's date string
   const today = format(new Date(), "yyyy-MM-dd");
