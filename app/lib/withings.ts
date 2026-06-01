@@ -85,8 +85,9 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
 
 // ─── Measures fetch ───────────────────────────────────────────────────────────
 
-// meastype: 1=weight(kg) 6=fat% 8=fat-free-mass 11=resting-HR 54=SpO2 71=body-temp 76=muscle-mass
-const MEAS_TYPES = "1,6,8,11,54,71,76";
+// meastype: 1=weight 6=fat% 8=fat-free-mass 9=diastolicBP 10=systolicBP 11=resting-HR
+//           41=hydration 42=bone-mass 54=SpO2 71=body-temp 76=muscle-mass 173=visceral-fat
+const MEAS_TYPES = "1,6,8,9,10,11,41,42,54,71,76,173";
 
 interface MeasureGroup {
   date:     number;    // unix timestamp
@@ -94,16 +95,21 @@ interface MeasureGroup {
 }
 
 interface DayMeasure {
-  date:         string;
-  weightKg:     number | null;
-  bodyFatPct:   number | null;
-  bmi:          number | null;
-  muscleMassKg: number | null;
-  fatMassKg:    number | null;
-  spO2Pct:      number | null;
-  restingHR:    number | null;
-  tempCelsius:  number | null;
-  measuredAt:   number | null; // unix ms
+  date:          string;
+  weightKg:      number | null;
+  bodyFatPct:    number | null;
+  bmi:           number | null;
+  muscleMassKg:  number | null;
+  fatMassKg:     number | null;
+  boneMassKg:    number | null;
+  hydrationPct:  number | null;
+  visceralFat:   number | null;
+  spO2Pct:       number | null;
+  restingHR:     number | null;
+  tempCelsius:   number | null;
+  systolicBP:    number | null;
+  diastolicBP:   number | null;
+  measuredAt:    number | null; // unix ms
 }
 
 function scaleMeas(value: number, unit: number): number {
@@ -147,18 +153,23 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
   for (const grp of groups) {
     const date = new Date(grp.date * 1000).toISOString().slice(0, 10);
     if (!byDate[date]) {
-      byDate[date] = { date, weightKg: null, bodyFatPct: null, bmi: null, muscleMassKg: null, fatMassKg: null, spO2Pct: null, restingHR: null, tempCelsius: null, measuredAt: grp.date * 1000 };
+      byDate[date] = { date, weightKg: null, bodyFatPct: null, bmi: null, muscleMassKg: null, fatMassKg: null, boneMassKg: null, hydrationPct: null, visceralFat: null, spO2Pct: null, restingHR: null, tempCelsius: null, systolicBP: null, diastolicBP: null, measuredAt: grp.date * 1000 };
     }
     const day = byDate[date];
     for (const m of grp.measures) {
       const v = scaleMeas(m.value, m.unit);
-      if (m.type === 1)  day.weightKg     = Math.round(v * 100) / 100;
-      if (m.type === 6)  day.bodyFatPct   = Math.round(v * 10)  / 10;
-      if (m.type === 8)  day.fatMassKg    = null; // type 8 is fat-free mass — store separately
-      if (m.type === 11) day.restingHR    = Math.round(v);
-      if (m.type === 54) day.spO2Pct      = Math.round(v * 10) / 10;
-      if (m.type === 71) day.tempCelsius  = Math.round(v * 10) / 10;
-      if (m.type === 76) day.muscleMassKg = Math.round(v * 100) / 100;
+      if (m.type === 1)   day.weightKg     = Math.round(v * 100) / 100;
+      if (m.type === 6)   day.bodyFatPct   = Math.round(v * 10)  / 10;
+      if (m.type === 8)   day.fatMassKg    = null; // type 8 = fat-free mass, used below
+      if (m.type === 9)   day.diastolicBP  = Math.round(v);
+      if (m.type === 10)  day.systolicBP   = Math.round(v);
+      if (m.type === 11)  day.restingHR    = Math.round(v);
+      if (m.type === 41)  day.hydrationPct = Math.round(v * 10) / 10;
+      if (m.type === 42)  day.boneMassKg   = Math.round(v * 100) / 100;
+      if (m.type === 54)  day.spO2Pct      = Math.round(v * 10) / 10;
+      if (m.type === 71)  day.tempCelsius  = Math.round(v * 10) / 10;
+      if (m.type === 76)  day.muscleMassKg = Math.round(v * 100) / 100;
+      if (m.type === 173) day.visceralFat  = Math.round(v * 10) / 10;
     }
     // Compute fatMassKg from weight - fatFreeMass
     const fatFree = grp.measures.find(m => m.type === 8);
@@ -194,9 +205,14 @@ export async function syncRange(userId: string, from: string, to: string): Promi
           bmi:          day.bmi,
           muscleMassKg: day.muscleMassKg,
           fatMassKg:    day.fatMassKg,
+          boneMassKg:   day.boneMassKg   ?? null,
+          hydrationPct: day.hydrationPct ?? null,
+          visceralFat:  day.visceralFat  ?? null,
           spO2Pct:      day.spO2Pct      ?? null,
           restingHR:    day.restingHR    ?? null,
           tempCelsius:  day.tempCelsius  ?? null,
+          systolicBP:   day.systolicBP   ?? null,
+          diastolicBP:  day.diastolicBP  ?? null,
           measuredAt:   day.measuredAt ? new Date(day.measuredAt) : null,
           syncedAt:     ts,
         },
@@ -204,6 +220,28 @@ export async function syncRange(userId: string, from: string, to: string): Promi
       written++;
     }
     await batch.commit();
+  }
+
+  // Auto-sync blood pressure to healthLog when Withings BPM data exists
+  const bpDays = days.filter(d => d.systolicBP !== null && d.diastolicBP !== null);
+  if (bpDays.length > 0) {
+    const bpBatch = db.batch();
+    for (const day of bpDays) {
+      const ref = db.doc(`users/${userId}/healthLog/${day.date}`);
+      // Only set if not already manually entered (don't overwrite user data)
+      const existing = await ref.get();
+      const existingData = existing.data() as { systolic?: number; source?: string } | undefined;
+      if (!existing.exists || existingData?.source === "withings") {
+        bpBatch.set(ref, {
+          date:      day.date,
+          systolic:  day.systolicBP,
+          diastolic: day.diastolicBP,
+          source:    "withings",
+          syncedAt:  ts,
+        }, { merge: true });
+      }
+    }
+    await bpBatch.commit();
   }
 
   // Also sync sleep summary
@@ -230,6 +268,34 @@ export async function syncRange(userId: string, from: string, to: string): Promi
     await batch.commit();
   }
 
+  // Sync activity data
+  const actDays = await fetchActivity(userId, from, to);
+  if (actDays.length > 0) {
+    const CHUNK2 = 400;
+    for (let i = 0; i < actDays.length; i += CHUNK2) {
+      const batch = db.batch();
+      for (const a of actDays.slice(i, i + CHUNK2)) {
+        if (!a.steps && !a.activeCalories) continue; // skip empty days
+        const ref = db.doc(`users/${userId}/fitnessData/${a.date}`);
+        batch.set(ref, {
+          date: a.date,
+          withingsActivity: {
+            steps:           a.steps,
+            distanceM:       a.distanceM,
+            activeCalories:  a.activeCalories,
+            totalCalories:   a.totalCalories,
+            softMinutes:     a.softMinutes,
+            moderateMinutes: a.moderateMinutes,
+            intenseMinutes:  a.intenseMinutes,
+            hrAvg:           a.hrAvg,
+            syncedAt:        ts,
+          },
+        }, { merge: true });
+      }
+      await batch.commit();
+    }
+  }
+
   await db.doc(`users/${userId}`).set(
     { integrations: { withings: { connected: true, lastSyncedAt: ts } } },
     { merge: true },
@@ -241,6 +307,53 @@ export async function syncRange(userId: string, from: string, to: string): Promi
 export async function syncDay(userId: string, date: string): Promise<boolean> {
   const n = await syncRange(userId, date, date);
   return n > 0;
+}
+
+// ─── Activity fetch ───────────────────────────────────────────────────────────
+
+interface WithingsActivityDay {
+  date:             string;
+  steps:            number | null;
+  distanceM:        number | null;
+  activeCalories:   number | null;
+  totalCalories:    number | null;
+  softMinutes:      number | null;
+  moderateMinutes:  number | null;
+  intenseMinutes:   number | null;
+  hrAvg:            number | null;
+}
+
+async function fetchActivity(userId: string, from: string, to: string): Promise<WithingsActivityDay[]> {
+  const tokens = await getTokens(userId);
+  if (!tokens) return [];
+
+  const formBody = new URLSearchParams({
+    action:       "getactivity",
+    startdateymd: from,
+    enddateymd:   to,
+    data_fields:  "steps,distance,active_calories,total_calories,soft,moderate,intense,heart_rate_average",
+  });
+
+  const res = await fetch("https://wbsapi.withings.net/v2/measure", {
+    method:  "POST",
+    headers: { "Authorization": `Bearer ${tokens.accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: formBody,
+  });
+  if (!res.ok) return [];
+  const json = await res.json() as { status: number; body?: { activities: { date: string; steps?: number; distance?: number; active_calories?: number; total_calories?: number; soft?: number; moderate?: number; intense?: number; heart_rate_average?: number }[] } };
+  if (json.status !== 0 || !json.body?.activities) return [];
+
+  return json.body.activities.map(a => ({
+    date:            a.date,
+    steps:           a.steps           ?? null,
+    distanceM:       a.distance        ?? null,
+    activeCalories:  a.active_calories ?? null,
+    totalCalories:   a.total_calories  ?? null,
+    softMinutes:     a.soft            ?? null,
+    moderateMinutes: a.moderate        ?? null,
+    intenseMinutes:  a.intense         ?? null,
+    hrAvg:           a.heart_rate_average ?? null,
+  }));
 }
 
 // ─── Sleep Summary ─────────────────────────────────────────────────────────────

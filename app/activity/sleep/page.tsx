@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
-import type { GoogleFitDay, UserProfile } from "@/app/lib/types";
+import type { GoogleFitDay, UserProfile, AppleHealthDay, WithingsSleepDay } from "@/app/lib/types";
 import SleepClient from "./SleepClient";
 
 export interface SleepPoint {
@@ -12,6 +12,7 @@ export interface SleepPoint {
   lightSleepMin:    number | null;
   deepSleepMin:     number | null;
   remSleepMin:      number | null;
+  sleepScore:       number | null;
   sleepSyncedAt?:   string;
 }
 
@@ -32,15 +33,37 @@ export default async function SleepPage() {
   const sleepGoalMin = profile?.goals?.sleepGoalMin ?? 420;
 
   const points: SleepPoint[] = snaps.map((snap, i) => {
-    const data = snap.exists ? snap.data() as { googleFit?: GoogleFitDay; appleHealth?: import("@/app/lib/types").AppleHealthDay; manualSleep?: { sleepMinutes: number | null } } : undefined;
-    const gf   = data?.googleFit;
-    const ah   = data?.appleHealth;
-    // Manual entry takes priority over Google Fit sync
-    const sleepMin = data?.manualSleep?.sleepMinutes ?? gf?.sleepMinutes ?? ah?.sleepMinutes ?? null;
-    // Sleep phases: prefer Google Fit segments, fall back to Apple Health
-    const lightSleepMin = gf?.lightSleepMin ?? ah?.sleepLightMinutes ?? null;
-    const deepSleepMin  = gf?.deepSleepMin  ?? ah?.sleepDeepMinutes  ?? null;
-    const remSleepMin   = gf?.remSleepMin   ?? ah?.sleepRemMinutes   ?? null;
+    const data = snap.exists ? snap.data() as {
+      googleFit?:    GoogleFitDay;
+      appleHealth?:  AppleHealthDay;
+      withingsSleep?: WithingsSleepDay;
+      manualSleep?:  { sleepMinutes: number | null };
+    } : undefined;
+    const gf = data?.googleFit;
+    const ah = data?.appleHealth;
+    const ws = data?.withingsSleep;
+
+    // Sleep total: manual > Withings > Apple Health > Google Fit
+    const sleepMin = data?.manualSleep?.sleepMinutes
+      ?? (ws?.totalSleepSec  != null ? Math.round(ws.totalSleepSec  / 60) : null)
+      ?? ah?.sleepMinutes
+      ?? gf?.sleepMinutes
+      ?? null;
+
+    // Phases: Withings (best, from ScanWatch/Sleep Analyzer) > Apple Health > Google Fit
+    const lightSleepMin = (ws?.lightSleepSec != null ? Math.round(ws.lightSleepSec / 60) : null)
+      ?? ah?.sleepLightMinutes
+      ?? gf?.lightSleepMin
+      ?? null;
+    const deepSleepMin  = (ws?.deepSleepSec  != null ? Math.round(ws.deepSleepSec  / 60) : null)
+      ?? ah?.sleepDeepMinutes
+      ?? gf?.deepSleepMin
+      ?? null;
+    const remSleepMin   = (ws?.remSleepSec   != null ? Math.round(ws.remSleepSec   / 60) : null)
+      ?? ah?.sleepRemMinutes
+      ?? gf?.remSleepMin
+      ?? null;
+
     return {
       date:             dates[i],
       sleepMinutes:     sleepMin,
@@ -48,6 +71,7 @@ export default async function SleepPage() {
       lightSleepMin,
       deepSleepMin,
       remSleepMin,
+      sleepScore:       ws?.sleepScore ?? null,
       sleepSyncedAt:    gf?.sleepSyncedAt,
     };
   });
