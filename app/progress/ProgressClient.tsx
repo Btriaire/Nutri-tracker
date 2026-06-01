@@ -217,15 +217,15 @@ function buildWeightChartData(
   const lastActual = past[past.length - 1]?.actual ?? currentKg;
   if (!lastActual) return past;
 
-  // Bridge point: today (if no actual weight recorded)
-  const todayHasActual = past.some(p => p.date === todayStr);
+  // Bridge point: today — always show actual if measured today, else carry last known weight
+  const todayActualKg  = past.find(p => p.date === todayStr)?.actual ?? null;
   const todayBridge: WeightChartPoint = {
     date:      todayStr,
     label:     "Auj.",
-    actual:    todayHasActual ? null : lastActual,
+    actual:    todayActualKg ?? lastActual,   // ← was null when todayHasActual; now always shown
     projected: getProjected(todayStr) ?? lastActual,
-    projLow:   lastActual,
-    projHigh:  lastActual,
+    projLow:   todayActualKg ?? lastActual,
+    projHigh:  todayActualKg ?? lastActual,
     gapTop:    null,
     gapBottom: null,
     calories:  calMap.get(todayStr) ?? null,
