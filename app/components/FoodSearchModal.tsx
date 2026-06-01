@@ -370,8 +370,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [aiSearching, setAiSearching] = useState(false);
   const [savedAiIds,  setSavedAiIds]  = useState<Set<string>>(new Set());
   const [savingAiId,  setSavingAiId]  = useState<string | null>(null);
-  const [myFoods,       setMyFoods]       = useState<FoodSearchResult[]>([]);
-  const [loadingMyFoods, setLoadingMyFoods] = useState(false);
+  const [myFoods,          setMyFoods]          = useState<FoodSearchResult[]>([]);
+  const [loadingMyFoods,   setLoadingMyFoods]   = useState(false);
+  const [deletingMyFoodId, setDeletingMyFoodId] = useState<string | null>(null);
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ServingOption | null>(null);
   const [customQty, setCustomQty]   = useState("1");
@@ -473,6 +474,17 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     } catch { /* silent */ }
     finally { setLoadingMyFoods(false); }
   }, []);
+
+  const handleDeleteMyFood = async (foodId: string) => {
+    if (deletingMyFoodId) return;
+    const realId = foodId.replace("custom:", "");
+    setDeletingMyFoodId(foodId);
+    try {
+      await fetch(`/api/custom-foods/${realId}`, { method: "DELETE" });
+      setMyFoods(prev => prev.filter(f => f.id !== foodId));
+    } catch { /* silent */ }
+    finally { setDeletingMyFoodId(null); }
+  };
 
   useEffect(() => {
     if (open && tab === "repas")        loadMeals();
@@ -1279,6 +1291,18 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             {isAdding
                               ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#f59e0b" }} />
                               : <IconPlus size={16} stroke={2} style={{ color: "#f59e0b" }} />
+                            }
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMyFood(r.id)}
+                            disabled={deletingMyFoodId === r.id}
+                            className="shrink-0 flex items-center justify-center w-9 self-stretch transition-all"
+                            style={{ background: "rgba(239,68,68,0.07)", borderLeft: "1px solid rgba(239,68,68,0.15)" }}
+                            title="Supprimer de ma liste"
+                          >
+                            {deletingMyFoodId === r.id
+                              ? <IconLoader2 size={12} stroke={2} className="animate-spin" style={{ color: "#f87171" }} />
+                              : <IconTrash size={13} stroke={1.5} style={{ color: "#f87171" }} />
                             }
                           </button>
                         </motion.div>
