@@ -3,8 +3,18 @@ export const dynamic = "force-dynamic";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { FitnessDay, NutritionGoals, UserProfile } from "@/app/lib/types";
 import { defaultGoals } from "@/app/lib/nutrition";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import ActivityClient from "./ActivityClient";
+
+export interface ActivityHistoryPoint {
+  date:        string;
+  steps:       number;
+  activeKcal:  number;
+  activeMin:   number;
+  sportMin:    number;   // manual + GFit sessions combined
+  sportKcal:   number;
+  sessions:    { name: string; emoji: string; durationMin: number; calories: number | null }[];
+}
 
 /**
  * Recursively converts every Firestore Timestamp to a plain number (ms since epoch),
@@ -13,7 +23,6 @@ import ActivityClient from "./ActivityClient";
 function stripTimestamps(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
   if (typeof obj !== "object") return obj;
-  // Firestore Timestamp has toMillis()
   const maybeTs = obj as { toMillis?: () => number };
   if (typeof maybeTs.toMillis === "function") return maybeTs.toMillis();
   if (Array.isArray(obj)) return obj.map(stripTimestamps);
@@ -22,34 +31,92 @@ function stripTimestamps(obj: unknown): unknown {
   );
 }
 
+const EMOJI: Record<number, string> = {
+  1: "🏃", 3: "🏃", 7: "🚴", 8: "🚴", 9: "💪", 17: "🏋️", 46: "🚶",
+  82: "🧘", 83: "💃", 93: "🏊", 104: "🥊", 45: "⚽", 54: "🎾",
+};
+
 export default async function ActivityPage() {
   const userId = "owner";
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today  = format(new Date(), "yyyy-MM-dd");
+  const from   = format(subDays(new Date(), 13), "yyyy-MM-dd");
+
   let fitnessDay: FitnessDay | null = null;
-  let manualActivities: unknown[] = [];
-  let goals: NutritionGoals = defaultGoals();
+  let manualActivities: unknown[]   = [];
+  let goals: NutritionGoals         = defaultGoals();
+  let history: ActivityHistoryPoint[] = [];
 
   try {
     const db = getAdminFirestore();
-    const [fitSnap, actSnap, profileSnap] = await Promise.all([
+
+    const [fitSnap, actSnap, profileSnap, fitHistSnap, manualHistSnap] = await Promise.all([
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
-      db.collection(`users/${userId}/manualActivities`)
-        .where("date", "==", today)
-        .get(),
+      db.collection(`users/${userId}/manualActivities`).where("date", "==", today).get(),
       db.doc(`users/${userId}`).get(),
+      db.collection(`users/${userId}/fitnessData`)
+        .where("date", ">=", from).where("date", "<", today)
+        .orderBy("date", "asc").get(),
+      db.collection(`users/${userId}/manualActivities`)
+        .where("date", ">=", from).where("date", "<", today)
+        .get(),
     ]);
-    if (fitSnap.exists) {
-      // Strip ALL Timestamps recursively — any Firestore Timestamp in the tree
-      // will throw "Only plain objects" if passed to a Client Component as-is.
-      fitnessDay = stripTimestamps(fitSnap.data()) as FitnessDay;
-    }
+
+    if (fitSnap.exists) fitnessDay = stripTimestamps(fitSnap.data()) as FitnessDay;
+
     manualActivities = actSnap.docs.map((d) => {
       const data = stripTimestamps(d.data()) as Record<string, unknown>;
       return { ...data, id: d.id };
     });
-    if (profileSnap.exists) {
-      goals = (profileSnap.data() as UserProfile).goals ?? defaultGoals();
+
+    if (profileSnap.exists) goals = (profileSnap.data() as UserProfile).goals ?? defaultGoals();
+
+    // Build history: merge fitnessData + manualActivities per day
+    const histMap = new Map<string, ActivityHistoryPoint>();
+
+    for (const d of fitHistSnap.docs) {
+      const fd   = stripTimestamps(d.data()) as FitnessDay;
+      const gf   = fd.googleFit;
+      const date = (fd.date as string) ?? d.id;
+      const sessions = ((gf?.sessions ?? []) as { name: string; activityType: number; durationMin: number; calories?: number | null }[])
+        .map(s => ({
+          name:        s.name,
+          emoji:       EMOJI[s.activityType] ?? "🏅",
+          durationMin: s.durationMin,
+          calories:    s.calories ?? null,
+        }));
+      histMap.set(date, {
+        date,
+        steps:      (gf?.steps as number)                    ?? 0,
+        activeKcal: (gf?.activeCaloriesBurned as number)     ?? 0,
+        activeMin:  (gf?.activeMinutes as number)            ?? 0,
+        sportMin:   sessions.reduce((a, s) => a + s.durationMin, 0),
+        sportKcal:  sessions.reduce((a, s) => a + (s.calories ?? 0), 0),
+        sessions,
+      });
     }
+
+    for (const d of manualHistSnap.docs) {
+      const m    = stripTimestamps(d.data()) as Record<string, unknown>;
+      const date = m.date as string;
+      if (!date) continue;
+      const entry = histMap.get(date) ?? {
+        date, steps: 0, activeKcal: 0, activeMin: 0, sportMin: 0, sportKcal: 0, sessions: [],
+      };
+      const dur  = (m.durationMin as number)     ?? 0;
+      const kcal = (m.caloriesBurned as number)  ?? 0;
+      const actType = m.actType as number;
+      entry.sportMin  += dur;
+      entry.sportKcal += kcal;
+      entry.sessions.push({
+        name:        (m.customName as string) || "Activité",
+        emoji:       EMOJI[actType] ?? "🏅",
+        durationMin: dur,
+        calories:    kcal || null,
+      });
+      histMap.set(date, entry);
+    }
+
+    history = [...histMap.values()].sort((a, b) => a.date.localeCompare(b.date));
   } catch (e) {
     console.error(e);
   }
@@ -60,6 +127,7 @@ export default async function ActivityPage() {
       fitnessDay={fitnessDay}
       initialManualActivities={manualActivities}
       goals={goals}
+      history={history}
     />
   );
 }
