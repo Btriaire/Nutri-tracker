@@ -2,22 +2,129 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_KEY = process.env.GROQ_API_KEY ?? "";
+const GROQ_URL    = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_KEY    = process.env.GROQ_API_KEY ?? "";
+const YOUTUBE_KEY = process.env.YOUTUBE_API_KEY ?? "";
 
-// Validate a YouTube video ID via oEmbed (no API key needed)
-async function isVideoValid(videoId: string): Promise<boolean> {
-  try {
-    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-    return res.ok; // 200 = exists, 401/404 = dead
-  } catch {
-    return false;
-  }
+// ── Curated fallback pool (validated IDs) ────────────────────────────────────
+// Used when YouTube API key is not configured
+const CURATED_POOL: { videoId: string; title: string; emoji: string; tags: string[] }[] = [
+  { videoId: "77ZozI0rw7w", title: "Bols tibétains 3h",       emoji: "🔔", tags: ["bol","tibétain","stress","anxiété","guérison"] },
+  { videoId: "I0GnHkFgSIQ", title: "432 Hz Miracle Tone",     emoji: "✨", tags: ["432hz","fréquence","guérison","chakra"] },
+  { videoId: "puX7S3cOlKE", title: "Bols cristal 8h",         emoji: "💎", tags: ["cristal","bol","sommeil","profond"] },
+  { videoId: "q76bMs-NwRk", title: "Pluie douce 3h",          emoji: "🌧", tags: ["pluie","nature","sommeil","stress","focus"] },
+  { videoId: "nMfPqeZjc2c", title: "Vagues océan 8h",         emoji: "🌊", tags: ["ocean","vague","nature","relaxation","sommeil"] },
+  { videoId: "xNN7iTA57jM", title: "Forêt & oiseaux",         emoji: "🌲", tags: ["forêt","nature","oiseau","calme","pleine conscience"] },
+  { videoId: "jfKfPfyJRdk", title: "Lofi hip hop 24/7",       emoji: "🎵", tags: ["lofi","focus","travail","énergie","étude"] },
+  { videoId: "DWcJFNfaw9c", title: "Ondes Thêta 4Hz 8h",      emoji: "🧠", tags: ["theta","binaural","sommeil","profond","rêve"] },
+  { videoId: "5qap5aO4i9A", title: "Ambient spatial lofi",    emoji: "🌌", tags: ["ambient","espace","focus","créativité"] },
+  { videoId: "1ZYbU82GVz4", title: "528 Hz DNA Repair",       emoji: "💚", tags: ["528hz","guérison","chakra","réparation","énergie"] },
+  { videoId: "lCOF9LN_Zxs", title: "396 Hz Libère la peur",   emoji: "🌈", tags: ["396hz","chakra","racine","anxiété","libération"] },
+  { videoId: "iRoaEbCZiHE", title: "963 Hz Glande pinéale",   emoji: "🔮", tags: ["963hz","glande","pinéale","éveil","spirituel"] },
+  { videoId: "O4I7p4mSfcE", title: "Pleine lune méditation",  emoji: "🌕", tags: ["pleine lune","lune","intuition","féminin"] },
+  { videoId: "1w3GqMFhPm0", title: "Chakra Heart Green",      emoji: "💚", tags: ["chakra","cœur","amour","guérison","anahata"] },
+  { videoId: "ot3p2kGdJAM", title: "Forêt bambou Japon",      emoji: "🎋", tags: ["japon","zen","bambou","nature","sérénité"] },
+  { videoId: "YyBkAsfcXFg", title: "Pluie sur toit 10h",      emoji: "☔", tags: ["pluie","nuit","sommeil","cocon","confort"] },
+];
+
+// ── YouTube Data API search ───────────────────────────────────────────────────
+async function searchYouTube(query: string): Promise<{ videoId: string; title: string }[]> {
+  const params = new URLSearchParams({
+    part:        "snippet",
+    q:           query,
+    type:        "video",
+    videoCategoryId: "10", // Music
+    maxResults:  "6",
+    key:         YOUTUBE_KEY,
+    relevanceLanguage: "fr",
+    safeSearch:  "strict",
+  });
+
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/search?${params}`,
+    { signal: AbortSignal.timeout(8000) }
+  );
+  if (!res.ok) throw new Error(`YouTube API ${res.status}`);
+
+  const json = await res.json() as {
+    items?: { id: { videoId: string }; snippet: { title: string } }[]
+  };
+
+  return (json.items ?? []).map(item => ({
+    videoId: item.id.videoId,
+    title:   item.snippet.title,
+  }));
 }
 
-// POST { theme: string }
-// Returns: { tracks: { videoId, title, emoji }[] }
+// ── Groq: generate search query ───────────────────────────────────────────────
+async function groqSearchQuery(theme: string): Promise<string> {
+  const prompt = `Generate ONE optimal YouTube search query in English for meditation/ambient music related to: "${theme}".
+
+Requirements:
+- Include channel hints like: "Meditative Mind" OR "Yellow Brick Cinema" OR "Greenred Productions" OR "Jason Stephenson"
+- Target long videos (1h+)
+- Focus on ambient/meditation/binaural content
+- Return ONLY the search query string, nothing else
+
+Example output: meditation 432hz healing frequency Meditative Mind`;
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4,
+      max_tokens: 60,
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) return `${theme} meditation ambient`;
+  const json = await res.json() as { choices: { message: { content: string } }[] };
+  return json.choices[0]?.message?.content?.trim() ?? `${theme} meditation ambient`;
+}
+
+// ── Groq: pick from curated pool ─────────────────────────────────────────────
+async function groqPickFromPool(theme: string): Promise<{ videoId: string; title: string; emoji: string }[]> {
+  const poolJson = JSON.stringify(
+    CURATED_POOL.map((v, i) => ({ i, title: v.title, emoji: v.emoji, tags: v.tags }))
+  );
+
+  const prompt = `The user wants meditation music for the theme: "${theme}".
+
+Available tracks (with index):
+${poolJson}
+
+Choose the 3 best matches for this theme. Return ONLY a JSON array of indices, e.g.: [2, 5, 11]`;
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 30,
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) return CURATED_POOL.slice(0, 3);
+
+  const json = await res.json() as { choices: { message: { content: string } }[] };
+  const raw = json.choices[0]?.message?.content ?? "";
+  const match = raw.match(/\[[\d,\s]+\]/);
+  if (!match) return CURATED_POOL.slice(0, 3);
+
+  const indices = JSON.parse(match[0]) as number[];
+  return indices
+    .filter(i => i >= 0 && i < CURATED_POOL.length)
+    .slice(0, 3)
+    .map(i => ({ videoId: CURATED_POOL[i].videoId, title: CURATED_POOL[i].title, emoji: CURATED_POOL[i].emoji }));
+}
+
+// ── Route ─────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   let body: { theme?: string };
   try { body = await req.json() as typeof body; }
@@ -25,76 +132,62 @@ export async function POST(req: NextRequest) {
 
   const theme = (body.theme ?? "").trim();
   if (!theme) return NextResponse.json({ error: "Missing theme" }, { status: 400 });
-  if (!GROQ_KEY) return NextResponse.json({ error: "Groq not configured" }, { status: 500 });
 
-  // Ask Groq to suggest YouTube video IDs for meditation/ambient content matching the theme
-  const prompt = `Tu es un expert en méditation et bien-être. L'utilisateur cherche une musique ambiante ou guidée pour : "${theme}".
+  // Path 1: YouTube API available → real search + Groq-generated query
+  if (YOUTUBE_KEY) {
+    try {
+      const query = GROQ_KEY
+        ? await groqSearchQuery(theme)
+        : `${theme} meditation ambient 1 hour`;
 
-Propose exactement 6 vidéos YouTube de méditation/ambiance sonore qui correspondent parfaitement à ce thème.
-Privilégie les chaînes connues : Meditative Mind, Jason Stephenson, Yellow Brick Cinema, Greenred Productions, PowerThoughts Meditation Club, Solfeggio Frequencies, Nu Meditation Music, Relaxing White Noise.
+      const ytResults = await searchYouTube(query);
 
-Réponds UNIQUEMENT avec un tableau JSON valide, sans texte avant ni après :
-[
-  { "videoId": "XXXXXXXXXXX", "title": "titre court descriptif", "emoji": "emoji thématique" },
-  ...
-]
+      // Map to emoji based on theme keywords
+      const emojiMap: Record<string, string> = {
+        stress: "😮‍💨", sleep: "🌙", sommeil: "🌙", energy: "⚡", énergie: "⚡",
+        focus: "🎯", chakra: "🌈", heal: "💚", guérison: "💚", anxiety: "🌊",
+        anxiété: "🌊", hz: "✨", moon: "🌕", lune: "🌕", nature: "🌿",
+        rain: "🌧", ocean: "🌊", forest: "🌲", binaural: "🧠",
+      };
+      const themeEmoji = Object.entries(emojiMap).find(([k]) =>
+        theme.toLowerCase().includes(k)
+      )?.[1] ?? "☸️";
 
-Règles :
-- videoId : exactement 11 caractères alphanumériques
-- title : 3-6 mots descriptifs en français
-- emoji : 1 seul emoji symbolisant l'ambiance
-- Varie les durées (courts 30min, longs 3-8h)
-- Pour le thème donné, pense aux sons et ambiances qui l'accompagnent vraiment`;
+      const tracks = ytResults.slice(0, 3).map(r => ({
+        videoId: r.videoId,
+        title:   r.title.length > 45 ? r.title.slice(0, 42) + "…" : r.title,
+        emoji:   themeEmoji,
+      }));
 
-  let candidates: { videoId: string; title: string; emoji: string }[] = [];
-
-  try {
-    const groqRes = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 600,
-      }),
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (!groqRes.ok) {
-      const txt = await groqRes.text();
-      console.error("Groq error:", groqRes.status, txt);
-      return NextResponse.json({ error: "AI unavailable" }, { status: 502 });
+      return NextResponse.json({ tracks, source: "youtube" });
+    } catch (e) {
+      console.error("YouTube search error:", e);
+      // Fall through to curated pool
     }
-
-    const groqJson = await groqRes.json() as { choices: { message: { content: string } }[] };
-    const raw = groqJson.choices[0]?.message?.content ?? "";
-
-    // Extract JSON array from response (Groq sometimes adds prose)
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) return NextResponse.json({ error: "AI parse error" }, { status: 502 });
-
-    candidates = JSON.parse(match[0]) as typeof candidates;
-  } catch (e) {
-    console.error("Groq fetch error:", e);
-    return NextResponse.json({ error: "AI fetch error" }, { status: 502 });
   }
 
-  // Validate up to 6 candidates concurrently, return first 3 valid
-  const validationResults = await Promise.all(
-    candidates.slice(0, 6).map(async (c) => ({
-      ...c,
-      valid: /^[a-zA-Z0-9_-]{11}$/.test(c.videoId) && await isVideoValid(c.videoId),
+  // Path 2: No YouTube API → Groq picks from curated pool
+  if (GROQ_KEY) {
+    try {
+      const tracks = await groqPickFromPool(theme);
+      return NextResponse.json({ tracks, source: "curated" });
+    } catch (e) {
+      console.error("Groq pool error:", e);
+    }
+  }
+
+  // Path 3: No keys at all → tag-based match from curated pool
+  const lower = theme.toLowerCase();
+  const matches = CURATED_POOL
+    .map(v => ({
+      ...v,
+      score: v.tags.filter(t => lower.includes(t) || t.includes(lower)).length,
     }))
-  );
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
 
-  const tracks = validationResults
-    .filter(r => r.valid)
-    .slice(0, 3)
-    .map(({ valid: _v, ...rest }) => rest);
-
-  return NextResponse.json({ tracks });
+  return NextResponse.json({
+    tracks: matches.map(({ videoId, title, emoji }) => ({ videoId, title, emoji })),
+    source: "curated",
+  });
 }
