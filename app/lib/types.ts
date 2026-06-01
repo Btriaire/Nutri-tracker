@@ -455,6 +455,10 @@ export interface DayTrendPoint {
   heartRateAvg?:  number;
   systolicBP?:   number;
   diastolicBP?:  number;
+  hungerBreakfast?: number;  // 1–5
+  hungerLunch?:     number;
+  hungerDinner?:    number;
+  hungerSnacks?:    number;
 }
 
 // ─── Health Vitals ────────────────────────────────────────────────────────────

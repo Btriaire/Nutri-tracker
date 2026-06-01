@@ -65,21 +65,26 @@ export async function GET(req: NextRequest) {
     const fitness = fitnessMap.get(d.id);
     const gf      = fitness?.googleFit;
     const bp      = bpMap.get(d.id);
+    const mh      = log.mealHunger ?? {};
     return {
-      date:          d.id,
-      calories:      Math.round(log.totals?.calories ?? 0),
-      proteinG:      Math.round(log.totals?.proteinG ?? 0),
-      carbsG:        Math.round(log.totals?.carbsG ?? 0),
-      fatG:          Math.round(log.totals?.fatG ?? 0),
-      waterMl:       log.waterMl ?? 0,
-      steps:         gf?.steps ?? undefined,
-      weightKg:      fitness?.withings?.weightKg ?? gf?.weightKg ?? undefined,
-      burned:        gf?.activeCaloriesBurned ?? undefined,
-      activeMinutes: gf?.activeMinutes ?? undefined,
-      sleepMinutes:  gf?.sleepMinutes ?? undefined,
-      heartRateAvg:  gf?.heartRateAvg ?? undefined,
-      systolicBP:    bp?.sys,
-      diastolicBP:   bp?.dia,
+      date:             d.id,
+      calories:         Math.round(log.totals?.calories ?? 0),
+      proteinG:         Math.round(log.totals?.proteinG ?? 0),
+      carbsG:           Math.round(log.totals?.carbsG ?? 0),
+      fatG:             Math.round(log.totals?.fatG ?? 0),
+      waterMl:          log.waterMl ?? 0,
+      steps:            gf?.steps ?? undefined,
+      weightKg:         fitness?.withings?.weightKg ?? gf?.weightKg ?? undefined,
+      burned:           gf?.activeCaloriesBurned ?? undefined,
+      activeMinutes:    gf?.activeMinutes ?? undefined,
+      sleepMinutes:     gf?.sleepMinutes ?? undefined,
+      heartRateAvg:     gf?.heartRateAvg ?? undefined,
+      systolicBP:       bp?.sys,
+      diastolicBP:      bp?.dia,
+      hungerBreakfast:  mh.breakfast ?? undefined,
+      hungerLunch:      mh.lunch ?? undefined,
+      hungerDinner:     mh.dinner ?? undefined,
+      hungerSnacks:     mh.snacks ?? undefined,
     };
   });
 

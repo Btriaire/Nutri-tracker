@@ -7,7 +7,7 @@ import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Legend,
 } from "recharts";
 import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
@@ -1194,6 +1194,192 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                     <span className="ml-auto text-[9px]" style={{ color: "rgba(249,115,22,0.6)" }}>— 120 · 140 mmHg</span>
                     <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{bpData.length} mesures</span>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
+            {/* ── Hunger × Calories × Activité chart ── */}
+            {(() => {
+              const MEAL_COLORS = {
+                breakfast: "#f59e0b",  // amber
+                lunch:     "#f97316",  // orange
+                dinner:    "#8b5cf6",  // violet
+                snacks:    "#34d399",  // teal
+              };
+              const MEAL_LABELS = {
+                breakfast: "Petit-dej",
+                lunch:     "Déjeuner",
+                dinner:    "Dîner",
+                snacks:    "Collation",
+              };
+
+              const maxCal     = Math.max(...points.filter(p => p.calories > 0).map(p => p.calories), goals.dailyCalories ?? 2000);
+              const maxSteps   = Math.max(...points.filter(p => (p.steps ?? 0) > 0).map(p => p.steps!), goals.stepsGoal ?? 10000);
+              const maxBurned  = Math.max(...points.filter(p => (p.burned ?? 0) > 0).map(p => p.burned!), 500);
+
+              // Normalize calories and activity to 0–5 scale to overlay with hunger
+              const hungerData = chartData
+                .filter(p =>
+                  p.hungerBreakfast != null || p.hungerLunch != null ||
+                  p.hungerDinner != null    || p.hungerSnacks != null
+                )
+                .map(p => ({
+                  label:     p.label,
+                  breakfast: p.hungerBreakfast ?? null,
+                  lunch:     p.hungerLunch ?? null,
+                  dinner:    p.hungerDinner ?? null,
+                  snacks:    p.hungerSnacks ?? null,
+                  // Normalize to 0-5 scale
+                  calNorm:   p.calories > 0 ? +(p.calories / maxCal * 5).toFixed(2) : null,
+                  stepsNorm: (p.steps ?? 0) > 0 ? +((p.steps! / maxSteps) * 5).toFixed(2) : null,
+                  burnedNorm:(p.burned ?? 0) > 0 ? +((p.burned! / maxBurned) * 5).toFixed(2) : null,
+                  // Raw values for tooltip
+                  calories:  p.calories || null,
+                  steps:     p.steps ?? null,
+                  burned:    p.burned ?? null,
+                }));
+
+              if (hungerData.length < 2) return null;
+
+              const hasCal    = hungerData.some(p => p.calNorm != null);
+              const hasSteps  = hungerData.some(p => p.stepsNorm != null);
+              const hasBurned = hungerData.some(p => p.burnedNorm != null);
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.08 }}
+                  className="glass p-4 mb-4"
+                >
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base">🍽️</span>
+                    <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                      Faim × Calories × Activité
+                    </p>
+                  </div>
+                  <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>
+                    Échelles normalisées · faim 1–5 · calories et activité ramenées sur 5
+                  </p>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
+                    {(Object.entries(MEAL_LABELS) as [keyof typeof MEAL_LABELS, string][]).map(([key, label]) => (
+                      <div key={key} className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ background: MEAL_COLORS[key] }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      </div>
+                    ))}
+                    {hasCal && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-5 h-0.5 rounded-full" style={{ background: "var(--calories)", opacity: 0.5 }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Calories</span>
+                      </div>
+                    )}
+                    {(hasSteps || hasBurned) && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-5 h-0.5 rounded-full" style={{ background: "var(--fit-blue)", opacity: 0.5 }} />
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{hasSteps ? "Pas" : "Brûlées"}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={200}>
+                    <ComposedChart data={hungerData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "rgba(250,250,250,0.35)" }}
+                        axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                      <YAxis domain={[0, 5]} ticks={[1,2,3,4,5]}
+                        tick={{ fontSize: 9, fill: "rgba(250,250,250,0.35)" }} axisLine={false} tickLine={false} width={20} />
+                      <Tooltip
+                        content={({ active, payload, label: lbl }) => {
+                          if (!active || !payload?.length) return null;
+                          const HUNGER_LABELS: Record<number, string> = {
+                            1: "Pas faim", 2: "Peu", 3: "Modéré", 4: "Faim", 5: "Très faim"
+                          };
+                          return (
+                            <div className="rounded-xl px-3 py-2 text-[11px] space-y-1"
+                              style={{ background: "rgba(15,15,22,0.97)", border: "1px solid var(--border)" }}>
+                              <p className="font-semibold" style={{ color: "var(--text-primary)" }}>{lbl}</p>
+                              {payload.map((entry, i) => {
+                                if (entry.value == null) return null;
+                                const raw = entry.payload as typeof hungerData[number];
+                                const isHunger = ["breakfast","lunch","dinner","snacks"].includes(entry.dataKey as string);
+                                if (isHunger) {
+                                  const v = entry.value as number;
+                                  const mealKey = entry.dataKey as keyof typeof MEAL_LABELS;
+                                  return (
+                                    <p key={i} style={{ color: MEAL_COLORS[mealKey] }}>
+                                      {MEAL_LABELS[mealKey]} : {HUNGER_LABELS[v] ?? v} ({v}/5)
+                                    </p>
+                                  );
+                                }
+                                if (entry.dataKey === "calNorm" && raw.calories)
+                                  return <p key={i} style={{ color: "var(--calories)" }}>Calories : {raw.calories} kcal</p>;
+                                if (entry.dataKey === "stepsNorm" && raw.steps)
+                                  return <p key={i} style={{ color: "var(--fit-blue)" }}>Pas : {raw.steps.toLocaleString("fr-FR")}</p>;
+                                if (entry.dataKey === "burnedNorm" && raw.burned)
+                                  return <p key={i} style={{ color: "var(--fit-red)" }}>Brûlées : {raw.burned} kcal</p>;
+                                return null;
+                              })}
+                            </div>
+                          );
+                        }}
+                      />
+
+                      {/* Calories background area (very subtle) */}
+                      {hasCal && (
+                        <Area dataKey="calNorm" type="monotone"
+                          stroke="var(--calories)" strokeWidth={1.5} strokeOpacity={0.5}
+                          fill="var(--calories)" fillOpacity={0.06}
+                          dot={false} connectNulls />
+                      )}
+
+                      {/* Activity (steps or burned) line */}
+                      {hasSteps && (
+                        <Line dataKey="stepsNorm" type="monotone"
+                          stroke="var(--fit-blue)" strokeWidth={1.5} strokeOpacity={0.55}
+                          strokeDasharray="4 3" dot={false} connectNulls />
+                      )}
+                      {!hasSteps && hasBurned && (
+                        <Line dataKey="burnedNorm" type="monotone"
+                          stroke="var(--fit-red)" strokeWidth={1.5} strokeOpacity={0.55}
+                          strokeDasharray="4 3" dot={false} connectNulls />
+                      )}
+
+                      {/* Hunger lines per meal */}
+                      {(["breakfast","lunch","dinner","snacks"] as const).map(key => (
+                        <Line key={key} dataKey={key} type="monotone"
+                          stroke={MEAL_COLORS[key]} strokeWidth={2}
+                          dot={{ r: 3, fill: MEAL_COLORS[key], strokeWidth: 0 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false} />
+                      ))}
+
+                      {/* Reference lines at 3 (modéré) */}
+                      <ReferenceLine y={3} stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-4 gap-2 mt-3">
+                    {(Object.entries(MEAL_LABELS) as [keyof typeof MEAL_LABELS, string][]).map(([key, label]) => {
+                      const vals = hungerData.map(p => p[key]).filter((v): v is number => v != null);
+                      if (vals.length === 0) return null;
+                      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+                      const HUNGER_EMOJI: Record<number, string> = { 1: "😌", 2: "🙂", 3: "😐", 4: "😋", 5: "🤤" };
+                      return (
+                        <div key={key} className="text-center p-2 rounded-xl"
+                          style={{ background: `${MEAL_COLORS[key]}12`, border: `1px solid ${MEAL_COLORS[key]}25` }}>
+                          <p className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                          <p className="text-[15px] font-bold tabular-nums" style={{ color: MEAL_COLORS[key] }}>
+                            {avg.toFixed(1)}
+                          </p>
+                          <p className="text-[11px]">{HUNGER_EMOJI[Math.round(avg)] ?? "😐"}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </motion.div>
               );
