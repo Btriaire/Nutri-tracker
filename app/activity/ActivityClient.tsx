@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
+import { format, addDays, subDays, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
-  IconMaximize,
+  IconMaximize, IconChevronLeft, IconChevronRight,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -19,7 +19,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import { format as dateFmt, parseISO } from "date-fns";
+import { format as dateFmt } from "date-fns";
 
 const ACTIVITY_OPTIONS = [
   { type: 0,   emoji: "🏅", label: "Activité libre" },
@@ -64,7 +64,7 @@ function activityEmoji(type: number): string {
 }
 
 interface Props {
-  date:                    string;
+  date:                    string;   // today's date (server-rendered)
   fitnessDay:              FitnessDay | null;
   initialManualActivities: unknown[];
   goals?:                  NutritionGoals;
@@ -304,9 +304,38 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function ActivityClient({ date, fitnessDay, initialManualActivities, goals, history = [] }: Props) {
-  const today = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
-  const gf    = fitnessDay?.googleFit;
+export default function ActivityClient({ date: initialDate, fitnessDay: initialFitnessDay, initialManualActivities, goals, history = [] }: Props) {
+  // ── Date navigation state ─────────────────────────────────────────────────
+  const [date,       setDate]       = useState(initialDate);
+  const [fitnessDay, setFitnessDay] = useState<FitnessDay | null>(initialFitnessDay);
+  const [navLoading, setNavLoading] = useState(false);
+
+  const isOnToday = isToday(parseISO(date + "T12:00:00"));
+  const dateLabel = isOnToday
+    ? "Aujourd'hui"
+    : format(parseISO(date + "T12:00:00"), "EEEE d MMM", { locale: fr });
+
+  const navigate = async (newDate: string) => {
+    if (newDate > initialDate) return;
+    setNavLoading(true);
+    setDate(newDate);
+    try {
+      const res  = await fetch(`/api/activity-day?date=${newDate}`);
+      const data = await res.json() as { fitnessDay: FitnessDay | null; manualActivities: ManualActivity[] };
+      setFitnessDay(data.fitnessDay);
+      setActivities(data.manualActivities);
+      setSessionEdits(
+        (data.fitnessDay?.sessionEdits as Record<string, { name?: string; calories?: number | null; durationMin?: number }>) ?? {}
+      );
+    } catch {
+      setFitnessDay(null);
+      setActivities([]);
+    } finally {
+      setNavLoading(false);
+    }
+  };
+
+  const gf = fitnessDay?.googleFit;
 
   // Weight for MET calculations — prefer Withings measurement, fallback to goals, then 75kg
   const userWeightKg = fitnessDay?.withings?.weightKg ?? goals?.currentWeightKg ?? 75;
@@ -822,10 +851,9 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-          className="flex items-start justify-between mb-5"
+          className="flex items-start justify-between mb-3"
         >
           <div>
-            <p className="label-xs mb-0.5 capitalize">{today}</p>
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Activité sportive
             </h1>
@@ -846,6 +874,32 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
               <IconPlus size={14} /> Ajouter
             </button>
           </div>
+        </motion.div>
+
+        {/* Date nav */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
+          className="flex items-center justify-between mb-5 glass px-4 py-2.5"
+        >
+          <button
+            onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
+            className="btn-icon flex-shrink-0"
+          >
+            <IconChevronLeft size={14} />
+          </button>
+          <span className="text-[13px] font-medium capitalize" style={{ color: "var(--text-primary)" }}>
+            {navLoading
+              ? <IconLoader2 size={14} className="animate-spin" />
+              : dateLabel}
+          </span>
+          <button
+            onClick={() => navigate(format(addDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
+            disabled={isOnToday}
+            className="btn-icon flex-shrink-0"
+            style={{ opacity: isOnToday ? 0.3 : 1 }}
+          >
+            <IconChevronRight size={14} />
+          </button>
         </motion.div>
 
         {/* Summary row */}
@@ -1430,9 +1484,11 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         {!gf && activities.length === 0 && !showForm && (
           <div className="flex flex-col items-center gap-3 py-12">
             <span className="text-5xl">🏃</span>
-            <p className="text-[14px] font-medium" style={{ color: "var(--text-secondary)" }}>Aucune activité aujourd'hui</p>
+            <p className="text-[14px] font-medium" style={{ color: "var(--text-secondary)" }}>
+              {isOnToday ? "Aucune activité aujourd'hui" : "Aucune activité ce jour"}
+            </p>
             <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
-              Lancez une séance type ou ajoutez manuellement.
+              {isOnToday ? "Lancez une séance type ou ajoutez manuellement." : "Naviguez vers un autre jour ou revenez à aujourd'hui."}
             </p>
           </div>
         )}
