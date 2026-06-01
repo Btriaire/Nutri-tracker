@@ -389,26 +389,34 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <AIInsightBox type="journal" data={journalInsightData} delay={800} />
         </motion.div>
 
-        {/* Locked overlay wrapper — water + meals + hunger */}
+        {/* Locked wrapper — water + meals + hunger */}
         <div className="relative">
-          {/* Lock overlay when validated */}
+          {/* Lock banner — slim bar above content, no overlay */}
+          <AnimatePresence>
+            {validated && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22 }}
+                className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl"
+                style={{
+                  background: "rgba(34,197,94,0.08)",
+                  border: "1px solid rgba(34,197,94,0.2)",
+                }}
+              >
+                <IconLock size={14} style={{ color: "#22c55e", flexShrink: 0 }} />
+                <span className="text-[12px] font-medium flex-1" style={{ color: "#22c55e" }}>
+                  Journée verrouillée
+                </span>
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  Tapez ✕ 3× pour modifier
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Invisible interaction blocker when validated */}
           {validated && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="absolute inset-0 z-20 rounded-2xl flex flex-col items-center justify-start pt-16 gap-3"
-              style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", pointerEvents: "auto" }}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)" }}>
-                  <IconLock size={22} style={{ color: "#22c55e" }} />
-                </div>
-                <p className="text-[13px] font-semibold" style={{ color: "#22c55e" }}>Journée verrouillée</p>
-                <p className="text-[11px] text-center px-8" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  Tapez ✕ 3× sur « déverrouiller » pour modifier
-                </p>
-              </div>
-            </motion.div>
+            <div className="absolute inset-0 z-10" style={{ pointerEvents: "auto", cursor: "default" }} />
           )}
 
           {/* Water tracker */}

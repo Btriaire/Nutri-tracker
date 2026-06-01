@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { UserProfile, NutritionPlan } from "@/app/lib/types";
+import type { UserProfile, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
 import ProgressClient from "./ProgressClient";
 
 export default async function ProgressPage() {
@@ -12,6 +12,7 @@ export default async function ProgressPage() {
   let currentWeightKg: number | null = null;
   let plan: NutritionPlan | undefined;
   let targetDate: string | undefined;
+  let trackedNutrients: TrackedNutrients | undefined;
 
   try {
     const db = getAdminFirestore();
@@ -24,8 +25,8 @@ export default async function ProgressPage() {
     targetWeightKg = goals.targetWeightKg ?? null;
     targetDate = goals.targetDate ?? plan?.projectedTargetDate ?? undefined;
     plan = profile?.goals?.plan ?? undefined;
-    // targetDate from plan takes precedence if goals doesn't have one
     if (!targetDate && plan?.projectedTargetDate) targetDate = plan.projectedTargetDate;
+    trackedNutrients = profile?.chartPrefs?.trackedNutrients;
     for (const d of fitnessSnap.docs) {
       const fd = d.data() as { withings?: { weightKg?: number }; googleFit?: { weightKg?: number } };
       const kg = fd.withings?.weightKg ?? fd.googleFit?.weightKg ?? null;
@@ -43,6 +44,7 @@ export default async function ProgressPage() {
       targetDate={targetDate}
       age={goals.age}
       plan={plan}
+      trackedNutrients={trackedNutrients}
     />
   );
 }

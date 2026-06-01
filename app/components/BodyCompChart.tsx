@@ -13,7 +13,7 @@ import type { BodyCompPoint } from "@/app/api/withings-body/route";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-type Tab = "composition" | "avance" | "vitaux" | "sommeil";
+type Tab = "composition" | "vitaux" | "sommeil";
 
 interface MetricDef {
   key:    keyof BodyCompPoint;
@@ -32,16 +32,6 @@ const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = 
       { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "#f97316" },
       { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "#8b5cf6", decimals: 1 },
       { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "#ef4444", decimals: 1 },
-    ],
-  },
-  {
-    id:    "avance",
-    label: "Avancé",
-    emoji: "🔬",
-    metrics: [
-      { key: "hydrationPct", label: "Hydratation",    unit: "%",  color: "#22d3ee", decimals: 1 },
-      { key: "visceralFat",  label: "Graisse viscérale", unit: "",  color: "#fb923c", decimals: 1 },
-      { key: "boneMassKg",   label: "Masse osseuse",  unit: "kg", color: "#a3e635", decimals: 2 },
     ],
   },
   {
@@ -249,7 +239,7 @@ export default function BodyCompChart() {
               ? "Aucune donnée de sommeil disponible"
               : tab === "vitaux"
                 ? "Aucun signal vital disponible"
-                : tab === "avance"
+                : false
                   ? "Aucune donnée avancée (hydratation, os, viscérale)"
                   : "Aucune donnée de composition corporelle"}
           </p>
@@ -258,7 +248,7 @@ export default function BodyCompChart() {
               ? "Synchronisez Withings ou entrez le sommeil manuellement"
               : tab === "vitaux"
                 ? "SpO₂ requiert ScanWatch · TA requiert Withings BPM"
-                : tab === "avance"
+                : false
                   ? "Requiert une balance connectée Withings (Body+/Body Scan)"
                   : "Synchronisez votre balance Withings dans Réglages"}
           </p>
@@ -331,7 +321,7 @@ export default function BodyCompChart() {
                 {tab === "vitaux"  && <ReferenceLine y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
-                {tab === "avance"  && <ReferenceLine y={13}  stroke="rgba(251,146,60,0.25)" strokeDasharray="4 4" label={{ value: "VF seuil", fill: "rgba(251,146,60,0.5)", fontSize: 9, position: "insideTopRight" }} />}
+                {false  && <ReferenceLine y={13}  stroke="rgba(251,146,60,0.25)" strokeDasharray="4 4" label={{ value: "VF seuil", fill: "rgba(251,146,60,0.5)", fontSize: 9, position: "insideTopRight" }} />}
 
                 {metrics.map(m => (
                   <Line
@@ -449,7 +439,7 @@ export default function BodyCompChart() {
               </div>
             );
           })()}
-          {tab === "avance" && (
+          {false && (
             <div className="flex items-center justify-center flex-wrap gap-2 pb-3 px-4">
               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— Graisse viscérale : seuil 13</p>
               <span className="text-[9px] px-1.5 py-0.5 rounded-full"

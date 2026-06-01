@@ -14,9 +14,10 @@ import {
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
   IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
 } from "@tabler/icons-react";
-import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
+import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import MealTimingWidget from "@/app/components/MealTimingWidget";
+import BodyCompChart from "@/app/components/BodyCompChart";
 import AlbumModal from "@/app/components/AlbumModal";
 import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
 
@@ -59,12 +60,13 @@ function hrZoneColor(bpm: number, maxHr: number): string {
 }
 
 interface Props {
-  goals:           NutritionGoals;
-  currentWeightKg: number | null;
-  targetWeightKg:  number | null;
-  targetDate?:     string;
-  age?:            number;
-  plan?:           NutritionPlan;
+  goals:              NutritionGoals;
+  currentWeightKg:    number | null;
+  targetWeightKg:     number | null;
+  targetDate?:        string;
+  age?:               number;
+  plan?:              NutritionPlan;
+  trackedNutrients?:  TrackedNutrients;
 }
 
 const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; value: string | number | undefined; unit?: string; color?: string }) => (
@@ -266,7 +268,7 @@ function buildWeightChartData(
   return [...filteredPast, todayBridge, ...future];
 }
 
-export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, targetDate: initialTargetDate, age, plan: initialPlan }: Props) {
+export default function ProgressClient({ goals, currentWeightKg, targetWeightKg, targetDate: initialTargetDate, age, plan: initialPlan, trackedNutrients }: Props) {
   const fcMax = age ? 220 - age : 190;
   const [range,           setRange]      = useState<Range>("30d");
   const [calChart,        setCalChart]   = useState<CalChart>("area");
@@ -1113,35 +1115,136 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </motion.div>
             )}
 
-            {/* Macros */}
-            {caloriePoints.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }} className="glass p-5 mb-4">
-                <p className="label-xs mb-4">Macros moyens / jour</p>
-                <ResponsiveContainer width="100%" height={110}>
-                  <BarChart
-                    data={[
-                      { name: "Protéines", value: avgProtein, goal: goals.proteinGrams },
-                      { name: "Glucides",  value: Math.round(caloriePoints.reduce((s, p) => s + p.carbsG, 0) / caloriePoints.length), goal: goals.carbsGrams },
-                      { name: "Lipides",   value: Math.round(caloriePoints.reduce((s, p) => s + p.fatG,   0) / caloriePoints.length), goal: goals.fatGrams  },
-                    ]}
-                    margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                    <Tooltip content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload as { name: string; value: number; goal: number };
-                      return <Tt label={d.name} value={`${d.value}g / ${d.goal}g`} />;
-                    }} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {["var(--protein)", "var(--carbs)", "var(--fat)"].map((color, i) => (
-                        <Cell key={i} fill={color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
-            )}
+            {/* Macros + Micronutriments */}
+            {caloriePoints.length > 0 && (() => {
+              const avgCarbs = Math.round(caloriePoints.reduce((s, p) => s + p.carbsG, 0) / caloriePoints.length);
+              const avgFat   = Math.round(caloriePoints.reduce((s, p) => s + p.fatG,   0) / caloriePoints.length);
+
+              // Micronutrient averages (only days where the value was logged)
+              const microAvg = (key: "fiberG" | "sugarG" | "sodiumMg" | "saturatedFatG") => {
+                const pts = caloriePoints.filter(p => (p[key] ?? 0) > 0);
+                if (!pts.length) return null;
+                return Math.round(pts.reduce((s, p) => s + (p[key] as number), 0) / pts.length);
+              };
+              const avgFiber  = microAvg("fiberG");
+              const avgSugar  = microAvg("sugarG");
+              const avgSodium = microAvg("sodiumMg");
+              const avgSatFat = microAvg("saturatedFatG");
+
+              // Reference values (OMS / ANSES)
+              const REF = {
+                fiber:  { min: 25, max: 30,   unit: "g",  label: "Fibres",        color: "#4ade80", note: "≥ 25 g/j recommandé" },
+                sugar:  { min: 0,  max: 25,   unit: "g",  label: "Sucres libres", color: "#f472b6", note: "< 25 g/j (OMS)" },
+                sodium: { min: 0,  max: 2000, unit: "mg", label: "Sodium",        color: "#fb923c", note: "< 2000 mg/j (OMS)" },
+                satFat: { min: 0,  max: 22,   unit: "g",  label: "Lipides sat.",  color: "#f97316", note: "< 10% kcal ≈ 22 g/j" },
+              };
+
+              // Status dot: green OK, amber warning, red over
+              function status(val: number | null, ref: typeof REF.fiber): "ok" | "warn" | "over" | null {
+                if (val === null) return null;
+                if (ref.min > 0) return val >= ref.min ? "ok" : val >= ref.min * 0.7 ? "warn" : "over"; // for fiber (minimum)
+                return val <= ref.max ? "ok" : val <= ref.max * 1.25 ? "warn" : "over"; // for limits
+              }
+              const STATUS_COLOR = { ok: "#34d399", warn: "#fbbf24", over: "#f87171" };
+              const STATUS_LABEL = { ok: "OK", warn: "Attention", over: "Dépassé" };
+
+              const microRows: { key: string; val: number | null; ref: typeof REF.fiber; tracked: boolean }[] = [
+                { key: "fiber",  val: avgFiber,  ref: REF.fiber,  tracked: true }, // fiber always shown in macros
+                { key: "sugar",  val: avgSugar,  ref: REF.sugar,  tracked: trackedNutrients?.sugar ?? false },
+                { key: "sodium", val: avgSodium, ref: REF.sodium, tracked: trackedNutrients?.sodium ?? false },
+                { key: "satFat", val: avgSatFat, ref: REF.satFat, tracked: trackedNutrients?.saturatedFat ?? false },
+              ].filter(r => r.tracked && r.val !== null);
+
+              return (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }} className="glass p-5 mb-4">
+                  <p className="label-xs mb-4">Macros moyens / jour</p>
+
+                  {/* Macro bar chart */}
+                  <ResponsiveContainer width="100%" height={110}>
+                    <BarChart
+                      data={[
+                        { name: "Protéines", value: avgProtein, goal: goals.proteinGrams },
+                        { name: "Glucides",  value: avgCarbs,   goal: goals.carbsGrams   },
+                        { name: "Lipides",   value: avgFat,     goal: goals.fatGrams     },
+                      ]}
+                      margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                      <Tooltip content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload as { name: string; value: number; goal: number };
+                        return <Tt label={d.name} value={`${d.value}g / ${d.goal}g`} />;
+                      }} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {["var(--protein)", "var(--carbs)", "var(--fat)"].map((color, i) => (
+                          <Cell key={i} fill={color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+
+                  {/* Micronutrients — shown when tracked */}
+                  {microRows.length > 0 && (
+                    <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      <p className="label-xs mb-3">Micronutriments suivis</p>
+                      <div className="space-y-2.5">
+                        {microRows.map(({ key, val, ref }) => {
+                          const pct = ref.min > 0
+                            ? Math.min((val! / ref.min) * 100, 130)         // fiber: % of minimum
+                            : Math.min((val! / ref.max) * 100, 130);        // limits: % of max
+                          const st = status(val, ref);
+                          const stColor = st ? STATUS_COLOR[st] : "var(--text-muted)";
+                          return (
+                            <div key={key}>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-1.5">
+                                  {/* Status dot */}
+                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{ background: stColor }} />
+                                  <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                                    {ref.label}
+                                  </span>
+                                  <span className="text-[9px] hidden sm:inline" style={{ color: "var(--text-muted)" }}>
+                                    ({ref.note})
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-bold tabular-nums" style={{ color: stColor }}>
+                                    {val}{ref.unit}
+                                  </span>
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                                    style={{ background: `${stColor}15`, color: stColor, border: `1px solid ${stColor}30` }}>
+                                    {st ? STATUS_LABEL[st] : "—"}
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                                <motion.div
+                                  className="h-full rounded-full"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(pct, 100)}%` }}
+                                  transition={{ duration: 0.7, ease: "easeOut" }}
+                                  style={{ background: stColor }}
+                                />
+                              </div>
+                              {/* Reference label */}
+                              <div className="flex justify-between mt-0.5">
+                                <span style={{ fontSize: 8, color: "var(--text-muted)" }}>0</span>
+                                <span style={{ fontSize: 8, color: "var(--text-muted)" }}>
+                                  {ref.min > 0 ? `≥ ${ref.min}${ref.unit}` : `max ${ref.max}${ref.unit}`}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })()}
 
 
             {points.length === 0 && !loading && (
@@ -1152,6 +1255,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </div>
             )}
 
+            {/* Body composition chart (Withings) */}
+            <BodyCompChart />
 
             {/* Blood pressure trend */}
             {(() => {

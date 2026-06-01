@@ -450,6 +450,10 @@ export interface DayTrendPoint {
   proteinG:      number;
   carbsG:        number;
   fatG:          number;
+  fiberG?:       number;
+  sugarG?:       number;
+  sodiumMg?:     number;
+  saturatedFatG?: number;
   waterMl?:      number;
   steps?:        number;
   weightKg?:     number;
