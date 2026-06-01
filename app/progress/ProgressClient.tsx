@@ -1115,134 +1115,194 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </motion.div>
             )}
 
-            {/* Macros + Micronutriments */}
+            {/* Macros + Micronutriments — évolution temporelle */}
             {caloriePoints.length > 0 && (() => {
-              const avgCarbs = Math.round(caloriePoints.reduce((s, p) => s + p.carbsG, 0) / caloriePoints.length);
-              const avgFat   = Math.round(caloriePoints.reduce((s, p) => s + p.fatG,   0) / caloriePoints.length);
+              // ── chart data ──────────────────────────────────────────────────
+              const macroChartData = caloriePoints.map(p => ({
+                label:    format(parseISO(p.date), caloriePoints.length > 14 ? "d/M" : "d MMM", { locale: fr }),
+                proteinG: p.proteinG,
+                carbsG:   p.carbsG,
+                fatG:     p.fatG,
+              }));
 
-              // Micronutrient averages (only days where the value was logged)
-              const microAvg = (key: "fiberG" | "sugarG" | "sodiumMg" | "saturatedFatG") => {
-                const pts = caloriePoints.filter(p => (p[key] ?? 0) > 0);
-                if (!pts.length) return null;
-                return Math.round(pts.reduce((s, p) => s + (p[key] as number), 0) / pts.length);
-              };
-              const avgFiber  = microAvg("fiberG");
-              const avgSugar  = microAvg("sugarG");
-              const avgSodium = microAvg("sodiumMg");
-              const avgSatFat = microAvg("saturatedFatG");
+              // ── averages ────────────────────────────────────────────────────
+              const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
+              const avgProteinV = avg(caloriePoints.map(p => p.proteinG));
+              const avgCarbsV   = avg(caloriePoints.map(p => p.carbsG));
+              const avgFatV     = avg(caloriePoints.map(p => p.fatG));
 
-              // Reference values (OMS / ANSES)
+              // ── micro references ────────────────────────────────────────────
               const REF = {
-                fiber:  { min: 25, max: 30,   unit: "g",  label: "Fibres",        color: "#4ade80", note: "≥ 25 g/j recommandé" },
-                sugar:  { min: 0,  max: 25,   unit: "g",  label: "Sucres libres", color: "#f472b6", note: "< 25 g/j (OMS)" },
-                sodium: { min: 0,  max: 2000, unit: "mg", label: "Sodium",        color: "#fb923c", note: "< 2000 mg/j (OMS)" },
-                satFat: { min: 0,  max: 22,   unit: "g",  label: "Lipides sat.",  color: "#f97316", note: "< 10% kcal ≈ 22 g/j" },
-              };
+                fiberG:        { refLine: 25, unit: "g",  label: "Fibres",        color: "#4ade80", note: "≥ 25 g/j" },
+                sugarG:        { refLine: 25, unit: "g",  label: "Sucres libres", color: "#f472b6", note: "< 25 g/j" },
+                sodiumMg:      { refLine: 2000, unit: "mg", label: "Sodium",      color: "#fb923c", note: "< 2000 mg/j" },
+                saturatedFatG: { refLine: 22, unit: "g",  label: "Lipides sat.",  color: "#f97316", note: "< 22 g/j"  },
+              } as const;
 
-              // Status dot: green OK, amber warning, red over
-              function status(val: number | null, ref: typeof REF.fiber): "ok" | "warn" | "over" | null {
-                if (val === null) return null;
-                if (ref.min > 0) return val >= ref.min ? "ok" : val >= ref.min * 0.7 ? "warn" : "over"; // for fiber (minimum)
-                return val <= ref.max ? "ok" : val <= ref.max * 1.25 ? "warn" : "over"; // for limits
-              }
-              const STATUS_COLOR = { ok: "#34d399", warn: "#fbbf24", over: "#f87171" };
-              const STATUS_LABEL = { ok: "OK", warn: "Attention", over: "Dépassé" };
+              type MicroKey = keyof typeof REF;
 
-              const microRows: { key: string; val: number | null; ref: typeof REF.fiber; tracked: boolean }[] = [
-                { key: "fiber",  val: avgFiber,  ref: REF.fiber,  tracked: true }, // fiber always shown in macros
-                { key: "sugar",  val: avgSugar,  ref: REF.sugar,  tracked: trackedNutrients?.sugar ?? false },
-                { key: "sodium", val: avgSodium, ref: REF.sodium, tracked: trackedNutrients?.sodium ?? false },
-                { key: "satFat", val: avgSatFat, ref: REF.satFat, tracked: trackedNutrients?.saturatedFat ?? false },
-              ].filter(r => r.tracked && r.val !== null);
+              const activeMicros: MicroKey[] = (["fiberG", "sugarG", "sodiumMg", "saturatedFatG"] as MicroKey[]).filter(k => {
+                if (k === "fiberG") return true;
+                if (k === "sugarG")        return trackedNutrients?.sugar ?? false;
+                if (k === "sodiumMg")      return trackedNutrients?.sodium ?? false;
+                if (k === "saturatedFatG") return trackedNutrients?.saturatedFat ?? false;
+                return false;
+              }).filter(k => caloriePoints.some(p => (p[k] ?? 0) > 0));
 
               return (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }} className="glass p-5 mb-4">
-                  <p className="label-xs mb-4">Macros moyens / jour</p>
-
-                  {/* Macro bar chart */}
-                  <ResponsiveContainer width="100%" height={110}>
-                    <BarChart
-                      data={[
-                        { name: "Protéines", value: avgProtein, goal: goals.proteinGrams },
-                        { name: "Glucides",  value: avgCarbs,   goal: goals.carbsGrams   },
-                        { name: "Lipides",   value: avgFat,     goal: goals.fatGrams     },
-                      ]}
-                      margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                      <Tooltip content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload as { name: string; value: number; goal: number };
-                        return <Tt label={d.name} value={`${d.value}g / ${d.goal}g`} />;
-                      }} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {["var(--protein)", "var(--carbs)", "var(--fat)"].map((color, i) => (
-                          <Cell key={i} fill={color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  {/* Micronutrients — shown when tracked */}
-                  {microRows.length > 0 && (
-                    <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                      <p className="label-xs mb-3">Micronutriments suivis</p>
-                      <div className="space-y-2.5">
-                        {microRows.map(({ key, val, ref }) => {
-                          const pct = ref.min > 0
-                            ? Math.min((val! / ref.min) * 100, 130)         // fiber: % of minimum
-                            : Math.min((val! / ref.max) * 100, 130);        // limits: % of max
-                          const st = status(val, ref);
-                          const stColor = st ? STATUS_COLOR[st] : "var(--text-muted)";
+                <>
+                  {/* ── Macros évolution ─────────────────────────────────── */}
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }} className="glass p-5 mb-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="label-xs">Évolution des macros</p>
+                      <div className="flex items-center gap-3">
+                        {(["proteinG", "carbsG", "fatG"] as const).map((k, i) => {
+                          const [label, cssVar] = [["Protéines", "var(--protein)"], ["Glucides", "var(--carbs)"], ["Lipides", "var(--fat)"]].at(i)!;
                           return (
-                            <div key={key}>
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-1.5">
-                                  {/* Status dot */}
-                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                    style={{ background: stColor }} />
-                                  <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                                    {ref.label}
-                                  </span>
-                                  <span className="text-[9px] hidden sm:inline" style={{ color: "var(--text-muted)" }}>
-                                    ({ref.note})
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-bold tabular-nums" style={{ color: stColor }}>
-                                    {val}{ref.unit}
-                                  </span>
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-                                    style={{ background: `${stColor}15`, color: stColor, border: `1px solid ${stColor}30` }}>
-                                    {st ? STATUS_LABEL[st] : "—"}
-                                  </span>
-                                </div>
-                              </div>
-                              {/* Progress bar */}
-                              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                                <motion.div
-                                  className="h-full rounded-full"
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(pct, 100)}%` }}
-                                  transition={{ duration: 0.7, ease: "easeOut" }}
-                                  style={{ background: stColor }}
-                                />
-                              </div>
-                              {/* Reference label */}
-                              <div className="flex justify-between mt-0.5">
-                                <span style={{ fontSize: 8, color: "var(--text-muted)" }}>0</span>
-                                <span style={{ fontSize: 8, color: "var(--text-muted)" }}>
-                                  {ref.min > 0 ? `≥ ${ref.min}${ref.unit}` : `max ${ref.max}${ref.unit}`}
-                                </span>
-                              </div>
+                            <div key={k} className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ background: cssVar }} />
+                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                             </div>
                           );
                         })}
                       </div>
                     </div>
+
+                    {/* Line chart — daily macros evolution */}
+                    <ResponsiveContainer width="100%" height={140}>
+                      <ComposedChart data={macroChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                        <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          interval={caloriePoints.length > 20 ? Math.floor(caloriePoints.length / 8) : 0} />
+                        <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          tickFormatter={v => `${v}g`} />
+                        <Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="px-3 py-2 rounded-xl space-y-0.5 text-[11px]"
+                                style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                <p style={{ color: "var(--text-muted)", marginBottom: 4 }}>{label}</p>
+                                {payload.map(e => (
+                                  <p key={e.dataKey as string} style={{ color: e.color }}>
+                                    {e.name} {e.value}g
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          }}
+                        />
+                        {/* Goal reference lines */}
+                        {goals.proteinGrams > 0 && <ReferenceLine y={goals.proteinGrams} stroke="var(--protein)" strokeDasharray="4 3" strokeOpacity={0.35} />}
+                        {goals.carbsGrams   > 0 && <ReferenceLine y={goals.carbsGrams}   stroke="var(--carbs)"   strokeDasharray="4 3" strokeOpacity={0.35} />}
+                        {goals.fatGrams     > 0 && <ReferenceLine y={goals.fatGrams}     stroke="var(--fat)"     strokeDasharray="4 3" strokeOpacity={0.35} />}
+                        {/* Lines */}
+                        <Line dataKey="proteinG" name="Protéines" stroke="var(--protein)" strokeWidth={2} dot={false} connectNulls />
+                        <Line dataKey="carbsG"   name="Glucides"  stroke="var(--carbs)"   strokeWidth={2} dot={false} connectNulls />
+                        <Line dataKey="fatG"     name="Lipides"   stroke="var(--fat)"     strokeWidth={2} dot={false} connectNulls />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+
+                    {/* Average summary row */}
+                    <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      {[
+                        { label: "Protéines moy.", val: avgProteinV, goal: goals.proteinGrams, cssVar: "var(--protein)" },
+                        { label: "Glucides moy.",  val: avgCarbsV,   goal: goals.carbsGrams,   cssVar: "var(--carbs)"   },
+                        { label: "Lipides moy.",   val: avgFatV,     goal: goals.fatGrams,     cssVar: "var(--fat)"     },
+                      ].map(({ label, val, goal, cssVar }) => (
+                        <div key={label} className="flex-1 text-center">
+                          <p className="text-[15px] font-bold tabular-nums" style={{ color: cssVar }}>{val}g</p>
+                          <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                            {label}
+                          </p>
+                          {goal > 0 && (
+                            <p className="text-[9px] tabular-nums" style={{ color: val >= goal * 0.85 && val <= goal * 1.15 ? "#34d399" : "#fbbf24" }}>
+                              obj. {goal}g
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* ── Micronutrients évolution ──────────────────────────── */}
+                  {activeMicros.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }} className="glass p-5 mb-4">
+                      <p className="label-xs mb-3">Évolution des micronutriments</p>
+                      <div className={`grid gap-4 ${activeMicros.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                        {activeMicros.map(k => {
+                          const ref = REF[k];
+                          // Build per-day data for this nutrient
+                          const microData = caloriePoints
+                            .filter(p => (p[k] ?? 0) > 0)
+                            .map(p => ({
+                              label: format(parseISO(p.date), "d/M", { locale: fr }),
+                              value: p[k] as number,
+                            }));
+                          if (microData.length < 2) return null;
+                          const avgVal = avg(microData.map(d => d.value));
+                          const isOkAvg = k === "fiberG"
+                            ? avgVal >= ref.refLine
+                            : avgVal <= ref.refLine;
+                          const dotColor = isOkAvg ? "#34d399" : "#f87171";
+                          return (
+                            <div key={k}>
+                              {/* Header */}
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ref.color }} />
+                                  <span className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                                    {ref.label}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-bold tabular-nums" style={{ color: dotColor }}>
+                                    {avgVal}{ref.unit}
+                                  </span>
+                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>moy.</span>
+                                </div>
+                              </div>
+                              {/* Sparkline area chart */}
+                              <ResponsiveContainer width="100%" height={64}>
+                                <AreaChart data={microData} margin={{ top: 2, right: 2, left: -40, bottom: 0 }}>
+                                  <defs>
+                                    <linearGradient id={`micro-grad-${k}`} x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor={ref.color} stopOpacity={0.25} />
+                                      <stop offset="100%" stopColor={ref.color} stopOpacity={0.02} />
+                                    </linearGradient>
+                                  </defs>
+                                  <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
+                                  <YAxis tick={false} axisLine={false} tickLine={false} />
+                                  <Tooltip
+                                    content={({ active, payload, label }) => {
+                                      if (!active || !payload?.length) return null;
+                                      return (
+                                        <div className="px-2 py-1 rounded-lg text-[10px]"
+                                          style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                          <p style={{ color: "var(--text-muted)" }}>{label}</p>
+                                          <p style={{ color: ref.color }}>{payload[0].value}{ref.unit}</p>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  {/* Reference threshold */}
+                                  <ReferenceLine y={ref.refLine} stroke={ref.color} strokeDasharray="3 3" strokeOpacity={0.5} />
+                                  <Area dataKey="value" stroke={ref.color} strokeWidth={1.5}
+                                    fill={`url(#micro-grad-${k})`} dot={false} connectNulls />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                              {/* Ref label */}
+                              <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                                {k === "fiberG" ? `Objectif ≥ ${ref.refLine}${ref.unit}` : `Limite ${ref.refLine}${ref.unit}`} · {ref.note}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
                   )}
-                </motion.div>
+                </>
               );
             })()}
 
