@@ -12,7 +12,7 @@ import {
 import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
-  IconPhoto, IconBrain,
+  IconPhoto, IconBrain, IconSunrise, IconSunHigh, IconMoonStars, IconApple, IconChartGridDots,
 } from "@tabler/icons-react";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -1247,14 +1247,22 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 dinner:    "#8b5cf6",
                 snacks:    "#34d399",
               };
-              const MEAL_LABELS = {
-                breakfast: "🌅 Petit-dej",
-                lunch:     "☀️ Déjeuner",
-                dinner:    "🌙 Dîner",
-                snacks:    "🍎 Collation",
+              // Professional icon components per meal
+              const MEAL_ICONS = {
+                breakfast: <IconSunrise  size={11} />,
+                lunch:     <IconSunHigh  size={11} />,
+                dinner:    <IconMoonStars size={11} />,
+                snacks:    <IconApple    size={11} />,
               };
-              const HUNGER_EMOJI: Record<number, string> = { 1: "😌", 2: "🙂", 3: "😐", 4: "😋", 5: "🤤" };
+              const MEAL_SHORT = {
+                breakfast: "Petit-dej",
+                lunch:     "Déjeuner",
+                dinner:    "Dîner",
+                snacks:    "Collation",
+              };
               const HUNGER_LABEL: Record<number, string> = { 1: "Rassasié", 2: "Peu faim", 3: "Modéré", 4: "Faim", 5: "Très faim" };
+              // Dot radius per level: 1→2px, 2→3px, 3→4px, 4→5.5px, 5→7px
+              const DOT_R: Record<number, number> = { 1: 2, 2: 3, 3: 4, 4: 5.5, 5: 7 };
 
               // Build heatmap data: only days with at least one hunger value
               const heatDays = chartData.filter(p =>
@@ -1264,25 +1272,42 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
               if (heatDays.length < 2) return null;
 
-              // Calories per day for the mini bar chart overlay
               const calGoal = goals.dailyCalories ?? 2000;
 
               // Avg per meal
               const mealAvg = (key: "breakfast" | "lunch" | "dinner" | "snacks") => {
-                const vals = heatDays.map(p => p[`hunger${key.charAt(0).toUpperCase() + key.slice(1)}` as keyof typeof p] as number | undefined)
+                const vals = heatDays
+                  .map(p => p[`hunger${key.charAt(0).toUpperCase() + key.slice(1)}` as keyof typeof p] as number | undefined)
                   .filter((v): v is number => v != null);
                 return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
               };
 
-              // Cell color: from 1 (light) to 5 (saturated)
-              function cellColor(meal: keyof typeof MEAL_COLORS, value: number | null) {
-                if (value == null) return "rgba(255,255,255,0.03)";
+              // Cell background: transparent to saturated
+              function cellBg(meal: keyof typeof MEAL_COLORS, value: number | null) {
+                if (value == null) return "rgba(255,255,255,0.025)";
                 const base = MEAL_COLORS[meal];
-                const alpha = 0.08 + (value - 1) / 4 * 0.72; // 0.08..0.80
+                const alpha = 0.06 + (value - 1) / 4 * 0.68; // 0.06..0.74
                 return `${base}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
               }
 
-              const displayDays = heatDays.slice(-Math.min(heatDays.length, 21)); // max 21 cols
+              // 5-pip level indicator for summary cards
+              function LevelPips({ value, color }: { value: number; color: string }) {
+                return (
+                  <div className="flex items-center justify-center gap-0.5 mt-1">
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} className="rounded-full"
+                        style={{
+                          width:      i <= Math.round(value) ? 5 : 4,
+                          height:     i <= Math.round(value) ? 5 : 4,
+                          background: i <= Math.round(value) ? color : "rgba(255,255,255,0.1)",
+                          transition: "all 0.15s",
+                        }} />
+                    ))}
+                  </div>
+                );
+              }
+
+              const displayDays = heatDays.slice(-Math.min(heatDays.length, 21));
 
               return (
                 <motion.div
@@ -1294,33 +1319,51 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-base">🍽️</span>
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center"
+                          style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
+                          <IconChartGridDots size={12} />
+                        </div>
                         <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
                           Niveaux de faim
                         </p>
                       </div>
                       <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        Intensité par repas sur {displayDays.length} jours · plus foncé = plus faim
+                        Par repas · {displayDays.length} jours · intensité = niveau de faim (1–5)
                       </p>
                     </div>
-                    {/* Legend: color scale */}
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(v => (
-                        <div key={v} className="w-3 h-3 rounded-sm"
-                          style={{ background: `rgba(249,115,22,${0.08 + (v-1)/4 * 0.72})` }} />
-                      ))}
+                    {/* Legend: gradient scale */}
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(v => (
+                          <div key={v} className="rounded-[3px]"
+                            style={{
+                              width: 10, height: 10,
+                              background: `rgba(249,115,22,${0.06 + (v-1)/4 * 0.68})`,
+                              border: "1px solid rgba(249,115,22,0.15)",
+                            }} />
+                        ))}
+                      </div>
+                      <div className="flex justify-between w-full px-0.5">
+                        <span style={{ fontSize: 7, color: "rgba(250,250,250,0.25)" }}>rassasié</span>
+                        <span style={{ fontSize: 7, color: "rgba(250,250,250,0.25)" }}>très faim</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Heatmap grid */}
                   <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                    <div style={{ minWidth: displayDays.length * 24 + 72 }}>
+                    <div style={{ minWidth: displayDays.length * 24 + 80 }}>
+
                       {/* Day labels row */}
-                      <div className="flex mb-1" style={{ paddingLeft: 72 }}>
+                      <div className="flex mb-1.5" style={{ paddingLeft: 80 }}>
                         {displayDays.map((p, i) => (
                           <div key={p.date} className="flex-shrink-0 text-center"
-                            style={{ width: 24, fontSize: 7, color: "rgba(250,250,250,0.3)",
-                              fontWeight: i === displayDays.length - 1 ? 700 : 400 }}>
+                            style={{
+                              width: 22, margin: "0 1px",
+                              fontSize: 7,
+                              color: i === displayDays.length - 1 ? "rgba(250,250,250,0.6)" : "rgba(250,250,250,0.25)",
+                              fontWeight: i === displayDays.length - 1 ? 700 : 400,
+                            }}>
                             {format(parseISO(p.date), "dd")}
                           </div>
                         ))}
@@ -1333,32 +1376,49 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         const avgVal = mealAvg(meal);
                         return (
                           <div key={meal} className="flex items-center mb-1.5">
-                            {/* Row label */}
-                            <div className="flex-shrink-0 text-right pr-2" style={{ width: 72, fontSize: 10, color: "var(--text-muted)" }}>
-                              {MEAL_LABELS[meal]}
+                            {/* Row label: icon + text */}
+                            <div className="flex-shrink-0 flex items-center justify-end gap-1.5 pr-2" style={{ width: 80 }}>
+                              <span style={{ color: MEAL_COLORS[meal], opacity: 0.8 }}>
+                                {MEAL_ICONS[meal]}
+                              </span>
+                              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                                {MEAL_SHORT[meal]}
+                              </span>
                             </div>
+
                             {/* Cells */}
                             {displayDays.map(p => {
                               const val = p[hungerKey] as number | undefined ?? null;
+                              const r   = val != null ? DOT_R[val] : 0;
                               return (
                                 <div key={p.date}
-                                  className="flex-shrink-0 rounded-sm flex items-center justify-center"
-                                  title={val != null ? `${format(parseISO(p.date), "dd/MM")} — ${HUNGER_LABEL[val]}` : ""}
+                                  className="flex-shrink-0 rounded-[4px] flex items-center justify-center"
+                                  title={val != null ? `${format(parseISO(p.date), "dd/MM")} — ${HUNGER_LABEL[val]} (${val}/5)` : ""}
                                   style={{
                                     width: 22, height: 22, margin: "0 1px",
-                                    background: cellColor(meal, val),
-                                    border: val != null ? `1px solid ${MEAL_COLORS[meal]}30` : "1px solid rgba(255,255,255,0.03)",
-                                    fontSize: 9,
+                                    background: cellBg(meal, val),
+                                    border: val != null
+                                      ? `1px solid ${MEAL_COLORS[meal]}28`
+                                      : "1px solid rgba(255,255,255,0.03)",
                                   }}
                                 >
-                                  {val != null && <span style={{ opacity: 0.9 }}>{HUNGER_EMOJI[val]}</span>}
+                                  {val != null && (
+                                    <div className="rounded-full"
+                                      style={{
+                                        width:      r * 2,
+                                        height:     r * 2,
+                                        background: MEAL_COLORS[meal],
+                                        opacity:    0.55 + (val - 1) / 4 * 0.45, // 0.55..1.0
+                                      }} />
+                                  )}
                                 </div>
                               );
                             })}
+
                             {/* Row avg */}
                             {avgVal !== null && (
-                              <div className="flex-shrink-0 ml-2 flex items-center gap-1">
-                                <span className="text-[11px] font-bold tabular-nums" style={{ color: MEAL_COLORS[meal] }}>
+                              <div className="flex-shrink-0 ml-2 text-right" style={{ width: 28 }}>
+                                <span className="text-[11px] font-semibold tabular-nums" style={{ color: MEAL_COLORS[meal] }}>
                                   {avgVal.toFixed(1)}
                                 </span>
                               </div>
@@ -1367,51 +1427,76 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         );
                       })}
 
-                      {/* Calories mini-bars below heatmap */}
+                      {/* Calorie micro-bars */}
                       {displayDays.some(p => p.calories > 0) && (
                         <>
-                          <div className="flex mt-3" style={{ paddingLeft: 72 }}>
+                          {/* Separator */}
+                          <div style={{ height: 1, marginLeft: 80, marginTop: 6, marginBottom: 6, background: "rgba(255,255,255,0.05)" }} />
+                          <div className="flex items-end" style={{ paddingLeft: 80 }}>
                             {displayDays.map(p => {
-                              const pct = p.calories > 0 ? Math.min(p.calories / calGoal, 1.2) : 0;
+                              const pct  = p.calories > 0 ? Math.min(p.calories / calGoal, 1.3) : 0;
                               const over = pct > 1;
                               return (
                                 <div key={p.date} className="flex-shrink-0 flex flex-col items-center justify-end"
-                                  style={{ width: 22, margin: "0 1px", height: 28 }}>
-                                  <div className="w-full rounded-sm"
+                                  style={{ width: 22, margin: "0 1px", height: 20 }}>
+                                  <div className="w-[10px] rounded-sm"
                                     style={{
-                                      height: `${Math.round(pct * 100 / 1.2)}%`,
-                                      minHeight: p.calories > 0 ? 2 : 0,
-                                      background: over ? "rgba(239,68,68,0.55)" : "rgba(249,115,22,0.45)",
+                                      height: pct > 0 ? Math.max(2, Math.round(pct / 1.3 * 18)) : 0,
+                                      background: over
+                                        ? "rgba(239,68,68,0.6)"
+                                        : `rgba(249,115,22,${0.25 + pct * 0.35})`,
                                     }} />
                                 </div>
                               );
                             })}
-                          </div>
-                          <div className="flex mt-0.5" style={{ paddingLeft: 72 }}>
-                            <p className="text-[9px]" style={{ color: "var(--text-muted)", width: "100%", textAlign: "center" }}>
-                              🔥 Calories (objectif {calGoal} kcal)
-                            </p>
+                            {/* Label */}
+                            <div className="flex-shrink-0 ml-2 flex items-center gap-1" style={{ width: 28 }}>
+                              <IconFlame size={9} style={{ color: "var(--calories)", opacity: 0.6, flexShrink: 0 }} />
+                              <span style={{ fontSize: 8, color: "var(--text-muted)", lineHeight: 1.2 }}>
+                                kcal
+                              </span>
+                            </div>
                           </div>
                         </>
                       )}
                     </div>
                   </div>
 
-                  {/* Summary stats */}
-                  <div className="grid grid-cols-4 gap-2 mt-3">
+                  {/* Summary chips */}
+                  <div className="grid grid-cols-4 gap-2 mt-4">
                     {(["breakfast","lunch","dinner","snacks"] as const).map(meal => {
                       const avg = mealAvg(meal);
                       if (avg === null) return null;
                       return (
-                        <div key={meal} className="text-center p-2 rounded-xl"
-                          style={{ background: `${MEAL_COLORS[meal]}10`, border: `1px solid ${MEAL_COLORS[meal]}25` }}>
-                          <p className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>
-                            {MEAL_LABELS[meal].replace(/^[^ ]+ /, "")}
+                        <div key={meal} className="flex flex-col items-center p-2.5 rounded-xl"
+                          style={{ background: `${MEAL_COLORS[meal]}0D`, border: `1px solid ${MEAL_COLORS[meal]}22` }}>
+                          {/* Icon */}
+                          <span style={{ color: MEAL_COLORS[meal], opacity: 0.8, marginBottom: 2 }}>
+                            {MEAL_ICONS[meal]}
+                          </span>
+                          {/* Label */}
+                          <p className="text-[9px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>
+                            {MEAL_SHORT[meal]}
                           </p>
-                          <p className="text-[14px] font-bold tabular-nums" style={{ color: MEAL_COLORS[meal] }}>
+                          {/* Score */}
+                          <p className="text-[15px] font-bold tabular-nums mt-1" style={{ color: MEAL_COLORS[meal] }}>
                             {avg.toFixed(1)}
                           </p>
-                          <p className="text-[11px]">{HUNGER_EMOJI[Math.round(avg)] ?? "😐"}</p>
+                          {/* 5-pip scale */}
+                          <div className="flex items-center justify-center gap-[3px] mt-1.5">
+                            {[1,2,3,4,5].map(i => (
+                              <div key={i} className="rounded-full transition-all"
+                                style={{
+                                  width:      i <= Math.round(avg) ? 5 : 4,
+                                  height:     i <= Math.round(avg) ? 5 : 4,
+                                  background: i <= Math.round(avg) ? MEAL_COLORS[meal] : "rgba(255,255,255,0.1)",
+                                }} />
+                            ))}
+                          </div>
+                          {/* Level label */}
+                          <p className="text-[8px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                            {HUNGER_LABEL[Math.round(avg)] ?? "—"}
+                          </p>
                         </div>
                       );
                     })}
