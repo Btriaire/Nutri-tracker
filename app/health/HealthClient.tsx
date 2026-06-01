@@ -549,6 +549,25 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           ))}
         </motion.div>
 
+        {/* Date nav — above all tabs */}
+        <div className="flex items-center justify-between mb-4 glass px-4 py-2.5">
+          <button
+            onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
+            className="btn-icon flex-shrink-0">
+            <IconChevronLeft size={14} />
+          </button>
+          <span className="text-[13px] font-medium capitalize" style={{ color: "var(--text-primary)" }}>
+            {loading ? <IconLoader2 size={14} className="animate-spin" /> : dateLabel}
+          </span>
+          <button
+            onClick={() => navigate(format(addDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
+            disabled={today}
+            className="btn-icon flex-shrink-0"
+            style={{ opacity: today ? 0.3 : 1 }}>
+            <IconChevronRight size={14} />
+          </button>
+        </div>
+
         {/* ── TAB: VITAUX ── */}
         {activeTab === "synthese" && (
           <>
@@ -640,25 +659,6 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   )}
                 </>
               )}
-            </motion.div>
-
-            {/* Date nav */}
-            <motion.div {...fade(0.06)} className="flex items-center justify-between mb-5 glass px-4 py-2.5">
-              <button
-                onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
-                className="btn-icon flex-shrink-0">
-                <IconChevronLeft size={14} />
-              </button>
-              <span className="text-[13px] font-medium capitalize" style={{ color: "var(--text-primary)" }}>
-                {loading ? <IconLoader2 size={14} className="animate-spin" /> : dateLabel}
-              </span>
-              <button
-                onClick={() => navigate(format(addDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
-                disabled={today}
-                className="btn-icon flex-shrink-0"
-                style={{ opacity: today ? 0.3 : 1 }}>
-                <IconChevronRight size={14} />
-              </button>
             </motion.div>
 
             {/* Tension artérielle */}
