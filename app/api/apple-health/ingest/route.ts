@@ -18,6 +18,7 @@ interface IngestPayload {
   hrv?:             number;
   spO2?:            number;
   sleepMinutes?:    number;
+  sleepLightMinutes?: number;
   sleepDeepMinutes?: number;
   sleepRemMinutes?: number;
   distanceKm?:      number;
@@ -52,9 +53,10 @@ export async function POST(req: NextRequest) {
     heartRateResting: body.heartRateResting ?? null,
     hrv:              body.hrv              ?? null,
     spO2:             body.spO2             ?? null,
-    sleepMinutes:     body.sleepMinutes     ?? null,
-    sleepDeepMinutes: body.sleepDeepMinutes ?? null,
-    sleepRemMinutes:  body.sleepRemMinutes  ?? null,
+    sleepMinutes:      body.sleepMinutes      ?? null,
+    sleepLightMinutes: body.sleepLightMinutes ?? null,
+    sleepDeepMinutes:  body.sleepDeepMinutes  ?? null,
+    sleepRemMinutes:   body.sleepRemMinutes   ?? null,
     distanceKm:       body.distanceKm       ?? null,
     vo2Max:           body.vo2Max           ?? null,
     weightKg:         body.weightKg         ?? null,

@@ -32,17 +32,22 @@ export default async function SleepPage() {
   const sleepGoalMin = profile?.goals?.sleepGoalMin ?? 420;
 
   const points: SleepPoint[] = snaps.map((snap, i) => {
-    const data = snap.exists ? snap.data() as { googleFit?: GoogleFitDay; manualSleep?: { sleepMinutes: number | null } } : undefined;
+    const data = snap.exists ? snap.data() as { googleFit?: GoogleFitDay; appleHealth?: import("@/app/lib/types").AppleHealthDay; manualSleep?: { sleepMinutes: number | null } } : undefined;
     const gf   = data?.googleFit;
+    const ah   = data?.appleHealth;
     // Manual entry takes priority over Google Fit sync
-    const sleepMin = data?.manualSleep?.sleepMinutes ?? gf?.sleepMinutes ?? null;
+    const sleepMin = data?.manualSleep?.sleepMinutes ?? gf?.sleepMinutes ?? ah?.sleepMinutes ?? null;
+    // Sleep phases: prefer Google Fit segments, fall back to Apple Health
+    const lightSleepMin = gf?.lightSleepMin ?? ah?.sleepLightMinutes ?? null;
+    const deepSleepMin  = gf?.deepSleepMin  ?? ah?.sleepDeepMinutes  ?? null;
+    const remSleepMin   = gf?.remSleepMin   ?? ah?.sleepRemMinutes   ?? null;
     return {
       date:             dates[i],
       sleepMinutes:     sleepMin,
       timeInBedMinutes: gf?.timeInBedMinutes ?? null,
-      lightSleepMin:    gf?.lightSleepMin    ?? null,
-      deepSleepMin:     gf?.deepSleepMin     ?? null,
-      remSleepMin:      gf?.remSleepMin      ?? null,
+      lightSleepMin,
+      deepSleepMin,
+      remSleepMin,
       sleepSyncedAt:    gf?.sleepSyncedAt,
     };
   });

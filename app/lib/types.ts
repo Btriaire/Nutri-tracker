@@ -319,6 +319,7 @@ export interface AppleHealthDay {
   hrv:              number | null;
   spO2:             number | null;
   sleepMinutes:     number | null;
+  sleepLightMinutes: number | null;
   sleepDeepMinutes: number | null;
   sleepRemMinutes:  number | null;
   distanceKm:       number | null;
