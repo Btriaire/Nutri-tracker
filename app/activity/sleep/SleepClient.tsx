@@ -64,15 +64,19 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }:
   type ArcSeg = { path: string; color: string; label: string; min: number; pct: number; desc: string; emoji: string };
   const arcs: ArcSeg[] = [];
 
+  // Total arc span based on sleep vs goal (never exceeds full circle)
+  const totalSpan = Math.min(displayMin / goalMin, 1) * 2 * Math.PI;
+
   if (hasPhases) {
     const values = [light, deep, rem];
     let cursor = START;
     values.forEach((v, i) => {
-      if (v <= 0) { cursor += (v / phaseTotal) * 2 * Math.PI; return; }
-      const span  = (v / phaseTotal) * 2 * Math.PI - GAP;
+      if (v <= 0) { cursor += (v / phaseTotal) * totalSpan; return; }
+      const segSpan = (v / phaseTotal) * totalSpan;
+      const span  = segSpan - GAP;
       const a0    = cursor + GAP / 2;
-      const a1    = a0 + span;
-      cursor     += (v / phaseTotal) * 2 * Math.PI;
+      const a1    = a0 + Math.max(span, 0.01);
+      cursor     += segSpan;
       arcs.push({
         path:  describeArc(a0, a1),
         color: STAGES[i].color,
@@ -84,14 +88,12 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }:
       });
     });
   } else {
-    // Single arc — full circle, color = quality
-    const sleepPct = Math.min(displayMin / goalMin, 1);
-    const span  = sleepPct * 2 * Math.PI - 0.01;
+    // Single arc proportional to goal completion
     const color = sleepQualityColor(displayMin, goalMin);
     arcs.push({
-      path:  describeArc(START, START + span),
+      path:  describeArc(START, START + Math.max(totalSpan - 0.01, 0.05)),
       color, label: "Sommeil", desc: "Total enregistré", emoji: "🌙",
-      min: displayMin, pct: Math.round(sleepPct * 100),
+      min: displayMin, pct: Math.round(Math.min(displayMin / goalMin, 1) * 100),
     });
   }
 
@@ -564,7 +566,10 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
   }));
 
   // Most recent sleep for hypnogram
-  const lastSleep = [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+  // Prefer most recent night that has phase data; fallback to any night with sleep minutes
+  const lastSleep =
+    [...points].reverse().find(p => (p.lightSleepMin ?? 0) + (p.deepSleepMin ?? 0) + (p.remSleepMin ?? 0) > 0) ??
+    [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
 
   // Today's date string
   const today = format(new Date(), "yyyy-MM-dd");
