@@ -107,7 +107,7 @@ const fade = (delay = 0) => ({
 
 export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
-  sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
+  sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, recentWeight, trendPoints,
   waterMl: initialWaterMl, plan, lang, trackedNutrients, recentPhotos = [],
   todayMeditationMin = 0, lastBPDate = null, lastBPSystolic = null,
 }: Props) {
@@ -197,6 +197,16 @@ export default function DashboardClient({
     ? Math.round(knownPcts.reduce((a, b) => a + b, 0) / knownPcts.length)
     : 0;
 
+  // Weight trend for AI insight
+  const weightDeltaKg = weight && previousWeight
+    ? Math.round((weight.kg - previousWeight.kg) * 100) / 100
+    : null;
+  // 7-day trend from recentWeight (most recent first after reverse)
+  const w7 = [...recentWeight].reverse(); // oldest first
+  const weightTrend7d = w7.length >= 2
+    ? Math.round((w7[w7.length - 1].kg - w7[0].kg) * 100) / 100
+    : null;
+
   const dashboardInsightData = {
     sleepMinutes,
     sleepGoalMin,
@@ -210,6 +220,9 @@ export default function DashboardClient({
     waterMl,
     waterGoal:        goals.waterMl ?? 2000,
     weightKg:         weight?.kg ?? null,
+    previousWeightKg: previousWeight?.kg ?? null,
+    weightDeltaKg,
+    weightTrend7d,
     targetWeightKg:   goals.targetWeightKg ?? null,
     planLabel:        plan?.programLabel,
     planEmoji:        plan?.programEmoji,

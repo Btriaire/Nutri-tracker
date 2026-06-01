@@ -31,11 +31,20 @@ Rédige une analyse en 3 parties courtes :
 3. 1 point fort + 1 conseil concret.
 Total : 3-4 phrases maximum. Réponds directement sans intro générique.`,
 
-    dashboard: `Tu es un coach santé bienveillant mais ambitieux. On te donne un bilan de la journée.
-Analyse la situation du jour (sommeil, calories, activité, pas, FC, hydratation) en 2-3 phrases factuelles et positives.
-Si un plan est actif, mets les résultats en perspective par rapport aux objectifs du plan.
-Termine sur une note motivante et concrète pour la suite.
-Réponds directement sans intro ni conclusion générique.`,
+    dashboard: `Tu es un coach santé chaleureux, motivant et bienveillant. Ton rôle est d'encourager et donner de l'élan.
+
+Analyse le bilan du jour en 3-4 phrases COMPLÈTES. Ne jamais s'arrêter au milieu d'une phrase.
+
+RÈGLES IMPÉRATIVES :
+1. Commence toujours par quelque chose de positif ou un encouragement sincère
+2. Si le poids a baissé depuis la veille ou sur 7 jours → célèbre-le brièvement ("super tendance", "bonne direction", etc.)
+3. Si le poids a légèrement augmenté → relativise positivement (rétention d'eau, fluctuations normales, muscle) et rappelle la tendance globale sur 7 jours si elle est bonne
+4. Si un plan est actif, ancre le message dans la progression du plan (ex : "Jour X de ton plan — tu es sur la bonne voie")
+5. Termine TOUJOURS par une action concrète et motivante pour les prochaines heures
+6. Ton = énergie positive, confiant, comme un ami coach qui te connaît bien
+7. Ne JAMAIS terminer la réponse au milieu d'une phrase
+
+Réponds directement sans intro générique comme "Bien sûr" ou "Voici".`,
 
     activity: `Tu es un coach sportif expert. On te donne les données d'activité du jour.
 Analyse les performances comme un vrai coach : durée, intensité, calories brûlées, pas, minutes actives.
@@ -130,10 +139,27 @@ ${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}`;
         burned: number | null; steps: number | null; stepsGoal: number;
         activeMinutes: number | null; heartRate: number | null;
         waterMl: number; waterGoal: number;
-        weightKg: number | null; targetWeightKg: number | null;
+        weightKg: number | null; previousWeightKg: number | null;
+        weightDeltaKg: number | null; weightTrend7d: number | null;
+        targetWeightKg: number | null;
         planLabel?: string; planDay?: number; planEmoji?: string;
         projectedTargetDate?: string;
       };
+
+      // Build weight section with delta + trend
+      let weightLine = `- Poids : ${d.weightKg !== null ? `${d.weightKg} kg` : "non renseigné"}`;
+      if (d.weightKg && d.previousWeightKg) {
+        const delta = d.weightDeltaKg ?? 0;
+        const sign  = delta > 0 ? "+" : "";
+        weightLine += ` (hier : ${d.previousWeightKg} kg, variation : ${sign}${delta} kg)`;
+      }
+      if (d.targetWeightKg) weightLine += ` → objectif : ${d.targetWeightKg} kg`;
+      if (d.weightTrend7d !== null && d.weightKg) {
+        const trend7 = d.weightTrend7d;
+        const sign7  = trend7 > 0 ? "+" : "";
+        weightLine += `\n- Tendance 7 jours : ${sign7}${trend7} kg ${trend7 < -0.1 ? "✅ en baisse" : trend7 > 0.1 ? "⚠️ en hausse" : "→ stable"}`;
+      }
+
       return `${timePrefix}Bilan du jour :
 - Sommeil : ${d.sleepMinutes !== null ? `${Math.round((d.sleepMinutes ?? 0) / 60 * 10) / 10}h` : "non renseigné"} (objectif : ${Math.round((d.sleepGoalMin ?? 480) / 60 * 10) / 10}h)
 - Calories consommées : ${d.caloriesConsumed} / ${d.caloriesGoal} kcal
@@ -142,7 +168,7 @@ ${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}`;
 - Minutes actives : ${d.activeMinutes !== null ? `${d.activeMinutes} min` : "non renseigné"}
 - Fréquence cardiaque moyenne : ${d.heartRate !== null ? `${d.heartRate} bpm` : "non renseigné"}
 - Hydratation : ${d.waterMl} / ${d.waterGoal} mL
-- Poids actuel : ${d.weightKg !== null ? `${d.weightKg} kg` : "non renseigné"}${d.targetWeightKg ? ` (cible : ${d.targetWeightKg} kg)` : ""}
+${weightLine}
 ${d.planLabel ? `- Plan actif : ${d.planEmoji ?? ""} ${d.planLabel} — Jour ${d.planDay ?? 1}${d.projectedTargetDate ? ` — cible visée le ${d.projectedTargetDate}` : ""}` : "Aucun plan actif"}`;
     }
 
@@ -219,8 +245,8 @@ export async function POST(req: NextRequest) {
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        temperature: 0.5,
-        max_tokens: 200,
+        temperature: 0.45,
+        max_tokens: 380,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user",   content: userMessage },
