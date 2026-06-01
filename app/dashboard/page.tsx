@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
+import type { DayLog, FitnessDay, UserProfile, WeightPoint, DayTrendPoint, NutritionPlan, TrackedNutrients, ManualActivity } from "@/app/lib/types";
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
 import { format } from "date-fns";
 import DashboardClient from "./DashboardClient";
@@ -24,12 +24,13 @@ export default async function DashboardPage() {
   let todayMeditationMin            = 0;
   let lastBPDate:     string | null = null;
   let lastBPSystolic: number | null = null;
+  let manualActivitiesSnap: import("firebase-admin/firestore").QuerySnapshot | null = null;
 
   try {
     const db = getAdminFirestore();
     const trendFrom = format(new Date(Date.now() - 13 * 86400000), "yyyy-MM-dd");
 
-    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap, photosSnap, meditSnap, healthSnap] = await Promise.all([
+    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap, photosSnap, meditSnap, healthSnap, manualActSnap] = await Promise.all([
       db.doc(`users/${userId}/foodLog/${today}`).get(),
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
       db.doc(`users/${userId}`).get(),
@@ -48,6 +49,10 @@ export default async function DashboardPage() {
       db.collection(`users/${userId}/healthLog`)
         .orderBy("date", "desc")
         .limit(7)
+        .get(),
+      // Today's manual activities
+      db.collection(`users/${userId}/manualActivities`)
+        .where("date", "==", today)
         .get(),
     ]);
 
@@ -106,9 +111,38 @@ export default async function DashboardPage() {
         recentPhotos.push({ date: data.date, photo: data.photos[0] });
       }
     }
+    manualActivitiesSnap = manualActSnap;
   } catch (e) {
     console.error("Firestore error:", e);
   }
+
+  // Merge manual activities into sessions list
+  const gfitSessions = fitnessDay?.googleFit?.sessions ?? [];
+  const manualActivities = (manualActivitiesSnap?.docs ?? []).map(d => {
+    const a = d.data() as ManualActivity;
+    const startMs = (a.loggedAt as unknown as { _seconds?: number })?._seconds
+      ? (a.loggedAt as unknown as { _seconds: number })._seconds * 1000
+      : Date.now();
+    return {
+      id:           a.id,
+      name:         a.name,
+      activityType: a.activityType,
+      durationMin:  a.durationMin,
+      startMs,
+      calories:     a.caloriesBurned ?? null,
+    };
+  });
+  const allSessions = [
+    ...gfitSessions,
+    ...manualActivities,
+  ].sort((a, b) => a.startMs - b.startMs);
+
+  // Add manual calories burned to the Google Fit burned total
+  const manualBurned = manualActivities.reduce((sum, a) => sum + (a.calories ?? 0), 0);
+  const gfitBurned   = fitnessDay?.googleFit?.activeCaloriesBurned ?? null;
+  const totalBurned  = (gfitBurned ?? 0) + manualBurned > 0
+    ? (gfitBurned ?? 0) + manualBurned
+    : null;
 
   return (
     <DashboardClient
@@ -117,14 +151,14 @@ export default async function DashboardPage() {
       photoUrl={photoUrl}
       goals={goals}
       consumed={dayLog?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }}
-      burned={fitnessDay?.googleFit?.activeCaloriesBurned ?? null}
+      burned={totalBurned}
       steps={fitnessDay?.googleFit?.steps ?? null}
       stepsGoal={goals.stepsGoal ?? 10000}
       activeMinutes={fitnessDay?.googleFit?.activeMinutes ?? null}
       heartRate={fitnessDay?.googleFit?.heartRateAvg ?? null}
       sleepMinutes={fitnessDay?.manualSleep?.sleepMinutes ?? fitnessDay?.googleFit?.sleepMinutes ?? null}
       sleepGoalMin={goals.sleepGoalMin ?? 420}
-      sessions={fitnessDay?.googleFit?.sessions ?? []}
+      sessions={allSessions}
       weight={recentWeight[0] ?? null}
       previousWeight={recentWeight[1] ?? null}
       recentWeight={[...recentWeight].reverse()}

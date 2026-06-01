@@ -1251,19 +1251,19 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                             actPhotoInputRef.current?.click();
                           }
                         }}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
+                        className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden relative group"
                         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
                         title={a.photoDataUrl ? "Agrandir la photo" : "Ajouter une photo"}
                       >
                         {a.photoDataUrl
-                          ? <img src={a.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
+                          ? <img src={a.photoDataUrl} className="w-14 h-14 object-cover" alt="" />
                           : activityEmoji(a.activityType)
                         }
                         <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           style={{ background: "rgba(0,0,0,0.5)" }}>
                           {a.photoDataUrl
-                            ? <IconMaximize size={12} style={{ color: "white" }} />
-                            : <IconCamera size={12} style={{ color: "white" }} />
+                            ? <IconMaximize size={16} style={{ color: "white" }} />
+                            : <IconCamera size={16} style={{ color: "white" }} />
                           }
                         </div>
                       </button>

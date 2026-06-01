@@ -28,7 +28,7 @@ import HealthFactsBanner from "@/app/components/HealthFactsBanner";
 import MeditationPlayer from "@/app/components/MeditationPlayer";
 
 type HealthData = Omit<HealthEntry, "updatedAt">;
-type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre" | "mensurations";
+type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre";
 
 // ─── Symptom categories ──────────────────────────────────────────────────────
 
@@ -536,7 +536,6 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             { id: "cardiaque",     label: "❤️ Cœur" },
             { id: "medical",       label: "🏥 Médical" },
             { id: "bienetre",      label: "🧠 Bien-être" },
-            { id: "mensurations",  label: "📏 Mesures" },
           ] as const).map(({ id, label }) => (
             <button key={id} onClick={() => setActiveTab(id)}
               className="flex-shrink-0 flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap px-2"
@@ -940,6 +939,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 )}
               </AnimatePresence>
             </motion.div>
+
+            {/* ── Mensurations corporelles ── */}
+            <BodyMeasurementsTab />
 
           </>
         )}
@@ -1697,10 +1699,6 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           <BienEtreTab date={date} />
         )}
 
-        {/* ── TAB: MENSURATIONS ── */}
-        {activeTab === "mensurations" && (
-          <BodyMeasurementsTab />
-        )}
 
       </div>
 
