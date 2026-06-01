@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { IconChevronRight, IconMoon, IconHeart, IconBolt, IconClock, IconTrendingUp, IconShoe, IconArrowUp, IconRefresh, IconX, IconFlame } from "@tabler/icons-react";
+import { IconChevronRight, IconMoon, IconHeart, IconBolt, IconClock, IconTrendingUp, IconShoe, IconArrowUp, IconRefresh, IconX, IconFlame, IconChartRadar, IconCircle } from "@tabler/icons-react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import WeightWidget from "@/app/components/WeightWidget";
@@ -17,6 +17,7 @@ import StreakWidget from "@/app/components/StreakWidget";
 import PhotoStrip from "@/app/components/PhotoStrip";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from "recharts";
 import type { DayTotals, NutritionGoals, NutritionPlan, ActivityPlan, WeightPoint, DayTrendPoint, Lang, TrackedNutrients } from "@/app/lib/types";
 import type { RecentPhoto } from "@/app/api/photos/recent/route";
@@ -197,6 +198,9 @@ export default function DashboardClient({
     ? Math.round(knownPcts.reduce((a, b) => a + b, 0) / knownPcts.length)
     : 0;
 
+  // ── Spider chart toggle ──────────────────────────────────────────────────
+  const [showSpider, setShowSpider] = useState(false);
+
   // Weight trend for AI insight
   const weightDeltaKg = weight && previousWeight
     ? Math.round((weight.kg - previousWeight.kg) * 100) / 100
@@ -251,6 +255,33 @@ export default function DashboardClient({
 
   // Steps
   const stepsPct = Math.min((steps ?? 0) / stepsGoal, 1) * 100;
+
+  // ── Spider scores (0–6 per axis; 6 = objective fully met) ────────────────
+  const spiderCalories = consumed.calories > 0 && goals.dailyCalories > 0
+    ? Math.min(6, Math.round(consumed.calories / goals.dailyCalories * 6)) : 0;
+  const spiderActivite = Math.min(6, Math.round((activeMinutes ?? 0) / 30 * 6));
+  const spiderSommeil  = sleepMinutes
+    ? Math.min(6, Math.round(sleepMinutes / sleepGoalMin * 6)) : 0;
+  // FC: resting HR — lower = better (< 60 athlete → 6)
+  const spiderFC = heartRate
+    ? (heartRate < 60 ? 6 : heartRate < 70 ? 5 : heartRate < 80 ? 4 : heartRate < 90 ? 3 : heartRate < 100 ? 2 : 1)
+    : 0;
+  const spiderHydra = (goals.waterMl ?? 2000) > 0
+    ? Math.min(6, Math.round(waterMl / (goals.waterMl ?? 2000) * 6)) : 0;
+  const spiderBienetre = Math.min(6,
+    (sleepPct >= 90 ? 2 : sleepPct >= 60 ? 1 : 0) +
+    (waterMl / (goals.waterMl ?? 2000) >= 0.9 ? 2 : waterMl / (goals.waterMl ?? 2000) >= 0.6 ? 1 : 0) +
+    (todayMeditationMin > 15 ? 2 : stepsPct >= 80 ? 2 : stepsPct >= 50 ? 1 : todayMeditationMin > 0 ? 1 : 0)
+  );
+  const spiderData = [
+    { subject: "Calories",    A: spiderCalories,  fullMark: 6 },
+    { subject: "Activité",    A: spiderActivite,  fullMark: 6 },
+    { subject: "Sommeil",     A: spiderSommeil,   fullMark: 6 },
+    { subject: "FC",          A: spiderFC,        fullMark: 6 },
+    { subject: "Hydratation", A: spiderHydra,     fullMark: 6 },
+    { subject: "Bien-être",   A: spiderBienetre,  fullMark: 6 },
+  ];
+  const spiderTotal = spiderData.reduce((s, d) => s + d.A, 0); // max 36
 
   const chartData = trendPoints.map((p) => ({
     ...p,
@@ -458,75 +489,204 @@ export default function DashboardClient({
 
         {/* ── Hero card: ring + macros + journal ── */}
         <motion.div {...fade(0.05)} className="glass p-5 mb-4">
-          {/* Calorie ring */}
-          <div className="flex flex-col items-center gap-4">
-            <CalorieBudgetRing
-              consumed={consumed.calories}
-              goal={goals.dailyCalories}
-              burned={deductBurned ? burned : null}
-              activeMinutes={activeMinutes}
-              sessionCount={sessions.length}
-              steps={steps}
-              stepsGoal={stepsGoal}
-              onBurnedClick={burned && deductBurned ? () => setBurnedDetailOpen(true) : undefined}
-            />
 
-            {/* ── Deduct-burned toggle ── */}
-            {burned != null && burned > 0 && (
-              <button
-                onClick={toggleDeductBurned}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all active:scale-95"
-                style={{
-                  background: deductBurned ? "rgba(52,211,153,0.10)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${deductBurned ? "rgba(52,211,153,0.35)" : "var(--border)"}`,
-                  color: deductBurned ? "rgba(52,211,153,0.9)" : "var(--text-muted)",
-                }}
-              >
-                {/* Mini pill switch */}
-                <div className="relative w-7 h-4 rounded-full flex-shrink-0 transition-colors"
-                  style={{ background: deductBurned ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.12)" }}>
-                  <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform"
-                    style={{ transform: deductBurned ? "translateX(15px)" : "translateX(2px)" }} />
-                </div>
-                Retrancher {Math.round(burned)} kcal brûlées
-              </button>
-            )}
-
-            {/* Macro progress bars */}
-            <div className="w-full grid grid-cols-4 gap-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-              {macros.map(({ label, value, goal, color }) => {
-                const fraction = goal > 0 ? value / goal : 0;
-                const pct = Math.min(fraction * 100, 100);
-                const over = value > goal;
-                return (
-                  <div key={label} className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
-                      <span className="text-[10px] tabular-nums" style={{ color: over ? "#ef4444" : levelColor(fraction) }}>
-                        {Math.round(value)}g
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                      <motion.div
-                        className="h-full rounded-full w-full"
-                        style={{ background: levelBarBg(over ? 1.1 : fraction) }}
-                        initial={{ clipPath: "inset(0 100% 0 0)" }}
-                        animate={{ clipPath: levelBarClip(fraction) }}
-                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-                      />
-                    </div>
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/{goal}g</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Journal link */}
-            <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
-              Ouvrir le journal
-              <IconChevronRight size={14} stroke={2} />
-            </Link>
+          {/* Toggle button — top right */}
+          <div className="flex items-center justify-end mb-2 -mt-1">
+            <button
+              onClick={() => setShowSpider(x => !x)}
+              title={showSpider ? "Vue anneaux" : "Vue radar"}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all active:scale-95"
+              style={{
+                background: showSpider ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.05)",
+                border: `1px solid ${showSpider ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
+                color: showSpider ? "var(--calories)" : "var(--text-muted)",
+              }}
+            >
+              {showSpider
+                ? <><IconCircle size={11} /> Anneaux</>
+                : <><IconChartRadar size={11} /> Radar</>
+              }
+            </button>
           </div>
+
+          <AnimatePresence mode="wait">
+            {showSpider ? (
+              /* ── Spider / Radar view ──────────────────────────────── */
+              <motion.div
+                key="spider"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                onDoubleClick={() => setShowSpider(false)}
+              >
+                {/* Score headline */}
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Score global du jour</p>
+                    <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
+                      {spiderTotal}<span className="text-[14px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>/36</span>
+                    </p>
+                  </div>
+                  {/* Score pips */}
+                  <div className="grid grid-cols-3 gap-1">
+                    {spiderData.map(d => (
+                      <div key={d.subject} className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                          style={{ background: d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : d.A > 0 ? "#f87171" : "rgba(255,255,255,0.12)" }} />
+                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{d.subject}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Radar chart */}
+                <ResponsiveContainer width="100%" height={240}>
+                  <RadarChart data={spiderData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
+                    <defs>
+                      <linearGradient id="spiderFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#f97316" stopOpacity={0.08} />
+                      </linearGradient>
+                    </defs>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={({ x, y, payload }) => {
+                        const d = spiderData.find(s => s.subject === payload.value);
+                        const color = !d || d.A === 0 ? "rgba(255,255,255,0.25)"
+                          : d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : "#f87171";
+                        return (
+                          <g>
+                            <text x={x} y={y} textAnchor="middle" dominantBaseline="central"
+                              style={{ fontSize: 10, fill: "rgba(255,255,255,0.55)", fontFamily: "inherit" }}>
+                              {payload.value}
+                            </text>
+                            <text x={x} y={(Number(y) || 0) + 13} textAnchor="middle" dominantBaseline="central"
+                              style={{ fontSize: 11, fontWeight: 700, fill: color, fontFamily: "inherit" }}>
+                              {d?.A ?? 0}
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                    <PolarRadiusAxis
+                      domain={[0, 6]} tickCount={4}
+                      tick={{ fontSize: 8, fill: "rgba(255,255,255,0.2)" }}
+                      axisLine={false}
+                    />
+                    <Radar
+                      dataKey="A"
+                      stroke="#f97316"
+                      strokeWidth={2}
+                      fill="url(#spiderFill)"
+                      dot={{ fill: "#f97316", r: 4, strokeWidth: 0 }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+
+                {/* Score breakdown row */}
+                <div className="grid grid-cols-6 gap-1 mt-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  {spiderData.map(d => {
+                    const color = d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : d.A > 0 ? "#f87171" : "rgba(255,255,255,0.2)";
+                    return (
+                      <div key={d.subject} className="flex flex-col items-center gap-0.5">
+                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{d.A}</span>
+                        <span className="text-[8px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>{d.subject}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Journal link */}
+                <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center mt-3">
+                  Ouvrir le journal
+                  <IconChevronRight size={14} stroke={2} />
+                </Link>
+              </motion.div>
+            ) : (
+              /* ── Ring / macros view ───────────────────────────────── */
+              <motion.div
+                key="ring"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div
+                  className="flex flex-col items-center gap-4"
+                  onDoubleClick={() => setShowSpider(true)}
+                  title="Double-clic pour vue radar"
+                >
+                  <CalorieBudgetRing
+                    consumed={consumed.calories}
+                    goal={goals.dailyCalories}
+                    burned={deductBurned ? burned : null}
+                    activeMinutes={activeMinutes}
+                    sessionCount={sessions.length}
+                    steps={steps}
+                    stepsGoal={stepsGoal}
+                    onBurnedClick={burned && deductBurned ? () => setBurnedDetailOpen(true) : undefined}
+                  />
+
+                  {/* ── Deduct-burned toggle ── */}
+                  {burned != null && burned > 0 && (
+                    <button
+                      onClick={toggleDeductBurned}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                      style={{
+                        background: deductBurned ? "rgba(52,211,153,0.10)" : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${deductBurned ? "rgba(52,211,153,0.35)" : "var(--border)"}`,
+                        color: deductBurned ? "rgba(52,211,153,0.9)" : "var(--text-muted)",
+                      }}
+                    >
+                      {/* Mini pill switch */}
+                      <div className="relative w-7 h-4 rounded-full flex-shrink-0 transition-colors"
+                        style={{ background: deductBurned ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.12)" }}>
+                        <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform"
+                          style={{ transform: deductBurned ? "translateX(15px)" : "translateX(2px)" }} />
+                      </div>
+                      Retrancher {Math.round(burned)} kcal brûlées
+                    </button>
+                  )}
+
+                  {/* Macro progress bars */}
+                  <div className="w-full grid grid-cols-4 gap-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                    {macros.map(({ label, value, goal, color }) => {
+                      const fraction = goal > 0 ? value / goal : 0;
+                      const over = value > goal;
+                      return (
+                        <div key={label} className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+                            <span className="text-[10px] tabular-nums" style={{ color: over ? "#ef4444" : levelColor(fraction) }}>
+                              {Math.round(value)}g
+                            </span>
+                          </div>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                            <motion.div
+                              className="h-full rounded-full w-full"
+                              style={{ background: levelBarBg(over ? 1.1 : fraction) }}
+                              initial={{ clipPath: "inset(0 100% 0 0)" }}
+                              animate={{ clipPath: levelBarClip(fraction) }}
+                              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                            />
+                          </div>
+                          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/{goal}g</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Journal link */}
+                  <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
+                    Ouvrir le journal
+                    <IconChevronRight size={14} stroke={2} />
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* ── Bilan du jour ── */}
