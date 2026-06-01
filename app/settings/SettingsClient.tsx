@@ -8,7 +8,7 @@ import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconD
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
-import { useTheme } from "@/app/components/ThemeProvider";
+import { useTheme, type Theme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
@@ -32,7 +32,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
     try { await signOut(getClientAuth()); } catch {}
     router.push("/login");
   };
-  const { theme, toggle } = useTheme();
+  const { theme, setTheme } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState(initialFit);
   const [syncing, setSyncing]           = useState(false);
@@ -203,50 +203,8 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         {/* Nutrition & Profile Goals */}
         <GoalsPanel initialGoals={initialGoals} />
 
-        {/* Theme toggle */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
-          className="glass p-4 mb-4 mt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: theme === "light" ? "rgba(249,115,22,0.12)" : "rgba(139,92,246,0.12)" }}>
-                {theme === "light"
-                  ? <IconSun size={18} style={{ color: "var(--calories)" }} />
-                  : <IconMoon size={18} style={{ color: "#818cf8" }} />
-                }
-              </div>
-              <div>
-                <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Apparence</p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  {theme === "light" ? "Interface claire" : "Interface sombre"}
-                </p>
-              </div>
-            </div>
-            {/* Toggle pill */}
-            <button
-              onClick={toggle}
-              className="relative flex-shrink-0 w-[52px] h-[28px] rounded-full transition-all"
-              style={{
-                background: theme === "light" ? "var(--calories)" : "rgba(255,255,255,0.12)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              <span
-                className="absolute top-[3px] w-[20px] h-[20px] rounded-full flex items-center justify-center transition-all"
-                style={{
-                  background: "#fff",
-                  left: theme === "light" ? "calc(100% - 23px)" : "3px",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                }}
-              >
-                {theme === "light"
-                  ? <IconSun size={11} style={{ color: "var(--calories)" }} />
-                  : <IconMoon size={11} style={{ color: "#818cf8" }} />
-                }
-              </span>
-            </button>
-          </div>
-        </motion.div>
+        {/* Theme picker */}
+        <ThemePicker current={theme} onChange={setTheme} />
 
         {/* Google Fit card */}
         <motion.div
@@ -2883,6 +2841,209 @@ function ResetPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ─── Theme Picker ─────────────────────────────────────────────────────────── */
+
+const THEME_DEFS: {
+  id: Theme;
+  name: string;
+  desc: string;
+  bg: string;
+  surface: string;
+  accent: string;
+  nav: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  radius: string;
+}[] = [
+  {
+    id: "cosmos",
+    name: "Cosmos",
+    desc: "Sombre & épuré",
+    bg: "#09090b",
+    surface: "#1c1c21",
+    accent: "#a78bfa",
+    nav: "#09090b",
+    protein: "#a78bfa",
+    carbs: "#fbbf24",
+    fat: "#60a5fa",
+    radius: "10px",
+  },
+  {
+    id: "lumiere",
+    name: "Lumière",
+    desc: "Clair & aéré",
+    bg: "#f4f4f8",
+    surface: "#ffffff",
+    accent: "#a78bfa",
+    nav: "#f4f4f8",
+    protein: "#a78bfa",
+    carbs: "#fbbf24",
+    fat: "#60a5fa",
+    radius: "10px",
+  },
+  {
+    id: "mfp",
+    name: "MFP Style",
+    desc: "MyFitnessPal",
+    bg: "#F2F2F2",
+    surface: "#FFFFFF",
+    accent: "#00A86B",
+    nav: "#FFFFFF",
+    protein: "#00A86B",
+    carbs: "#FF9800",
+    fat: "#F44336",
+    radius: "5px",
+  },
+  {
+    id: "ocean",
+    name: "Océan",
+    desc: "Marine & cyan",
+    bg: "#0A1628",
+    surface: "#0f2040",
+    accent: "#00BCD4",
+    nav: "#0A1628",
+    protein: "#26C6DA",
+    carbs: "#FFCA28",
+    fat: "#42A5F5",
+    radius: "10px",
+  },
+];
+
+function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected: boolean }) {
+  return (
+    <div
+      className="relative rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: t.bg,
+        border: selected ? `2px solid ${t.accent}` : "2px solid transparent",
+        height: 90,
+        boxShadow: selected ? `0 0 0 3px ${t.accent}28` : "none",
+        transition: "border-color 0.2s, box-shadow 0.2s",
+      }}
+    >
+      {/* Page content mock */}
+      <div className="flex-1 flex flex-col gap-1 p-1.5">
+        {/* Card */}
+        <div
+          style={{
+            background: t.surface,
+            borderRadius: t.radius,
+            padding: "4px 6px",
+            border: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.07)"}`,
+          }}
+        >
+          {/* Mini chart bars */}
+          <div className="flex items-end gap-0.5" style={{ height: 16 }}>
+            {[0.5, 0.8, 0.6, 1.0, 0.75, 0.9, 0.65].map((h, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: `${h * 100}%`,
+                  background: i === 3 ? t.accent : `${t.accent}50`,
+                  borderRadius: "2px 2px 0 0",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        {/* Macro dots */}
+        <div className="flex gap-1 px-0.5">
+          {[t.protein, t.carbs, t.fat].map((c, i) => (
+            <div key={i} style={{ width: 18, height: 4, borderRadius: 2, background: c, opacity: 0.9 }} />
+          ))}
+        </div>
+      </div>
+      {/* Nav bar mock */}
+      <div
+        style={{
+          background: t.nav,
+          borderTop: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" || t.nav === "#FFFFFF" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
+          height: 16,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-around",
+          paddingInline: 6,
+        }}
+      >
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: i === 0 ? t.accent : (t.bg === "#F2F2F2" || t.bg === "#f4f4f8" || t.nav === "#FFFFFF" ? "rgba(0,0,0,0.20)" : "rgba(255,255,255,0.25)"),
+            }}
+          />
+        ))}
+      </div>
+      {/* Selected checkmark */}
+      {selected && (
+        <div
+          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
+          style={{ background: t.accent }}
+        >
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ThemePicker({ current, onChange }: { current: Theme; onChange: (t: Theme) => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.03 }}
+      className="glass p-4 mb-4 mt-4"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(139,92,246,0.12)" }}
+        >
+          <IconSun size={16} style={{ color: "#a78bfa" }} />
+        </div>
+        <div>
+          <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence</p>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Choisir un thème</p>
+        </div>
+      </div>
+
+      {/* 2×2 grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {THEME_DEFS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            className="text-left"
+            style={{ outline: "none" }}
+          >
+            <ThemePreview t={t} selected={current === t.id} />
+            <div className="mt-1.5 px-0.5">
+              <p
+                className="text-[12px] font-semibold leading-tight"
+                style={{ color: current === t.id ? "var(--text-primary)" : "var(--text-secondary)" }}
+              >
+                {t.name}
+              </p>
+              <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
+                {t.desc}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
     </motion.div>
   );
 }

@@ -2,37 +2,46 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "dark" | "light";
+export type Theme = "cosmos" | "lumiere" | "mfp" | "ocean";
 
-const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
-  theme: "dark",
-  toggle: () => {},
+const ThemeContext = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
+  theme: "cosmos",
+  setTheme: () => {},
 });
 
 export function useTheme() { return useContext(ThemeContext); }
 
+function applyTheme(t: Theme) {
+  const html = document.documentElement;
+  html.dataset.theme = t;
+  // Keep legacy .light class for lumiere (CSS still uses html.light selector)
+  html.classList.toggle("light", t === "lumiere");
+}
+
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("cosmos");
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored === "light") {
-      setTheme("light");
-      document.documentElement.classList.add("light");
-    }
+    const stored = localStorage.getItem("nutri-theme") as Theme | null;
+    // Support legacy "light"/"dark" values from old storage key
+    const legacy = localStorage.getItem("theme");
+    const validThemes: Theme[] = ["cosmos", "lumiere", "mfp", "ocean"];
+    const initial: Theme =
+      stored && validThemes.includes(stored) ? stored
+      : legacy === "light" ? "lumiere"
+      : "cosmos";
+    setThemeState(initial);
+    applyTheme(initial);
   }, []);
 
-  const toggle = () => {
-    setTheme((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", next);
-      document.documentElement.classList.toggle("light", next === "light");
-      return next;
-    });
+  const setTheme = (t: Theme) => {
+    setThemeState(t);
+    localStorage.setItem("nutri-theme", t);
+    applyTheme(t);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
