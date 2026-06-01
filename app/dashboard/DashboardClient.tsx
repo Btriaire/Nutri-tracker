@@ -47,6 +47,9 @@ interface Props {
   lang:              Lang;
   trackedNutrients?: TrackedNutrients;
   recentPhotos?:     RecentPhoto[];
+  todayMeditationMin?: number;
+  lastBPDate?:       string | null;
+  lastBPSystolic?:   number | null;
 }
 
 function activityEmoji(type: number): string {
@@ -106,6 +109,7 @@ export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, trendPoints,
   waterMl: initialWaterMl, plan, lang, trackedNutrients, recentPhotos = [],
+  todayMeditationMin = 0, lastBPDate = null, lastBPSystolic = null,
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -240,6 +244,22 @@ export default function DashboardClient({
     label: format(new Date(p.date + "T12:00:00"), "dd/MM"),
   }));
   const weightChartData = chartData.filter((p) => (p.weightKg ?? 0) > 0);
+
+  // Blood pressure warning
+  const daysSinceLastBP = lastBPDate
+    ? Math.floor((new Date(date + "T00:00:00").getTime() - new Date(lastBPDate + "T00:00:00").getTime()) / 86400000)
+    : 999;
+  const bpMaxDays = lastBPSystolic !== null && lastBPSystolic > 180 ? 2
+    : lastBPSystolic !== null && lastBPSystolic > 140 ? 4
+    : 7;
+  const showBPWarning = daysSinceLastBP >= bpMaxDays;
+  const bpWarningMsg = lastBPSystolic !== null && lastBPSystolic > 180
+    ? "Tension élevée · mesure requise tous les 2 jours"
+    : lastBPSystolic !== null && lastBPSystolic > 140
+    ? "Tension haute · mesure requise 2× par semaine"
+    : lastBPDate
+    ? `Dernière mesure il y a ${daysSinceLastBP} jours`
+    : "Aucune mesure de tension enregistrée";
 
   return (
     <div className="relative min-h-screen">
@@ -387,6 +407,41 @@ export default function DashboardClient({
         <motion.div {...fade(0.04)} className="mb-4">
           <FunFactsBanner />
         </motion.div>
+
+        {/* ── Blood pressure warning ── */}
+        {showBPWarning && (
+          <motion.div
+            {...fade(0.045)}
+            className="mb-4"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Link
+              href="/health"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
+              style={{
+                background: "rgba(239,68,68,0.12)",
+                border: "1px solid rgba(239,68,68,0.4)",
+                textDecoration: "none",
+              }}
+            >
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(239,68,68,0.15)" }}>
+                <span style={{ fontSize: 18 }}>🩺</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold" style={{ color: "#f87171" }}>
+                  Tension artérielle
+                </p>
+                <p className="text-[11px]" style={{ color: "rgba(248,113,113,0.75)" }}>
+                  {bpWarningMsg}
+                </p>
+              </div>
+              <IconChevronRight size={16} stroke={2} style={{ color: "#f87171", flexShrink: 0 }} />
+            </Link>
+          </motion.div>
+        )}
 
         {/* ── Hero card: ring + macros + journal ── */}
         <motion.div {...fade(0.05)} className="glass p-5 mb-4">
@@ -823,6 +878,35 @@ export default function DashboardClient({
         <motion.div {...fade(0.21)} className="mb-4">
           <StreakWidget />
         </motion.div>
+
+        {/* ── Meditation today ── */}
+        {todayMeditationMin > 0 && (
+          <motion.div {...fade(0.215)} className="mb-4">
+            <Link
+              href="/meditation"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
+              style={{
+                background: "rgba(139,92,246,0.08)",
+                border: "1px solid rgba(139,92,246,0.25)",
+                textDecoration: "none",
+              }}
+            >
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(139,92,246,0.12)" }}>
+                <span style={{ fontSize: 20 }}>☸️</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold" style={{ color: "#a78bfa" }}>
+                  Méditation · {todayMeditationMin} min aujourd&apos;hui
+                </p>
+                <p className="text-[11px]" style={{ color: "rgba(167,139,250,0.65)" }}>
+                  Séance complétée ✨
+                </p>
+              </div>
+              <IconChevronRight size={16} stroke={2} style={{ color: "#a78bfa", flexShrink: 0 }} />
+            </Link>
+          </motion.div>
+        )}
 
         {/* ── Tracked nutrients ── */}
         {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (() => {

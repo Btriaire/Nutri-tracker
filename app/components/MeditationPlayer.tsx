@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconPlayerPlay, IconPlayerPause, IconPlayerStop, IconCircleCheck,
   IconChevronLeft, IconVolume, IconVolumeOff, IconMusic, IconRefresh,
+  IconSparkles, IconSearch, IconX,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -103,6 +104,23 @@ const PROGRAMS: Program[] = [
       { label: "Intégration",   durationSec: 120, instruction: "Prenez conscience que vous emportez cet état de paix avec vous. La paix continue dans chaque action." },
     ],
   },
+];
+
+// ─── AI Themes ────────────────────────────────────────────────────────────────
+
+const AI_THEMES = [
+  { label: "Stress",      emoji: "😮‍💨" },
+  { label: "Sommeil",     emoji: "🌙" },
+  { label: "Énergie",     emoji: "⚡" },
+  { label: "Focus",       emoji: "🎯" },
+  { label: "Chakras",     emoji: "🌈" },
+  { label: "Guérison",    emoji: "💚" },
+  { label: "Anxiété",     emoji: "🌊" },
+  { label: "Confiance",   emoji: "✨" },
+  { label: "Gratitude",   emoji: "🙏" },
+  { label: "432 Hz",      emoji: "🔮" },
+  { label: "528 Hz",      emoji: "💎" },
+  { label: "Pleine lune", emoji: "🌕" },
 ];
 
 // ─── YouTube URL builder ──────────────────────────────────────────────────────
@@ -297,6 +315,13 @@ export default function MeditationPlayer() {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [iframeKey,    setIframeKey]    = useState(0);
 
+  // Médit-IA states
+  const [aiTheme,      setAiTheme]      = useState("");
+  const [aiLoading,    setAiLoading]    = useState(false);
+  const [aiResults,    setAiResults]    = useState<Track[] | null>(null);
+  const [aiError,      setAiError]      = useState("");
+  const [aiSession,    setAiSession]    = useState(false); // true when playing an AI track
+
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedRef = useRef(false);
 
@@ -329,6 +354,7 @@ export default function MeditationPlayer() {
     setPaused(false);
     setStepIdx(0);
     setStepElapsed(0);
+    setAiSession(false);
     // NowPlaying reçoit active=false → src=about:blank → stoppe YouTube
   }, []);
 
@@ -341,6 +367,61 @@ export default function MeditationPlayer() {
   const handleChangeTrack = useCallback((track: Track) => {
     setCurrentTrack(track);
     setIframeKey(k => k + 1);
+  }, []);
+
+  const handleAiSearch = useCallback(async (theme: string) => {
+    if (!theme.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError("");
+    setAiResults(null);
+    try {
+      const res = await fetch("/api/meditation/ai-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme }),
+      });
+      const json = await res.json() as { tracks?: { videoId: string; title: string; emoji: string }[]; error?: string };
+      if (!res.ok || json.error) {
+        setAiError(json.error ?? "Erreur de recherche");
+      } else if (!json.tracks || json.tracks.length === 0) {
+        setAiError("Aucun résultat trouvé — essayez un autre thème");
+      } else {
+        setAiResults(json.tracks.map((t, i) => ({
+          id:      `ai_${i}_${t.videoId}`,
+          label:   t.title,
+          emoji:   t.emoji,
+          videoId: t.videoId,
+        })));
+      }
+    } catch {
+      setAiError("Impossible de contacter le service");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [aiLoading]);
+
+  const playAiTrack = useCallback((track: Track) => {
+    setAiSession(true);
+    setSelected({
+      id: "court" as ProgramId,
+      label: track.label,
+      durationMin: 30,
+      emoji: track.emoji,
+      description: "Séance libre · Médit-IA",
+      color: "#a78bfa",
+      soundCat: "bowl",
+      steps: [
+        { label: "Méditation libre", durationSec: 30 * 60, instruction: "Installez-vous confortablement. Laissez la musique vous guider vers la paix intérieure." },
+      ],
+    });
+    setCurrentTrack(track);
+    setRunning(true);
+    setPaused(false);
+    setStepIdx(0);
+    setStepElapsed(0);
+    setTotalElapsed(0);
+    setIframeKey(k => k + 1);
+    pausedRef.current = false;
   }, []);
 
   // Timer
@@ -499,7 +580,7 @@ export default function MeditationPlayer() {
             iframeKey={iframeKey}
             active={running}
             onChangeTrack={handleChangeTrack}
-            tracks={TRACKS[selected.soundCat]}
+            tracks={aiSession && aiResults ? aiResults : TRACKS[selected.soundCat]}
           />
         </div>
       </div>
@@ -654,8 +735,142 @@ export default function MeditationPlayer() {
         );
       })}
 
+      {/* ── Médit-IA ─────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl overflow-hidden"
+        style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.2)" }}>
+
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
+            <IconSparkles size={18} stroke={1.5} style={{ color: "#a78bfa" }} />
+          </div>
+          <div>
+            <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Médit-IA</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ambiances thématiques · IA + validation</p>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 space-y-3">
+          {/* Theme chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {AI_THEMES.map(({ label, emoji }) => (
+              <button key={label}
+                onClick={() => { setAiTheme(label); handleAiSearch(label); }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+                style={{
+                  background: aiTheme === label ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${aiTheme === label ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
+                  color: aiTheme === label ? "#a78bfa" : "var(--text-muted)",
+                }}>
+                {emoji} {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom search input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={aiTheme}
+              onChange={(e) => setAiTheme(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAiSearch(aiTheme)}
+              placeholder="Thème libre… (ex: chakra sacral, pleine lune)"
+              className="flex-1 px-3 py-2 rounded-xl text-[12px] outline-none"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(139,92,246,0.25)",
+                color: "var(--text-primary)",
+              }}
+            />
+            <button
+              onClick={() => handleAiSearch(aiTheme)}
+              disabled={aiLoading || !aiTheme.trim()}
+              className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-all"
+              style={{
+                background: aiLoading ? "rgba(139,92,246,0.08)" : "rgba(139,92,246,0.2)",
+                border: "1px solid rgba(139,92,246,0.4)",
+                color: "#a78bfa",
+              }}>
+              {aiLoading
+                ? <IconRefresh size={15} stroke={1.5} className="animate-spin" />
+                : <IconSearch size={15} stroke={1.5} />
+              }
+            </button>
+          </div>
+
+          {/* Loading state */}
+          {aiLoading && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+              style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)" }}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ border: "2px solid rgba(139,92,246,0.3)", borderTopColor: "#a78bfa" }}
+              />
+              <p className="text-[11px]" style={{ color: "#a78bfa" }}>
+                Recherche en cours · validation des ambiances…
+              </p>
+            </motion.div>
+          )}
+
+          {/* Error */}
+          {aiError && !aiLoading && (
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <p className="text-[11px]" style={{ color: "#f87171" }}>{aiError}</p>
+              <button onClick={() => setAiError("")}>
+                <IconX size={12} stroke={2} style={{ color: "#f87171" }} />
+              </button>
+            </div>
+          )}
+
+          {/* Results */}
+          <AnimatePresence>
+            {aiResults && !aiLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="space-y-2">
+                {aiResults.map((track) => (
+                  <div key={track.id}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl"
+                    style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)" }}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-[18px]"
+                      style={{ background: "rgba(139,92,246,0.12)" }}>
+                      {track.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                        {track.label}
+                      </p>
+                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        Ambiance validée · {aiTheme}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => playAiTrack(track)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all"
+                      style={{
+                        background: "rgba(139,92,246,0.18)",
+                        border: "1px solid rgba(139,92,246,0.4)",
+                        color: "#a78bfa",
+                      }}>
+                      <IconPlayerPlay size={11} stroke={2} />
+                      Lancer
+                    </button>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
       <p className="text-[10px] text-center" style={{ color: "var(--text-muted)" }}>
-        🎵 Musique ambiante via YouTube · Nécessite une connexion internet
+        🎵 Musique ambiante · Nécessite une connexion internet
       </p>
     </div>
   );

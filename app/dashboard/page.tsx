@@ -21,12 +21,15 @@ export default async function DashboardPage() {
   const recentWeight: WeightPoint[] = [];
   const trendPoints: DayTrendPoint[] = [];
   let recentPhotos: RecentPhoto[] = [];
+  let todayMeditationMin            = 0;
+  let lastBPDate:     string | null = null;
+  let lastBPSystolic: number | null = null;
 
   try {
     const db = getAdminFirestore();
     const trendFrom = format(new Date(Date.now() - 13 * 86400000), "yyyy-MM-dd");
 
-    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap, photosSnap] = await Promise.all([
+    const [logSnap, fitnessSnap, profileSnap, recentWeightSnap, trendLogSnap, photosSnap, meditSnap, healthSnap] = await Promise.all([
       db.doc(`users/${userId}/foodLog/${today}`).get(),
       db.doc(`users/${userId}/fitnessData/${today}`).get(),
       db.doc(`users/${userId}`).get(),
@@ -37,6 +40,15 @@ export default async function DashboardPage() {
         .orderBy("date", "asc")
         .get(),
       db.collection(`users/${userId}/dayPhotos`).orderBy("date", "desc").limit(14).get(),
+      // Today's meditation sessions
+      db.collection(`users/${userId}/meditationSessions`)
+        .where("date", "==", today)
+        .get(),
+      // Last 7 days of health logs (to find most recent BP reading)
+      db.collection(`users/${userId}/healthLog`)
+        .orderBy("date", "desc")
+        .limit(7)
+        .get(),
     ]);
 
     const profile = profileSnap.exists ? profileSnap.data() as UserProfile : null;
@@ -71,6 +83,22 @@ export default async function DashboardPage() {
         burned:    fit?.googleFit?.activeCaloriesBurned ?? undefined,
       });
     }
+    // Meditation minutes today
+    for (const doc of meditSnap.docs) {
+      const d = doc.data() as { durationMin?: number };
+      todayMeditationMin += d.durationMin ?? 0;
+    }
+
+    // Last blood pressure reading
+    for (const doc of healthSnap.docs) {
+      const d = doc.data() as { date?: string; bloodPressure?: { systolic: number; diastolic: number; time: string }[] };
+      if (d.bloodPressure && d.bloodPressure.length > 0) {
+        lastBPDate     = d.date ?? doc.id;
+        lastBPSystolic = d.bloodPressure[d.bloodPressure.length - 1].systolic;
+        break;
+      }
+    }
+
     // Recent photos
     for (const doc of photosSnap.docs) {
       const data = doc.data() as { date: string; photos?: { id: string; dataUrl: string; addedAt: string }[] };
@@ -106,6 +134,9 @@ export default async function DashboardPage() {
       lang="fr"
       trackedNutrients={trackedNutrients}
       recentPhotos={recentPhotos}
+      todayMeditationMin={todayMeditationMin}
+      lastBPDate={lastBPDate}
+      lastBPSystolic={lastBPSystolic}
     />
   );
 }
