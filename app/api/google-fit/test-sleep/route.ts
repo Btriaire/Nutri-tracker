@@ -61,6 +61,13 @@ export async function GET() {
     }
   }
 
+  // 4. List all data sources that contain sleep data
+  const dsListRes = await fetch(
+    "https://www.googleapis.com/fitness/v1/users/me/dataSources?dataTypeName=com.google.sleep.segment",
+    { headers: { Authorization: auth } }
+  );
+  const dsListJson = dsListRes.ok ? await dsListRes.json() : { error: dsListRes.status };
+
   return NextResponse.json({
     date,
     window: { from: new Date(windowStart).toISOString(), to: new Date(noonMs).toISOString() },
@@ -68,5 +75,6 @@ export async function GET() {
     aggregateRaw: aggJson,
     datasetRaw: dsJson,
     sessionsRaw: sessJson,
+    dataSourcesList: dsListJson,
   });
 }
