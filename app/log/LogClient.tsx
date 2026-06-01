@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
@@ -14,6 +14,7 @@ import { pct } from "@/app/lib/nutrition";
 import { IconCheck } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
+import DayTypeSelector from "@/app/components/DayTypeSelector";
 import type { DayPhoto } from "@/app/api/photos/route";
 import { levelBarStyle, levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
 
@@ -59,6 +60,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [mealHunger, setMealHunger] = useState<Partial<Record<MealType, HungerLevel>>>(
     (initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {}
   );
+  const initialDayType = (initialLog as (DayLog & { dayType?: DayType }) | null)?.dayType;
+  const initialJetlag  = (initialLog as (DayLog & { jetlag?: boolean })  | null)?.jetlag;
   const [toast,     setToast]      = useState<AddedInfo | null>(null);
   const [validated,      setValidated]      = useState((initialLog as { validated?: boolean } | null)?.validated ?? false);
   const [validating,     setValidating]     = useState(false);
@@ -190,7 +193,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <DateNav date={date} />
         </motion.div>
 
-        {/* Day photos */}
+        {/* Day photos + type */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -198,6 +201,17 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           className="mb-4"
         >
           <DayPhotos date={date} initialPhotos={dayPhotos} />
+          {/* Day type selector — compact row below photos */}
+          <div className="flex items-center gap-2 mt-2 px-0.5">
+            <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+              Journée
+            </span>
+            <DayTypeSelector
+              date={date}
+              initialType={initialDayType}
+              initialJetlag={initialJetlag}
+            />
+          </div>
         </motion.div>
 
         {/* Daily summary */}

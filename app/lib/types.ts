@@ -173,12 +173,16 @@ export interface DayTotals {
   saturatedFatG?: number;
 }
 
+export type DayType = "work" | "rest" | "travel";
+
 export interface DayLog {
   date:        string;     // YYYY-MM-DD
   entries:     FoodEntry[];
   totals:      DayTotals;
   waterMl:     number;     // hydratation du jour
   mealHunger?: Partial<Record<MealType, HungerLevel>>; // faim par repas
+  dayType?:    DayType;    // type de journée
+  jetlag?:     boolean;    // décalage horaire (si dayType==="travel")
   updatedAt:   Timestamp;
 }
 
