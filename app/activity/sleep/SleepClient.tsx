@@ -21,9 +21,9 @@ interface Props { points: SleepPoint[]; sleepGoalMin: number }
 // ─── Sleep Cycle Ring ─────────────────────────────────────────────────────────
 
 const STAGES = [
-  { key: "light", label: "Léger",      emoji: "🌙", color: "#7986CB", glow: "rgba(121,134,203,0.35)", desc: "Endormissement, rêverie" },
-  { key: "deep",  label: "Profond",    emoji: "💤", color: "#3B82F6", glow: "rgba(59,130,246,0.35)",  desc: "Récupération physique" },
-  { key: "rem",   label: "Paradoxal",  emoji: "✨", color: "#8B5CF6", glow: "rgba(139,92,246,0.35)",  desc: "Mémoire & créativité" },
+  { key: "light", label: "Léger",     emoji: "🌙", color: "#7986CB", desc: "Endormissement · rêverie" },
+  { key: "deep",  label: "Profond",   emoji: "💤", color: "#3B82F6", desc: "Récupération physique" },
+  { key: "rem",   label: "Paradoxal", emoji: "✨", color: "#8B5CF6", desc: "Mémoire · créativité" },
 ] as const;
 
 function fmtH(min: number) {
@@ -31,213 +31,245 @@ function fmtH(min: number) {
   return h > 0 ? (m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`) : `${m}min`;
 }
 
-function SleepCycleRing({ light, deep, rem, totalMin }: {
-  light: number; deep: number; rem: number; totalMin?: number;
+function sleepQualityColor(min: number, goal: number) {
+  const r = min / goal;
+  if (r >= 1)    return "#34A853";
+  if (r >= 0.85) return "#7986CB";
+  if (r >= 0.65) return "#FBBC04";
+  return "#EA4335";
+}
+
+function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }: {
+  light: number; deep: number; rem: number;
+  totalMin?: number; inBedMin?: number; goalMin?: number;
 }) {
-  const total = light + deep + rem;
-  if (total === 0) return null;
+  const phaseTotal = light + deep + rem;
+  const displayMin = totalMin ?? phaseTotal;
+  if (displayMin === 0) return null;
 
-  // SVG arc parameters
-  const SIZE  = 200;
-  const CX    = SIZE / 2;
-  const CY    = SIZE / 2;
-  const R     = 76;
-  const SW    = 16;       // stroke width
-  const GAP   = 0.04;     // radians gap between segments
-  const circ  = 2 * Math.PI * R;
-  const START = -Math.PI / 2; // top
+  const hasPhases = phaseTotal > 0;
 
-  // Segments: [light, deep, rem]
-  const values = [light, deep, rem];
-  let cursor = START;
+  // SVG arc geometry
+  const SIZE = 180, CX = SIZE / 2, CY = SIZE / 2, R = 68, SW = 14;
+  const GAP  = 0.05;
+  const START = -Math.PI / 2;
 
-  function describeArc(startAngle: number, endAngle: number) {
-    const x1 = CX + R * Math.cos(startAngle);
-    const y1 = CY + R * Math.sin(startAngle);
-    const x2 = CX + R * Math.cos(endAngle);
-    const y2 = CY + R * Math.sin(endAngle);
-    const large = endAngle - startAngle > Math.PI ? 1 : 0;
-    return `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2}`;
+  function describeArc(a0: number, a1: number) {
+    const x1 = CX + R * Math.cos(a0), y1 = CY + R * Math.sin(a0);
+    const x2 = CX + R * Math.cos(a1), y2 = CY + R * Math.sin(a1);
+    return `M ${x1} ${y1} A ${R} ${R} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x2} ${y2}`;
   }
 
-  const arcs = values.map((v, i) => {
-    const span = (v / total) * (2 * Math.PI) - GAP;
-    const arcStart = cursor + GAP / 2;
-    const arcEnd   = cursor + GAP / 2 + span;
-    cursor += (v / total) * (2 * Math.PI);
-    return { path: describeArc(arcStart, arcEnd), stage: STAGES[i], pct: Math.round(v / total * 100), min: v };
-  });
+  // Build arc segments
+  type ArcSeg = { path: string; color: string; label: string; min: number; pct: number; desc: string; emoji: string };
+  const arcs: ArcSeg[] = [];
 
-  // Hypnogram timeline — simulate a typical cycle pattern based on proportions
-  // Just a decorative wave showing relative depth changes across the night
-  const W = 280, H = 36;
-  // Build simplified hypnogram: roughly 4-5 NREM/REM cycles over the night
-  // light → deep → light → REM → light → deep → light → REM ...
-  const cycles = 4;
-  const pts: string[] = [];
-  const deepRatio = deep / total;
-  const remRatio  = rem  / total;
-  for (let i = 0; i <= cycles * 4; i++) {
-    const x = (i / (cycles * 4)) * W;
-    const phase = i % 4; // 0=light, 1=deep, 2=light, 3=rem
-    // y: 0=top(awake), 36=bottom(deep), scale by actual ratios
-    const y = phase === 1 ? H * (0.35 + deepRatio * 0.55)
-            : phase === 3 ? H * (0.1  + remRatio  * 0.45)
-            : H * 0.22;
-    pts.push(`${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`);
+  if (hasPhases) {
+    const values = [light, deep, rem];
+    let cursor = START;
+    values.forEach((v, i) => {
+      if (v <= 0) { cursor += (v / phaseTotal) * 2 * Math.PI; return; }
+      const span  = (v / phaseTotal) * 2 * Math.PI - GAP;
+      const a0    = cursor + GAP / 2;
+      const a1    = a0 + span;
+      cursor     += (v / phaseTotal) * 2 * Math.PI;
+      arcs.push({
+        path:  describeArc(a0, a1),
+        color: STAGES[i].color,
+        label: STAGES[i].label,
+        desc:  STAGES[i].desc,
+        emoji: STAGES[i].emoji,
+        min:   v,
+        pct:   Math.round(v / phaseTotal * 100),
+      });
+    });
+  } else {
+    // Single arc — full circle, color = quality
+    const sleepPct = Math.min(displayMin / goalMin, 1);
+    const span  = sleepPct * 2 * Math.PI - 0.01;
+    const color = sleepQualityColor(displayMin, goalMin);
+    arcs.push({
+      path:  describeArc(START, START + span),
+      color, label: "Sommeil", desc: "Total enregistré", emoji: "🌙",
+      min: displayMin, pct: Math.round(sleepPct * 100),
+    });
   }
-  const wavePath = pts.join(" ");
 
-  const efficiencyPct = totalMin ? Math.round((totalMin / total) * 100) : null;
+  const effPct = inBedMin && inBedMin > 0 ? Math.round(displayMin / inBedMin * 100) : null;
+  const qualColor = sleepQualityColor(displayMin, goalMin);
+
+  // Hypnogram wave (only when phases available)
+  const W = 260, H = 34;
+  let wavePath = "";
+  if (hasPhases) {
+    const deepR = deep / phaseTotal, remR = rem / phaseTotal;
+    const cycles = 4;
+    const pts: string[] = [];
+    for (let i = 0; i <= cycles * 4; i++) {
+      const x = (i / (cycles * 4)) * W;
+      const ph = i % 4;
+      const y = ph === 1 ? H * (0.35 + deepR * 0.5)
+              : ph === 3 ? H * (0.08 + remR  * 0.5)
+              : H * 0.2;
+      pts.push(`${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`);
+    }
+    wavePath = pts.join(" ");
+  }
 
   return (
     <div className="space-y-4">
-      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Cycle de sommeil</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+        {hasPhases ? "Cycle de sommeil" : "Nuit analysée"}
+      </p>
 
-      {/* Ring + center */}
+      {/* Ring + cards */}
       <div className="flex items-center gap-4">
+
+        {/* SVG Ring */}
         <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
-
-          {/* Track ring */}
+          {/* Track */}
           <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0 }}>
-            <circle cx={CX} cy={CY} r={R} fill="none"
-              stroke="rgba(255,255,255,0.05)" strokeWidth={SW} />
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={SW} />
           </svg>
-
-          {/* Glow layer (blurred duplicate arcs) */}
-          <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0, filter: "blur(6px)" }}>
-            {arcs.map(({ path, stage, min }) => min > 0 && (
-              <path key={stage.key} d={path} fill="none"
-                stroke={stage.color} strokeWidth={SW + 4} strokeLinecap="round"
-                opacity={0.35} />
+          {/* Glow */}
+          <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0, filter: "blur(7px)" }}>
+            {arcs.map((a, i) => (
+              <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth={SW + 4}
+                strokeLinecap="round" opacity={0.3} />
             ))}
           </svg>
-
-          {/* Main arcs — animated */}
+          {/* Arcs */}
           <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0 }}>
-            {arcs.map(({ path, stage, min }, i) => min > 0 && (
-              <motion.path key={stage.key} d={path} fill="none"
-                stroke={stage.color} strokeWidth={SW} strokeLinecap="round"
+            {arcs.map((a, i) => (
+              <motion.path key={i} d={a.path} fill="none"
+                stroke={a.color} strokeWidth={SW} strokeLinecap="round"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 1, delay: 0.2 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 1.1, delay: 0.15 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
               />
             ))}
           </svg>
-
-          {/* Center content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span style={{ fontSize: 28, lineHeight: 1 }}>😴</span>
-            <p className="text-[18px] font-bold leading-tight tabular-nums mt-1" style={{ color: "var(--text-primary)" }}>
-              {fmtH(total)}
+          {/* Center */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+            <span style={{ fontSize: 26 }}>😴</span>
+            <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color: qualColor }}>
+              {fmtH(displayMin)}
             </p>
-            <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              {efficiencyPct ? `${efficiencyPct}% eff.` : "phases"}
+            <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+              {effPct ? `${effPct}% eff.` : `/${fmtH(goalMin)}`}
             </p>
           </div>
         </div>
 
-        {/* Phase cards */}
-        <div className="flex flex-col gap-2 flex-1">
-          {arcs.map(({ stage, min, pct }) => (
-            <motion.div key={stage.key}
-              initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.4 + arcs.findIndex(a => a.stage.key === stage.key) * 0.1 }}
-              className="px-3 py-2 rounded-xl"
-              style={{ background: `${stage.color}0d`, border: `1px solid ${stage.color}28` }}>
-              <div className="flex items-center justify-between mb-0.5">
+        {/* Phase / quality cards */}
+        <div className="flex flex-col gap-2 flex-1 min-w-0">
+          {hasPhases ? arcs.map((a, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, delay: 0.35 + i * 0.08 }}
+              className="px-2.5 py-2 rounded-xl"
+              style={{ background: `${a.color}0e`, border: `1px solid ${a.color}25` }}>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: stage.color, boxShadow: `0 0 5px ${stage.color}` }} />
-                  <span className="text-[11px] font-semibold" style={{ color: stage.color }}>{stage.label}</span>
+                  <div className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: a.color, boxShadow: `0 0 4px ${a.color}` }} />
+                  <span className="text-[11px] font-semibold" style={{ color: a.color }}>{a.label}</span>
                 </div>
                 <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                  {min > 0 ? fmtH(min) : "—"}
+                  {fmtH(a.min)}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{stage.desc}</span>
-                <span className="text-[10px] font-medium" style={{ color: stage.color }}>{min > 0 ? `${pct}%` : ""}</span>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{a.desc}</span>
+                <span className="text-[10px] font-medium" style={{ color: a.color }}>{a.pct}%</span>
               </div>
-              {/* Mini bar */}
-              {min > 0 && (
-                <div className="mt-1.5 h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <motion.div className="h-full rounded-full"
-                    style={{ background: stage.color }}
-                    initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  />
-                </div>
-              )}
+              <div className="mt-1.5 h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <motion.div className="h-full rounded-full" style={{ background: a.color }}
+                  initial={{ width: 0 }} animate={{ width: `${a.pct}%` }}
+                  transition={{ duration: 0.8, delay: 0.5 + i * 0.08, ease: [0.16, 1, 0.3, 1] }} />
+              </div>
             </motion.div>
-          ))}
+          )) : (
+            /* No phase data — show quality metrics instead */
+            <>
+              {[
+                { label: "Durée", val: fmtH(displayMin), color: qualColor },
+                { label: "Au lit", val: inBedMin ? fmtH(inBedMin) : "—", color: "rgba(255,255,255,0.5)" },
+                { label: "Objectif", val: fmtH(goalMin), color: "var(--text-muted)" },
+              ].map(({ label, val, color }) => (
+                <motion.div key={label}
+                  initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.35, delay: 0.3 }}
+                  className="px-2.5 py-2.5 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                  <p className="text-[16px] font-bold leading-none tabular-nums" style={{ color }}>{val}</p>
+                </motion.div>
+              ))}
+              <p className="text-[9px] leading-relaxed px-1" style={{ color: "var(--text-muted)" }}>
+                Phases non disponibles · ton tracker ne les remonte pas dans Google Fit
+              </p>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Hypnogram wave */}
-      <div className="rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme estimé</p>
-          <div className="flex items-center gap-2">
-            {STAGES.map(s => (
-              <div key={s.key} className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
-                <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
-              </div>
-            ))}
+      {/* Hypnogram (only when phases exist) */}
+      {hasPhases && wavePath && (
+        <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme · cycles estimés</p>
+            <div className="flex items-center gap-2.5">
+              {STAGES.map(s => (
+                <div key={s.key} className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                  <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Y-axis labels */}
-        <div className="flex gap-2">
-          <div className="flex flex-col justify-between text-right" style={{ minWidth: 36 }}>
-            <span className="text-[8px]" style={{ color: "rgba(121,134,203,0.6)" }}>Léger</span>
-            <span className="text-[8px]" style={{ color: "rgba(59,130,246,0.6)" }}>Profond</span>
+          <div className="flex gap-2">
+            <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ width: 32 }}>
+              <span className="text-[7px]" style={{ color: "rgba(121,134,203,0.55)" }}>Léger</span>
+              <span className="text-[7px]" style={{ color: "rgba(59,130,246,0.55)" }}>Profond</span>
+            </div>
+            <svg width="100%" height={H + 6} viewBox={`0 0 ${W} ${H + 6}`} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="waveGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#7986CB" stopOpacity="0.2" />
+                  <stop offset="60%" stopColor="#8B5CF6" stopOpacity="0.1" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.04" />
+                </linearGradient>
+                <linearGradient id="waveStroke2" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stopColor="#7986CB" />
+                  <stop offset="45%"  stopColor="#3B82F6" />
+                  <stop offset="75%"  stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#7986CB" />
+                </linearGradient>
+              </defs>
+              <rect x={0} y={0}         width={W} height={H * 0.26} fill="rgba(121,134,203,0.04)" />
+              <rect x={0} y={H * 0.26}  width={W} height={H * 0.42} fill="rgba(139,92,246,0.04)" />
+              <rect x={0} y={H * 0.68}  width={W} height={H * 0.32} fill="rgba(59,130,246,0.05)" />
+              <motion.path d={`${wavePath} L ${W} ${H + 6} L 0 ${H + 6} Z`}
+                fill="url(#waveGrad2)"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.9 }} />
+              <motion.path d={wavePath} fill="none"
+                stroke="url(#waveStroke2)" strokeWidth="1.5" strokeLinejoin="round"
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+                transition={{ duration: 1.4, delay: 0.7, ease: "easeInOut" }} />
+            </svg>
           </div>
-          <svg width="100%" height={H + 8} viewBox={`0 0 ${W} ${H + 8}`} preserveAspectRatio="none"
-            style={{ overflow: "visible" }}>
-            {/* Depth bands */}
-            <rect x={0} y={0}    width={W} height={H * 0.28} fill="rgba(121,134,203,0.04)" />
-            <rect x={0} y={H * 0.28} width={W} height={H * 0.4}  fill="rgba(139,92,246,0.04)" />
-            <rect x={0} y={H * 0.68} width={W} height={H * 0.32} fill="rgba(59,130,246,0.06)" />
-
-            {/* Glow under wave */}
-            <defs>
-              <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#7986CB" stopOpacity="0.25" />
-                <stop offset="50%"  stopColor="#8B5CF6" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
-              </linearGradient>
-            </defs>
-            <motion.path
-              d={`${wavePath} L ${W} ${H + 8} L 0 ${H + 8} Z`}
-              fill="url(#waveGrad)"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.8 }}
-            />
-            {/* Wave line */}
-            <motion.path d={wavePath} fill="none"
-              stroke="url(#waveStroke)" strokeWidth="1.5" strokeLinejoin="round"
-              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-              transition={{ duration: 1.5, delay: 0.6, ease: "easeInOut" }}
-            />
-            <defs>
-              <linearGradient id="waveStroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stopColor="#7986CB" />
-                <stop offset="40%"  stopColor="#3B82F6" />
-                <stop offset="70%"  stopColor="#8B5CF6" />
-                <stop offset="100%" stopColor="#7986CB" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <p className="text-[8px] text-center mt-1" style={{ color: "var(--text-muted)" }}>
+            Cycles NREM / REM simulés à partir des proportions
+          </p>
         </div>
-        <p className="text-[8px] mt-1.5 text-center" style={{ color: "var(--text-muted)" }}>
-          Estimation basée sur les proportions · cycles NREM/REM simulés
-        </p>
-      </div>
+      )}
 
       <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
-        Données Google Fit · Total phases {fmtH(total)}
-        {totalMin && totalMin !== total ? ` · ${fmtH(totalMin)} sommeil total` : ""}
+        Données Google Fit
+        {hasPhases && ` · Total phases ${fmtH(phaseTotal)}`}
+        {inBedMin ? ` · Au lit ${fmtH(inBedMin)}` : ""}
       </p>
     </div>
   );
@@ -744,15 +776,15 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               ))}
             </div>
 
-            {/* Sleep stages — arc ring */}
-            {(lastSleep.lightSleepMin || lastSleep.deepSleepMin || lastSleep.remSleepMin) && (
-              <SleepCycleRing
-                light={lastSleep.lightSleepMin ?? 0}
-                deep={lastSleep.deepSleepMin ?? 0}
-                rem={lastSleep.remSleepMin ?? 0}
-                totalMin={lastSleep.sleepMinutes ?? undefined}
-              />
-            )}
+            {/* Sleep stages — arc ring (always shown when sleep data exists) */}
+            <SleepCycleRing
+              light={lastSleep.lightSleepMin ?? 0}
+              deep={lastSleep.deepSleepMin ?? 0}
+              rem={lastSleep.remSleepMin ?? 0}
+              totalMin={lastSleep.sleepMinutes ?? undefined}
+              inBedMin={lastSleep.timeInBedMinutes ?? undefined}
+              goalMin={sleepGoalMin}
+            />
 
           </motion.div>
         )}
