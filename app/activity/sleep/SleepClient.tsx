@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconChevronLeft, IconMoon, IconCircleCheck, IconTrophy, IconArrowUp, IconArrowDown, IconMinus,
-  IconPlus, IconX, IconPencil, IconTrash, IconLoader2,
+  IconPlus, IconX, IconPencil, IconTrash, IconLoader2, IconRefresh,
 } from "@tabler/icons-react";
 import {
   ResponsiveContainer, BarChart, Bar,
@@ -551,9 +552,36 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function SleepClient({ points: initialPoints, sleepGoalMin }: Props) {
+  const router                    = useRouter();
   const [points,    setPoints]    = useState(initialPoints);
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
   const [modal,     setModal]     = useState<{ date: string; current: number | null } | null>(null);
+  const [syncing,   setSyncing]   = useState(false);
+
+  // Auto-sync Withings on mount (last 7 days, silent)
+  useEffect(() => {
+    fetch("/api/withings/sync", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ days: 7 }),
+    })
+      .then(r => r.ok ? router.refresh() : null)
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/withings/sync", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ days: 30 }),
+      });
+      if (res.ok) router.refresh();
+    } catch { /* ignore */ }
+    finally { setSyncing(false); }
+  }
 
   // Update a point locally after save
   const handleSaved = useCallback((date: string, min: number | null) => {
@@ -612,6 +640,13 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           <IconMoon size={18} style={{ color: "#7986CB" }} />
           <span className="text-[15px] font-semibold">Sommeil</span>
         </div>
+        {/* Sync Withings */}
+        <button onClick={handleSync} disabled={syncing}
+          className="flex items-center justify-center w-8 h-8 rounded-lg transition-all"
+          style={{ background: "rgba(52,211,153,0.1)", color: "#34d399", border: "1px solid rgba(52,211,153,0.25)" }}
+          title="Synchroniser Withings">
+          <IconRefresh size={14} className={syncing ? "animate-spin" : ""} />
+        </button>
         {/* Add today */}
         <button
           onClick={() => setModal({ date: today, current: points.find(p => p.date === today)?.sleepMinutes ?? null })}
