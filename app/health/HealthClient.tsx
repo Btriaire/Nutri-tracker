@@ -820,7 +820,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Other vitals grid */}
-            <motion.div {...fade(0.12)} className="grid grid-cols-2 gap-2 mb-4">
+            <motion.div {...fade(0.12)} className="glass mb-4 overflow-hidden">
               <VitalCard
                 icon={<IconHeartbeat size={15} style={{ color: "#EA4335" }} />}
                 label="FC repos" unit="bpm" value={entry?.restingHR} editKey="restingHR"
@@ -1971,21 +1971,14 @@ function VitalCard({
     : null;
 
   return (
-    <div className="card flex flex-col gap-1.5 p-3" style={{ minHeight: "80px" }}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {icon}
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-        </div>
-        {value != null && !editing && (
-          <button onClick={onStartEdit} className="p-1 rounded-md transition-colors" style={{ color: "var(--text-muted)" }}>
-            <IconPencil size={12} />
-          </button>
-        )}
-      </div>
-
+    <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
       {editing ? (
+        /* ── Edit mode — vertical, needs more space ── */
         <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            {icon}
+            <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>{label}</span>
+          </div>
           <div className="relative">
             <input
               autoFocus type="number" value={editVal}
@@ -2014,34 +2007,49 @@ function VitalCard({
               </button>
             )}
           </div>
+          <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{refRange}</p>
         </div>
       ) : displayVal != null ? (
-        <>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[20px] font-bold tabular-nums leading-none"
-              style={{ color: status?.color ?? "var(--text-primary)" }}>
-              {displayVal}
-            </span>
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+        /* ── Display mode — horizontal row ── */
+        <div className="flex items-center gap-2">
+          {/* Left: icon + label */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            {icon}
+            <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
           </div>
-          {status && (
-            <span className="text-[10px] font-medium" style={{ color: status.color }}>
-              ● {status.label}
-            </span>
-          )}
-        </>
+          {/* Right: value + status */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {status && (
+              <span className="text-[10px] font-medium hidden sm:inline" style={{ color: status.color }}>
+                {status.label}
+              </span>
+            )}
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-[18px] font-bold tabular-nums leading-none"
+                style={{ color: status?.color ?? "var(--text-primary)" }}>
+                {displayVal}
+              </span>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+            </div>
+            <button onClick={onStartEdit} className="p-1 rounded-md" style={{ color: "var(--text-muted)" }}>
+              <IconPencil size={11} />
+            </button>
+          </div>
+        </div>
       ) : (
-        <button
-          onClick={onStartEdit}
-          className="flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors"
-          style={{ minHeight: "40px", border: "1.5px dashed var(--border)" }}>
-          <IconPlus size={14} style={{ color: "var(--text-muted)" }} />
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Ajouter</span>
+        /* ── Empty — tap to add ── */
+        <button onClick={onStartEdit}
+          className="w-full flex items-center gap-2 py-1"
+          style={{ color: "var(--text-muted)" }}>
+          <div className="flex items-center gap-1.5 flex-1">
+            {icon}
+            <span className="text-[11px] font-medium">{label}</span>
+          </div>
+          <div className="flex items-center gap-1 text-[10px]" style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "2px 8px" }}>
+            <IconPlus size={11} />
+            Saisir
+          </div>
         </button>
-      )}
-
-      {!editing && (
-        <p className="text-[9px] mt-auto" style={{ color: "var(--text-muted)" }}>{refRange}</p>
       )}
     </div>
   );
