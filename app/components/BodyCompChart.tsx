@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { IconLoader2, IconChartLine } from "@tabler/icons-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { IconLoader2, IconChartLine, IconChevronDown } from "@tabler/icons-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -75,6 +75,17 @@ const RANGES = [
   { label: "180j", days: 180 },
 ];
 
+// ─── BP classification ─────────────────────────────────────────────────────────
+
+function bpClass(sys: number, dia: number): { label: string; color: string; bg: string } {
+  if (sys < 90 || dia < 60)      return { label: "Hypotension",     color: "#60a5fa", bg: "rgba(96,165,250,0.08)"  };
+  if (sys < 120 && dia < 80)     return { label: "Optimal",         color: "#34d399", bg: "rgba(52,211,153,0.08)"  };
+  if (sys < 130 && dia < 80)     return { label: "Normal élevé",    color: "#a3e635", bg: "rgba(163,230,53,0.08)"  };
+  if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "#fb923c", bg: "rgba(251,146,60,0.08)"  };
+  if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "#f87171", bg: "rgba(248,113,113,0.08)" };
+  return                                  { label: "HTA grade 3",     color: "#ef4444", bg: "rgba(239,68,68,0.1)"   };
+}
+
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
 function CustomTooltip({ active, payload, label, metrics }: {
@@ -135,11 +146,12 @@ function MiniStat({ label, value, unit, color, trend }: {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BodyCompChart() {
-  const [tab,     setTab]     = useState<Tab>("composition");
-  const [days,    setDays]    = useState(90);
-  const [points,  setPoints]  = useState<BodyCompPoint[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hidden,  setHidden]  = useState<Set<string>>(new Set());
+  const [tab,        setTab]       = useState<Tab>("composition");
+  const [days,       setDays]      = useState(90);
+  const [points,     setPoints]    = useState<BodyCompPoint[]>([]);
+  const [loading,    setLoading]   = useState(false);
+  const [hidden,     setHidden]    = useState<Set<string>>(new Set());
+  const [bpListOpen, setBpListOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -360,17 +372,83 @@ export default function BodyCompChart() {
               })()}
             </div>
           )}
-          {tab === "vitaux" && (
-            <div className="flex items-center justify-center flex-wrap gap-2 pb-3 px-4">
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ 95% · TA 120/80 mmHg</p>
-              {chartData.some(p => p.systolicBP != null) && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                  style={{ background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.2)" }}>
-                  TA = Pression artérielle
-                </span>
-              )}
-            </div>
-          )}
+          {tab === "vitaux" && (() => {
+            const bpPoints = [...points]
+              .filter(p => p.systolicBP != null && p.diastolicBP != null)
+              .reverse(); // most recent first
+            return (
+              <div className="px-4 pb-1">
+                {/* Legend row */}
+                <div className="flex items-center justify-center flex-wrap gap-2 pb-2">
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ 95% · TA 120/80 mmHg</p>
+                </div>
+
+                {/* Collapsible BP list */}
+                {bpPoints.length > 0 && (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    {/* Header / toggle */}
+                    <button
+                      onClick={() => setBpListOpen(o => !o)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
+                      style={{ background: "rgba(244,63,94,0.05)" }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold" style={{ color: "#f43f5e" }}>
+                          ❤️ Historique tensions
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums"
+                          style={{ background: "rgba(244,63,94,0.12)", color: "#f43f5e" }}>
+                          {bpPoints.length} mesures
+                        </span>
+                      </div>
+                      <motion.div animate={{ rotate: bpListOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <IconChevronDown size={14} style={{ color: "#f43f5e" }} />
+                      </motion.div>
+                    </button>
+
+                    {/* Expandable list */}
+                    <AnimatePresence initial={false}>
+                      {bpListOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                          style={{ overflow: "hidden" }}>
+                          <div style={{ maxHeight: 280, overflowY: "auto", scrollbarWidth: "none" }}>
+                            {bpPoints.map((p, i) => {
+                              const cls = bpClass(p.systolicBP!, p.diastolicBP!);
+                              return (
+                                <div key={p.date}
+                                  className="flex items-center gap-3 px-3 py-2"
+                                  style={{ borderTop: i === 0 ? "1px solid var(--border)" : "1px solid rgba(255,255,255,0.03)", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
+                                  {/* Date */}
+                                  <span className="text-[10px] w-[52px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                                    {format(parseISO(p.date), "dd MMM", { locale: fr })}
+                                  </span>
+                                  {/* Values */}
+                                  <span className="text-[13px] font-bold tabular-nums flex-1" style={{ color: cls.color }}>
+                                    {p.systolicBP}
+                                    <span className="text-[10px] font-normal mx-0.5" style={{ color: "var(--text-muted)" }}>/</span>
+                                    {p.diastolicBP}
+                                    <span className="text-[9px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
+                                  </span>
+                                  {/* Classification badge */}
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
+                                    style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.color}33` }}>
+                                    {cls.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {tab === "avance" && (
             <div className="flex items-center justify-center flex-wrap gap-2 pb-3 px-4">
               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— Graisse viscérale : seuil 13</p>
