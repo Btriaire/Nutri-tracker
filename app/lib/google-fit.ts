@@ -240,15 +240,20 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
           nightIntervals.push([sessStart, sessEnd]);
         }
       } else {
-        sessions.push({
-          id:           s.id,
-          name:         s.name || activityLabel(s.activityType ?? 0),
-          activityType: s.activityType ?? 0,
-          startMs:      sessStart,
-          endMs:        sessEnd,
-          durationMin,
-          calories:     null,
-        });
+        // Workout sessions: only include those that START on the target date
+        // (the fetch window extends 18h back for sleep capture — without this
+        //  filter yesterday's workouts would bleed into today's dashboard)
+        if (sessStart >= startMs) {
+          sessions.push({
+            id:           s.id,
+            name:         s.name || activityLabel(s.activityType ?? 0),
+            activityType: s.activityType ?? 0,
+            startMs:      sessStart,
+            endMs:        sessEnd,
+            durationMin,
+            calories:     null,
+          });
+        }
       }
     }
 
