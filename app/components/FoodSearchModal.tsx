@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconX, IconSearch, IconPlus, IconChevronLeft, IconLoader2, IconChevronDown,
   IconToolsKitchen2, IconBookmark, IconToolsKitchen, IconTrash, IconCheck,
-  IconBarcode, IconCamera,
+  IconBarcode, IconCamera, IconStar, IconStarFilled,
 } from "@tabler/icons-react";
 import MealBuilderModal from "./MealBuilderModal";
 import FoodPictogram from "./FoodPictogram";
@@ -121,7 +121,7 @@ function MacroPills({ n }: { n: FoodNutrition }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab  = "aliments" | "repas" | "recettes";
+type Tab  = "aliments" | "repas" | "recettes" | "mes-aliments";
 type Step = "browse" | "configure" | "configure-recipe" | "save-meal";
 
 export interface AddedInfo { name: string; calories: number }
@@ -370,6 +370,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [aiSearching, setAiSearching] = useState(false);
   const [savedAiIds,  setSavedAiIds]  = useState<Set<string>>(new Set());
   const [savingAiId,  setSavingAiId]  = useState<string | null>(null);
+  const [myFoods,       setMyFoods]       = useState<FoodSearchResult[]>([]);
+  const [loadingMyFoods, setLoadingMyFoods] = useState(false);
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ServingOption | null>(null);
   const [customQty, setCustomQty]   = useState("1");
@@ -454,10 +456,29 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     } finally { setLoadingRecipes(false); }
   }, []);
 
+  const loadMyFoods = useCallback(async () => {
+    setLoadingMyFoods(true);
+    try {
+      const res  = await fetch("/api/custom-foods");
+      const json = await res.json() as { foods: Array<{ id: string; name: string; servingSizeG: number; servingLabel?: string; nutrition: FoodNutrition }> };
+      const mapped: FoodSearchResult[] = (json.foods ?? []).map(f => ({
+        id:           `custom:${f.id}`,
+        source:       "custom" as const,
+        name:         f.name,
+        servingSizeG: f.servingSizeG ?? 100,
+        servingLabel: f.servingLabel ?? `${f.servingSizeG ?? 100}g`,
+        nutrition:    f.nutrition,
+      }));
+      setMyFoods(mapped);
+    } catch { /* silent */ }
+    finally { setLoadingMyFoods(false); }
+  }, []);
+
   useEffect(() => {
-    if (open && tab === "repas")    loadMeals();
-    if (open && tab === "recettes") loadRecipes();
-  }, [open, tab, loadMeals, loadRecipes]);
+    if (open && tab === "repas")        loadMeals();
+    if (open && tab === "recettes")     loadRecipes();
+    if (open && tab === "mes-aliments") loadMyFoods();
+  }, [open, tab, loadMeals, loadRecipes, loadMyFoods]);
 
   // ── Aliments ──────────────────────────────────────────────────────────────
 
@@ -572,6 +593,10 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   };
 
   const selectFood = (food: FoodSearchResult) => {
+    // Auto-save Nutri-AI foods to personal list
+    if (food.source === "ai" && !savedAiIds.has(food.id)) {
+      handleSaveAiToDb(food);
+    }
     setSelected(food);
     const opts = getServingOptions(food);
     setSelectedUnit(opts.find((o) => o.isDefault) ?? opts[0]);
@@ -625,6 +650,10 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   };
 
   const handleQuickAdd = async (food: FoodSearchResult) => {
+    // Auto-save Nutri-AI foods to personal list
+    if (food.source === "ai" && !savedAiIds.has(food.id)) {
+      handleSaveAiToDb(food);
+    }
     setQuickAddingId(food.id);
     const opts    = getServingOptions(food);
     const unit    = opts.find((o) => o.isDefault) ?? opts[0];
@@ -801,18 +830,19 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               <div className="flex gap-1 p-1 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                 {([
-                  { id: "aliments",  label: "Aliments",  Icon: IconToolsKitchen2 },
-                  { id: "repas",     label: "Repas",     Icon: IconToolsKitchen },
-                  { id: "recettes",  label: "Recettes",  Icon: IconBookmark },
+                  { id: "aliments",     label: "Aliments",  Icon: IconToolsKitchen2 },
+                  { id: "repas",        label: "Repas",     Icon: IconToolsKitchen },
+                  { id: "recettes",     label: "Recettes",  Icon: IconBookmark },
+                  { id: "mes-aliments", label: "Mes aliments", Icon: IconStarFilled },
                 ] as const).map(({ id, label, Icon }) => (
                   <button key={id} onClick={() => setTab(id)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-medium transition-all"
                     style={{
                       background: tab === id ? "rgba(167,139,250,0.15)" : "transparent",
                       color:      tab === id ? "var(--protein)" : "var(--text-muted)",
                       border:     tab === id ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
                     }}>
-                    <Icon size={12} stroke={tab === id ? 2 : 1.5} />
+                    <Icon size={11} stroke={tab === id ? 2 : 1.5} />
                     {label}
                   </button>
                 ))}
@@ -1187,6 +1217,73 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         <IconPlus size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                       </motion.button>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── MES ALIMENTS ── */}
+              {tab === "mes-aliments" && (
+                <div className="px-4 py-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <IconStarFilled size={13} style={{ color: "#f59e0b" }} />
+                    <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                      Ma liste personnelle
+                    </p>
+                    <p className="text-[11px] ml-1" style={{ color: "var(--text-muted)" }}>
+                      — aliments Nutri-AI sauvegardés
+                    </p>
+                  </div>
+
+                  {loadingMyFoods && (
+                    <div className="flex justify-center py-12">
+                      <IconLoader2 size={18} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                    </div>
+                  )}
+
+                  {!loadingMyFoods && myFoods.length === 0 && (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      <span className="text-4xl">⭐</span>
+                      <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+                        Aucun aliment personnel.<br />
+                        Sélectionnez un résultat Nutri-AI pour l'ajouter automatiquement.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    {myFoods.map((r) => {
+                      const isAdding = quickAddingId === r.id;
+                      return (
+                        <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center gap-2 rounded-xl overflow-hidden"
+                          style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.18)" }}>
+                          <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                            <FoodPictogram name={r.name} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                </div>
+                              </div>
+                              <MacroPills n={r.nutrition} />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => handleQuickAdd(r)}
+                            disabled={isAdding}
+                            className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                            style={{ background: isAdding ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.10)", borderLeft: "1px solid rgba(245,158,11,0.18)" }}
+                          >
+                            {isAdding
+                              ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#f59e0b" }} />
+                              : <IconPlus size={16} stroke={2} style={{ color: "#f59e0b" }} />
+                            }
+                          </button>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

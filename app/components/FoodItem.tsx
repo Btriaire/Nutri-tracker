@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconTrash, IconChevronDown, IconX, IconLoader2, IconCheck } from "@tabler/icons-react";
+import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
@@ -59,12 +59,11 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
     onDelete(entry.id);
   };
 
-  const toggleEdit = () => {
+  const toggleExpand = () => {
     if (lockedRef.current) return;
     if (swipeXRef.current > 0) { swipeXRef.current = 0; setSwipeX(0); return; }
-    setEditGrams(String(Math.round(entry.servingGrams)));
-    setEditing((x) => !x);
-    setExpanded(false);
+    setExpanded((x) => !x);
+    setEditing(false);
   };
 
   useEffect(() => { swipeXRef.current = swipeX; }, [swipeX]);
@@ -211,8 +210,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
             {/* Food pictogram */}
             <FoodPictogram name={entry.name} size={38} />
 
-            {/* Food info — click to toggle edit */}
-            <button className="flex-1 min-w-0 text-left" onClick={toggleEdit}>
+            {/* Food info — click to toggle expanded */}
+            <button className="flex-1 min-w-0 text-left" onClick={toggleExpand}>
               <div className="flex items-baseline gap-1.5">
                 <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>
                   {entry.name}
@@ -224,11 +223,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                   </span>
                 )}
               </div>
-              <p className="text-[11px]" style={{ color: editing ? "var(--protein)" : "var(--text-muted)" }}>
-                {editing
-                  ? "✏️ Modifier la quantité"
-                  : `${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`
-                }
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`}
               </p>
             </button>
 
@@ -244,18 +240,6 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
 
             {/* Actions */}
             <div className="flex items-center gap-0.5 flex-shrink-0">
-              {hasMicros && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setExpanded((x) => !x); setEditing(false); }}
-                  className="p-1 rounded-lg transition-colors"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.18 }}
-                    style={{ display: "inline-flex" }}>
-                    <IconChevronDown size={12} stroke={2} />
-                  </motion.span>
-                </button>
-              )}
               <div className="w-1.5 h-1.5 rounded-full mx-1"
                 style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }} />
               <button
@@ -356,9 +340,9 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Micro-nutrient panel */}
+      {/* Nutritional detail panel */}
       <AnimatePresence initial={false}>
-        {expanded && hasMicros && (
+        {expanded && (
           <motion.div
             key="micros"
             initial={{ height: 0, opacity: 0 }}
@@ -367,18 +351,69 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <div className="pb-3 pl-8">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 p-2.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                {microRows.map(({ label, value, unit, color }) => (
-                  <div key={label} className="flex justify-between items-center">
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                    <span className="text-[11px] font-medium tabular-nums"
-                      style={{ color: color ?? "var(--text-secondary)" }}>
-                      {formatMicro(value, unit)}
-                    </span>
+            <div className="pb-3 pl-3 pr-2 pt-1">
+              {/* Macro pills row */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  { label: "Glucides",  value: n.carbsG,   color: "var(--carbs)" },
+                  { label: "Protéines", value: n.proteinG, color: "var(--protein)" },
+                  { label: "Lipides",   value: n.fatG,     color: "var(--fat)" },
+                  ...(n.fiberG ? [{ label: "Fibres", value: n.fiberG, color: "var(--fiber)" }] : []),
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
+                    style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[9px] ml-0.5">g</span></span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* Secondary row: Sucres, Sel, Graisses sat. */}
+              {(n.sugarG || n.sodiumMg || n.saturatedFatG) && (
+                <div className="flex gap-3 mb-2">
+                  {n.sugarG != null && n.sugarG > 0 && (
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      Sucres <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{n.sugarG.toFixed(1)}g</span>
+                    </span>
+                  )}
+                  {n.sodiumMg != null && n.sodiumMg > 0 && (
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      Sel <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{(n.sodiumMg / 393).toFixed(2)}g</span>
+                    </span>
+                  )}
+                  {n.saturatedFatG != null && n.saturatedFatG > 0 && (
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      Gr. sat. <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{n.saturatedFatG.toFixed(1)}g</span>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Micro-nutrient grid (existing, only if has values) */}
+              {hasMicros && microRows.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 p-2.5 rounded-xl mb-2"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  {microRows.map(({ label, value, unit, color }) => (
+                    <div key={label} className="flex justify-between items-center">
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[11px] font-medium tabular-nums"
+                        style={{ color: color ?? "var(--text-secondary)" }}>
+                        {formatMicro(value, unit)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Edit button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditGrams(String(Math.round(entry.servingGrams))); setEditing(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                  style={{ background: "rgba(167,139,250,0.10)", color: "var(--protein)", border: "1px solid rgba(167,139,250,0.20)" }}>
+                  <IconPencil size={11} stroke={2} />
+                  Modifier la quantité
+                </button>
               </div>
             </div>
           </motion.div>
