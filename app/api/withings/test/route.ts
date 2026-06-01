@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getTokens } from "@/app/lib/withings";
+import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 
 const USER = "owner";
@@ -63,21 +64,47 @@ export async function GET() {
     body?: { series?: { date: string; data: Record<string, number> }[] };
   };
 
+  // Check Firestore — what's stored for the last 7 days
+  const db = getAdminFirestore();
+  const firestoreDocs = await Promise.all(
+    Array.from({ length: 7 }, (_, i) => format(subDays(new Date(), i), "yyyy-MM-dd"))
+      .map(async (date) => {
+        const snap = await db.doc(`users/${USER}/fitnessData/${date}`).get();
+        if (!snap.exists) return { date, exists: false };
+        const data = snap.data();
+        const ws = data?.withingsSleep;
+        return {
+          date,
+          exists: true,
+          withingsSleep: ws ? {
+            totalSleepSec: ws.totalSleepSec,
+            lightSleepSec: ws.lightSleepSec,
+            deepSleepSec:  ws.deepSleepSec,
+            remSleepSec:   ws.remSleepSec,
+            sleepScore:    ws.sleepScore,
+          } : null,
+        };
+      })
+  );
+
   return NextResponse.json({
     connected: true,
     tokenExpiresAt: new Date(tokens.expiresAt).toISOString(),
     dateRange: { from, to: today },
+    // What the Withings API returns RIGHT NOW
+    apiSleep: {
+      status:      sleepJson.status,
+      error:       sleepJson.error,
+      seriesCount: sleepJson.body?.series?.length ?? 0,
+      series:      sleepJson.body?.series,
+    },
+    // What is currently stored in Firestore
+    firestoreSleep: firestoreDocs,
+    // Body measures
     measure: {
       status:    measJson.status,
       error:     measJson.error,
       groupCount: measJson.body?.measuregrps?.length ?? 0,
-      sample:    measJson.body?.measuregrps?.slice(0, 2),
-    },
-    sleep: {
-      status:      sleepJson.status,
-      error:       sleepJson.error,
-      seriesCount: sleepJson.body?.series?.length ?? 0,
-      sample:      sleepJson.body?.series?.slice(0, 2),
     },
   });
 }
