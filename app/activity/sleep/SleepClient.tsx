@@ -39,9 +39,17 @@ function sleepQualityColor(min: number, goal: number) {
   return "#EA4335";
 }
 
-function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }: {
+const SOURCE_LABEL: Record<string, string> = {
+  withings:    "Withings",
+  applehealth: "Apple Health",
+  googlefit:   "Google Fit",
+  manual:      "Manuel",
+};
+
+function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, source, sleepScore }: {
   light: number; deep: number; rem: number;
   totalMin?: number; inBedMin?: number; goalMin?: number;
+  source?: string; sleepScore?: number | null;
 }) {
   const phaseTotal = light + deep + rem;
   const displayMin = totalMin ?? phaseTotal;
@@ -209,7 +217,11 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }:
                 </motion.div>
               ))}
               <p className="text-[9px] leading-relaxed px-1" style={{ color: "var(--text-muted)" }}>
-                Phases non disponibles · ton tracker ne les remonte pas dans Google Fit
+                {source === "withings"
+                  ? "Phases non disponibles · ScanWatch ou Sleep Analyzer requis"
+                  : source === "applehealth"
+                    ? "Phases non disponibles · active la détection dans Santé"
+                    : "Phases non disponibles · ton tracker ne les remonte pas dans Google Fit"}
               </p>
             </>
           )}
@@ -268,11 +280,26 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420 }:
         </div>
       )}
 
-      <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
-        Données Google Fit
-        {hasPhases && ` · Total phases ${fmtH(phaseTotal)}`}
-        {inBedMin ? ` · Au lit ${fmtH(inBedMin)}` : ""}
-      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        {source && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+            style={{ background: source === "withings" ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.05)", color: source === "withings" ? "#34d399" : "var(--text-muted)", border: `1px solid ${source === "withings" ? "rgba(52,211,153,0.2)" : "var(--border)"}` }}>
+            {source === "withings" ? "🛏" : source === "applehealth" ? "🍎" : source === "googlefit" ? "💚" : "✏️"} {SOURCE_LABEL[source] ?? source}
+          </span>
+        )}
+        {sleepScore != null && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+            style={{ background: "rgba(99,102,241,0.08)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>
+            Score {sleepScore}/100
+          </span>
+        )}
+        {hasPhases && (
+          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Total phases {fmtH(phaseTotal)}</span>
+        )}
+        {inBedMin != null && (
+          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Au lit {fmtH(inBedMin)}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -759,24 +786,42 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
 
             {/* Key metrics row */}
             <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "Au lit",      value: lastSleep.timeInBedMinutes, color: "rgba(255,255,255,0.5)" },
-                { label: "Endormi",     value: lastSleep.sleepMinutes,     color: "#7986CB" },
-                { label: "Efficacité",  value: lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
-                    ? null : null,
-                  pct: lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
-                    ? Math.round(lastSleep.sleepMinutes / lastSleep.timeInBedMinutes * 100)
-                    : null,
-                  color: "#34d399" },
-              ].map(({ label, value, pct, color }) => (
-                <div key={label} className="rounded-xl p-2.5 text-center"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
-                  <p className="text-[16px] font-bold leading-none" style={{ color }}>
-                    {pct !== undefined && pct !== null ? `${pct}%` : value ? fmtSleep(value) : "—"}
+              {/* Sleep total */}
+              <div className="rounded-xl p-2.5 text-center"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Endormi</p>
+                <p className="text-[16px] font-bold leading-none" style={{ color: "#7986CB" }}>
+                  {lastSleep.sleepMinutes ? fmtSleep(lastSleep.sleepMinutes) : "—"}
+                </p>
+              </div>
+              {/* Sleep score (Withings) or time in bed (GFit) */}
+              {lastSleep.sleepScore != null ? (
+                <div className="rounded-xl p-2.5 text-center"
+                  style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
+                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Score</p>
+                  <p className="text-[16px] font-bold leading-none" style={{ color: "#818cf8" }}>
+                    {lastSleep.sleepScore}<span className="text-[10px] font-normal">/100</span>
                   </p>
                 </div>
-              ))}
+              ) : (
+                <div className="rounded-xl p-2.5 text-center"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Au lit</p>
+                  <p className="text-[16px] font-bold leading-none" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {lastSleep.timeInBedMinutes ? fmtSleep(lastSleep.timeInBedMinutes) : "—"}
+                  </p>
+                </div>
+              )}
+              {/* Efficiency */}
+              <div className="rounded-xl p-2.5 text-center"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Efficacité</p>
+                <p className="text-[16px] font-bold leading-none" style={{ color: "#34d399" }}>
+                  {lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
+                    ? `${Math.round(lastSleep.sleepMinutes / lastSleep.timeInBedMinutes * 100)}%`
+                    : "—"}
+                </p>
+              </div>
             </div>
 
             {/* Sleep stages — arc ring (always shown when sleep data exists) */}
@@ -787,6 +832,8 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               totalMin={lastSleep.sleepMinutes ?? undefined}
               inBedMin={lastSleep.timeInBedMinutes ?? undefined}
               goalMin={sleepGoalMin}
+              source={lastSleep.source}
+              sleepScore={lastSleep.sleepScore}
             />
 
           </motion.div>
@@ -844,7 +891,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
             <div>
               <p className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Aucune donnée de sommeil</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                Connecte Google Fit pour importer automatiquement,<br />ou saisis ta durée manuellement.
+                Withings se synchronise automatiquement,<br />ou saisis ta durée manuellement.
               </p>
             </div>
             <button

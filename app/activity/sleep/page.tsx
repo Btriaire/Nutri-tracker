@@ -14,6 +14,7 @@ export interface SleepPoint {
   remSleepMin:      number | null;
   sleepScore:       number | null;
   sleepSyncedAt?:   string;
+  source?:          "withings" | "applehealth" | "googlefit" | "manual";
 }
 
 export default async function SleepPage() {
@@ -64,6 +65,14 @@ export default async function SleepPage() {
       ?? gf?.remSleepMin
       ?? null;
 
+    // Determine source
+    const source: SleepPoint["source"] =
+      data?.manualSleep?.sleepMinutes != null ? "manual"
+      : ws?.totalSleepSec  != null ? "withings"
+      : ah?.sleepMinutes   != null ? "applehealth"
+      : gf?.sleepMinutes   != null ? "googlefit"
+      : undefined;
+
     return {
       date:             dates[i],
       sleepMinutes:     sleepMin,
@@ -73,6 +82,7 @@ export default async function SleepPage() {
       remSleepMin,
       sleepScore:       ws?.sleepScore ?? null,
       sleepSyncedAt:    gf?.sleepSyncedAt,
+      source,
     };
   });
 
