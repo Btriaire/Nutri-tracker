@@ -3,18 +3,19 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2 } from "@tabler/icons-react";
+import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2,
+  IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
 
-const MEAL_META: Record<MealType, { fr: string; en: string; icon: string }> = {
-  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", icon: "🌅" },
-  lunch:     { fr: "Déjeuner",       en: "Lunch",     icon: "☀️" },
-  dinner:    { fr: "Dîner",          en: "Dinner",    icon: "🌙" },
-  snacks:    { fr: "Collations",     en: "Snacks",    icon: "🍎" },
+const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
+  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried },
+  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad    },
+  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat     },
+  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple    },
 };
 
 
@@ -113,7 +114,10 @@ export default function MealSection({
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-2.5 flex-1 py-3 text-left transition-colors min-w-0"
         >
-          <span className="text-base shrink-0">{meta.icon}</span>
+          <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-md"
+            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}>
+            <meta.Icon size={13} />
+          </span>
           <span className="font-medium text-[13.5px] truncate" style={{ color: "var(--text-primary)" }}>
             {meta[lang]}
           </span>

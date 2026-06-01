@@ -12,7 +12,7 @@ import {
 import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
-  IconPhoto, IconBrain, IconSunrise, IconSunHigh, IconMoonStars, IconApple, IconChartGridDots,
+  IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
 } from "@tabler/icons-react";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -1249,10 +1249,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               };
               // Professional icon components per meal
               const MEAL_ICONS = {
-                breakfast: <IconSunrise  size={11} />,
-                lunch:     <IconSunHigh  size={11} />,
-                dinner:    <IconMoonStars size={11} />,
-                snacks:    <IconApple    size={11} />,
+                breakfast: <IconEggFried size={11} />,
+                lunch:     <IconSalad   size={11} />,
+                dinner:    <IconMeat    size={11} />,
+                snacks:    <IconApple   size={11} />,
               };
               const MEAL_SHORT = {
                 breakfast: "Petit-dej",

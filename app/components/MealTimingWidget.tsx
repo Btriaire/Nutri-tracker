@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
 import type { MealTimingData, MealTimingStats } from "@/app/api/meal-timing/route";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -12,11 +13,16 @@ function minutesToLabel(m: number): string {
   return `${String(h).padStart(2, "0")}:${String(mn).padStart(2, "0")}`;
 }
 
-const MEAL_META: Record<string, { label: string; emoji: string; color: string; typical: [number, number] }> = {
-  breakfast: { label: "Petit-déj", emoji: "☕", color: "#fbbf24", typical: [360, 600]  }, // 6h-10h
-  lunch:     { label: "Déjeuner",  emoji: "🥗", color: "#34d399", typical: [660, 840]  }, // 11h-14h
-  dinner:    { label: "Dîner",     emoji: "🍽️", color: "#a78bfa", typical: [1080, 1260] }, // 18h-21h
-  snacks:    { label: "Collation", emoji: "🍎", color: "#f97316", typical: [0, 1440]    }, // any time
+const MEAL_META: Record<string, {
+  label: string;
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
+  color: string;
+  typical: [number, number];
+}> = {
+  breakfast: { label: "Petit-déj", Icon: IconEggFried, color: "#fbbf24", typical: [360, 600]  },
+  lunch:     { label: "Déjeuner",  Icon: IconSalad,    color: "#34d399", typical: [660, 840]  },
+  dinner:    { label: "Dîner",     Icon: IconMeat,     color: "#a78bfa", typical: [1080, 1260] },
+  snacks:    { label: "Collation", Icon: IconApple,    color: "#f97316", typical: [0, 1440]    },
 };
 
 // Map 0-1440 minutes to a 0-100% horizontal position within a window
@@ -58,7 +64,10 @@ function MealTimeline({ stat }: { stat: MealTimingStats }) {
       <div className="flex items-center justify-between px-3 py-2.5"
         style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-center gap-2">
-          <span className="text-[16px]">{meta.emoji}</span>
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
+            style={{ background: `${meta.color}18`, color: meta.color }}>
+            <meta.Icon size={15} />
+          </span>
           <div>
             <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{meta.label}</p>
             <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>

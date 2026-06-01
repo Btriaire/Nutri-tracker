@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
 import type { HungerLevel, MealType } from "@/app/lib/types";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
-const MEALS: { key: MealType; label: string; icon: string }[] = [
-  { key: "breakfast", label: "Petit-déjeuner", icon: "🌅" },
-  { key: "lunch",     label: "Déjeuner",       icon: "☀️" },
-  { key: "snacks",    label: "Collations",     icon: "🍎" },
-  { key: "dinner",    label: "Dîner",          icon: "🌙" },
+const MEALS: { key: MealType; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+  { key: "breakfast", label: "Petit-déjeuner", Icon: IconEggFried },
+  { key: "lunch",     label: "Déjeuner",       Icon: IconSalad    },
+  { key: "snacks",    label: "Collations",     Icon: IconApple    },
+  { key: "dinner",    label: "Dîner",          Icon: IconMeat     },
 ];
 
 // ─── SVG geometry ──────────────────────────────────────────────────────────────
@@ -205,7 +206,10 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           <div key={m.key} className="flex items-center gap-3">
             {/* Meal icon + label */}
             <div className="flex items-center gap-1.5 shrink-0" style={{ width: 90 }}>
-              <span className="text-[14px]">{m.icon}</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}>
+                <m.Icon size={12} />
+              </span>
               <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
                 {m.label}
               </span>

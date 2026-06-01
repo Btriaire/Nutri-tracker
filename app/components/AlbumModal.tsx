@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, parseISO, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { IconX, IconLoader2, IconPhoto, IconFlame, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
+import { IconX, IconLoader2, IconPhoto, IconFlame, IconChevronDown, IconChevronUp,
+  IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
 import type { AlbumDay } from "@/app/api/album/route";
 
 type Period = "7d" | "1m" | "3m";
@@ -15,11 +16,11 @@ const PERIODS: { key: Period; label: string; days: number }[] = [
   { key: "3m", label: "3 mois",   days: 90 },
 ];
 
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: "🌅 Petit-déjeuner",
-  lunch:     "☀️ Déjeuner",
-  dinner:    "🌙 Dîner",
-  snacks:    "🍎 Collations",
+const MEAL_META: Record<string, { label: string; Icon: React.ComponentType<{ size?: number }> }> = {
+  breakfast: { label: "Petit-déjeuner", Icon: IconEggFried },
+  lunch:     { label: "Déjeuner",       Icon: IconSalad    },
+  dinner:    { label: "Dîner",          Icon: IconMeat     },
+  snacks:    { label: "Collations",     Icon: IconApple    },
 };
 
 interface Props {
@@ -216,9 +217,23 @@ export default function AlbumModal({ open, onClose }: Props) {
                               return (
                                 <div key={meal}>
                                   <div className="flex items-center justify-between mb-1.5">
-                                    <p className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-                                      {MEAL_LABELS[meal]}
-                                    </p>
+                                    <div className="flex items-center gap-1.5">
+                                      {(() => {
+                                        const m = MEAL_META[meal];
+                                        if (!m) return null;
+                                        return (
+                                          <>
+                                            <span className="flex items-center justify-center w-4 h-4 rounded-sm flex-shrink-0"
+                                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}>
+                                              <m.Icon size={10} />
+                                            </span>
+                                            <p className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                                              {m.label}
+                                            </p>
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
                                     <span className="text-[10px]" style={{ color: "var(--calories)" }}>
                                       {total} kcal
                                     </span>
