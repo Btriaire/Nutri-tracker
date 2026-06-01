@@ -7,6 +7,7 @@ import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
+  IconMaximize,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -355,6 +356,7 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
   const [editSaving,         setEditSaving]         = useState(false);
   const actPhotoInputRef = useRef<HTMLInputElement>(null);
   const [photoForActivityId, setPhotoForActivityId] = useState<string | null>(null);
+  const [photoZoom, setPhotoZoom] = useState<{ url: string; activityId: string } | null>(null);
 
   // ── Google Fit session editing
   // sessionEdits: local copy of edits (seeded from fitnessDay.sessionEdits)
@@ -1238,13 +1240,20 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                     className="flex flex-col gap-2"
                   >
                     <div className="flex items-center gap-3">
-                      {/* Photo thumbnail / emoji — click to upload photo */}
+                      {/* Photo thumbnail / emoji */}
                       <button
                         type="button"
-                        onClick={() => { setPhotoForActivityId(a.id); actPhotoInputRef.current?.click(); }}
+                        onClick={() => {
+                          if (a.photoDataUrl) {
+                            setPhotoZoom({ url: a.photoDataUrl, activityId: a.id });
+                          } else {
+                            setPhotoForActivityId(a.id);
+                            actPhotoInputRef.current?.click();
+                          }
+                        }}
                         className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
                         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
-                        title="Ajouter une photo"
+                        title={a.photoDataUrl ? "Agrandir la photo" : "Ajouter une photo"}
                       >
                         {a.photoDataUrl
                           ? <img src={a.photoDataUrl} className="w-9 h-9 object-cover" alt="" />
@@ -1252,7 +1261,10 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
                         }
                         <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           style={{ background: "rgba(0,0,0,0.5)" }}>
-                          <IconCamera size={12} style={{ color: "white" }} />
+                          {a.photoDataUrl
+                            ? <IconMaximize size={12} style={{ color: "white" }} />
+                            : <IconCamera size={12} style={{ color: "white" }} />
+                          }
                         </div>
                       </button>
                       <div className="flex-1 min-w-0">
@@ -1479,6 +1491,66 @@ export default function ActivityClient({ date, fitnessDay, initialManualActiviti
         className="hidden"
         onChange={handleActivityPhotoUpload}
       />
+
+      {/* ── Photo lightbox ── */}
+      <AnimatePresence>
+        {photoZoom && (
+          <motion.div
+            key="photo-lightbox"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}
+            onClick={() => setPhotoZoom(null)}
+          >
+            {/* Image */}
+            <motion.img
+              src={photoZoom.url}
+              alt=""
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1,    opacity: 1 }}
+              exit={{ scale: 0.85,    opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="rounded-2xl object-contain shadow-2xl"
+              style={{ maxWidth: "min(90vw, 480px)", maxHeight: "70vh" }}
+            />
+
+            {/* Action row */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1,  y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+              className="flex items-center gap-3 mt-5"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Replace photo */}
+              <button
+                onClick={() => {
+                  setPhotoForActivityId(photoZoom.activityId);
+                  setPhotoZoom(null);
+                  setTimeout(() => actPhotoInputRef.current?.click(), 50);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)" }}>
+                <IconCamera size={14} />
+                Remplacer
+              </button>
+              {/* Close */}
+              <button
+                onClick={() => setPhotoZoom(null)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
+                style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                <IconX size={14} />
+                Fermer
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
