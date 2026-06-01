@@ -1116,6 +1116,89 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             {/* Body composition chart (Withings) */}
             <BodyCompChart />
 
+            {/* Blood pressure trend */}
+            {(() => {
+              const bpData = points
+                .filter(p => p.systolicBP != null && p.diastolicBP != null)
+                .map(p => ({
+                  label: format(parseISO(p.date), "d MMM", { locale: fr }),
+                  date:  p.date,
+                  sys:   p.systolicBP!,
+                  dia:   p.diastolicBP!,
+                }));
+              if (bpData.length === 0) return null;
+              const avgSys = Math.round(bpData.reduce((s, p) => s + p.sys, 0) / bpData.length);
+              const avgDia = Math.round(bpData.reduce((s, p) => s + p.dia, 0) / bpData.length);
+              const cls = avgSys < 120 && avgDia < 80 ? { label: "Optimal", color: "#34d399" }
+                        : avgSys < 130 && avgDia < 80 ? { label: "Normal élevé", color: "#a3e635" }
+                        : avgSys < 140 || avgDia < 90 ? { label: "HTA grade 1", color: "#fb923c" }
+                        : { label: "HTA grade 2+", color: "#f87171" };
+              return (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.14 }} className="glass p-5 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <IconHeart size={15} style={{ color: "#EA4335" }} />
+                      <p className="label-xs">Tension artérielle</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold tabular-nums" style={{ color: "#EA4335" }}>
+                        {avgSys}<span className="text-[9px] font-normal mx-0.5">/</span>{avgDia}
+                        <span className="text-[9px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>mmHg moy.</span>
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                        style={{ background: `${cls.color}15`, color: cls.color, border: `1px solid ${cls.color}40` }}>
+                        {cls.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart data={bpData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                      <Tooltip content={({ active, payload, label: lbl }) => {
+                        if (!active || !payload?.length) return null;
+                        const s = payload.find(p => p.dataKey === "sys")?.value as number;
+                        const d = payload.find(p => p.dataKey === "dia")?.value as number;
+                        const c = s < 120 && d < 80 ? "#34d399" : s < 130 ? "#a3e635" : s < 140 ? "#fb923c" : "#f87171";
+                        const lbl2 = s < 120 && d < 80 ? "Optimal" : s < 130 ? "Normal élevé" : s < 140 ? "HTA 1" : "HTA 2+";
+                        return (
+                          <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                            style={{ background: "rgba(13,13,17,0.97)", border: "1px solid var(--border)" }}>
+                            <p className="mb-1" style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                            <p className="font-bold" style={{ color: "#EA4335" }}>{s} / {d} mmHg</p>
+                            <p className="text-[9px]" style={{ color: c }}>{lbl2}</p>
+                          </div>
+                        );
+                      }} />
+                      <ReferenceLine y={120} stroke="rgba(163,230,53,0.3)" strokeDasharray="4 3" />
+                      <ReferenceLine y={140} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 3" />
+                      <ReferenceLine y={80}  stroke="rgba(251,188,4,0.25)"  strokeDasharray="4 3" />
+                      <Line type="monotone" dataKey="sys" stroke="#EA4335" strokeWidth={2}
+                        dot={{ r: 3, fill: "#EA4335", strokeWidth: 0 }} activeDot={{ r: 5 }} connectNulls />
+                      <Line type="monotone" dataKey="dia" stroke="#7986CB" strokeWidth={2}
+                        dot={{ r: 3, fill: "#7986CB", strokeWidth: 0 }} activeDot={{ r: 5 }} connectNulls />
+                    </LineChart>
+                  </ResponsiveContainer>
+
+                  <div className="flex items-center gap-4 mt-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="w-3 h-0.5 rounded" style={{ background: "#EA4335" }} /> Systolique
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="w-3 h-0.5 rounded" style={{ background: "#7986CB" }} /> Diastolique
+                    </div>
+                    <span className="ml-auto text-[9px]" style={{ color: "rgba(249,115,22,0.6)" }}>— 120 · 140 mmHg</span>
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{bpData.length} mesures</span>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
             {/* Meal timing widget */}
             <MealTimingWidget />
           </>

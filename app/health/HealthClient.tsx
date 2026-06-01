@@ -761,43 +761,59 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 Ajouter une mesure
               </button>
 
-              {chartData.length >= 2 && (
+              {chartData.length >= 1 && (
                 <>
                   <div className="h-px my-4" style={{ background: "var(--border)" }} />
-                  <p className="label-xs mb-3">Évolution 30 jours</p>
-                  <ResponsiveContainer width="100%" height={110}>
-                    <LineChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
-                      <Tooltip content={({ active, payload, label: lbl }) => {
-                        if (!active || !payload?.length) return null;
-                        const s = payload.find(p => p.dataKey === "sys")?.value as number;
-                        const d = payload.find(p => p.dataKey === "dia")?.value as number;
-                        return (
-                          <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
-                            style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
-                            <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                            {s && d && <p style={{ color: "#EA4335" }} className="font-bold">{s} / {d} mmHg</p>}
-                          </div>
-                        );
-                      }} />
-                      <ReferenceLine y={140} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 3" />
-                      <ReferenceLine y={90}  stroke="rgba(251,188,4,0.3)"  strokeDasharray="4 3" />
-                      <Line type="monotone" dataKey="sys" stroke="#EA4335" strokeWidth={1.5} dot={false} connectNulls />
-                      <Line type="monotone" dataKey="dia" stroke="#7986CB" strokeWidth={1.5} dot={false} connectNulls />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      <div className="w-3 h-0.5 rounded" style={{ background: "#EA4335" }} />
-                      Systolique
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      <div className="w-3 h-0.5 rounded" style={{ background: "#7986CB" }} />
-                      Diastolique
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] ml-auto" style={{ color: "rgba(249,115,22,0.7)" }}>
-                      — 140 / 90 seuil
+                  <div className="glass p-4">
+                    <p className="label-xs mb-3">📈 Évolution tension artérielle · 30 jours</p>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <LineChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                        <Tooltip content={({ active, payload, label: lbl }) => {
+                          if (!active || !payload?.length) return null;
+                          const s = payload.find(p => p.dataKey === "sys")?.value as number;
+                          const d = payload.find(p => p.dataKey === "dia")?.value as number;
+                          const getBpClass = (sys: number, dia: number): { label: string; color: string } => {
+                            if (sys < 90 || dia < 60) return { label: "Hypotension", color: "#60a5fa" };
+                            if (sys < 120 && dia < 80) return { label: "Optimal", color: "#34d399" };
+                            if (sys < 130 && dia < 80) return { label: "Normal élevé", color: "#a3e635" };
+                            if (sys < 140 && dia < 90) return { label: "HTA grade 1", color: "#fb923c" };
+                            if (sys < 180 && dia < 110) return { label: "HTA grade 2", color: "#f87171" };
+                            return { label: "HTA grade 3", color: "#ef4444" };
+                          };
+                          const cls = s && d ? getBpClass(s, d) : null;
+                          return (
+                            <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                              style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                              <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
+                              {s && d && <p style={{ color: "#EA4335" }} className="font-bold">{s} / {d} mmHg</p>}
+                              {cls && <p className="text-[10px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}
+                            </div>
+                          );
+                        }} />
+                        <ReferenceLine y={120} stroke="rgba(251,188,4,0.5)"  strokeDasharray="4 3" />
+                        <ReferenceLine y={140} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 3" />
+                        <ReferenceLine y={80}  stroke="rgba(251,188,4,0.3)"  strokeDasharray="4 3" />
+                        <Line type="monotone" dataKey="sys" stroke="#EA4335" strokeWidth={1.5} dot={{ r: 3, fill: "#EA4335", strokeWidth: 0 }} connectNulls />
+                        <Line type="monotone" dataKey="dia" stroke="#7986CB" strokeWidth={1.5} dot={{ r: 3, fill: "#7986CB", strokeWidth: 0 }} connectNulls />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center gap-4 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        <div className="w-3 h-0.5 rounded" style={{ background: "#EA4335" }} />
+                        Systolique
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        <div className="w-3 h-0.5 rounded" style={{ background: "#7986CB" }} />
+                        Diastolique
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(251,188,4,0.7)" }}>
+                        — 120
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(249,115,22,0.7)" }}>
+                        — 140
+                      </div>
                     </div>
                   </div>
                 </>
@@ -805,7 +821,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Other vitals grid */}
-            <motion.div {...fade(0.12)} className="grid grid-cols-2 gap-3 mb-4">
+            <motion.div {...fade(0.12)} className="grid grid-cols-2 gap-2 mb-4">
               <VitalCard
                 icon={<IconHeartbeat size={15} style={{ color: "#EA4335" }} />}
                 label="FC repos" unit="bpm" value={entry?.restingHR} editKey="restingHR"
@@ -1968,11 +1984,11 @@ function VitalCard({
     : null;
 
   return (
-    <div className="card flex flex-col gap-2.5" style={{ minHeight: "120px" }}>
+    <div className="card flex flex-col gap-1.5 p-3" style={{ minHeight: "80px" }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {icon}
-          <span className="label-xs">{label}</span>
+          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
         </div>
         {value != null && !editing && (
           <button onClick={onStartEdit} className="p-1 rounded-md transition-colors" style={{ color: "var(--text-muted)" }}>
@@ -2015,11 +2031,11 @@ function VitalCard({
       ) : displayVal != null ? (
         <>
           <div className="flex items-baseline gap-1">
-            <span className="text-[26px] font-bold tabular-nums leading-none"
+            <span className="text-[20px] font-bold tabular-nums leading-none"
               style={{ color: status?.color ?? "var(--text-primary)" }}>
               {displayVal}
             </span>
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
           </div>
           {status && (
             <span className="text-[10px] font-medium" style={{ color: status.color }}>
@@ -2031,7 +2047,7 @@ function VitalCard({
         <button
           onClick={onStartEdit}
           className="flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl transition-colors"
-          style={{ minHeight: "56px", border: "1.5px dashed var(--border)" }}>
+          style={{ minHeight: "40px", border: "1.5px dashed var(--border)" }}>
           <IconPlus size={14} style={{ color: "var(--text-muted)" }} />
           <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Ajouter</span>
         </button>

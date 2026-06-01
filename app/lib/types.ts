@@ -453,6 +453,8 @@ export interface DayTrendPoint {
   activeMinutes?: number;
   sleepMinutes?:  number;
   heartRateAvg?:  number;
+  systolicBP?:   number;
+  diastolicBP?:  number;
 }
 
 // ─── Health Vitals ────────────────────────────────────────────────────────────
