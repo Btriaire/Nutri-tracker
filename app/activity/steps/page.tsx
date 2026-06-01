@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
-import type { GoogleFitDay, UserProfile } from "@/app/lib/types";
+import type { GoogleFitDay, UserProfile, WithingsActivityDay } from "@/app/lib/types";
+// WithingsActivityDay used for fallback steps/calories when Google Fit isn't connected
 import StepsClient from "./StepsClient";
 
 export interface StepsPoint {
@@ -30,15 +31,16 @@ export default async function StepsPage() {
   const stepsGoal = profile?.goals?.stepsGoal ?? 10000;
 
   const points: StepsPoint[] = snaps.map((snap, i) => {
-    const gf = snap.exists
-      ? (snap.data() as { googleFit?: GoogleFitDay }).googleFit
-      : undefined;
+    const data = snap.exists ? snap.data() as { googleFit?: GoogleFitDay; withingsActivity?: WithingsActivityDay } : undefined;
+    const gf   = data?.googleFit;
+    const wa   = data?.withingsActivity;
     return {
       date:           dates[i],
-      steps:          gf?.steps ?? 0,
-      activeMinutes:  gf?.activeMinutes ?? 0,
-      activeCalories: gf?.activeCaloriesBurned ?? 0,
-      distanceKm:     null, // not yet stored
+      // Google Fit preferred; fallback to Withings activity tracker
+      steps:          gf?.steps          ?? wa?.steps          ?? 0,
+      activeMinutes:  gf?.activeMinutes  ?? (wa ? (wa.moderateMinutes ?? 0) + (wa.intenseMinutes ?? 0) : 0),
+      activeCalories: gf?.activeCaloriesBurned ?? wa?.activeCalories ?? 0,
+      distanceKm:     wa?.distanceM != null && gf?.steps == null ? wa.distanceM / 1000 : null,
     };
   });
 

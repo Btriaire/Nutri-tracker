@@ -315,6 +315,18 @@ export interface WithingsSleepDay {
   syncedAt:      Timestamp;
 }
 
+export interface WithingsActivityDay {
+  steps:            number | null;
+  distanceM:        number | null;
+  activeCalories:   number | null;
+  totalCalories:    number | null;
+  softMinutes:      number | null;   // light activity
+  moderateMinutes:  number | null;
+  intenseMinutes:   number | null;
+  hrAvg:            number | null;
+  syncedAt:         Timestamp;
+}
+
 export interface AppleHealthDay {
   steps:            number;
   activeCalories:   number;
@@ -341,13 +353,14 @@ export interface GFitSessionEdit {
 }
 
 export interface FitnessDay {
-  date:           string;
-  googleFit?:     GoogleFitDay;
-  withings?:      WithingsDay;
-  withingsSleep?: WithingsSleepDay;
-  appleHealth?:   AppleHealthDay;
-  manualSleep?:   { sleepMinutes: number | null };  // manual override, never overwritten by sync
-  sessionEdits?:  Record<string, GFitSessionEdit>;  // user edits for GFit sessions — never overwritten by sync
+  date:               string;
+  googleFit?:         GoogleFitDay;
+  withings?:          WithingsDay;
+  withingsSleep?:     WithingsSleepDay;
+  withingsActivity?:  WithingsActivityDay;
+  appleHealth?:       AppleHealthDay;
+  manualSleep?:       { sleepMinutes: number | null };  // manual override, never overwritten by sync
+  sessionEdits?:      Record<string, GFitSessionEdit>;  // user edits for GFit sessions — never overwritten by sync
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────

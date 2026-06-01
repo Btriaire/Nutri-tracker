@@ -13,7 +13,7 @@ import type { BodyCompPoint } from "@/app/api/withings-body/route";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-type Tab = "composition" | "vitaux" | "sommeil";
+type Tab = "composition" | "avance" | "vitaux" | "sommeil";
 
 interface MetricDef {
   key:    keyof BodyCompPoint;
@@ -35,10 +35,22 @@ const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = 
     ],
   },
   {
+    id:    "avance",
+    label: "Avancé",
+    emoji: "🔬",
+    metrics: [
+      { key: "hydrationPct", label: "Hydratation",    unit: "%",  color: "#22d3ee", decimals: 1 },
+      { key: "visceralFat",  label: "Graisse viscérale", unit: "",  color: "#fb923c", decimals: 1 },
+      { key: "boneMassKg",   label: "Masse osseuse",  unit: "kg", color: "#a3e635", decimals: 2 },
+    ],
+  },
+  {
     id:    "vitaux",
-    label: "Signaux vitaux",
+    label: "Vitaux",
     emoji: "❤️",
     metrics: [
+      { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "#f43f5e" },
+      { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "#fb7185" },
       { key: "spO2Pct",     label: "SpO₂",        unit: "%",   color: "#06b6d4" },
       { key: "restingHR",   label: "FC repos",     unit: "bpm", color: "#ec4899" },
       { key: "tempCelsius", label: "Température",  unit: "°C",  color: "#f59e0b", decimals: 1 },
@@ -49,10 +61,10 @@ const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = 
     label: "Sommeil",
     emoji: "🌙",
     metrics: [
-      { key: "totalSleepH", label: "Sommeil total", unit: "h", color: "#6366f1", decimals: 1 },
-      { key: "deepSleepH",  label: "Sommeil profond", unit: "h", color: "#4f46e5", decimals: 1 },
-      { key: "remSleepH",   label: "Sommeil REM",   unit: "h", color: "#7c3aed", decimals: 1 },
-      { key: "sleepScore",  label: "Score sommeil",  unit: "/100", color: "#34d399" },
+      { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "#6366f1", decimals: 1 },
+      { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "#4f46e5", decimals: 1 },
+      { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "#7c3aed", decimals: 1 },
+      { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "#34d399" },
     ],
   },
 ];
@@ -224,13 +236,19 @@ export default function BodyCompChart() {
             {tab === "sommeil"
               ? "Aucune donnée de sommeil disponible"
               : tab === "vitaux"
-                ? "Aucun signal vital disponible (SpO₂ nécessite un ScanWatch)"
-                : "Aucune donnée de composition corporelle"}
+                ? "Aucun signal vital disponible"
+                : tab === "avance"
+                  ? "Aucune donnée avancée (hydratation, os, viscérale)"
+                  : "Aucune donnée de composition corporelle"}
           </p>
           <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
             {tab === "sommeil"
               ? "Synchronisez Withings ou entrez le sommeil manuellement"
-              : "Synchronisez votre balance Withings dans Réglages"}
+              : tab === "vitaux"
+                ? "SpO₂ requiert ScanWatch · TA requiert Withings BPM"
+                : tab === "avance"
+                  ? "Requiert une balance connectée Withings (Body+/Body Scan)"
+                  : "Synchronisez votre balance Withings dans Réglages"}
           </p>
         </div>
       )}
@@ -296,9 +314,12 @@ export default function BodyCompChart() {
                 />
                 <Tooltip content={<CustomTooltip metrics={metrics} />} />
 
-                {/* Reference lines for sleep/SpO2 */}
-                {tab === "sommeil" && <ReferenceLine y={7} stroke="rgba(99,102,241,0.3)" strokeDasharray="4 4" />}
-                {tab === "vitaux"  && <ReferenceLine y={95} stroke="rgba(6,182,212,0.25)" strokeDasharray="4 4" />}
+                {/* Reference lines */}
+                {tab === "sommeil" && <ReferenceLine y={7}   stroke="rgba(99,102,241,0.3)"  strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
+                {tab === "avance"  && <ReferenceLine y={13}  stroke="rgba(251,146,60,0.25)" strokeDasharray="4 4" label={{ value: "VF seuil", fill: "rgba(251,146,60,0.5)", fontSize: 9, position: "insideTopRight" }} />}
 
                 {metrics.map(m => (
                   <Line
@@ -340,20 +361,23 @@ export default function BodyCompChart() {
             </div>
           )}
           {tab === "vitaux" && (
-            <div className="flex items-center justify-center gap-3 pb-3">
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ seuil normal 95%</p>
-              {chartData.some(p => p.spO2Pct != null) && (
+            <div className="flex items-center justify-center flex-wrap gap-2 pb-3 px-4">
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ 95% · TA 120/80 mmHg</p>
+              {chartData.some(p => p.systolicBP != null) && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                  style={{ background: "rgba(6,182,212,0.08)", color: "#06b6d4", border: "1px solid rgba(6,182,212,0.2)" }}>
-                  SpO₂ = saturation en oxygène
+                  style={{ background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.2)" }}>
+                  TA = Pression artérielle
                 </span>
               )}
-              {!chartData.some(p => p.spO2Pct != null) && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                  SpO₂ requiert ScanWatch
-                </span>
-              )}
+            </div>
+          )}
+          {tab === "avance" && (
+            <div className="flex items-center justify-center flex-wrap gap-2 pb-3 px-4">
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— Graisse viscérale : seuil 13</p>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+                style={{ background: "rgba(34,211,238,0.06)", color: "#22d3ee", border: "1px solid rgba(34,211,238,0.2)" }}>
+                Body Scan Withings
+              </span>
             </div>
           )}
         </>

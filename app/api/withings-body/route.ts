@@ -13,10 +13,15 @@ export interface BodyCompPoint {
   bodyFatPct:    number | null;
   muscleMassKg:  number | null;
   fatMassKg:     number | null;
-  // Vital signs (Withings ScanWatch → fallback Apple Health)
-  spO2Pct:       number | null;   // %  — meastype 54 OR appleHealth.spO2
+  boneMassKg:    number | null;   // meastype 42
+  hydrationPct:  number | null;   // meastype 41
+  visceralFat:   number | null;   // meastype 173
+  // Vital signs (Withings ScanWatch/BPM → fallback Apple Health)
+  spO2Pct:       number | null;   // %   — meastype 54 OR appleHealth.spO2
   restingHR:     number | null;   // bpm — Withings only
   tempCelsius:   number | null;   // °C  — Withings only
+  systolicBP:    number | null;   // mmHg — Withings BPM (meastype 10)
+  diastolicBP:   number | null;   // mmHg — Withings BPM (meastype 9)
   // Sleep (Withings > Apple Health > Google Fit > Manual)
   totalSleepH:   number | null;
   deepSleepH:    number | null;
@@ -98,8 +103,8 @@ export async function GET(req: NextRequest) {
       }
 
       // ── Skip day if absolutely no relevant data ───────────────────────────
-      const hasBodyComp = w?.bodyFatPct != null || w?.muscleMassKg != null;
-      const hasVitals   = spO2Pct != null || w?.restingHR != null || w?.tempCelsius != null;
+      const hasBodyComp = w?.bodyFatPct != null || w?.muscleMassKg != null || w?.boneMassKg != null || w?.hydrationPct != null || w?.visceralFat != null;
+      const hasVitals   = spO2Pct != null || w?.restingHR != null || w?.tempCelsius != null || w?.systolicBP != null;
       const hasSleep    = totalSleepH != null;
       if (!hasBodyComp && !hasVitals && !hasSleep) return null;
 
@@ -108,9 +113,14 @@ export async function GET(req: NextRequest) {
         bodyFatPct:   w?.bodyFatPct    ?? null,
         muscleMassKg: w?.muscleMassKg  ?? null,
         fatMassKg:    w?.fatMassKg     ?? null,
+        boneMassKg:   w?.boneMassKg    ?? null,
+        hydrationPct: w?.hydrationPct  ?? null,
+        visceralFat:  w?.visceralFat   ?? null,
         spO2Pct,
         restingHR:    w?.restingHR     ?? null,
         tempCelsius:  w?.tempCelsius   ?? null,
+        systolicBP:   w?.systolicBP    ?? null,
+        diastolicBP:  w?.diastolicBP   ?? null,
         totalSleepH,
         deepSleepH,
         remSleepH,
