@@ -1358,60 +1358,131 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               }
 
               return (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.16 }} className="glass p-5 mb-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, ease: "easeOut", delay: 0.16 }}
+                  className="mb-4 overflow-hidden"
+                  style={{
+                    borderRadius: "24px",
+                    background: "linear-gradient(160deg, rgba(88,28,135,0.10) 0%, rgba(15,10,30,0.0) 100%)",
+                    border: "1px solid rgba(139,92,246,0.14)",
+                  }}
+                >
+                  {/* Glow halo */}
+                  <div className="relative overflow-hidden" style={{ height: 0 }}>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 pointer-events-none"
+                      style={{
+                        background: "radial-gradient(ellipse, rgba(139,92,246,0.22) 0%, transparent 70%)",
+                        filter: "blur(24px)",
+                        transform: "translate(-50%, -40%)",
+                      }} />
+                  </div>
 
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span style={{ fontSize: 15 }}>☸️</span>
-                      <p className="label-xs">Méditation</p>
-                    </div>
+                  <div className="px-5 pt-7 pb-6 flex flex-col items-center">
+
+                    {/* Lotus icon with glow */}
+                    <div className="text-[36px] mb-1 select-none"
+                      style={{ filter: "drop-shadow(0 0 14px rgba(167,139,250,0.55))" }}>☸️</div>
+
+                    {/* Label */}
+                    <p className="text-[10px] font-light tracking-[0.22em] uppercase mb-3"
+                      style={{ color: "rgba(196,181,253,0.55)" }}>méditation</p>
+
+                    {/* Big total minutes */}
+                    <p className="text-[52px] font-extralight tabular-nums leading-none"
+                      style={{ color: "#ede9fe" }}>{totalMin}</p>
+                    <p className="text-[11px] font-light mt-1 mb-4"
+                      style={{ color: "rgba(196,181,253,0.45)", letterSpacing: "0.06em" }}>
+                      minutes de pratique
+                    </p>
+
+                    {/* Streak pill */}
                     {streak > 0 && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{ background: "rgba(139,92,246,0.12)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.25)" }}>
-                        🔥 {streak}j streak
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {[
-                      { label: "Séances", value: String(totalSessions), color: "#a78bfa" },
-                      { label: "Total",   value: `${totalMin} min`,     color: "#c4b5fd" },
-                      { label: "Moy.",    value: `${avgMin} min/j`,     color: "#ddd6fe" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
-                        style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)" }}>
-                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{value}</span>
-                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <div className="mb-5 px-4 py-1.5 rounded-full"
+                        style={{
+                          background: "rgba(139,92,246,0.09)",
+                          border: "1px solid rgba(139,92,246,0.2)",
+                          color: "rgba(196,181,253,0.75)",
+                          fontSize: 11,
+                          fontWeight: 300,
+                          letterSpacing: "0.06em",
+                        }}>
+                        🌙&nbsp;{streak} jour{streak > 1 ? "s" : ""} consécutif{streak > 1 ? "s" : ""}
                       </div>
-                    ))}
-                  </div>
+                    )}
 
-                  {/* Bar chart */}
-                  <ResponsiveContainer width="100%" height={110}>
-                    <BarChart data={meditChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="meditGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%"   stopColor="#a78bfa" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.6} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
-                        interval={meditChartData.length > 10 ? Math.floor(meditChartData.length / 6) : 0} />
-                      <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
-                        tickFormatter={v => `${v}m`} />
-                      <Tooltip content={({ active, payload, label: lbl }) =>
-                        active && payload?.length
-                          ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="#a78bfa" />
-                          : null
-                      } />
-                      <Bar dataKey="mins" fill="url(#meditGrad)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                    {/* Wave area chart — no axes, no grid */}
+                    <div className="w-full mb-4">
+                      <ResponsiveContainer width="100%" height={64}>
+                        <AreaChart data={meditChartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="meditWave" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%"   stopColor="#a78bfa" stopOpacity={0.45} />
+                              <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <Tooltip
+                            content={({ active, payload, label: lbl }) =>
+                              active && payload?.length ? (
+                                <div className="px-2.5 py-1.5 rounded-xl text-[10px]"
+                                  style={{ background: "rgba(30,10,60,0.92)", border: "1px solid rgba(139,92,246,0.3)", color: "#ede9fe" }}>
+                                  <p style={{ color: "rgba(196,181,253,0.5)", marginBottom: 2 }}>{lbl}</p>
+                                  <p>{payload[0].value} min</p>
+                                </div>
+                              ) : null
+                            }
+                          />
+                          <Area type="monotone" dataKey="mins"
+                            stroke="#a78bfa" strokeWidth={1.5}
+                            fill="url(#meditWave)" dot={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Last-14-days dot calendar */}
+                    <div className="flex gap-[7px] mb-5">
+                      {Array.from({ length: 14 }, (_, i) => {
+                        const d    = format(subDays(new Date(), 13 - i), "yyyy-MM-dd");
+                        const mins = byDate.get(d) ?? 0;
+                        const isToday = i === 13;
+                        return (
+                          <div key={d} className="flex flex-col items-center gap-1">
+                            <div
+                              style={{
+                                width: 8, height: 8,
+                                borderRadius: "50%",
+                                background: mins > 0
+                                  ? `radial-gradient(circle, #e9d5ff 20%, #7c3aed 100%)`
+                                  : "rgba(255,255,255,0.07)",
+                                boxShadow: mins > 0 ? "0 0 8px rgba(167,139,250,0.7)" : "none",
+                                outline: isToday ? "1.5px solid rgba(167,139,250,0.4)" : "none",
+                                outlineOffset: 2,
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Subtle stats row */}
+                    <div className="flex items-center gap-5" style={{ color: "rgba(196,181,253,0.45)", fontSize: 11, fontWeight: 300 }}>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span style={{ color: "rgba(196,181,253,0.8)", fontSize: 15, fontWeight: 300 }}>{totalSessions}</span>
+                        <span style={{ letterSpacing: "0.05em" }}>séances</span>
+                      </div>
+                      <div style={{ width: 1, height: 24, background: "rgba(139,92,246,0.2)" }} />
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span style={{ color: "rgba(196,181,253,0.8)", fontSize: 15, fontWeight: 300 }}>{avgMin} min</span>
+                        <span style={{ letterSpacing: "0.05em" }}>en moyenne</span>
+                      </div>
+                      <div style={{ width: 1, height: 24, background: "rgba(139,92,246,0.2)" }} />
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span style={{ color: "rgba(196,181,253,0.8)", fontSize: 15, fontWeight: 300 }}>{meditChartData.length}</span>
+                        <span style={{ letterSpacing: "0.05em" }}>jours actifs</span>
+                      </div>
+                    </div>
+
+                  </div>
                 </motion.div>
               );
             })()}
