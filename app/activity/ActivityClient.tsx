@@ -13,6 +13,7 @@ import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types
 import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
+import ActivityCategoryPicker from "@/app/components/ActivityCategoryPicker";
 import type { ExerciseEntry } from "@/app/lib/exercise-catalog";
 import type { ActivityHistoryPoint } from "./page";
 import {
@@ -374,6 +375,22 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
 
   // ── Sport search modal
   const [showSportSearch, setShowSportSearch] = useState(false);
+
+  // ── Category picker favorites (localStorage)
+  const [actFavorites, setActFavorites] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("actCatFavorites");
+      if (saved) setActFavorites(JSON.parse(saved) as string[]);
+    } catch { /* ignore */ }
+  }, []);
+  const toggleFav = (id: string) => {
+    setActFavorites(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      localStorage.setItem("actCatFavorites", JSON.stringify(next));
+      return next;
+    });
+  };
 
   // ── Template photo editing
   const tplPhotoEditRef  = useRef<HTMLInputElement>(null);
@@ -919,6 +936,18 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
+        </motion.div>
+
+        {/* ── Category picker ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.07 }}
+        >
+          <ActivityCategoryPicker
+            actFavorites={actFavorites}
+            onToggleFav={toggleFav}
+            onSelectExercise={handleSportCustomize}
+            userWeightKg={userWeightKg}
+          />
         </motion.div>
 
         {/* ── AI Insight ── */}
