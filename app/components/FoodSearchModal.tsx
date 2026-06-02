@@ -911,7 +911,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     ref={photoInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoRecognize(f); e.target.value = ""; }}
                   />
