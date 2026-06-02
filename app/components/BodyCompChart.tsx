@@ -376,6 +376,7 @@ export default function BodyCompChart() {
                   return (
                     <Line
                       key={m.key}
+                      type="monotone"
                       yAxisId={isBP ? "bp" : "left"}
                       dataKey={m.key as string}
                       name={m.label}
