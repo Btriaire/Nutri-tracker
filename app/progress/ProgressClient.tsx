@@ -281,12 +281,22 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   );
   const [showAlbum,       setShowAlbum]    = useState(false);
   const [showAnalysis,    setShowAnalysis] = useState(false);
+  const [meditSessions,   setMeditSessions] = useState<{ date: string; durationMin: number; programLabel: string }[]>([]);
 
   useEffect(() => {
     fetch("/api/goals")
       .then((r) => r.json())
       .then((d: { chartPrefs?: { calorieTrend?: string } | null }) => {
         if (d.chartPrefs?.calorieTrend === "bar") setCalChart("bar");
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/meditation")
+      .then((r) => r.json())
+      .then((d: { sessions?: { date: string; durationMin: number; programLabel: string }[] }) => {
+        setMeditSessions(d.sessions ?? []);
       })
       .catch(() => {});
   }, []);
@@ -1306,6 +1316,105 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               );
             })()}
 
+
+            {/* ── Méditation progression ── */}
+            {(() => {
+              const rangeObj = RANGES.find(x => x.key === range);
+              const today    = format(new Date(), "yyyy-MM-dd");
+              const fromDate = range === "all" || !rangeObj?.days
+                ? "2020-01-01"
+                : format(subDays(new Date(), rangeObj.days), "yyyy-MM-dd");
+
+              // Filter sessions to current range
+              const filtered = meditSessions.filter(s => s.date >= fromDate && s.date <= today);
+              if (filtered.length === 0) return null;
+
+              // Group by date — sum minutes
+              const byDate = new Map<string, number>();
+              for (const s of filtered) {
+                byDate.set(s.date, (byDate.get(s.date) ?? 0) + s.durationMin);
+              }
+
+              // Build chart points (one per distinct date, sorted)
+              const meditChartData = Array.from(byDate.entries())
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, mins]) => ({
+                  date,
+                  label: format(parseISO(date), filtered.length > 14 ? "d/M" : "d MMM", { locale: fr }),
+                  mins,
+                }));
+
+              const totalSessions = filtered.length;
+              const totalMin      = filtered.reduce((s, x) => s + x.durationMin, 0);
+              const avgMin        = Math.round(totalMin / meditChartData.length);
+
+              // Streak from today backwards
+              let streak = 0;
+              const sortedDates = Array.from(byDate.keys()).sort((a, b) => b.localeCompare(a));
+              for (let i = 0; i < sortedDates.length; i++) {
+                const expected = format(subDays(new Date(), i), "yyyy-MM-dd");
+                if (sortedDates[i] === expected) streak++;
+                else break;
+              }
+
+              return (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.16 }} className="glass p-5 mb-4">
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span style={{ fontSize: 15 }}>☸️</span>
+                      <p className="label-xs">Méditation</p>
+                    </div>
+                    {streak > 0 && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: "rgba(139,92,246,0.12)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.25)" }}>
+                        🔥 {streak}j streak
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {[
+                      { label: "Séances", value: String(totalSessions), color: "#a78bfa" },
+                      { label: "Total",   value: `${totalMin} min`,     color: "#c4b5fd" },
+                      { label: "Moy.",    value: `${avgMin} min/j`,     color: "#ddd6fe" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
+                        style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)" }}>
+                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{value}</span>
+                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bar chart */}
+                  <ResponsiveContainer width="100%" height={110}>
+                    <BarChart data={meditChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="meditGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"   stopColor="#a78bfa" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.6} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                        interval={meditChartData.length > 10 ? Math.floor(meditChartData.length / 6) : 0} />
+                      <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                        tickFormatter={v => `${v}m`} />
+                      <Tooltip content={({ active, payload, label: lbl }) =>
+                        active && payload?.length
+                          ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="#a78bfa" />
+                          : null
+                      } />
+                      <Bar dataKey="mins" fill="url(#meditGrad)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              );
+            })()}
 
             {points.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-3 py-16">

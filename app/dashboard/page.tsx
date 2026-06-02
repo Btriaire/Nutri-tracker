@@ -22,6 +22,7 @@ export default async function DashboardPage() {
   const trendPoints: DayTrendPoint[] = [];
   let recentPhotos: RecentPhoto[] = [];
   let todayMeditationMin            = 0;
+  let todayMeditationSessions       = 0;
   let lastBPDate:     string | null = null;
   let lastBPSystolic: number | null = null;
   let manualActivitiesSnap: import("firebase-admin/firestore").QuerySnapshot | null = null;
@@ -89,6 +90,7 @@ export default async function DashboardPage() {
       });
     }
     // Meditation minutes today
+    todayMeditationSessions = meditSnap.docs.length;
     for (const doc of meditSnap.docs) {
       const d = doc.data() as { durationMin?: number };
       todayMeditationMin += d.durationMin ?? 0;
@@ -169,6 +171,7 @@ export default async function DashboardPage() {
       trackedNutrients={trackedNutrients}
       recentPhotos={recentPhotos}
       todayMeditationMin={todayMeditationMin}
+      todayMeditationSessions={todayMeditationSessions}
       lastBPDate={lastBPDate}
       lastBPSystolic={lastBPSystolic}
     />

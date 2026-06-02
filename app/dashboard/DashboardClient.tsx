@@ -48,7 +48,8 @@ interface Props {
   lang:              Lang;
   trackedNutrients?: TrackedNutrients;
   recentPhotos?:     RecentPhoto[];
-  todayMeditationMin?: number;
+  todayMeditationMin?:      number;
+  todayMeditationSessions?: number;
   lastBPDate?:       string | null;
   lastBPSystolic?:   number | null;
 }
@@ -110,7 +111,7 @@ export default function DashboardClient({
   date, displayName, photoUrl, goals, consumed, burned, steps, stepsGoal, activeMinutes, heartRate,
   sleepMinutes, sleepGoalMin, sessions, weight, previousWeight, recentWeight, trendPoints,
   waterMl: initialWaterMl, plan, lang, trackedNutrients, recentPhotos = [],
-  todayMeditationMin = 0, lastBPDate = null, lastBPSystolic = null,
+  todayMeditationMin = 0, todayMeditationSessions = 0, lastBPDate = null, lastBPSystolic = null,
 }: Props) {
   const todayLabel = format(new Date(date + "T12:00:00"), "EEEE d MMMM", { locale: fr });
   const [waterMl, setWaterMl] = useState(initialWaterMl);
@@ -521,22 +522,12 @@ export default function DashboardClient({
                 onDoubleClick={() => setShowSpider(false)}
               >
                 {/* Score headline */}
-                <div className="flex items-center justify-between mb-3">
-                  <div>
+                <div className="flex items-center justify-center mb-3">
+                  <div className="text-center">
                     <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Score global du jour</p>
                     <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
                       {spiderTotal}<span className="text-[14px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>/36</span>
                     </p>
-                  </div>
-                  {/* Score pips */}
-                  <div className="grid grid-cols-3 gap-1">
-                    {spiderData.map(d => (
-                      <div key={d.subject} className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ background: d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : d.A > 0 ? "#f87171" : "rgba(255,255,255,0.12)" }} />
-                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{d.subject}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -584,19 +575,6 @@ export default function DashboardClient({
                     />
                   </RadarChart>
                 </ResponsiveContainer>
-
-                {/* Score breakdown row */}
-                <div className="grid grid-cols-6 gap-1 mt-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                  {spiderData.map(d => {
-                    const color = d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : d.A > 0 ? "#f87171" : "rgba(255,255,255,0.2)";
-                    return (
-                      <div key={d.subject} className="flex flex-col items-center gap-0.5">
-                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{d.A}</span>
-                        <span className="text-[8px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>{d.subject}</span>
-                      </div>
-                    );
-                  })}
-                </div>
 
                 {/* Journal link */}
                 <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center mt-3">
@@ -1070,10 +1048,12 @@ export default function DashboardClient({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold" style={{ color: "#a78bfa" }}>
-                  Méditation · {todayMeditationMin} min aujourd&apos;hui
+                  Méditation · {todayMeditationMin} min
                 </p>
                 <p className="text-[11px]" style={{ color: "rgba(167,139,250,0.65)" }}>
-                  Séance complétée ✨
+                  {todayMeditationSessions > 1
+                    ? `${todayMeditationSessions} séances aujourd'hui ✨`
+                    : "Séance complétée aujourd'hui ✨"}
                 </p>
               </div>
               <IconChevronRight size={16} stroke={2} style={{ color: "#a78bfa", flexShrink: 0 }} />
