@@ -14,6 +14,8 @@ import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
 import ActivityCategoryPicker from "@/app/components/ActivityCategoryPicker";
+import ActivityDetailSheet from "@/app/components/ActivityDetailSheet";
+import type { ActivitySaveData } from "@/app/components/ActivityDetailSheet";
 import type { ExerciseEntry } from "@/app/lib/exercise-catalog";
 import type { ActivityHistoryPoint } from "./page";
 import {
@@ -390,6 +392,46 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
       localStorage.setItem("actCatFavorites", JSON.stringify(next));
       return next;
     });
+  };
+
+  // ── Activity detail sheet (from category picker)
+  const [detailExercise, setDetailExercise] = useState<ExerciseEntry | null>(null);
+  const [detailColor,    setDetailColor]    = useState("#38bdf8");
+  const [detailColor2,   setDetailColor2]   = useState("#6366f1");
+  const [detailSaving,   setDetailSaving]   = useState(false);
+
+  const handleCategorySelect = (exercise: ExerciseEntry, c1: string, c2: string) => {
+    setDetailExercise(exercise);
+    setDetailColor(c1);
+    setDetailColor2(c2);
+  };
+
+  const handleDetailSave = async (data: ActivitySaveData) => {
+    setDetailSaving(true);
+    try {
+      const res = await fetch("/api/activity", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ date, ...data }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        showToast(`Erreur ${res.status}${text ? " — " + text.slice(0, 60) : ""}`, false);
+        return;
+      }
+      const json = await res.json() as { activity?: ManualActivity };
+      if (json.activity) {
+        setActivities(prev => [json.activity!, ...prev]);
+        showToast(`✓ ${data.name} ajouté · ${Math.round(data.durationMin)} min · ${data.caloriesBurned ?? 0} kcal`, true);
+        setDetailExercise(null);
+      } else {
+        showToast("Réponse inattendue du serveur", false);
+      }
+    } catch (err) {
+      showToast(`Erreur réseau — ${String(err).slice(0, 50)}`, false);
+    } finally {
+      setDetailSaving(false);
+    }
   };
 
   // ── Template photo editing
@@ -945,7 +987,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
           <ActivityCategoryPicker
             actFavorites={actFavorites}
             onToggleFav={toggleFav}
-            onSelectExercise={handleSportCustomize}
+            onSelectExercise={handleCategorySelect}
             userWeightKg={userWeightKg}
           />
         </motion.div>
@@ -1549,6 +1591,17 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Activity detail sheet (from category picker) */}
+      <ActivityDetailSheet
+        exercise={detailExercise}
+        catColor={detailColor}
+        catColor2={detailColor2}
+        weightKg={userWeightKg}
+        saving={detailSaving}
+        onSave={handleDetailSave}
+        onClose={() => setDetailExercise(null)}
+      />
 
       {/* Sport Search Modal */}
       <SportSearchModal

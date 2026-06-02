@@ -147,7 +147,7 @@ const CAT_SVGS: Record<CatId, React.ComponentType<{ color: string }>> = {
 interface Props {
   actFavorites:     string[];
   onToggleFav:      (id: string) => void;
-  onSelectExercise: (e: ExerciseEntry) => void;
+  onSelectExercise: (e: ExerciseEntry, catColor: string, catColor2: string) => void;
   userWeightKg:     number;
 }
 
@@ -163,11 +163,11 @@ export default function ActivityCategoryPicker({
   const closeSheet = () => setCatOpen(null);
 
   const handleSelect = (e: ExerciseEntry) => {
+    const cat = ACT_CATEGORIES.find(c => c.id === catOpen);
     closeSheet();
-    // Let the sheet animate out, then fire the callback + scroll to form
+    // Let the sheet animate out, then fire the callback
     setTimeout(() => {
-      onSelectExercise(e);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      onSelectExercise(e, cat?.c1 ?? "#38bdf8", cat?.c2 ?? "#6366f1");
     }, 260);
   };
 
@@ -231,7 +231,7 @@ export default function ActivityCategoryPicker({
                       <button
                         key={e.id}
                         type="button"
-                        onClick={ev => { ev.stopPropagation(); handleSelect(e); }}
+                        onClick={ev => { ev.stopPropagation(); onSelectExercise(e, cat.c1, cat.c2); }}
                         className="flex items-center gap-0.5 rounded-lg text-[10px] font-medium truncate transition-all active:opacity-70"
                         style={{
                           maxWidth: "72px",
