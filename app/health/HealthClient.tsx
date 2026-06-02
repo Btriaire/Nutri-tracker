@@ -181,6 +181,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [bpTime,   setBpTime]   = useState(nowHHMM);
   const [bpMoment, setBpMoment] = useState<BPMoment>("morning");
   const [bpSaving, setBpSaving] = useState(false);
+  const [bpError,  setBpError]  = useState<string | null>(null);
 
   // Vital inline edit
   const [editVital,   setEditVital]   = useState<string | null>(null);
@@ -245,6 +246,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ date, ...updates }),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => `HTTP ${res.status}`);
+      throw new Error(`Sauvegarde échouée (${res.status}): ${text}`);
+    }
     return res.json() as Promise<HealthData>;
   };
 
@@ -265,6 +270,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       setEntry(updated);
       setBpOpen(false);
       setBpSys("120"); setBpDia("80"); setBpPulse(""); setBpTime(nowHHMM());
+    } catch (e) {
+      console.error("BP save failed:", e);
+      setBpError(e instanceof Error ? e.message : "Erreur inconnue");
     } finally { setBpSaving(false); }
   };
 
@@ -475,6 +483,22 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const latestF  = [...withingsPoints].reverse().find(p => p.bodyFatPct   !== null);
   const latestM  = [...withingsPoints].reverse().find(p => p.muscleMassKg !== null);
   const latestFm = [...withingsPoints].reverse().find(p => p.fatMassKg    !== null);
+
+  // Most recent BP — today's entry first, then trend (most recent first)
+  const latestBP = (() => {
+    const all = [...trend, ...(entry ? [{ ...entry, date }] : [])].sort((a, b) => b.date.localeCompare(a.date));
+    for (const e of all) {
+      const r = e.bloodPressure ?? [];
+      if (r.length > 0) {
+        return {
+          sys:  Math.round(r.reduce((s, x) => s + x.systolic,  0) / r.length),
+          dia:  Math.round(r.reduce((s, x) => s + x.diastolic, 0) / r.length),
+          date: e.date,
+        };
+      }
+    }
+    return null;
+  })();
   const weightChartData = withingsPoints
     .filter(p => p.weightKg !== null)
     .map(p => ({ label: format(parseISO(p.date), "dd/MM"), kg: p.weightKg! }));
@@ -753,7 +777,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               )}
 
               <button
-                onClick={() => { setBpTime(nowHHMM()); setBpOpen(true); }}
+                onClick={() => { setBpTime(nowHHMM()); setBpError(null); setBpOpen(true); }}
                 className="btn btn-ghost w-full gap-2 text-[12.5px]">
                 <IconPlus size={14} />
                 Ajouter une mesure
@@ -1793,6 +1817,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   </button>
                 ))}
               </div>
+
+              {bpError && (
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-[12px]"
+                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
+                  <IconAlertCircle size={14} />
+                  <span>{bpError}</span>
+                </div>
+              )}
 
               <button onClick={handleAddBP} disabled={bpSaving || !bpSys || !bpDia}
                 className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px" }}>
