@@ -118,16 +118,103 @@ export function activityLabel(type: number): string {
   return ACTIVITY_LABELS[type] ?? `Activité (${type})`;
 }
 
+// ─── GPS activity types (outdoor — may have location data) ───────────────────
+
+const GPS_ACTIVITY_TYPES = new Set([
+  3, 7, 10, 19, 25, 29, 37, 39, 41, 46, 48, 49, 51, 53, 57, 63, 68, 75,
+]);
+
+export function isGpsActivity(type: number): boolean {
+  return GPS_ACTIVITY_TYPES.has(type);
+}
+
 // ─── Data types ───────────────────────────────────────────────────────────────
 
 export interface WorkoutSession {
-  id:           string;
-  name:         string;
-  activityType: number;
-  startMs:      number;
-  endMs:        number;
-  durationMin:  number;
-  calories:     number | null;
+  id:             string;
+  name:           string;
+  activityType:   number;
+  startMs:        number;
+  endMs:          number;
+  durationMin:    number;
+  calories:       number | null;
+  distanceM:      number | null;
+  avgSpeedKmh:    number | null;
+  heartRateAvg:   number | null;
+  elevationGainM: number | null;
+}
+
+// ─── Per-session details: calories, distance, HR ─────────────────────────────
+
+interface SessionDetails {
+  calories:       number | null;
+  distanceM:      number | null;
+  avgSpeedKmh:    number | null;
+  heartRateAvg:   number | null;
+  elevationGainM: number | null;
+}
+
+async function fetchSessionDetails(auth: string, s: WorkoutSession): Promise<SessionDetails> {
+  const durMs = Math.max(1, s.endMs - s.startMs);
+
+  try {
+    const res = await fetch(
+      "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
+      {
+        method:  "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aggregateBy: [
+            { dataTypeName: "com.google.calories.expended" },  // 0
+            { dataTypeName: "com.google.distance.delta" },      // 1
+            { dataTypeName: "com.google.heart_rate.bpm" },      // 2
+          ],
+          bucketByTime:    { durationMillis: durMs },
+          startTimeMillis: s.startMs,
+          endTimeMillis:   s.endMs,
+        }),
+      }
+    );
+    if (!res.ok) return { calories: null, distanceM: null, avgSpeedKmh: null, heartRateAvg: null, elevationGainM: null };
+
+    type AggPoint = { value?: { fpVal?: number; intVal?: number }[] };
+    type AggJson  = { bucket?: { dataset?: { point?: AggPoint[] }[] }[] };
+    const json  = await res.json() as AggJson;
+    const bkt   = json.bucket?.[0];
+    if (!bkt) return { calories: null, distanceM: null, avgSpeedKmh: null, heartRateAvg: null, elevationGainM: null };
+
+    const sumFp = (i: number): number | null => {
+      const pts = bkt.dataset?.[i]?.point ?? [];
+      const v = pts.reduce((acc, p) => acc + (p.value?.[0]?.fpVal ?? 0), 0);
+      return v > 0 ? v : null;
+    };
+    const avgFp = (i: number): number | null => {
+      const pts = bkt.dataset?.[i]?.point ?? [];
+      if (!pts.length) return null;
+      const v = pts.reduce((acc, p) => acc + (p.value?.[0]?.fpVal ?? 0), 0) / pts.length;
+      return v > 0 ? v : null;
+    };
+
+    const cal  = sumFp(0);
+    const dist = sumFp(1);
+    const hr   = avgFp(2);
+
+    // Derive speed from distance + duration (more reliable than speed.summary)
+    let avgSpeedKmh: number | null = null;
+    if (dist && s.durationMin > 0) {
+      avgSpeedKmh = Math.round((dist / 1000) / (s.durationMin / 60) * 10) / 10;
+    }
+
+    return {
+      calories:       cal  !== null ? Math.round(cal)  : null,
+      distanceM:      dist !== null && dist > 10 ? Math.round(dist) : null,
+      avgSpeedKmh:    avgSpeedKmh,
+      heartRateAvg:   hr   !== null ? Math.round(hr)   : null,
+      elevationGainM: null, // computed from GPS route on demand
+    };
+  } catch {
+    return { calories: null, distanceM: null, avgSpeedKmh: null, heartRateAvg: null, elevationGainM: null };
+  }
 }
 
 interface DayFitnessData {
@@ -266,13 +353,17 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         //  filter yesterday's workouts would bleed into today's dashboard)
         if (sessStart >= startMs) {
           sessions.push({
-            id:           s.id,
-            name:         s.name || activityLabel(s.activityType ?? 0),
-            activityType: s.activityType ?? 0,
-            startMs:      sessStart,
-            endMs:        sessEnd,
+            id:             s.id,
+            name:           s.name || activityLabel(s.activityType ?? 0),
+            activityType:   s.activityType ?? 0,
+            startMs:        sessStart,
+            endMs:          sessEnd,
             durationMin,
-            calories:     null,
+            calories:       null,
+            distanceM:      null,
+            avgSpeedKmh:    null,
+            heartRateAvg:   null,
+            elevationGainM: null,
           });
         }
       }
@@ -340,6 +431,25 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   // Fallback: if no segment data, estimate from in-bed time (85% sleep efficiency)
   if (sleepMinutes === null && timeInBedMinutes !== null) {
     sleepMinutes = Math.round(timeInBedMinutes * 0.85);
+  }
+
+  // ── Fetch per-session details (calories, distance, HR) in parallel batches ─
+  if (sessions.length > 0) {
+    const BATCH = 5;
+    for (let i = 0; i < sessions.length; i += BATCH) {
+      const batch = sessions.slice(i, i + BATCH);
+      const details = await Promise.all(
+        batch.map(s => fetchSessionDetails(auth, s))
+      );
+      details.forEach((d, j) => {
+        const s = sessions[i + j];
+        s.calories       = d.calories       ?? s.calories;
+        s.distanceM      = d.distanceM;
+        s.avgSpeedKmh    = d.avgSpeedKmh;
+        s.heartRateAvg   = d.heartRateAvg;
+        s.elevationGainM = d.elevationGainM;
+      });
+    }
   }
 
   return {

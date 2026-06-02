@@ -7,9 +7,11 @@ import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
-  IconMaximize, IconChevronLeft, IconChevronRight,
+  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
+import { isGpsActivity } from "@/app/lib/google-fit";
+import RouteMap from "@/app/components/RouteMap";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
@@ -454,6 +456,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
   const [editingGFitId,      setEditingGFitId]      = useState<string | null>(null);
   const [gfitEditForm,       setGfitEditForm]       = useState({ name: "", calories: "", durationMin: "" });
   const [gfitEditSaving,     setGfitEditSaving]     = useState(false);
+  const [openRouteId,        setOpenRouteId]        = useState<string | null>(null);
 
   // Load templates on mount
   useEffect(() => {
@@ -1234,16 +1237,20 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
         {(gf?.sessions?.length ?? 0) > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
-            className="glass p-4 mb-4"
+            className="mb-4 rounded-2xl p-4"
+            style={{ background: "linear-gradient(140deg, rgba(251,191,36,0.11) 0%, rgba(249,115,22,0.06) 100%)", border: "1px solid rgba(251,191,36,0.20)" }}
           >
             <p className="label-xs mb-3">Séances Google Fit</p>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {gf?.sessions?.map((s) => {
-                const edit    = sessionEdits[s.id] ?? {};
-                const dispName = edit.name        ?? s.name;
-                const dispDur  = edit.durationMin ?? s.durationMin;
-                const dispCal  = edit.calories    !== undefined ? edit.calories : s.calories;
+                const edit      = sessionEdits[s.id] ?? {};
+                const dispName  = edit.name        ?? s.name;
+                const dispDur   = edit.durationMin ?? s.durationMin;
+                const dispCal   = edit.calories    !== undefined ? edit.calories : s.calories;
                 const isEditing = editingGFitId === s.id;
+                const hasGps    = isGpsActivity(s.activityType);
+                const showRoute = openRouteId === s.id;
+                const hasStats  = s.distanceM != null || s.avgSpeedKmh != null || s.heartRateAvg != null;
 
                 return (
                   <div key={s.id} className="flex flex-col gap-2">
@@ -1274,6 +1281,17 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                           </div>
                         )}
                       </div>
+                      {/* Map toggle (GPS activities only) */}
+                      {hasGps && (
+                        <button
+                          onClick={() => setOpenRouteId(showRoute ? null : s.id)}
+                          className="btn-icon w-7 h-7 flex-shrink-0"
+                          style={{ color: showRoute ? "#f97316" : "var(--text-muted)" }}
+                          title="Voir le tracé GPS"
+                        >
+                          <IconMap size={13} />
+                        </button>
+                      )}
                       {/* Edit button */}
                       <button
                         onClick={() => {
@@ -1292,6 +1310,58 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                         <IconPencil size={12} />
                       </button>
                     </div>
+
+                    {/* Stats row: distance · vitesse · FC */}
+                    {hasStats && (
+                      <div className="flex items-center gap-3 pl-12 flex-wrap">
+                        {s.distanceM != null && (
+                          <div className="flex items-center gap-1">
+                            <IconRuler size={11} style={{ color: "#34d399" }} />
+                            <span className="text-[11px] tabular-nums" style={{ color: "#34d399" }}>
+                              {s.distanceM >= 1000
+                                ? `${(s.distanceM / 1000).toFixed(2)} km`
+                                : `${s.distanceM} m`}
+                            </span>
+                          </div>
+                        )}
+                        {s.avgSpeedKmh != null && (
+                          <div className="flex items-center gap-1">
+                            <IconGauge size={11} style={{ color: "#60a5fa" }} />
+                            <span className="text-[11px] tabular-nums" style={{ color: "#60a5fa" }}>
+                              {s.avgSpeedKmh} km/h
+                            </span>
+                          </div>
+                        )}
+                        {s.heartRateAvg != null && (
+                          <div className="flex items-center gap-1">
+                            <IconHeart size={11} style={{ color: "#f87171" }} />
+                            <span className="text-[11px] tabular-nums" style={{ color: "#f87171" }}>
+                              {s.heartRateAvg} bpm
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Route map */}
+                    <AnimatePresence>
+                      {showRoute && (
+                        <motion.div
+                          key={`route-${s.id}`}
+                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          <div className="pl-12 pb-1">
+                            <RouteMap
+                              startMs={s.startMs}
+                              endMs={s.endMs}
+                              height={180}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {/* Inline edit */}
                     <AnimatePresence>

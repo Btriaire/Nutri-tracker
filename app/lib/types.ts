@@ -273,6 +273,27 @@ export interface WorkoutSession {
   caloriesBurned:  number | null;
 }
 
+export interface GpsPoint {
+  lat:  number;
+  lng:  number;
+  alt:  number | null;  // altitude in meters
+  tsMs: number;         // timestamp in ms epoch
+}
+
+export interface GoogleFitSession {
+  id:             string;
+  name:           string;
+  activityType:   number;
+  durationMin:    number;
+  startMs:        number;
+  endMs:          number;
+  calories:       number | null;
+  distanceM:      number | null;   // distance in meters
+  avgSpeedKmh:    number | null;   // average speed in km/h
+  heartRateAvg:   number | null;   // average heart rate in bpm
+  elevationGainM: number | null;   // elevation gain in meters
+}
+
 export interface GoogleFitDay {
   steps:                 number;
   activeCaloriesBurned:  number;
@@ -285,7 +306,7 @@ export interface GoogleFitDay {
   deepSleepMin:          number | null;
   remSleepMin:           number | null;
   sleepSyncedAt?:        string;           // ISO date of the sleep session
-  sessions:              { id: string; name: string; activityType: number; durationMin: number; startMs: number; endMs: number; calories: number | null }[];
+  sessions:              GoogleFitSession[];
   syncedAt:              Timestamp;
 }
 
