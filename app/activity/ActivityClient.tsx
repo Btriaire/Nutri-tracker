@@ -10,8 +10,11 @@ import {
   IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
-import { isGpsActivity } from "@/app/lib/google-fit";
 import RouteMap from "@/app/components/RouteMap";
+
+// GPS activity types (outdoor — may have location data)
+const GPS_ACTIVITY_TYPES = new Set([3, 7, 10, 19, 25, 29, 37, 39, 41, 46, 48, 49, 51, 53, 57, 63, 68, 75]);
+function isGpsActivity(type: number): boolean { return GPS_ACTIVITY_TYPES.has(type); }
 import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
