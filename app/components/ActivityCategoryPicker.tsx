@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconX } from "@tabler/icons-react";
@@ -154,11 +154,21 @@ interface Props {
 export default function ActivityCategoryPicker({
   actFavorites, onToggleFav, onSelectExercise, userWeightKg,
 }: Props) {
-  const [catOpen, setCatOpen] = useState<CatId | null>(null);
+  const [catOpen,  setCatOpen]  = useState<CatId | null>(null);
+  const [mounted,  setMounted]  = useState(false);
+
+  // Portal needs to mount client-side only
+  useEffect(() => { setMounted(true); }, []);
+
+  const closeSheet = () => setCatOpen(null);
 
   const handleSelect = (e: ExerciseEntry) => {
-    setCatOpen(null);
-    onSelectExercise(e);
+    closeSheet();
+    // Let the sheet animate out, then fire the callback + scroll to form
+    setTimeout(() => {
+      onSelectExercise(e);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 260);
   };
 
   const activeCat = ACT_CATEGORIES.find(c => c.id === catOpen) ?? null;
@@ -252,15 +262,17 @@ export default function ActivityCategoryPicker({
         })}
       </div>
 
-      {/* ── Category sheet portal ── */}
-      {catOpen && typeof document !== "undefined" && activeCat && createPortal(
+      {/* ── Category sheet portal — always mounted client-side for exit animations ── */}
+      {mounted && createPortal(
         <AnimatePresence>
+          {catOpen && activeCat && (
           <motion.div
             key="cat-backdrop"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
             className="fixed inset-0 z-50 flex items-end justify-center"
             style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
-            onClick={() => setCatOpen(null)}
+            onClick={closeSheet}
           >
             <motion.div
               key="cat-sheet"
@@ -324,7 +336,7 @@ export default function ActivityCategoryPicker({
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setCatOpen(null)} className="btn-icon flex-shrink-0">
+                <button onClick={closeSheet} className="btn-icon flex-shrink-0">
                   <IconX size={14} />
                 </button>
               </div>
@@ -429,6 +441,7 @@ export default function ActivityCategoryPicker({
               </div>
             </motion.div>
           </motion.div>
+          )}
         </AnimatePresence>,
         document.body
       )}
