@@ -1215,9 +1215,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           {goals.proteinGrams > 0 && <ReferenceLine y={goals.proteinGrams} stroke="var(--protein)" strokeDasharray="4 3" strokeOpacity={0.35} />}
                           {goals.carbsGrams   > 0 && <ReferenceLine y={goals.carbsGrams}   stroke="var(--carbs)"   strokeDasharray="4 3" strokeOpacity={0.35} />}
                           {goals.fatGrams     > 0 && <ReferenceLine y={goals.fatGrams}     stroke="var(--fat)"     strokeDasharray="4 3" strokeOpacity={0.35} />}
-                          <Line dataKey="proteinG" name="Protéines" stroke="var(--protein)" strokeWidth={2} dot={false} connectNulls />
-                          <Line dataKey="carbsG"   name="Glucides"  stroke="var(--carbs)"   strokeWidth={2} dot={false} connectNulls />
-                          <Line dataKey="fatG"     name="Lipides"   stroke="var(--fat)"     strokeWidth={2} dot={false} connectNulls />
+                          <Line type="monotone" dataKey="proteinG" name="Protéines" stroke="var(--protein)" strokeWidth={2} dot={false} connectNulls />
+                          <Line type="monotone" dataKey="carbsG"   name="Glucides"  stroke="var(--carbs)"   strokeWidth={2} dot={false} connectNulls />
+                          <Line type="monotone" dataKey="fatG"     name="Lipides"   stroke="var(--fat)"     strokeWidth={2} dot={false} connectNulls />
                         </ComposedChart>
                       </ResponsiveContainer>
                       {/* Average summary */}
@@ -1292,7 +1292,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                     );
                                   }} />
                                   <ReferenceLine y={ref.refLine} stroke={ref.color} strokeDasharray="3 3" strokeOpacity={0.5} />
-                                  <Area dataKey="value" stroke={ref.color} strokeWidth={1.5}
+                                  <Area type="monotone" dataKey="value" stroke={ref.color} strokeWidth={1.5}
                                     fill={`url(#micro-grad-${k})`} dot={false} connectNulls />
                                 </AreaChart>
                               </ResponsiveContainer>
