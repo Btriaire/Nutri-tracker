@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconPlayerPlay, IconPlayerPause, IconPlayerStop, IconCircleCheck,
   IconChevronLeft, IconVolume, IconVolumeOff, IconMusic, IconRefresh,
-  IconSparkles, IconSearch, IconX,
+  IconSparkles, IconSearch, IconX, IconFlame, IconClock, IconChevronDown, IconChevronUp,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ProgramId = "court" | "moyen" | "long";
+type ProgramId = "express" | "court" | "moyen" | "long";
 type SoundCategory = "bowl" | "nature" | "binaural";
 
 interface Track {
@@ -64,6 +64,15 @@ interface Program {
 }
 
 const PROGRAMS: Program[] = [
+  {
+    id: "express", label: "Pause éclair", durationMin: 3, emoji: "⚡",
+    description: "Micro-pause · 3 respirations · retour au calme immédiat",
+    color: "#fbbf24", soundCat: "bowl",
+    steps: [
+      { label: "Lâcher prise", durationSec: 90,  instruction: "Fermez les yeux. Déposez tout. Sentez le poids de votre corps." },
+      { label: "3 souffles",   durationSec: 90,  instruction: "3 grandes inspirations lentes. À chaque expiration, relâchez une tension. Épaules, mâchoire, front." },
+    ],
+  },
   {
     id: "court", label: "Pleine présence", durationMin: 5, emoji: "🌸",
     description: "Ancrage rapide · respiration · calme l'esprit en 5 minutes",
@@ -317,10 +326,16 @@ export default function MeditationPlayer() {
 
   // Médit-IA states
   const [aiTheme,      setAiTheme]      = useState("");
+  const [aiDuration,   setAiDuration]   = useState(15);
   const [aiLoading,    setAiLoading]    = useState(false);
   const [aiResults,    setAiResults]    = useState<Track[] | null>(null);
   const [aiError,      setAiError]      = useState("");
   const [aiSession,    setAiSession]    = useState(false); // true when playing an AI track
+
+  // Tracking — sessions from API (Firestore), merged with localStorage
+  type ApiSession = { id: string; programId: string; programLabel: string; durationMin: number; date: string; completedAt: string };
+  const [allSessions,  setAllSessions]  = useState<ApiSession[]>([]);
+  const [showHistory,  setShowHistory]  = useState(false);
 
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedRef = useRef(false);
@@ -331,6 +346,15 @@ export default function MeditationPlayer() {
       const saved = localStorage.getItem("meditation_sessions");
       if (saved) setSessions(JSON.parse(saved));
     } catch {}
+  }, []);
+
+  // Fetch full session history from API
+  useEffect(() => {
+    fetch("/api/meditation")
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { sessions?: ApiSession[] } | null) => { if (d?.sessions) setAllSessions(d.sessions); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startProgram = useCallback((program: Program) => {
@@ -400,18 +424,18 @@ export default function MeditationPlayer() {
     }
   }, [aiLoading]);
 
-  const playAiTrack = useCallback((track: Track) => {
+  const playAiTrack = useCallback((track: Track, durationMin = 15) => {
     setAiSession(true);
     setSelected({
       id: "court" as ProgramId,
       label: track.label,
-      durationMin: 30,
+      durationMin,
       emoji: track.emoji,
-      description: "Séance libre · Médit-IA",
+      description: `Séance libre ${durationMin} min · Médit-IA`,
       color: "#a78bfa",
       soundCat: "bowl",
       steps: [
-        { label: "Méditation libre", durationSec: 30 * 60, instruction: "Installez-vous confortablement. Laissez la musique vous guider vers la paix intérieure." },
+        { label: "Méditation libre", durationSec: durationMin * 60, instruction: "Installez-vous confortablement. Laissez la musique vous guider vers la paix intérieure." },
       ],
     });
     setCurrentTrack(track);
@@ -481,14 +505,58 @@ export default function MeditationPlayer() {
   const totalDuration = selected ? selected.steps.reduce((a, s) => a + s.durationSec, 0) : 0;
   const progressPct  = totalDuration > 0 ? Math.min((totalElapsed / totalDuration) * 100, 100) : 0;
 
-  // Weekly stats
+  // Weekly stats — prefer API data, fall back to localStorage
+  const today = format(new Date(), "yyyy-MM-dd");
   const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  const weekSessions = sessions.filter(s => new Date(s.completedAt) >= weekStart);
-  const weekMinutes  = weekSessions.reduce((a, s) => {
-    const p = PROGRAMS.find(pr => pr.id === s.programId);
-    return a + (p?.durationMin ?? 0);
-  }, 0);
+  weekStart.setDate(weekStart.getDate() - 6); // last 7 days
+  weekStart.setHours(0, 0, 0, 0);
+
+  const useApi = allSessions.length > 0;
+  const weekSessions = useApi
+    ? allSessions.filter(s => new Date(s.date + "T12:00:00") >= weekStart)
+    : sessions.filter(s => new Date(s.completedAt) >= weekStart);
+  const weekMinutes = useApi
+    ? weekSessions.reduce((a, s) => a + ((s as ApiSession).durationMin ?? 0), 0)
+    : (weekSessions as { programId: ProgramId }[]).reduce((a, s) => {
+        const p = PROGRAMS.find(pr => pr.id === s.programId);
+        return a + (p?.durationMin ?? 0);
+      }, 0);
+
+  // Streak (consecutive days with at least one session)
+  const streak = (() => {
+    if (!useApi || allSessions.length === 0) return 0;
+    const days = new Set(allSessions.map(s => s.date));
+    let count = 0;
+    let d = new Date();
+    // If no session today, start from yesterday
+    if (!days.has(today)) d.setDate(d.getDate() - 1);
+    while (true) {
+      const key = format(d, "yyyy-MM-dd");
+      if (!days.has(key)) break;
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  })();
+
+  // Last 7 days calendar
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = format(d, "yyyy-MM-dd");
+    const hasSess = useApi
+      ? allSessions.some(s => s.date === key)
+      : sessions.some(s => format(new Date(s.completedAt), "yyyy-MM-dd") === key);
+    const mins = useApi
+      ? allSessions.filter(s => s.date === key).reduce((a, s) => a + s.durationMin, 0)
+      : sessions.filter(s => format(new Date(s.completedAt), "yyyy-MM-dd") === key)
+          .reduce((a, s) => { const p = PROGRAMS.find(pr => pr.id === s.programId); return a + (p?.durationMin ?? 0); }, 0);
+    return { key, label: format(d, "EEE", { locale: fr }).slice(0, 3), isToday: key === today, hasSess, mins };
+  });
+
+  const totalMin = useApi
+    ? allSessions.reduce((a, s) => a + s.durationMin, 0)
+    : sessions.reduce((a, s) => { const p = PROGRAMS.find(pr => pr.id === s.programId); return a + (p?.durationMin ?? 0); }, 0);
 
   // ── Running state ──────────────────────────────────────────────────────────
 
@@ -615,127 +683,29 @@ export default function MeditationPlayer() {
 
   // ── Program selection ──────────────────────────────────────────────────────
 
+  const AI_DURATIONS = [3, 5, 15, 30, 60];
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[18px]">☸️</span>
-        <div>
-          <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Méditation guidée</p>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>3 programmes · musique ambiante YouTube</p>
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[18px]">☸️</span>
+          <div>
+            <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Méditation</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>IA · programmes guidés · suivi</p>
+          </div>
         </div>
+        {streak > 0 && (
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)" }}>
+            <IconFlame size={13} stroke={2} style={{ color: "#fbbf24" }} />
+            <span className="text-[12px] font-bold" style={{ color: "#fbbf24" }}>{streak}j</span>
+          </div>
+        )}
       </div>
 
-      {/* Weekly stats */}
-      {weekSessions.length > 0 && (
-        <div className="flex gap-3">
-          {[
-            { v: weekSessions.length, l: "séances cette semaine" },
-            { v: `${weekMinutes} min`, l: "de pratique" },
-            { v: sessions.length, l: "séances au total" },
-          ].map(({ v, l }) => (
-            <div key={l} className="flex-1 px-3 py-2.5 rounded-xl"
-              style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }}>
-              <p className="text-[18px] font-bold leading-tight" style={{ color: "#34d399" }}>{v}</p>
-              <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{l}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Programs */}
-      {PROGRAMS.map((program) => {
-        const doneSessions = sessions.filter(s => s.programId === program.id).length;
-        const lastDate     = sessions.filter(s => s.programId === program.id).sort((a, b) => b.completedAt - a.completedAt)[0]?.date;
-        const tracks       = TRACKS[program.soundCat];
-        const defaultTrack = tracks.find(t => t.id === DEFAULT_TRACK[program.soundCat]) ?? tracks[0];
-
-        return (
-          <motion.div key={program.id}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}
-          >
-            <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${program.color}60, ${program.color}20)` }} />
-            <div className="p-4">
-              {/* Top row */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px]"
-                    style={{ background: `${program.color}15`, border: `1px solid ${program.color}30` }}>
-                    {program.emoji}
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{program.label}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md"
-                        style={{ background: `${program.color}15`, color: program.color }}>
-                        {program.durationMin} min
-                      </span>
-                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {defaultTrack.emoji} {defaultTrack.label}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {doneSessions > 0 && (
-                  <div className="flex flex-col items-end">
-                    <span className="text-[16px] font-bold" style={{ color: program.color }}>{doneSessions}×</span>
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>complétées</span>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-[12px] mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>{program.description}</p>
-
-              {/* Steps preview */}
-              <div className="flex gap-1 mb-3">
-                {program.steps.map((s, i) => (
-                  <div key={i} className="flex-1 px-1.5 py-1 rounded-lg text-center"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                    <p className="text-[8px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-                    <p className="text-[7px]" style={{ color: `${program.color}80` }}>
-                      {s.durationSec >= 60 ? `${Math.round(s.durationSec / 60)}m` : `${s.durationSec}s`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sound track chips */}
-              <div className="flex gap-1 mb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                {tracks.map((t) => (
-                  <span key={t.id}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                    {t.emoji} {t.label}
-                  </span>
-                ))}
-              </div>
-
-              {lastDate && (
-                <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>
-                  Dernière séance : {format(new Date(lastDate + "T00:00:00"), "d MMMM", { locale: fr })}
-                </p>
-              )}
-
-              <button
-                onClick={() => startProgram(program)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-                style={{
-                  background: `linear-gradient(135deg, ${program.color}25, ${program.color}15)`,
-                  border: `1px solid ${program.color}40`,
-                  color: program.color,
-                }}
-              >
-                <IconPlayerPlay size={14} stroke={2} />
-                Commencer · {program.durationMin} min
-              </button>
-            </div>
-          </motion.div>
-        );
-      })}
-
-      {/* ── Médit-IA ─────────────────────────────────────────────────────── */}
+      {/* ── Médit-IA (PREMIER) ─────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden"
         style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.2)" }}>
 
@@ -752,6 +722,25 @@ export default function MeditationPlayer() {
         </div>
 
         <div className="px-4 pb-4 space-y-3">
+          {/* Duration chips */}
+          <div>
+            <p className="text-[10px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Durée</p>
+            <div className="flex gap-1.5">
+              {AI_DURATIONS.map((d) => (
+                <button key={d} onClick={() => setAiDuration(d)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
+                  style={{
+                    background: aiDuration === d ? "rgba(139,92,246,0.22)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${aiDuration === d ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
+                    color: aiDuration === d ? "#a78bfa" : "var(--text-muted)",
+                  }}>
+                  <IconClock size={10} stroke={2} />
+                  {d < 60 ? `${d}m` : "1h"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Theme chips */}
           <div className="flex flex-wrap gap-1.5">
             {AI_THEMES.map(({ label, emoji }) => (
@@ -847,11 +836,11 @@ export default function MeditationPlayer() {
                         {track.label}
                       </p>
                       <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        Ambiance validée · {aiTheme}
+                        {aiDuration} min · {aiTheme}
                       </p>
                     </div>
                     <button
-                      onClick={() => playAiTrack(track)}
+                      onClick={() => playAiTrack(track, aiDuration)}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all"
                       style={{
                         background: "rgba(139,92,246,0.18)",
@@ -859,7 +848,7 @@ export default function MeditationPlayer() {
                         color: "#a78bfa",
                       }}>
                       <IconPlayerPlay size={11} stroke={2} />
-                      Lancer
+                      {aiDuration} min
                     </button>
                   </div>
                 ))}
@@ -868,6 +857,192 @@ export default function MeditationPlayer() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Weekly stats strip */}
+      <div className="rounded-2xl p-3" style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)" }}>
+        {/* 7-day calendar */}
+        <div className="flex justify-between mb-3">
+          {last7.map(({ key, label, isToday, hasSess, mins }) => (
+            <div key={key} className="flex flex-col items-center gap-1">
+              <span className="text-[9px] uppercase" style={{ color: isToday ? "#34d399" : "var(--text-muted)" }}>{label}</span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{
+                  background: hasSess ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${hasSess ? "rgba(52,211,153,0.4)" : "var(--border)"}`,
+                }}>
+                {hasSess
+                  ? <span className="text-[11px]">🧘</span>
+                  : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", display: "inline-block" }} />
+                }
+              </div>
+              {hasSess && <span className="text-[8px] font-medium" style={{ color: "#34d399" }}>{mins}m</span>}
+            </div>
+          ))}
+        </div>
+        {/* Stats row */}
+        <div className="flex justify-between text-center">
+          {[
+            { v: weekSessions.length, l: "séances / semaine" },
+            { v: `${weekMinutes}m`, l: "pratiquées" },
+            { v: `${totalMin}m`, l: "au total" },
+          ].map(({ v, l }) => (
+            <div key={l}>
+              <p className="text-[15px] font-bold" style={{ color: "#34d399" }}>{v}</p>
+              <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Programs */}
+      {PROGRAMS.map((program) => {
+        const doneSessions = sessions.filter(s => s.programId === program.id).length;
+        const lastDate     = sessions.filter(s => s.programId === program.id).sort((a, b) => b.completedAt - a.completedAt)[0]?.date;
+        const tracks       = TRACKS[program.soundCat];
+        const defaultTrack = tracks.find(t => t.id === DEFAULT_TRACK[program.soundCat]) ?? tracks[0];
+
+        return (
+          <motion.div key={program.id}
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}
+          >
+            <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${program.color}60, ${program.color}20)` }} />
+            <div className="p-4">
+              {/* Top row */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px]"
+                    style={{ background: `${program.color}15`, border: `1px solid ${program.color}30` }}>
+                    {program.emoji}
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{program.label}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md"
+                        style={{ background: `${program.color}15`, color: program.color }}>
+                        {program.durationMin} min
+                      </span>
+                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        {defaultTrack.emoji} {defaultTrack.label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {doneSessions > 0 && (
+                  <div className="flex flex-col items-end">
+                    <span className="text-[16px] font-bold" style={{ color: program.color }}>{doneSessions}×</span>
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>complétées</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[12px] mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>{program.description}</p>
+
+              {/* Steps preview */}
+              <div className="flex gap-1 mb-3">
+                {program.steps.map((s, i) => (
+                  <div key={i} className="flex-1 px-1.5 py-1 rounded-lg text-center"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                    <p className="text-[8px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                    <p className="text-[7px]" style={{ color: `${program.color}80` }}>
+                      {s.durationSec >= 60 ? `${Math.round(s.durationSec / 60)}m` : `${s.durationSec}s`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sound track chips */}
+              <div className="flex gap-1 mb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                {tracks.map((t) => (
+                  <span key={t.id}
+                    className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                    {t.emoji} {t.label}
+                  </span>
+                ))}
+              </div>
+
+              {lastDate && (
+                <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>
+                  Dernière séance : {format(new Date(lastDate + "T00:00:00"), "d MMMM", { locale: fr })}
+                </p>
+              )}
+
+              <button
+                onClick={() => startProgram(program)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+                style={{
+                  background: `linear-gradient(135deg, ${program.color}25, ${program.color}15)`,
+                  border: `1px solid ${program.color}40`,
+                  color: program.color,
+                }}
+              >
+                <IconPlayerPlay size={14} stroke={2} />
+                Commencer · {program.durationMin} min
+              </button>
+            </div>
+          </motion.div>
+        );
+      })}
+
+      {/* ── Historique / Tracking ────────────────────────────────────── */}
+      {allSessions.length > 0 && (
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            className="w-full flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <IconClock size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+              <span className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+                Historique
+              </span>
+              <span className="text-[11px] px-1.5 py-0.5 rounded-md"
+                style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+                {allSessions.length} séances
+              </span>
+            </div>
+            {showHistory
+              ? <IconChevronUp size={14} stroke={2} style={{ color: "var(--text-muted)" }} />
+              : <IconChevronDown size={14} stroke={2} style={{ color: "var(--text-muted)" }} />
+            }
+          </button>
+          <AnimatePresence initial={false}>
+            {showHistory && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: "hidden" }}>
+                <div className="px-4 pb-4 space-y-1.5">
+                  {allSessions.slice(0, 15).map((s) => (
+                    <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                      <span className="text-[16px]">
+                        {PROGRAMS.find(p => p.id === s.programId)?.emoji ?? "🧘"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          {s.programLabel}
+                        </p>
+                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                          {format(new Date(s.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg"
+                        style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+                        {s.durationMin} min
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       <p className="text-[10px] text-center" style={{ color: "var(--text-muted)" }}>
         🎵 Musique ambiante · Nécessite une connexion internet
