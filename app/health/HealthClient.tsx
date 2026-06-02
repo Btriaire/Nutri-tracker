@@ -574,7 +574,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         </motion.div>
 
         {/* Date nav — above all tabs */}
-        <div className="flex items-center justify-between mb-4 glass px-4 py-2.5">
+        <div className="flex items-center justify-between mb-4 px-4 py-2.5 rounded-2xl"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
           <button
             onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
             className="btn-icon flex-shrink-0">
@@ -599,7 +601,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             <HealthFactsBanner />
 
             {/* ── Composition corporelle (Withings) ── */}
-            <motion.div {...fade(0.03)} className="glass p-5 mb-4">
+            <motion.div {...fade(0.03)} className="mb-4 rounded-2xl p-5 overflow-hidden"
+              style={{
+                background: "linear-gradient(140deg, rgba(96,165,250,0.12) 0%, rgba(34,211,238,0.06) 100%)",
+                border: "1px solid rgba(96,165,250,0.2)",
+              }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -686,7 +693,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Tension artérielle */}
-            <motion.div {...fade(0.09)} className="glass p-5 mb-4">
+            <motion.div {...fade(0.09)} className="mb-4 rounded-2xl p-5 overflow-hidden"
+              style={{
+                background: "linear-gradient(140deg, rgba(248,113,113,0.12) 0%, rgba(244,63,94,0.05) 100%)",
+                border: "1px solid rgba(248,113,113,0.2)",
+              }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -786,7 +798,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               {chartData.length >= 1 && (
                 <>
                   <div className="h-px my-4" style={{ background: "var(--border)" }} />
-                  <div className="glass p-4">
+                  <div className="p-4 rounded-2xl"
+                    style={{
+                      background: "rgba(248,113,113,0.06)",
+                      border: "1px solid rgba(248,113,113,0.12)",
+                    }}
+                  >
                     <p className="label-xs mb-3">📈 Évolution tension artérielle · 30 jours</p>
                     <ResponsiveContainer width="100%" height={180}>
                       <LineChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
@@ -843,7 +860,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* Other vitals grid */}
-            <motion.div {...fade(0.12)} className="glass mb-4 overflow-hidden">
+            <motion.div {...fade(0.12)} className="mb-4 rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(140deg, rgba(52,211,153,0.10) 0%, rgba(34,211,238,0.04) 100%)",
+                border: "1px solid rgba(52,211,153,0.16)",
+              }}
+            >
               <VitalCard
                 icon={<IconHeartbeat size={15} style={{ color: "#EA4335" }} />}
                 label="FC repos" unit="bpm" value={entry?.restingHR} editKey="restingHR"
@@ -889,12 +911,17 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               const sleepOk = lastSleep && lastSleep.sleepMinutes! >= sleepGoalMin;
               const sleepH  = lastSleep ? Math.round(lastSleep.sleepMinutes! / 60 * 10) / 10 : null;
               return (
-                <motion.div {...fade(0.13)} className="glass p-4 mb-4">
+                <motion.div {...fade(0.13)} className="mb-4 rounded-2xl p-4 overflow-hidden"
+                  style={{
+                    background: "linear-gradient(140deg, rgba(129,140,248,0.12) 0%, rgba(167,139,250,0.05) 100%)",
+                    border: "1px solid rgba(129,140,248,0.2)",
+                  }}
+                >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(121,134,203,0.15)" }}>
-                        <IconMoon size={15} style={{ color: "#7986CB" }} />
+                        style={{ background: "rgba(129,140,248,0.18)" }}>
+                        <IconMoon size={15} style={{ color: "#818cf8" }} />
                       </div>
                       <div>
                         <p className="text-[14px] font-semibold">Sommeil</p>
@@ -936,7 +963,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             })()}
 
             {/* Notes */}
-            <motion.div {...fade(0.15)} className="glass p-4 mb-4">
+            <motion.div {...fade(0.15)} className="mb-4 rounded-2xl p-4"
+              style={{
+                background: "linear-gradient(140deg, rgba(167,139,250,0.09) 0%, rgba(129,140,248,0.04) 100%)",
+                border: "1px solid rgba(167,139,250,0.15)",
+              }}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <IconNote size={14} style={{ color: "var(--text-muted)" }} />
                 <p className="label-xs">Notes de santé</p>
@@ -983,7 +1015,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               };
               const cfg = synthesis ? ALERT_CFG[synthesis.alertLevel] : null;
               return (
-                <div className="glass px-3 py-2.5">
+                <div className="px-3 py-2.5 rounded-2xl"
+                  style={{
+                    background: "linear-gradient(140deg, rgba(167,139,250,0.12) 0%, rgba(192,132,252,0.05) 100%)",
+                    border: "1px solid rgba(167,139,250,0.2)",
+                  }}
+                >
                   {/* ── Header row ── */}
                   <div className="flex items-center gap-2">
                     <span className="text-[12px]">🤖</span>
@@ -1107,7 +1144,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             })()}
 
             {/* ── Médicaments ── */}
-            <div className={`glass ${meds.length === 0 ? "p-3" : "p-4"}`}>
+            <div className={`rounded-2xl ${meds.length === 0 ? "p-3" : "p-4"}`}
+              style={{
+                background: "linear-gradient(140deg, rgba(192,132,252,0.12) 0%, rgba(167,139,250,0.05) 100%)",
+                border: "1px solid rgba(192,132,252,0.2)",
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <IconPill size={14} style={{ color: "#c084fc" }} />
@@ -1171,7 +1213,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </div>
 
             {/* ── Symptômes ── */}
-            <div className={`glass ${symptoms.length === 0 && !symptomOpen ? "p-3" : "p-4"}`}>
+            <div className={`rounded-2xl ${symptoms.length === 0 && !symptomOpen ? "p-3" : "p-4"}`}
+              style={{
+                background: "linear-gradient(140deg, rgba(251,146,60,0.12) 0%, rgba(249,115,22,0.05) 100%)",
+                border: "1px solid rgba(251,146,60,0.2)",
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[14px]">🩺</span>
@@ -1400,7 +1447,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               const SCAT = Object.fromEntries(SYMPTOM_CATEGORIES.map(c => [c.key, c]));
               const SEV_COLOR: Record<string, string> = { "léger": "#34d399", "modéré": "#fbbf24", "sévère": "#f87171" };
               return (
-                <div className="glass p-4">
+                <div className="p-4 rounded-2xl"
+                  style={{
+                    background: "linear-gradient(140deg, rgba(251,146,60,0.09) 0%, rgba(249,115,22,0.04) 100%)",
+                    border: "1px solid rgba(251,146,60,0.16)",
+                  }}
+                >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-[14px]">📋</span>
                     <p className="label-xs">Historique des symptômes</p>
@@ -1475,7 +1527,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         {activeTab === "cardiaque" && (
           <>
             {/* Today's summary card */}
-            <motion.div {...fade(0.05)} className="glass p-5 mb-4">
+            <motion.div {...fade(0.05)} className="mb-4 rounded-2xl p-5 overflow-hidden"
+              style={{
+                background: "linear-gradient(140deg, rgba(234,67,53,0.12) 0%, rgba(248,113,113,0.05) 100%)",
+                border: "1px solid rgba(234,67,53,0.2)",
+              }}
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="label-xs mb-1">Aujourd'hui · Google Fit</p>
@@ -1518,11 +1575,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* Stats strip */}
             <motion.div {...fade(0.08)} className="grid grid-cols-3 gap-3 mb-4">
               {[
-                { label: "Moyenne", value: avgHr ? `${avgHr} bpm` : "—", icon: <IconHeart size={14} style={{ color: "var(--fit-red)" }} /> },
-                { label: "Min",     value: minHr ? `${minHr} bpm` : "—", icon: <IconArrowDown size={14} style={{ color: "var(--fit-green)" }} /> },
-                { label: "Max",     value: maxHr ? `${maxHr} bpm` : "—", icon: <IconArrowUp size={14} style={{ color: "#f97316" }} /> },
-              ].map(({ label, value, icon }) => (
-                <div key={label} className="card flex flex-col gap-1">
+                { label: "Moyenne", value: avgHr ? `${avgHr} bpm` : "—", icon: <IconHeart size={14} style={{ color: "#f87171" }} />, c1: "rgba(248,113,113,0.14)", c2: "rgba(248,113,113,0.22)" },
+                { label: "Min",     value: minHr ? `${minHr} bpm` : "—", icon: <IconArrowDown size={14} style={{ color: "#34d399" }} />, c1: "rgba(52,211,153,0.14)", c2: "rgba(52,211,153,0.22)" },
+                { label: "Max",     value: maxHr ? `${maxHr} bpm` : "—", icon: <IconArrowUp size={14} style={{ color: "#f97316" }} />, c1: "rgba(249,115,22,0.14)", c2: "rgba(249,115,22,0.22)" },
+              ].map(({ label, value, icon, c1, c2 }) => (
+                <div key={label} className="flex flex-col gap-1 rounded-2xl p-3"
+                  style={{ background: `linear-gradient(140deg, ${c1} 0%, transparent 100%)`, border: `1px solid ${c2}` }}>
                   <div className="flex items-center gap-1">{icon}<span className="label-xs">{label}</span></div>
                   <span className="text-[16px] font-bold" style={{ color: "var(--text-primary)" }}>{value}</span>
                 </div>
@@ -1559,7 +1617,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* ── Vue synthèse combinée ── */}
-            <motion.div {...fade(0.14)} className="glass p-4 mb-4">
+            <motion.div {...fade(0.14)} className="mb-4 rounded-2xl p-4"
+              style={{
+                background: "linear-gradient(140deg, rgba(234,67,53,0.09) 0%, rgba(129,140,248,0.04) 100%)",
+                border: "1px solid rgba(234,67,53,0.14)",
+              }}
+            >
               {/* Legend */}
               <div className="flex items-center justify-between mb-3">
                 <p className="label-xs">Vue synthèse</p>
@@ -1683,7 +1746,12 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
             {/* Daily log table */}
             {visible.length > 0 && (
-              <motion.div {...fade(0.2)} className="glass p-4">
+              <motion.div {...fade(0.2)} className="rounded-2xl p-4"
+                style={{
+                  background: "linear-gradient(140deg, rgba(248,113,113,0.08) 0%, rgba(129,140,248,0.04) 100%)",
+                  border: "1px solid rgba(248,113,113,0.14)",
+                }}
+              >
                 <p className="label-xs mb-3">Détail quotidien</p>
                 <div className="space-y-1">
                   {[...visible].reverse().slice(0, 14).map((p) => {
