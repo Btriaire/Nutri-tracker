@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       ? (snap.data() as DayLog)
       : { date: body.date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 }, waterMl: 0, updatedAt: Timestamp.now() };
 
-    const entries = [...existing.entries, ...newEntries];
+    const entries = [...(existing.entries ?? []), ...newEntries];
     const totals  = calcTotals(entries);
     tx.set(ref, { ...existing, entries, totals, updatedAt: Timestamp.now() });
   });

@@ -58,9 +58,15 @@ export default function MealSection({
   };
 
   const handleAdded = async (info: AddedInfo) => {
-    const res = await fetch(`/api/log?date=${date}`);
-    const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
-    if (dayLog) onEntriesChange(meal, (dayLog.entries ?? []).filter((e: FoodEntry) => e.meal === meal));
+    try {
+      const res = await fetch(`/api/log?date=${date}`);
+      if (res.ok) {
+        const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
+        if (dayLog) onEntriesChange(meal, (dayLog.entries ?? []).filter((e: FoodEntry) => e.meal === meal));
+      }
+    } catch (err) {
+      console.error("handleAdded refetch failed:", err);
+    }
     onFoodAdded?.(info);
   };
 
