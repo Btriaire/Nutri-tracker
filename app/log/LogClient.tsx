@@ -245,7 +245,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
-          className="glass p-5 mb-5"
+          className="mb-5 rounded-2xl p-5"
+          style={{
+            background: "linear-gradient(140deg, rgba(249,115,22,0.11) 0%, rgba(251,191,36,0.05) 100%)",
+            border: "1px solid rgba(249,115,22,0.18)",
+          }}
         >
           <div className="flex justify-between items-start mb-4">
             <div className="text-center">

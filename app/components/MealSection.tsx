@@ -11,11 +11,11 @@ import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
 
-const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
-  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried },
-  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad    },
-  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat     },
-  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple    },
+const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
+  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "#fbbf24", color2: "#f97316" },
+  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "#fb923c", color2: "#f97316" },
+  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat,     color: "#f87171", color2: "#f43f5e" },
+  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple,    color: "#34d399", color2: "#22d3ee" },
 };
 
 
@@ -95,7 +95,12 @@ export default function MealSection({
   };
 
   return (
-    <div className="glass overflow-hidden">
+    <div className="overflow-hidden rounded-2xl"
+      style={{
+        background: `linear-gradient(140deg, ${meta.color}12 0%, ${meta.color2}07 100%)`,
+        border: `1px solid ${meta.color}22`,
+      }}
+    >
       {/* Hidden camera input */}
       <input
         ref={cameraRef}
@@ -113,7 +118,7 @@ export default function MealSection({
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-4"
-        style={{ borderBottom: open && (entries.length > 0 || photoUrl) ? "1px solid var(--border)" : "none" }}
+        style={{ borderBottom: open && (entries.length > 0 || photoUrl) ? `1px solid ${meta.color}18` : "none" }}
       >
         {/* Left: toggle expand */}
         <button
@@ -121,14 +126,14 @@ export default function MealSection({
           className="flex items-center gap-2.5 flex-1 py-3 text-left transition-colors min-w-0"
         >
           <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-md"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}>
+            style={{ background: `${meta.color}20`, color: meta.color }}>
             <meta.Icon size={13} />
           </span>
           <span className="font-medium text-[13.5px] truncate" style={{ color: "var(--text-primary)" }}>
             {meta[lang]}
           </span>
           {cal > 0 ? (
-            <span className="text-[12px] font-medium t-calories shrink-0">{cal} kcal</span>
+            <span className="text-[12px] font-medium shrink-0" style={{ color: meta.color }}>{cal} kcal</span>
           ) : (
             <span className="label-xs shrink-0">{lang === "fr" ? "Vide" : "Empty"}</span>
           )}
@@ -189,7 +194,7 @@ export default function MealSection({
         <button
           onClick={() => setModal(true)}
           className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
-          style={{ background: "var(--protein)", color: "#fff" }}
+          style={{ background: meta.color, color: "#fff" }}
           onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}

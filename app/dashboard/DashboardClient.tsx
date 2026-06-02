@@ -489,7 +489,12 @@ export default function DashboardClient({
         )}
 
         {/* ── Hero card: ring + macros + journal ── */}
-        <motion.div {...fade(0.05)} className="glass p-5 mb-4">
+        <motion.div {...fade(0.05)} className="mb-4 rounded-2xl p-5 overflow-hidden"
+          style={{
+            background: "linear-gradient(140deg, rgba(249,115,22,0.11) 0%, rgba(251,191,36,0.05) 100%)",
+            border: "1px solid rgba(249,115,22,0.18)",
+          }}
+        >
 
           {/* Toggle button — top right */}
           <div className="flex items-center justify-end mb-2 -mt-1">
@@ -668,7 +673,12 @@ export default function DashboardClient({
         </motion.div>
 
         {/* ── Bilan du jour ── */}
-        <motion.div {...fade(0.08)} className="glass p-4 mb-4">
+        <motion.div {...fade(0.08)} className="mb-4 rounded-2xl p-4 overflow-hidden"
+          style={{
+            background: "linear-gradient(140deg, rgba(167,139,250,0.11) 0%, rgba(129,140,248,0.05) 100%)",
+            border: "1px solid rgba(167,139,250,0.18)",
+          }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="label-xs mb-0.5">Score journalier</p>
@@ -736,7 +746,12 @@ export default function DashboardClient({
         <motion.div {...fade(0.1)} className="grid grid-cols-2 gap-3 mb-4">
 
           {/* Steps */}
-          <Link href="/activity/steps" className="card flex flex-col gap-2 transition-opacity active:opacity-70">
+          <Link href="/activity/steps" className="flex flex-col gap-2 rounded-2xl p-3 transition-opacity active:opacity-70"
+            style={{
+              background: "linear-gradient(140deg, rgba(34,211,238,0.13) 0%, rgba(56,189,248,0.06) 100%)",
+              border: "1px solid rgba(34,211,238,0.2)",
+            }}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <IconShoe size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
@@ -773,106 +788,123 @@ export default function DashboardClient({
         </motion.div>
 
         {/* ── Stats strip: Sleep · HR · Active ── */}
-        <motion.div {...fade(0.13)} className="glass p-4 mb-4">
-          <div className="grid grid-cols-3 gap-0">
+        <motion.div {...fade(0.13)} className="grid grid-cols-3 gap-3 mb-4">
 
-            {/* Sleep */}
-            <Link href="/activity/sleep" className="flex flex-col gap-2 pr-4 transition-opacity active:opacity-70" style={{ borderRight: "1px solid var(--border)" }}>
-              <div className="flex items-center gap-1.5">
-                <IconMoon size={12} stroke={2} style={{ color: "#7986CB" }} />
-                <span className="label-xs">Sommeil</span>
-              </div>
-              <div className="flex items-end gap-1 leading-none">
-                <span className="text-[22px] font-bold"
-                  style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
-                  {sleepMinutes ? fmtSleep(sleepMinutes) : "—"}
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <motion.div
-                  className="h-full rounded-full w-full"
-                  style={{ background: levelBarBg(sleepPct / 100) }}
-                  initial={{ clipPath: "inset(0 100% 0 0)" }}
-                  animate={{ clipPath: levelBarClip(sleepPct / 100) }}
-                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
-                  {sleepMinutes ? (sleepOk ? "✓ Récupéré" : `obj. ${sleepGoalH}h`) : "Aucune donnée"}
-                </span>
-                <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-              </div>
-            </Link>
-
-            {/* Heart rate */}
-            <Link href="/cardio" className="flex flex-col gap-2 px-4 transition-opacity active:opacity-70"
-              style={{ borderRight: "1px solid var(--border)" }}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <IconHeart size={12} stroke={2} style={{ color: "#EA4335" }} />
-                  <span className="label-xs">FC moy.</span>
-                </div>
-                <IconChevronRight size={9} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-              </div>
-              <span className="text-[22px] font-bold leading-none"
-                style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
-                {heartRate ?? "—"}
+          {/* Sleep */}
+          <Link href="/activity/sleep" className="flex flex-col gap-2 p-3 rounded-2xl transition-opacity active:opacity-70"
+            style={{
+              background: "linear-gradient(140deg, rgba(129,140,248,0.14) 0%, rgba(167,139,250,0.06) 100%)",
+              border: "1px solid rgba(129,140,248,0.22)",
+            }}
+          >
+            <div className="flex items-center gap-1.5">
+              <IconMoon size={12} stroke={2} style={{ color: "#818cf8" }} />
+              <span className="label-xs">Sommeil</span>
+            </div>
+            <div className="flex items-end gap-1 leading-none">
+              <span className="text-[22px] font-bold"
+                style={{ color: sleepMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+                {sleepMinutes ? fmtSleep(sleepMinutes) : "—"}
               </span>
-              {heartRate && zone ? (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md self-start"
-                  style={{ background: `${zone.color}20`, color: zone.color }}>
-                  {zone.label}
-                </span>
-              ) : (
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                  {heartRate ? "bpm" : "Voir historique"}
-                </span>
-              )}
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <motion.div
+                className="h-full rounded-full w-full"
+                style={{ background: levelBarBg(sleepPct / 100) }}
+                initial={{ clipPath: "inset(0 100% 0 0)" }}
+                animate={{ clipPath: levelBarClip(sleepPct / 100) }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
+                {sleepMinutes ? (sleepOk ? "✓ Ok" : `/${sleepGoalH}h`) : "—"}
+              </span>
+              <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+            </div>
+          </Link>
+
+          {/* Heart rate */}
+          <Link href="/cardio" className="flex flex-col gap-2 p-3 rounded-2xl transition-opacity active:opacity-70"
+            style={{
+              background: "linear-gradient(140deg, rgba(248,113,113,0.14) 0%, rgba(239,68,68,0.06) 100%)",
+              border: "1px solid rgba(248,113,113,0.22)",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <IconHeart size={12} stroke={2} style={{ color: "#f87171" }} />
+                <span className="label-xs">FC moy.</span>
+              </div>
+              <IconChevronRight size={9} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+            </div>
+            <span className="text-[22px] font-bold leading-none"
+              style={{ color: heartRate ? "var(--text-primary)" : "var(--text-muted)" }}>
+              {heartRate ?? "—"}
+            </span>
+            {heartRate && zone ? (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md self-start"
+                style={{ background: `${zone.color}20`, color: zone.color }}>
+                {zone.label}
+              </span>
+            ) : (
               <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                {heartRate ? "bpm · Cardio →" : ""}
+                {heartRate ? "bpm" : "—"}
               </span>
-            </Link>
+            )}
+            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              {heartRate ? "bpm" : ""}
+            </span>
+          </Link>
 
-            {/* Active minutes */}
-            <Link href="/activity" className="flex flex-col gap-2 pl-4 transition-opacity active:opacity-70">
-              <div className="flex items-center gap-1.5">
-                <IconBolt size={12} stroke={2} style={{ color: "#34A853" }} />
-                <span className="label-xs">Min. actives</span>
-              </div>
-              <div className="flex items-end gap-1 leading-none">
-                <span className="text-[22px] font-bold"
-                  style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
-                  {activeMinutes ?? "—"}
-                </span>
-                {activeMinutes && (
-                  <span className="text-[11px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
-                )}
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <motion.div
-                  className="h-full rounded-full w-full"
-                  style={{ background: levelBarBg(activePct / 100) }}
-                  initial={{ clipPath: "inset(0 100% 0 0)" }}
-                  animate={{ clipPath: levelBarClip(activePct / 100) }}
-                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: activePct >= 100 ? levelColor(1) : "var(--text-muted)" }}>
-                  {activeMinutes
-                    ? activePct >= 100 ? "✓ Objectif atteint" : `${30 - (activeMinutes ?? 0)} min restantes`
-                    : "Aucune donnée"}
-                </span>
-                <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-              </div>
-            </Link>
-          </div>
+          {/* Active minutes */}
+          <Link href="/activity" className="flex flex-col gap-2 p-3 rounded-2xl transition-opacity active:opacity-70"
+            style={{
+              background: "linear-gradient(140deg, rgba(52,211,153,0.14) 0%, rgba(74,222,128,0.06) 100%)",
+              border: "1px solid rgba(52,211,153,0.22)",
+            }}
+          >
+            <div className="flex items-center gap-1.5">
+              <IconBolt size={12} stroke={2} style={{ color: "#34d399" }} />
+              <span className="label-xs">Min. actives</span>
+            </div>
+            <div className="flex items-end gap-1 leading-none">
+              <span className="text-[22px] font-bold"
+                style={{ color: activeMinutes ? "var(--text-primary)" : "var(--text-muted)" }}>
+                {activeMinutes ?? "—"}
+              </span>
+              {activeMinutes && (
+                <span className="text-[11px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
+              )}
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <motion.div
+                className="h-full rounded-full w-full"
+                style={{ background: levelBarBg(activePct / 100) }}
+                initial={{ clipPath: "inset(0 100% 0 0)" }}
+                animate={{ clipPath: levelBarClip(activePct / 100) }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px]" style={{ color: activePct >= 100 ? levelColor(1) : "var(--text-muted)" }}>
+                {activeMinutes
+                  ? activePct >= 100 ? "✓ Ok" : `${30 - (activeMinutes ?? 0)} restantes`
+                  : "—"}
+              </span>
+              <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+            </div>
+          </Link>
         </motion.div>
 
         {/* ── Workout sessions ── */}
         {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).length > 0 && (
-          <motion.div {...fade(0.15)} className="glass p-4 mb-4">
+          <motion.div {...fade(0.15)} className="mb-4 rounded-2xl p-4"
+            style={{
+              background: "linear-gradient(140deg, rgba(251,191,36,0.11) 0%, rgba(249,115,22,0.05) 100%)",
+              border: "1px solid rgba(251,191,36,0.18)",
+            }}
+          >
             <p className="label-xs mb-3">Séances du jour</p>
             <div className="space-y-2">
               {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
