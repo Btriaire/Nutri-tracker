@@ -343,7 +343,7 @@ export default function MealSection({
           goals={goals}
           alreadyKcal={alreadyKcal}
           onClose={() => setMenuModal(false)}
-          onAdded={(info) => { setMenuModal(false); handleAdded(info); }}
+          onAdded={async (info) => { setMenuModal(false); await handleAdded(info); }}
         />
       )}
     </div>

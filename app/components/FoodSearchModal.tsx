@@ -132,7 +132,7 @@ interface Props {
   date:    string;
   lang?:   Lang;
   onClose: () => void;
-  onAdded: (info: AddedInfo) => void;
+  onAdded: (info: AddedInfo) => Promise<void>;
 }
 
 // ─── BarcodeScanner subcomponent (ZXing — cross-browser incl. iOS Safari) ────
@@ -700,7 +700,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const handleLogMeal = async (m: SavedMeal) => {
     setAddingMealId(m.id);
     try {
-      await fetch("/api/log/batch", {
+      const res = await fetch("/api/log/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -719,7 +719,12 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           })),
         }),
       });
-      onAdded({ name: m.name, calories: Math.round(m.totalNutrition.calories) });
+      if (!res.ok) {
+        console.error("Failed to log meal:", res.status, await res.text().catch(() => ""));
+        return;
+      }
+      // Await the refetch so entries update before the modal closes
+      await onAdded({ name: m.name, calories: Math.round(m.totalNutrition.calories) });
       onClose();
     } finally { setAddingMealId(null); }
   };
