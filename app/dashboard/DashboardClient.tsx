@@ -1034,7 +1034,7 @@ export default function DashboardClient({
         {todayMeditationMin > 0 && (
           <motion.div {...fade(0.215)} className="mb-4">
             <Link
-              href="/meditation"
+              href="/health"
               className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
               style={{
                 background: "rgba(139,92,246,0.08)",

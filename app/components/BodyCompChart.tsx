@@ -259,6 +259,29 @@ export default function BodyCompChart() {
         <>
           {/* Mini stats row */}
           <div className="px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            {/* Combined BP stat — Vitaux tab only */}
+            {tab === "vitaux" && (() => {
+              const latestBP = [...points].reverse().find(p => p.systolicBP != null && p.diastolicBP != null);
+              if (!latestBP) return null;
+              const cls = bpClass(latestBP.systolicBP!, latestBP.diastolicBP!);
+              return (
+                <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-shrink-0"
+                  style={{ background: cls.bg, border: `1px solid ${cls.color}33`, minWidth: 96 }}>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Tension</span>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
+                      {latestBP.systolicBP}
+                    </span>
+                    <span className="text-[12px] font-normal" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
+                      {latestBP.diastolicBP}
+                    </span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>mmHg</span>
+                  </div>
+                  <span className="text-[9px] font-medium" style={{ color: cls.color }}>{cls.label}</span>
+                </div>
+              );
+            })()}
             {metrics.map(m => {
               const val  = latest?.[m.key] as number | null ?? null;
               const prev = previous?.[m.key] as number | null ?? null;
@@ -297,7 +320,7 @@ export default function BodyCompChart() {
             style={{ height: 220 }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 8, right: tab === "vitaux" ? 36 : 12, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis
                   dataKey="date"
@@ -307,35 +330,64 @@ export default function BodyCompChart() {
                   axisLine={false}
                   interval="preserveStartEnd"
                 />
+                {/* Left Y — per-tab scale (SpO2 %, FC bpm, Temp °C, body comp) */}
                 <YAxis
-                  domain={[yMin, yMax]}
+                  yAxisId="left"
+                  domain={tab === "vitaux"
+                    ? (() => {
+                        const nonBP = chartData.flatMap(p =>
+                          (["spO2Pct","restingHR","tempCelsius"] as (keyof BodyCompPoint)[])
+                            .map(k => p[k] as number | null)
+                            .filter((v): v is number => v != null)
+                        );
+                        if (!nonBP.length) return ["auto", "auto"] as ["auto","auto"];
+                        return [Math.floor(Math.min(...nonBP) * 0.95), Math.ceil(Math.max(...nonBP) * 1.05)] as [number,number];
+                      })()
+                    : [yMin, yMax]}
                   tick={{ fontSize: 9, fill: "var(--text-muted)" }}
                   tickLine={false}
                   axisLine={false}
                   width={36}
                 />
+                {/* Right Y — BP axis (mmHg 50–200) shown only on Vitaux */}
+                {tab === "vitaux" && (
+                  <YAxis
+                    yAxisId="bp"
+                    orientation="right"
+                    domain={[50, 200]}
+                    tick={{ fontSize: 9, fill: "rgba(244,63,94,0.5)" }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={30}
+                    tickFormatter={v => `${v}`}
+                  />
+                )}
                 <Tooltip content={<CustomTooltip metrics={metrics} />} />
 
                 {/* Reference lines */}
-                {tab === "sommeil" && <ReferenceLine y={7}   stroke="rgba(99,102,241,0.3)"  strokeDasharray="4 4" />}
-                {tab === "vitaux"  && <ReferenceLine y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
-                {tab === "vitaux"  && <ReferenceLine y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
-                {tab === "vitaux"  && <ReferenceLine y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
-                {false  && <ReferenceLine y={13}  stroke="rgba(251,146,60,0.25)" strokeDasharray="4 4" label={{ value: "VF seuil", fill: "rgba(251,146,60,0.5)", fontSize: 9, position: "insideTopRight" }} />}
+                {tab === "sommeil" && <ReferenceLine yAxisId="left" y={7}   stroke="rgba(99,102,241,0.3)"  strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine yAxisId="left" y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
+                {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
+                {false  && <ReferenceLine yAxisId="left" y={13}  stroke="rgba(251,146,60,0.25)" strokeDasharray="4 4" label={{ value: "VF seuil", fill: "rgba(251,146,60,0.5)", fontSize: 9, position: "insideTopRight" }} />}
 
-                {metrics.map(m => (
-                  <Line
-                    key={m.key}
-                    dataKey={m.key as string}
-                    name={m.label}
-                    stroke={m.color}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, strokeWidth: 0 }}
-                    connectNulls
-                    hide={hidden.has(m.label)}
-                  />
-                ))}
+                {metrics.map(m => {
+                  const isBP = m.key === "systolicBP" || m.key === "diastolicBP";
+                  return (
+                    <Line
+                      key={m.key}
+                      yAxisId={isBP ? "bp" : "left"}
+                      dataKey={m.key as string}
+                      name={m.label}
+                      stroke={m.color}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 0 }}
+                      connectNulls
+                      hide={hidden.has(m.label)}
+                    />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           </motion.div>

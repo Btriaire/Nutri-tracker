@@ -44,12 +44,56 @@ export async function GET(req: NextRequest) {
   const from = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
 
   const db   = getAdminFirestore();
-  const snap = await db
-    .collection(`users/${USER}/fitnessData`)
-    .where("date", ">=", from)
-    .where("date", "<=", to)
-    .orderBy("date", "asc")
-    .get();
+  const [snap, healthSnap] = await Promise.all([
+    db.collection(`users/${USER}/fitnessData`)
+      .where("date", ">=", from)
+      .where("date", "<=", to)
+      .orderBy("date", "asc")
+      .get(),
+    // healthLog stores manual BP entries + Withings BPM auto-sync
+    db.collection(`users/${USER}/healthLog`)
+      .where("date", ">=", from)
+      .where("date", "<=", to)
+      .get(),
+  ]);
+
+  // Build per-date BP map from healthLog ──────────────────────────────────────
+  // healthLog has two BP formats:
+  //   A) bloodPressure[] array (manual readings): { systolic, diastolic, ... }
+  //   B) systolic/diastolic directly on doc (Withings BPM auto-sync)
+  const bpMap = new Map<string, { sys: number; dia: number }>();
+  for (const d of healthSnap.docs) {
+    const h = d.data() as Record<string, unknown>;
+    const readings = (h.bloodPressure ?? []) as { systolic: number; diastolic: number }[];
+    if (readings.length > 0) {
+      const sys = Math.round(readings.reduce((s, r) => s + r.systolic,  0) / readings.length);
+      const dia = Math.round(readings.reduce((s, r) => s + r.diastolic, 0) / readings.length);
+      bpMap.set(d.id, { sys, dia });
+    } else if (typeof h.systolic === "number" && typeof h.diastolic === "number") {
+      bpMap.set(d.id, { sys: h.systolic, dia: h.diastolic });
+    }
+  }
+
+  // Dates already covered by fitnessData
+  const fitnessDates = new Set(snap.docs.map(d => d.id));
+
+  // BP-only points: healthLog entries with no matching fitnessData doc
+  const bpOnlyPoints: BodyCompPoint[] = [];
+  for (const [date, bp] of bpMap.entries()) {
+    if (!fitnessDates.has(date)) {
+      bpOnlyPoints.push({
+        date,
+        bodyFatPct:   null, muscleMassKg: null, fatMassKg:   null,
+        boneMassKg:   null, hydrationPct: null, visceralFat: null,
+        spO2Pct:      null, restingHR:    null, tempCelsius: null,
+        systolicBP:   bp.sys,
+        diastolicBP:  bp.dia,
+        totalSleepH:  null, deepSleepH:   null, remSleepH:   null,
+        lightSleepH:  null, sleepScore:   null, hrAvgSleep:  null,
+        wakeupCount:  null, sleepSource:  null,
+      });
+    }
+  }
 
   const points: BodyCompPoint[] = snap.docs
     .map((d) => {
@@ -59,6 +103,9 @@ export async function GET(req: NextRequest) {
       const gf   = data.googleFit;      // GoogleFitDay
       const ah   = data.appleHealth;    // AppleHealthDay
       const ms   = data.manualSleep;    // { sleepMinutes }
+
+      // BP: Withings BPM device first, then healthLog (manual or Withings BPM sync)
+      const bpHealth = bpMap.get(d.id);
 
       // ── SpO2: Withings ScanWatch → Apple Health fallback ─────────────────
       const spO2Pct = w?.spO2Pct ?? ah?.spO2 ?? null;
@@ -102,9 +149,13 @@ export async function GET(req: NextRequest) {
         sleepSource = "googlefit";
       }
 
+      // Resolved BP: Withings BPM hardware > healthLog (manual/sync)
+      const systolicBP  = w?.systolicBP  ?? bpHealth?.sys  ?? null;
+      const diastolicBP = w?.diastolicBP ?? bpHealth?.dia ?? null;
+
       // ── Skip day if absolutely no relevant data ───────────────────────────
       const hasBodyComp = w?.bodyFatPct != null || w?.muscleMassKg != null || w?.boneMassKg != null || w?.hydrationPct != null || w?.visceralFat != null;
-      const hasVitals   = spO2Pct != null || w?.restingHR != null || w?.tempCelsius != null || w?.systolicBP != null;
+      const hasVitals   = spO2Pct != null || w?.restingHR != null || w?.tempCelsius != null || systolicBP != null;
       const hasSleep    = totalSleepH != null;
       if (!hasBodyComp && !hasVitals && !hasSleep) return null;
 
@@ -119,8 +170,8 @@ export async function GET(req: NextRequest) {
         spO2Pct,
         restingHR:    w?.restingHR     ?? null,
         tempCelsius:  w?.tempCelsius   ?? null,
-        systolicBP:   w?.systolicBP    ?? null,
-        diastolicBP:  w?.diastolicBP   ?? null,
+        systolicBP,
+        diastolicBP,
         totalSleepH,
         deepSleepH,
         remSleepH,
@@ -133,5 +184,9 @@ export async function GET(req: NextRequest) {
     })
     .filter((p): p is BodyCompPoint => p !== null);
 
-  return NextResponse.json({ points, from, to });
+  // Merge BP-only points and sort by date
+  const allPoints = [...points, ...bpOnlyPoints]
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return NextResponse.json({ points: allPoints, from, to });
 }
