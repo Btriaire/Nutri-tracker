@@ -773,7 +773,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     setAddingRecipe(true);
     const servings = Math.max(0.1, parseFloat(recipeServings) || 1);
     const grams    = Math.round(selectedRecipe.gramsPerServing * servings);
-    const nutrition = scaleNutrition(selectedRecipe.nutrition, servings);
+    // Use nutritionPer100g × grams — recipe.nutrition is per-serving, not per-100g,
+    // so passing it to scaleNutrition (which expects per-100g) would give ×0.01 values.
+    const nutrition = scaleNutrition(selectedRecipe.nutritionPer100g, grams);
 
     try {
       const res = await fetch("/api/log", {
@@ -794,8 +796,12 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
           },
         }),
       });
-      if (!res.ok) return;
-      onAdded({ name: selectedRecipe.name, calories: Math.round(nutrition.calories) });
+      if (!res.ok) {
+        console.error("Failed to add recipe:", res.status, await res.text().catch(() => ""));
+        return;
+      }
+      // Await the refetch so entries are updated before the modal closes
+      await onAdded({ name: selectedRecipe.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAddingRecipe(false); }
   };
@@ -1649,7 +1655,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                         </div>
                         {(() => {
                           const servings = Math.max(0.1, parseFloat(recipeServings) || 1);
-                          const n = scaleNutrition(selectedRecipe.nutrition, servings);
+                          const grams    = Math.round(selectedRecipe.gramsPerServing * servings);
+                          const n = scaleNutrition(selectedRecipe.nutritionPer100g, grams);
                           return (
                             <div className="p-3 rounded-xl space-y-2"
                               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
