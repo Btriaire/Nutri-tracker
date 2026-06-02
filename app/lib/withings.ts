@@ -35,7 +35,8 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
     try {
       const fresh = await refreshAccessToken(refreshToken);
       await saveTokens(userId, fresh);
-      accessToken = fresh.accessToken;
+      // Return the fresh token set — not the pre-refresh (now-invalidated) values
+      return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
     } catch (err) {
       console.error("Withings token refresh failed — token likely expired:", err);
       return null;
@@ -132,7 +133,7 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
     enddate:   String(enddate),
   });
 
-  const res = await fetch("https://wbsapi.withings.net/measure", {
+  let res = await fetch("https://wbsapi.withings.net/measure", {
     method:  "POST",
     headers: {
       "Authorization":  `Bearer ${tokens.accessToken}`,
@@ -140,7 +141,21 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
     },
     body: formBody,
   });
-  const json = await res.json() as WithingsMeasResponse;
+  let json = await res.json() as WithingsMeasResponse;
+  // Withings returns status 401 in the body when the access token is expired mid-call.
+  // Force-refresh and retry once before giving up.
+  if (json.status === 401) {
+    try {
+      const fresh = await refreshAccessToken(tokens.refreshToken);
+      await saveTokens(userId, fresh);
+      res  = await fetch("https://wbsapi.withings.net/measure", {
+        method:  "POST",
+        headers: { "Authorization": `Bearer ${fresh.accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
+        body: formBody,
+      });
+      json = await res.json() as WithingsMeasResponse;
+    } catch { return []; }
+  }
   if (json.status !== 0) {
     console.error("Withings measure error:", json.status, json.error);
     return [];

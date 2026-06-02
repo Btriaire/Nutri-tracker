@@ -32,9 +32,15 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
   let   accessToken  = decrypt(d.accessToken  as string);
 
   if (Date.now() > expiresAt - 120_000) {
-    const fresh = await refreshAccessToken(refreshToken);
-    await saveTokens(userId, fresh);
-    accessToken = fresh.accessToken;
+    try {
+      const fresh = await refreshAccessToken(refreshToken);
+      await saveTokens(userId, fresh);
+      // Return fresh set — not the pre-refresh (now-stale) values
+      return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
+    } catch (err) {
+      console.error("Google Fit token refresh failed:", err);
+      return null;
+    }
   }
 
   return { accessToken, refreshToken, expiresAt };
@@ -189,6 +195,21 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       { headers: { Authorization: auth } },
     ),
   ]);
+
+  // If the activity request returned 401, the token expired mid-call.
+  // Force-refresh and retry all three requests with the new token.
+  if (activityRes.status === 401) {
+    try {
+      const fresh = await refreshAccessToken(tokens.refreshToken);
+      await saveTokens(userId, fresh);
+      tokens.accessToken = fresh.accessToken;
+    } catch (err) {
+      console.error("Google Fit token refresh (retry) failed:", err);
+      return null;
+    }
+    // Re-run the full fetch with the fresh token (tail-call to avoid duplicating logic)
+    return fetchDayData(userId, date);
+  }
 
   if (!activityRes.ok) {
     console.error("Google Fit activity error:", activityRes.status, await activityRes.text());
