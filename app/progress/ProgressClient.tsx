@@ -350,6 +350,19 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   // Fall back to the server-side prop when chart has no data yet.
   const effectiveCurrentWeight = lastWeight ?? currentWeightKg;
 
+  // ── Weight deltas over 7 / 15 / 30 days ─────────────────────────────────
+  const findWeightBefore = (daysBack: number): number | null => {
+    const today = points[points.length - 1]?.date;
+    if (!today || !lastWeight) return null;
+    const cutoff = format(subDays(parseISO(today), daysBack), "yyyy-MM-dd");
+    // Find the closest measurement on or before cutoff
+    const candidates = points.filter(p => (p.weightKg ?? 0) > 0 && p.date <= cutoff);
+    return candidates.length ? (candidates[candidates.length - 1].weightKg ?? null) : null;
+  };
+  const delta7d  = (() => { const w = findWeightBefore(7);  return (w && lastWeight) ? lastWeight - w : null; })();
+  const delta15d = (() => { const w = findWeightBefore(15); return (w && lastWeight) ? lastWeight - w : null; })();
+  const delta30d = (() => { const w = findWeightBefore(30); return (w && lastWeight) ? lastWeight - w : null; })();
+
   const avgSleepPts = points.filter((p) => (p.sleepMinutes ?? 0) > 0);
   const avgSleepH   = avgSleepPts.length
     ? Math.round(avgSleepPts.reduce((s, p) => s + (p.sleepMinutes ?? 0), 0) / avgSleepPts.length / 6) / 10
@@ -929,6 +942,32 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                   ))}
                 </div>
+
+                {/* 7j / 15j / 30j deltas */}
+                {(delta7d !== null || delta15d !== null || delta30d !== null) && (
+                  <div className="flex gap-2 mb-3">
+                    {([
+                      { label: "7 jours",  delta: delta7d  },
+                      { label: "15 jours", delta: delta15d },
+                      { label: "30 jours", delta: delta30d },
+                    ] as const).map(({ label, delta }) => {
+                      if (delta === null) return null;
+                      const loss = delta < -0.05;
+                      const gain = delta >  0.05;
+                      const color = loss ? "#4ade80" : gain ? "#f87171" : "var(--text-muted)";
+                      return (
+                        <div key={label} className="flex-1 flex flex-col items-center p-2 rounded-xl gap-0.5"
+                          style={{ background: loss ? "rgba(74,222,128,0.07)" : gain ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${loss ? "rgba(74,222,128,0.2)" : gain ? "rgba(248,113,113,0.2)" : "var(--border)"}` }}>
+                          <span className="flex items-center gap-0.5 text-[13px] font-bold tabular-nums leading-tight" style={{ color }}>
+                            {loss ? <IconArrowDown size={11} stroke={2.5} /> : gain ? <IconArrowUp size={11} stroke={2.5} /> : <IconMinus size={11} stroke={2} />}
+                            {Math.abs(delta).toFixed(1)} kg
+                          </span>
+                          <span className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Editable target date */}
                 <div className="flex items-center gap-2 mb-3">

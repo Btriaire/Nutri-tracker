@@ -120,6 +120,7 @@ export default function DashboardClient({
   const [syncMsg, setSyncMsg] = useState("");
   const [burnedDetailOpen, setBurnedDetailOpen] = useState(false);
   const [deductBurned, setDeductBurned] = useState(goals.deductBurnedCalories !== false);
+  const [moodFilled,   setMoodFilled]   = useState<boolean | null>(null); // null = not yet checked
 
   const toggleDeductBurned = async () => {
     const next = !deductBurned;
@@ -132,6 +133,14 @@ export default function DashboardClient({
   };
   const router = useRouter();
   const hasSynced = useRef(false);
+
+  // Check if today's Bien-être has been filled in
+  useEffect(() => {
+    fetch(`/api/mental-health?date=${date}`)
+      .then((r) => r.json())
+      .then((d: { entry: unknown }) => setMoodFilled(d.entry !== null))
+      .catch(() => setMoodFilled(true)); // don't show on error
+  }, [date]);
 
   // Auto-sync both services on every dashboard open, then refresh data
   useEffect(() => {
@@ -484,6 +493,51 @@ export default function DashboardClient({
                 </p>
               </div>
               <IconChevronRight size={16} stroke={2} style={{ color: "#f87171", flexShrink: 0 }} />
+            </Link>
+          </motion.div>
+        )}
+
+        {/* ── Bien-être reminder ── */}
+        {moodFilled === false && (
+          <motion.div
+            {...fade(0.046)}
+            className="mb-4"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Link
+              href="/health"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
+              style={{
+                background: "rgba(129,140,248,0.10)",
+                border: "1px solid rgba(129,140,248,0.30)",
+                textDecoration: "none",
+              }}
+              onClick={() => {
+                // store tab preference so health page opens on bienetre
+                sessionStorage.setItem("healthTab", "bienetre");
+              }}
+            >
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(129,140,248,0.15)" }}>
+                {/* Brain SVG */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
+                  <path d="M9 8.5C7.8 8.8 7 9.8 7 11" />
+                  <path d="M15 8.5c1.2.3 2 1.3 2 2.5" />
+                  <path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold" style={{ color: "#818cf8" }}>
+                  Bien-être non rempli
+                </p>
+                <p className="text-[11px]" style={{ color: "rgba(129,140,248,0.70)" }}>
+                  Humeur, énergie, stress — ça prend 10 secondes
+                </p>
+              </div>
+              <IconChevronRight size={16} stroke={2} style={{ color: "#818cf8", flexShrink: 0 }} />
             </Link>
           </motion.div>
         )}
