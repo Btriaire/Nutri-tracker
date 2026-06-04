@@ -410,52 +410,40 @@ export default function DashboardClient({
             const mo = wk !== undefined ? Math.round(wk * 4.33 * 10) / 10 : undefined;
             const fmtKg = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)} kg`;
             return (
-              <div className="mt-3 rounded-2xl px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1.5"
+              <div className="mt-2 rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-x-2 gap-y-1"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid var(--border)",
                 }}>
-                {/* Program name + day */}
                 {plan && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{plan.programEmoji}</span>
-                    <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px]">{plan.programEmoji}</span>
+                    <span className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>{plan.programLabel}</span>
                     {daysInPlan !== null && (
-                      <span className="text-[11px] px-1.5 py-0.5 rounded-md"
+                      <span className="text-[10px] px-1 py-px rounded"
                         style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", fontWeight: 600 }}>
-                        Jour {daysInPlan}
+                        J{daysInPlan}
                       </span>
                     )}
                     {plan.projectedTargetDate && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                         🎯 {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}
                       </span>
                     )}
                   </div>
                 )}
-
-                {/* Weight projections */}
                 {wk !== undefined && (
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <span className="h-3 w-px" style={{ background: "var(--border)" }} />
+                  <div className="flex items-center gap-1.5 text-[10px]">
+                    <span style={{ color: "var(--border)" }}>·</span>
                     <span style={{ color: "var(--fiber)", fontWeight: 600 }}>{fmtKg(wk)}/sem</span>
-                    {mo !== undefined && (
-                      <>
-                        <span style={{ color: "var(--text-muted)" }}>·</span>
-                        <span style={{ color: "var(--fiber)", fontWeight: 600 }}>{fmtKg(mo)}/mois</span>
-                      </>
-                    )}
+                    {mo !== undefined && <span style={{ color: "var(--fiber)" }}>{fmtKg(mo)}/mois</span>}
                   </div>
                 )}
-
-                {/* Activity plan */}
                 {ap && (
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <span className="h-3 w-px" style={{ background: "var(--border)" }} />
+                  <div className="flex items-center gap-1.5 text-[10px]">
+                    <span style={{ color: "var(--border)" }}>·</span>
                     <span>🏃</span>
-                    <span style={{ color: "var(--text-secondary)" }}>
-                      {ap.sessionsPerWeek} séances/sem · ~{Math.round(ap.weeklyKcalBurned)} kcal
-                    </span>
+                    <span style={{ color: "var(--text-muted)" }}>{ap.sessionsPerWeek} séances/sem</span>
                   </div>
                 )}
               </div>
@@ -506,43 +494,29 @@ export default function DashboardClient({
         {/* ── Bien-être reminder ── */}
         {moodFilled === false && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-4"
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-3"
           >
             <Link
               href="/health"
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all active:scale-[0.98]"
               style={{
-                background: "rgba(129,140,248,0.10)",
-                border: "1px solid rgba(129,140,248,0.30)",
+                background: "rgba(129,140,248,0.09)",
+                border: "1px solid rgba(129,140,248,0.25)",
                 textDecoration: "none",
               }}
-              onClick={() => {
-                // store tab preference so health page opens on bienetre
-                sessionStorage.setItem("healthTab", "bienetre");
-              }}
+              onClick={() => sessionStorage.setItem("healthTab", "bienetre")}
             >
-              <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(129,140,248,0.15)" }}>
-                {/* Brain SVG */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
-                  <path d="M9 8.5C7.8 8.8 7 9.8 7 11" />
-                  <path d="M15 8.5c1.2.3 2 1.3 2 2.5" />
-                  <path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold" style={{ color: "#818cf8" }}>
-                  Bien-être non rempli
-                </p>
-                <p className="text-[11px]" style={{ color: "rgba(129,140,248,0.70)" }}>
-                  Humeur, énergie, stress — ça prend 10 secondes
-                </p>
-              </div>
-              <IconChevronRight size={16} stroke={2} style={{ color: "#818cf8", flexShrink: 0 }} />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
+                <path d="M9 8.5C7.8 8.8 7 9.8 7 11" /><path d="M15 8.5c1.2.3 2 1.3 2 2.5" /><path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
+              </svg>
+              <p className="text-[11px] font-medium flex-1" style={{ color: "#818cf8" }}>
+                Bien-être non rempli · humeur, énergie, stress
+              </p>
+              <IconChevronRight size={12} stroke={2} style={{ color: "#818cf8", flexShrink: 0, opacity: 0.7 }} />
             </Link>
           </motion.div>
         )}

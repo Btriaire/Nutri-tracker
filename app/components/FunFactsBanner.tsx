@@ -46,51 +46,27 @@ export default function FunFactsBanner() {
   const fact = FACTS[idx];
 
   return (
-    <div className="glass px-4 py-3.5 mb-4 overflow-hidden relative"
-      style={{ minHeight: "80px" }}
+    <div className="glass px-3 py-2 mb-3 overflow-hidden relative cursor-pointer"
       onClick={next}
     >
-      {/* Background glow */}
-      <div className="absolute inset-0 opacity-[0.04]"
-        style={{ background: "radial-gradient(ellipse at 10% 50%, #fbbf24 0%, transparent 70%)" }} />
-
-      <div className="flex items-start gap-3 relative z-10">
-        <div className="flex-shrink-0 mt-0.5">
-          <IconBulb size={16} stroke={2} style={{ color: "#fbbf24" }} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#fbbf24" }}>
-            Le saviez-vous ?
-          </p>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.p
-              key={idx}
-              initial={{ opacity: 0, x: direction * 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -direction * 20 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[12.5px] leading-relaxed"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              <span className="mr-1.5">{fact.emoji}</span>{fact.text}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Dots */}
-      <div className="flex justify-center gap-1 mt-2.5">
-        {Array.from({ length: Math.min(FACTS.length, 8) }).map((_, i) => {
-          const dotIdx = Math.floor((idx / FACTS.length) * 8);
-          return (
-            <div key={i} className="rounded-full transition-all"
-              style={{
-                width:   i === dotIdx ? "12px" : "4px",
-                height:  "4px",
-                background: i === dotIdx ? "#fbbf24" : "rgba(255,255,255,0.15)",
-              }} />
-          );
-        })}
+      <div className="flex items-center gap-2 relative z-10">
+        <IconBulb size={13} stroke={2} style={{ color: "#fbbf24", flexShrink: 0 }} />
+        <p className="text-[10px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "#fbbf24" }}>
+          Le saviez-vous ?
+        </p>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={idx}
+            initial={{ opacity: 0, x: direction * 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -direction * 12 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="text-[11px] leading-snug truncate"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <span className="mr-1">{fact.emoji}</span>{fact.text}
+          </motion.p>
+        </AnimatePresence>
       </div>
     </div>
   );
