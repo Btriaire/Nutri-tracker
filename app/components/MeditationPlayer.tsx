@@ -150,18 +150,24 @@ function buildYTUrl(videoId: string) {
 // and preserves the user-gesture context → allows autoplay with sound on mobile.
 // React setState → re-render → new src loses the gesture because of async gap.
 
+const FADE_SECS = 20; // seconds for fade-in / fade-out
+
 function NowPlaying({
-  track, iframeKey, active, onChangeTrack, tracks,
+  track, iframeKey, active, onChangeTrack, tracks, totalElapsed, totalDuration,
 }: {
   track:         Track;
   iframeKey:     number;
   active:        boolean;
   onChangeTrack: (t: Track) => void;
   tracks:        Track[];
+  totalElapsed:  number;
+  totalDuration: number;
 }) {
   const iframeRef              = useRef<HTMLIFrameElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted,     setMuted]     = useState(false);
+  // Track manual mute so fade doesn't override it
+  const mutedRef = useRef(false);
 
   // postMessage helper
   const sendCmd = useCallback((func: string, args: unknown[] = []) => {
@@ -191,6 +197,7 @@ function NowPlaying({
   useEffect(() => {
     setIsPlaying(false);
     setMuted(false);
+    mutedRef.current = false;
     if (iframeRef.current) {
       iframeRef.current.src = active ? buildYTUrl(track.videoId) : "about:blank";
     }
@@ -205,10 +212,29 @@ function NowPlaying({
     }
   }, [active]);
 
+  // ── Volume fade-in / fade-out ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!active || !isPlaying || mutedRef.current) return;
+
+    let vol = 100;
+    if (totalElapsed <= FADE_SECS) {
+      // Fade-in: 0 → 100 over first 20s
+      vol = Math.round((totalElapsed / FADE_SECS) * 100);
+    } else if (totalDuration > 0 && totalDuration - totalElapsed <= FADE_SECS) {
+      // Fade-out: 100 → 0 over last 20s
+      const remaining = totalDuration - totalElapsed;
+      vol = Math.max(0, Math.round((remaining / FADE_SECS) * 100));
+    }
+
+    sendCmd("setVolume", [vol]);
+  }, [totalElapsed, totalDuration, active, isPlaying, sendCmd]);
+
   const toggleMute = () => {
-    if (muted) { sendCmd("unMute"); sendCmd("setVolume", [100]); }
-    else        { sendCmd("mute"); }
-    setMuted(m => !m);
+    const next = !mutedRef.current;
+    mutedRef.current = next;
+    if (next) { sendCmd("mute"); }
+    else       { sendCmd("unMute"); }
+    setMuted(next);
   };
 
   return (
@@ -649,6 +675,8 @@ export default function MeditationPlayer() {
             active={running}
             onChangeTrack={handleChangeTrack}
             tracks={aiSession && aiResults ? aiResults : TRACKS[selected.soundCat]}
+            totalElapsed={totalElapsed}
+            totalDuration={totalDuration}
           />
         </div>
       </div>
