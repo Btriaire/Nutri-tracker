@@ -67,7 +67,7 @@ const PROGRAMS: Program[] = [
   {
     id: "express", label: "Pause éclair", durationMin: 3, emoji: "⚡",
     description: "Micro-pause · 3 respirations · retour au calme immédiat",
-    color: "#fbbf24", soundCat: "bowl",
+    color: "#fbbf24", soundCat: "bowl" as SoundCategory,
     steps: [
       { label: "Lâcher prise", durationSec: 90,  instruction: "Fermez les yeux. Déposez tout. Sentez le poids de votre corps." },
       { label: "3 souffles",   durationSec: 90,  instruction: "3 grandes inspirations lentes. À chaque expiration, relâchez une tension. Épaules, mâchoire, front." },
@@ -76,7 +76,7 @@ const PROGRAMS: Program[] = [
   {
     id: "court", label: "Pleine présence", durationMin: 5, emoji: "🌸",
     description: "Ancrage rapide · respiration · calme l'esprit en 5 minutes",
-    color: "#a3e4a3", soundCat: "bowl",
+    color: "#f472b6", soundCat: "bowl" as SoundCategory,
     steps: [
       { label: "Arrivée",     durationSec: 30,  instruction: "Installez-vous confortablement. Fermez doucement les yeux. Sentez le contact de votre corps avec le sol ou votre siège." },
       { label: "Respiration", durationSec: 120, instruction: "Respirez naturellement. Observez le souffle entrer… et sortir. Sans forcer, sans contrôler. Juste observer." },
@@ -87,7 +87,7 @@ const PROGRAMS: Program[] = [
   {
     id: "moyen", label: "Scan corporel", durationMin: 15, emoji: "🪷",
     description: "Relaxation profonde · libération des tensions · conscience du corps",
-    color: "#86d4a6", soundCat: "nature",
+    color: "#34d399", soundCat: "nature" as SoundCategory,
     steps: [
       { label: "Installation",   durationSec: 60,  instruction: "Allongez-vous ou asseyez-vous. Relâchez les épaules. Laissez la mâchoire se détendre. Fermez les yeux." },
       { label: "Souffle",        durationSec: 120, instruction: "3 grandes respirations. À chaque expiration, sentez le corps s'alourdir, s'enfoncer, se relâcher." },
@@ -101,7 +101,7 @@ const PROGRAMS: Program[] = [
   {
     id: "long", label: "Méditation profonde", durationMin: 30, emoji: "☸️",
     description: "Pleine conscience · visualisation · transformation intérieure",
-    color: "#6dd6b5", soundCat: "binaural",
+    color: "#a78bfa", soundCat: "binaural" as SoundCategory,
     steps: [
       { label: "Ancrage",       durationSec: 120, instruction: "Sentez le sol, les racines qui descendent profondément dans la terre. Vous êtes en sécurité. Vous êtes ici." },
       { label: "Purification",  durationSec: 180, instruction: "À chaque inspiration, imaginez une lumière blanche pure entrer. À chaque expiration, laissez partir tensions et soucis." },
@@ -149,6 +149,153 @@ function buildYTUrl(videoId: string) {
 // Key insight: setting iframe.src directly inside the click handler is synchronous
 // and preserves the user-gesture context → allows autoplay with sound on mobile.
 // React setState → re-render → new src loses the gesture because of async gap.
+
+// ─── Esoteric SVG Symbols ─────────────────────────────────────────────────────
+
+function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
+  if (id === "express") {
+    // Merkaba — two interlocked triangles (Star Tetrahedron)
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        {/* Outer halo */}
+        <circle cx="40" cy="40" r="37" stroke={color} strokeWidth="0.5" opacity="0.2"/>
+        <circle cx="40" cy="40" r="31" stroke={color} strokeWidth="0.4" opacity="0.15"/>
+        {/* Triangle up */}
+        <polygon points="40,8 68,56 12,56" fill={`${color}18`} stroke={color} strokeWidth="1.6"/>
+        {/* Triangle down */}
+        <polygon points="40,72 12,24 68,24" fill={`${color}0d`} stroke={color} strokeWidth="1.6"/>
+        {/* Inner hexagon (intersection) */}
+        <polygon points="49,24 59,40 49,56 31,56 21,40 31,24" fill={`${color}22`} stroke={color} strokeWidth="0.9" opacity="0.9"/>
+        {/* Rays from center to each outer tip */}
+        {([[40,8],[68,56],[12,56],[40,72],[12,24],[68,24]] as [number,number][]).map(([x,y],i) => (
+          <line key={i} x1="40" y1="40" x2={x} y2={y} stroke={color} strokeWidth="0.4" opacity="0.25"/>
+        ))}
+        {/* 6 outer tips glow */}
+        {([[40,8],[68,56],[12,56],[40,72],[12,24],[68,24]] as [number,number][]).map(([x,y],i) => (
+          <circle key={i} cx={x} cy={y} r="3" fill={color} opacity="0.5"/>
+        ))}
+        {/* Center */}
+        <circle cx="40" cy="40" r="5.5" fill={`${color}30`} stroke={color} strokeWidth="1"/>
+        <circle cx="40" cy="40" r="2.5" fill={color} opacity="0.85"/>
+        <circle cx="40" cy="40" r="1" fill="white" opacity="0.6"/>
+      </svg>
+    );
+  }
+
+  if (id === "court") {
+    // Lotus — 8 outer petals + 8 inner petals + mandala center
+    const angles8 = [0, 45, 90, 135, 180, 225, 270, 315];
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="37" stroke={color} strokeWidth="0.4" opacity="0.2"/>
+        {/* Outer petals */}
+        {angles8.map((a) => (
+          <ellipse key={a} cx="40" cy="22" rx="7" ry="16"
+            fill={`${color}16`} stroke={color} strokeWidth="1.3"
+            transform={`rotate(${a},40,40)`}/>
+        ))}
+        {/* Inner petals (offset 22.5°, smaller) */}
+        {angles8.map((a) => (
+          <ellipse key={a} cx="40" cy="29" rx="4.5" ry="9"
+            fill={`${color}25`} stroke={color} strokeWidth="0.8" opacity="0.8"
+            transform={`rotate(${a + 22.5},40,40)`}/>
+        ))}
+        {/* Pericarp ring */}
+        <circle cx="40" cy="40" r="10" fill={`${color}28`} stroke={color} strokeWidth="1.4"/>
+        {/* 8-spoked wheel inside */}
+        {angles8.map((a) => (
+          <line key={a} x1="40" y1="30" x2="40" y2="40"
+            stroke={color} strokeWidth="0.9" opacity="0.6"
+            transform={`rotate(${a},40,40)`}/>
+        ))}
+        {/* Center bindu */}
+        <circle cx="40" cy="40" r="4" fill={color} opacity="0.8"/>
+        <circle cx="40" cy="40" r="1.5" fill="white" opacity="0.65"/>
+      </svg>
+    );
+  }
+
+  if (id === "moyen") {
+    // Chakra Column — 7 chakra orbs on the sushumna with Ida & Pingala
+    const chakras: { y: number; c: string; r: number }[] = [
+      { y: 10, c: "#e040fb", r: 3   }, // Sahasrara (crown)
+      { y: 19, c: "#7c4dff", r: 2.8 }, // Ajna
+      { y: 29, c: "#2979ff", r: 2.8 }, // Vishuddha
+      { y: 40, c: color,     r: 4   }, // Anahata — accent color (biggest)
+      { y: 51, c: "#ffd740", r: 2.8 }, // Manipura
+      { y: 61, c: "#ff9100", r: 2.8 }, // Svadhisthana
+      { y: 70, c: "#ff1744", r: 3   }, // Muladhara
+    ];
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        {/* Outer rings */}
+        <circle cx="40" cy="40" r="37" stroke={color} strokeWidth="0.4" opacity="0.2"/>
+        <circle cx="40" cy="40" r="28" stroke={color} strokeWidth="0.4" opacity="0.12"/>
+        {/* Sushumna (central channel) */}
+        <line x1="40" y1="7" x2="40" y2="73" stroke={color} strokeWidth="1.2" opacity="0.35"/>
+        {/* Ida (left serpent, clockwise) */}
+        <path
+          d="M34,70 C27,61 53,53 47,44 C41,35 27,27 34,18 C37,13 40,10 40,10"
+          stroke={color} strokeWidth="0.9" opacity="0.4"/>
+        {/* Pingala (right serpent, counter) */}
+        <path
+          d="M46,70 C53,61 27,53 33,44 C39,35 53,27 46,18 C43,13 40,10 40,10"
+          stroke={color} strokeWidth="0.9" opacity="0.4"/>
+        {/* Chakra orbs */}
+        {chakras.map(({ y, c, r }, i) => (
+          <g key={i}>
+            <circle cx="40" cy={y} r={r + 2.5} fill={`${c}22`}/>
+            <circle cx="40" cy={y} r={r} fill={c} opacity="0.88"/>
+            <circle cx="40" cy={y} r={r * 0.45} fill="white" opacity="0.35"/>
+          </g>
+        ))}
+        {/* Wings at heart center */}
+        <path d="M40,40 Q28,32 20,36 Q28,40 40,40" fill={`${color}20`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
+        <path d="M40,40 Q52,32 60,36 Q52,40 40,40" fill={`${color}20`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
+      </svg>
+    );
+  }
+
+  if (id === "long") {
+    // Sri Yantra — nested triangles + bindu center + 16-petal lotus ring
+    const angles16 = Array.from({ length: 16 }, (_, i) => i * 22.5);
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        {/* Bhupura (outer square gates) */}
+        <rect x="4" y="4" width="72" height="72" rx="2" stroke={color} strokeWidth="0.5" opacity="0.18"/>
+        <rect x="7" y="7" width="66" height="66" rx="2" stroke={color} strokeWidth="0.4" opacity="0.12"/>
+        {/* 16-petal outer lotus */}
+        {angles16.map((a) => (
+          <ellipse key={a} cx="40" cy="11" rx="3" ry="6.5"
+            fill={`${color}14`} stroke={color} strokeWidth="0.7" opacity="0.6"
+            transform={`rotate(${a},40,40)`}/>
+        ))}
+        {/* Outer circle */}
+        <circle cx="40" cy="40" r="28" fill="none" stroke={color} strokeWidth="0.7" opacity="0.35"/>
+        <circle cx="40" cy="40" r="24" fill="none" stroke={color} strokeWidth="0.4" opacity="0.2"/>
+        {/* Triangle layer 1 — largest */}
+        <polygon points="40,13 65,55 15,55" fill={`${color}0b`} stroke={color} strokeWidth="1.3"/>
+        <polygon points="40,67 15,25 65,25" fill={`${color}0b`} stroke={color} strokeWidth="1.3"/>
+        {/* Triangle layer 2 */}
+        <polygon points="40,19 60,50 20,50" fill={`${color}0d`} stroke={color} strokeWidth="1.1"/>
+        <polygon points="40,61 20,30 60,30" fill={`${color}0d`} stroke={color} strokeWidth="1.1"/>
+        {/* Triangle layer 3 */}
+        <polygon points="40,25 56,46 24,46" fill={`${color}10`} stroke={color} strokeWidth="1"/>
+        <polygon points="40,55 24,34 56,34" fill={`${color}10`} stroke={color} strokeWidth="1"/>
+        {/* Central downward triangle */}
+        <polygon points="40,32 52,51 28,51" fill={`${color}22`} stroke={color} strokeWidth="1.2"/>
+        {/* Bindu */}
+        <circle cx="40" cy="40" r="5" fill={`${color}35`} stroke={color} strokeWidth="1"/>
+        <circle cx="40" cy="40" r="2.5" fill={color} opacity="0.9"/>
+        <circle cx="40" cy="40" r="1" fill="white" opacity="0.7"/>
+      </svg>
+    );
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const FADE_SECS = 20; // seconds for fade-in / fade-out
 
@@ -922,97 +1069,59 @@ export default function MeditationPlayer() {
         </div>
       </div>
 
-      {/* Programs */}
-      {PROGRAMS.map((program) => {
-        const doneSessions = sessions.filter(s => s.programId === program.id).length;
-        const lastDate     = sessions.filter(s => s.programId === program.id).sort((a, b) => b.completedAt - a.completedAt)[0]?.date;
-        const tracks       = TRACKS[program.soundCat];
-        const defaultTrack = tracks.find(t => t.id === DEFAULT_TRACK[program.soundCat]) ?? tracks[0];
-
-        return (
-          <motion.div key={program.id}
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}
-          >
-            <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${program.color}60, ${program.color}20)` }} />
-            <div className="p-4">
-              {/* Top row */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px]"
-                    style={{ background: `${program.color}15`, border: `1px solid ${program.color}30` }}>
-                    {program.emoji}
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{program.label}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md"
-                        style={{ background: `${program.color}15`, color: program.color }}>
-                        {program.durationMin} min
-                      </span>
-                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {defaultTrack.emoji} {defaultTrack.label}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {doneSessions > 0 && (
-                  <div className="flex flex-col items-end">
-                    <span className="text-[16px] font-bold" style={{ color: program.color }}>{doneSessions}×</span>
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>complétées</span>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-[12px] mb-3 leading-relaxed" style={{ color: "var(--text-muted)" }}>{program.description}</p>
-
-              {/* Steps preview */}
-              <div className="flex gap-1 mb-3">
-                {program.steps.map((s, i) => (
-                  <div key={i} className="flex-1 px-1.5 py-1 rounded-lg text-center"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                    <p className="text-[8px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-                    <p className="text-[7px]" style={{ color: `${program.color}80` }}>
-                      {s.durationSec >= 60 ? `${Math.round(s.durationSec / 60)}m` : `${s.durationSec}s`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sound track chips */}
-              <div className="flex gap-1 mb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                {tracks.map((t) => (
-                  <span key={t.id}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                    {t.emoji} {t.label}
-                  </span>
-                ))}
-              </div>
-
-              {lastDate && (
-                <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>
-                  Dernière séance : {format(new Date(lastDate + "T00:00:00"), "d MMMM", { locale: fr })}
-                </p>
+      {/* Programs — 2×2 esoteric symbol grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {PROGRAMS.map((program, idx) => {
+          const doneSessions = sessions.filter(s => s.programId === program.id).length;
+          const lastDate     = sessions.filter(s => s.programId === program.id).sort((a, b) => b.completedAt - a.completedAt)[0]?.date;
+          return (
+            <motion.button
+              key={program.id}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.06, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => startProgram(program)}
+              className="relative flex flex-col items-center pt-5 pb-4 px-3 rounded-2xl overflow-hidden text-left transition-all"
+              style={{
+                background: `radial-gradient(ellipse at 50% 30%, ${program.color}22 0%, ${program.color}08 70%)`,
+                border: `1px solid ${program.color}30`,
+              }}
+            >
+              {/* Done count badge */}
+              {doneSessions > 0 && (
+                <span className="absolute top-2 right-2.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: `${program.color}25`, color: program.color }}>
+                  {doneSessions}×
+                </span>
               )}
 
-              <button
-                onClick={() => startProgram(program)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-                style={{
-                  background: `linear-gradient(135deg, ${program.color}25, ${program.color}15)`,
-                  border: `1px solid ${program.color}40`,
-                  color: program.color,
-                }}
-              >
-                <IconPlayerPlay size={14} stroke={2} />
-                Commencer · {program.durationMin} min
-              </button>
-            </div>
-          </motion.div>
-        );
-      })}
+              {/* Esoteric symbol */}
+              <div className="mb-3" style={{ filter: `drop-shadow(0 0 6px ${program.color}55)` }}>
+                <MeditationSymbol id={program.id} color={program.color} />
+              </div>
+
+              {/* Label */}
+              <p className="text-[13px] font-semibold text-center mb-1.5 leading-tight"
+                style={{ color: "var(--text-primary)" }}>
+                {program.label}
+              </p>
+
+              {/* Duration + last date */}
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full mb-1"
+                style={{ background: `${program.color}18`, color: program.color }}>
+                {program.durationMin} min
+              </span>
+              {lastDate && (
+                <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                  {format(new Date(lastDate + "T00:00:00"), "d MMM", { locale: fr })}
+                </p>
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
 
       {/* ── Historique / Tracking ────────────────────────────────────── */}
       {allSessions.length > 0 && (
