@@ -9,7 +9,7 @@ import {
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
   IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge,
 } from "@tabler/icons-react";
-import type { FitnessDay, ManualActivity, NutritionGoals } from "@/app/lib/types";
+import type { FitnessDay, ManualActivity, NutritionGoals, GoogleFitSession } from "@/app/lib/types";
 import RouteMap from "@/app/components/RouteMap";
 
 // GPS activity types (outdoor — may have location data)
@@ -1236,317 +1236,297 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
           </AnimatePresence>
         </motion.div>
 
-        {/* Google Fit sessions */}
-        {(gf?.sessions?.length ?? 0) > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
-            className="mb-4 rounded-2xl p-4"
-            style={{ background: "linear-gradient(140deg, rgba(251,191,36,0.11) 0%, rgba(249,115,22,0.06) 100%)", border: "1px solid rgba(251,191,36,0.20)" }}
-          >
-            <p className="label-xs mb-3">Séances Google Fit</p>
-            <div className="space-y-3">
-              {gf?.sessions?.map((s) => {
-                const edit      = sessionEdits[s.id] ?? {};
-                const dispName  = edit.name        ?? s.name;
-                const dispDur   = edit.durationMin ?? s.durationMin;
-                const dispCal   = edit.calories    !== undefined ? edit.calories : s.calories;
-                const isEditing = editingGFitId === s.id;
-                const hasGps    = isGpsActivity(s.activityType);
-                const showRoute = openRouteId === s.id;
-                const hasStats  = s.distanceM != null || s.avgSpeedKmh != null || s.heartRateAvg != null;
+        {/* ── Activités du jour (Google Fit + Manuelles fusionnées) ─────────── */}
+        {(() => {
+          type UnifiedItem =
+            | { kind: "gfit";   session:  GoogleFitSession; sortMs: number }
+            | { kind: "manual"; activity: ManualActivity;   sortMs: number };
 
-                return (
-                  <div key={s.id} className="flex flex-col gap-2">
-                    {/* Row */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
-                        {activityEmoji(s.activityType)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{dispName}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                          {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                          {edit.name && <span style={{ color: "var(--protein)", marginLeft: 4 }}>✎</span>}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5 mr-1">
-                        <div className="flex items-center gap-1">
-                          <IconClock size={12} style={{ color: "var(--text-muted)" }} />
-                          <span className="text-[12px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{dispDur} min</span>
-                        </div>
-                        {dispCal != null && dispCal > 0 && (
-                          <div className="flex items-center gap-1">
-                            <IconFlame size={11} style={{ color: "var(--fit-red, #f87171)" }} />
-                            <span className="text-[11px] font-semibold tabular-nums" style={{ color: "var(--fit-red, #f87171)" }}>
-                              {Math.round(dispCal)} kcal
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {/* Map toggle (GPS activities only) */}
-                      {hasGps && (
-                        <button
-                          onClick={() => setOpenRouteId(showRoute ? null : s.id)}
-                          className="btn-icon w-7 h-7 flex-shrink-0"
-                          style={{ color: showRoute ? "#f97316" : "var(--text-muted)" }}
-                          title="Voir le tracé GPS"
+          const unified: UnifiedItem[] = [
+            ...(gf?.sessions ?? []).map((s): UnifiedItem => ({
+              kind: "gfit", session: s, sortMs: s.startMs,
+            })),
+            ...activities.map((a): UnifiedItem => ({
+              kind: "manual", activity: a,
+              sortMs: (a.loggedAt as { seconds?: number })?.seconds
+                ? (a.loggedAt as { seconds: number }).seconds * 1000
+                : Date.now(),
+            })),
+          ].sort((a, b) => a.sortMs - b.sortMs);
+
+          if (unified.length === 0) return null;
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
+              className="glass p-4 mb-4"
+            >
+              <p className="label-xs mb-3">Activités du jour</p>
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {unified.map((item) => {
+
+                    /* ── Google Fit session ── */
+                    if (item.kind === "gfit") {
+                      const s         = item.session;
+                      const edit      = sessionEdits[s.id] ?? {};
+                      const dispName  = edit.name        ?? s.name;
+                      const dispDur   = edit.durationMin ?? s.durationMin;
+                      const dispCal   = edit.calories    !== undefined ? edit.calories : s.calories;
+                      const isEditing = editingGFitId === s.id;
+                      const hasGps    = isGpsActivity(s.activityType);
+                      const showRoute = openRouteId === s.id;
+                      const hasStats  = s.distanceM != null || s.avgSpeedKmh != null || s.heartRateAvg != null;
+
+                      return (
+                        <motion.div key={`gfit-${s.id}`}
+                          initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
+                          className="flex flex-col gap-2"
                         >
-                          <IconMap size={13} />
-                        </button>
-                      )}
-                      {/* Edit button */}
-                      <button
-                        onClick={() => {
-                          if (isEditing) { setEditingGFitId(null); return; }
-                          setEditingGFitId(s.id);
-                          setGfitEditForm({
-                            name:        edit.name        ?? s.name,
-                            durationMin: String(edit.durationMin ?? s.durationMin),
-                            calories:    String(edit.calories    !== undefined ? (edit.calories ?? "") : (s.calories ?? "")),
-                          });
-                        }}
-                        className="btn-icon w-7 h-7 flex-shrink-0"
-                        style={{ color: isEditing ? "var(--protein)" : "var(--text-muted)" }}
-                        title="Modifier"
-                      >
-                        <IconPencil size={12} />
-                      </button>
-                    </div>
-
-                    {/* Stats row: distance · vitesse · FC */}
-                    {hasStats && (
-                      <div className="flex items-center gap-3 pl-12 flex-wrap">
-                        {s.distanceM != null && (
-                          <div className="flex items-center gap-1">
-                            <IconRuler size={11} style={{ color: "#34d399" }} />
-                            <span className="text-[11px] tabular-nums" style={{ color: "#34d399" }}>
-                              {s.distanceM >= 1000
-                                ? `${(s.distanceM / 1000).toFixed(2)} km`
-                                : `${s.distanceM} m`}
-                            </span>
-                          </div>
-                        )}
-                        {s.avgSpeedKmh != null && (
-                          <div className="flex items-center gap-1">
-                            <IconGauge size={11} style={{ color: "#60a5fa" }} />
-                            <span className="text-[11px] tabular-nums" style={{ color: "#60a5fa" }}>
-                              {s.avgSpeedKmh} km/h
-                            </span>
-                          </div>
-                        )}
-                        {s.heartRateAvg != null && (
-                          <div className="flex items-center gap-1">
-                            <IconHeart size={11} style={{ color: "#f87171" }} />
-                            <span className="text-[11px] tabular-nums" style={{ color: "#f87171" }}>
-                              {s.heartRateAvg} bpm
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Route map */}
-                    <AnimatePresence>
-                      {showRoute && (
-                        <motion.div
-                          key={`route-${s.id}`}
-                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
-                          style={{ overflow: "hidden" }}
-                        >
-                          <div className="pl-12 pb-1">
-                            <RouteMap
-                              startMs={s.startMs}
-                              endMs={s.endMs}
-                              height={180}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Inline edit */}
-                    <AnimatePresence>
-                      {isEditing && (
-                        <motion.div
-                          key={`gfit-edit-${s.id}`}
-                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                          style={{ overflow: "hidden" }}
-                        >
-                          <div className="pl-12 pt-1 pb-2 space-y-2">
-                            <input
-                              value={gfitEditForm.name}
-                              onChange={(e) => setGfitEditForm((f) => ({ ...f, name: e.target.value }))}
-                              placeholder="Nom de la séance"
-                              className="input text-[12px] w-full"
-                            />
-                            <div className="flex gap-2">
-                              <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
-                                <IconClock size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                                <input
-                                  type="number" min="1" value={gfitEditForm.durationMin}
-                                  onChange={(e) => setGfitEditForm((f) => ({ ...f, durationMin: e.target.value }))}
-                                  className="w-full bg-transparent text-[12px] outline-none"
-                                  placeholder="min"
-                                />
+                          <div className="flex items-center gap-3">
+                            {/* Emoji icon */}
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                              style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                              {activityEmoji(s.activityType)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{dispName}</p>
+                                {edit.name && <span style={{ color: "var(--protein)", fontSize: 10 }}>✎</span>}
                               </div>
-                              <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
-                                <IconFlame size={12} style={{ color: "var(--fit-red)", flexShrink: 0 }} />
-                                <input
-                                  type="number" min="0" value={gfitEditForm.calories}
-                                  onChange={(e) => setGfitEditForm((f) => ({ ...f, calories: e.target.value }))}
-                                  className="w-full bg-transparent text-[12px] outline-none"
-                                  placeholder="kcal"
-                                />
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                                  style={{ background: "rgba(251,191,36,0.12)", color: "#fbbf24" }}>
+                                  Google Fit
+                                </span>
+                                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                  {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <button onClick={() => setEditingGFitId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
-                              <button
-                                onClick={() => handleGFitEditSave(s.id)}
-                                disabled={gfitEditSaving}
-                                className="flex-1 btn btn-primary gap-1.5 text-[11px]"
-                              >
-                                {gfitEditSaving ? <><IconLoader2 size={11} className="animate-spin" />…</> : <><IconCheck size={11} />Enregistrer</>}
+                            <div className="flex flex-col items-end gap-0.5 mr-1">
+                              <div className="flex items-center gap-1">
+                                <IconClock size={12} style={{ color: "var(--text-muted)" }} />
+                                <span className="text-[12px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{dispDur} min</span>
+                              </div>
+                              {dispCal != null && dispCal > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <IconFlame size={11} style={{ color: "#f87171" }} />
+                                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: "#f87171" }}>
+                                    {Math.round(dispCal)} kcal
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {hasGps && (
+                              <button onClick={() => setOpenRouteId(showRoute ? null : s.id)}
+                                className="btn-icon w-7 h-7 flex-shrink-0"
+                                style={{ color: showRoute ? "#f97316" : "var(--text-muted)" }}
+                                title="Voir le tracé GPS">
+                                <IconMap size={13} />
                               </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                if (isEditing) { setEditingGFitId(null); return; }
+                                setEditingGFitId(s.id);
+                                setGfitEditForm({
+                                  name:        edit.name        ?? s.name,
+                                  durationMin: String(edit.durationMin ?? s.durationMin),
+                                  calories:    String(edit.calories !== undefined ? (edit.calories ?? "") : (s.calories ?? "")),
+                                });
+                              }}
+                              className="btn-icon w-7 h-7 flex-shrink-0"
+                              style={{ color: isEditing ? "var(--protein)" : "var(--text-muted)" }}
+                              title="Modifier">
+                              <IconPencil size={12} />
+                            </button>
+                          </div>
+
+                          {/* Stats row */}
+                          {hasStats && (
+                            <div className="flex items-center gap-3 pl-[52px] flex-wrap">
+                              {s.distanceM != null && (
+                                <div className="flex items-center gap-1">
+                                  <IconRuler size={11} style={{ color: "#34d399" }} />
+                                  <span className="text-[11px] tabular-nums" style={{ color: "#34d399" }}>
+                                    {s.distanceM >= 1000 ? `${(s.distanceM / 1000).toFixed(2)} km` : `${s.distanceM} m`}
+                                  </span>
+                                </div>
+                              )}
+                              {s.avgSpeedKmh != null && (
+                                <div className="flex items-center gap-1">
+                                  <IconGauge size={11} style={{ color: "#60a5fa" }} />
+                                  <span className="text-[11px] tabular-nums" style={{ color: "#60a5fa" }}>{s.avgSpeedKmh} km/h</span>
+                                </div>
+                              )}
+                              {s.heartRateAvg != null && (
+                                <div className="flex items-center gap-1">
+                                  <IconHeart size={11} style={{ color: "#f87171" }} />
+                                  <span className="text-[11px] tabular-nums" style={{ color: "#f87171" }}>{s.heartRateAvg} bpm</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Route map */}
+                          <AnimatePresence>
+                            {showRoute && (
+                              <motion.div key={`route-${s.id}`}
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
+                                style={{ overflow: "hidden" }}>
+                                <div className="pl-[52px] pb-1">
+                                  <RouteMap startMs={s.startMs} endMs={s.endMs} height={180} />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* GFit inline edit */}
+                          <AnimatePresence>
+                            {isEditing && (
+                              <motion.div key={`gfit-edit-${s.id}`}
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                                style={{ overflow: "hidden" }}>
+                                <div className="pl-[52px] pt-1 pb-2 space-y-2">
+                                  <input value={gfitEditForm.name}
+                                    onChange={(e) => setGfitEditForm((f) => ({ ...f, name: e.target.value }))}
+                                    placeholder="Nom de la séance" className="input text-[12px] w-full" />
+                                  <div className="flex gap-2">
+                                    <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                      <IconClock size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                                      <input type="number" min="1" value={gfitEditForm.durationMin}
+                                        onChange={(e) => setGfitEditForm((f) => ({ ...f, durationMin: e.target.value }))}
+                                        className="w-full bg-transparent text-[12px] outline-none" placeholder="min" />
+                                    </div>
+                                    <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                      <IconFlame size={12} style={{ color: "var(--fit-red)", flexShrink: 0 }} />
+                                      <input type="number" min="0" value={gfitEditForm.calories}
+                                        onChange={(e) => setGfitEditForm((f) => ({ ...f, calories: e.target.value }))}
+                                        className="w-full bg-transparent text-[12px] outline-none" placeholder="kcal" />
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button onClick={() => setEditingGFitId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
+                                    <button onClick={() => handleGFitEditSave(s.id)} disabled={gfitEditSaving}
+                                      className="flex-1 btn btn-primary gap-1.5 text-[11px]">
+                                      {gfitEditSaving ? <><IconLoader2 size={11} className="animate-spin" />…</> : <><IconCheck size={11} />Enregistrer</>}
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      );
+                    }
+
+                    /* ── Activité manuelle ── */
+                    const a = item.activity;
+                    return (
+                      <motion.div key={`manual-${a.id}`}
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
+                        className="flex flex-col gap-2"
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Photo / emoji */}
+                          <button type="button"
+                            onClick={() => {
+                              if (a.photoDataUrl) {
+                                setPhotoZoom({ url: a.photoDataUrl, activityId: a.id });
+                              } else {
+                                setPhotoForActivityId(a.id);
+                                actPhotoInputRef.current?.click();
+                              }
+                            }}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 overflow-hidden relative group"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+                            title={a.photoDataUrl ? "Agrandir la photo" : "Ajouter une photo"}
+                          >
+                            {a.photoDataUrl
+                              ? <img src={a.photoDataUrl} className="w-10 h-10 object-cover" alt="" />
+                              : activityEmoji(a.activityType)
+                            }
+                            <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              style={{ background: "rgba(0,0,0,0.5)" }}>
+                              {a.photoDataUrl ? <IconMaximize size={14} style={{ color: "white" }} /> : <IconCamera size={14} style={{ color: "white" }} />}
+                            </div>
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium truncate mb-0.5" style={{ color: "var(--text-primary)" }}>{a.name}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                                style={{ background: "rgba(99,179,237,0.12)", color: "#60a5fa" }}>
+                                Manuel
+                              </span>
+                              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                {a.sets
+                                  ? `${a.sets}×${a.reps ?? "?"} reps${a.weightKg ? ` · ${a.weightKg}kg` : ""}`
+                                  : `${a.durationMin} min`}
+                                {a.caloriesBurned ? ` · ${a.caloriesBurned} kcal` : ""}
+                              </span>
                             </div>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Manual activities */}
-        {activities.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
-            className="glass p-4 mb-4"
-          >
-            <p className="label-xs mb-3">Activités du jour</p>
-            <div className="space-y-2">
-              <AnimatePresence>
-                {activities.map((a) => (
-                  <motion.div key={a.id}
-                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Photo thumbnail / emoji */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (a.photoDataUrl) {
-                            setPhotoZoom({ url: a.photoDataUrl, activityId: a.id });
-                          } else {
-                            setPhotoForActivityId(a.id);
-                            actPhotoInputRef.current?.click();
-                          }
-                        }}
-                        className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden relative group"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
-                        title={a.photoDataUrl ? "Agrandir la photo" : "Ajouter une photo"}
-                      >
-                        {a.photoDataUrl
-                          ? <img src={a.photoDataUrl} className="w-14 h-14 object-cover" alt="" />
-                          : activityEmoji(a.activityType)
-                        }
-                        <div className="absolute inset-0 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ background: "rgba(0,0,0,0.5)" }}>
-                          {a.photoDataUrl
-                            ? <IconMaximize size={16} style={{ color: "white" }} />
-                            : <IconCamera size={16} style={{ color: "white" }} />
-                          }
+                          <button
+                            onClick={() => {
+                              if (editingActivityId === a.id) { setEditingActivityId(null); return; }
+                              setEditingActivityId(a.id);
+                              setEditForm({
+                                actType:        a.activityType,
+                                duration:       String(a.durationMin),
+                                customName:     a.name,
+                                calories:       String(a.caloriesBurned ?? ""),
+                                sets:           String(a.sets ?? "3"),
+                                reps:           String(a.reps ?? "10"),
+                                weightKg:       String(a.weightKg ?? ""),
+                                variableWeight: false,
+                                weightPerSet:   [],
+                              });
+                            }}
+                            className="btn-icon w-7 h-7 flex-shrink-0"
+                            style={{ color: editingActivityId === a.id ? "var(--protein)" : "var(--text-muted)" }}
+                            title="Modifier">
+                            <IconPencil size={12} />
+                          </button>
+                          <button onClick={() => handleDelete(a.id)} className="btn-icon w-7 h-7 flex-shrink-0"
+                            style={{ color: "#f87171" }}>
+                            <IconTrash size={12} />
+                          </button>
                         </div>
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{a.name}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                          {a.sets ? `${a.sets}×${a.reps ?? "?"} reps${a.weightKg ? ` · ${a.weightKg}kg` : ""}` : `${a.durationMin} min`}
-                          {a.caloriesBurned ? ` · ${a.caloriesBurned} kcal` : ""}
-                        </p>
-                      </div>
-                      {/* Edit button */}
-                      <button
-                        onClick={() => {
-                          if (editingActivityId === a.id) { setEditingActivityId(null); return; }
-                          setEditingActivityId(a.id);
-                          setEditForm({
-                            actType:        a.activityType,
-                            duration:       String(a.durationMin),
-                            customName:     a.name,
-                            calories:       String(a.caloriesBurned ?? ""),
-                            sets:           String(a.sets ?? "3"),
-                            reps:           String(a.reps ?? "10"),
-                            weightKg:       String(a.weightKg ?? ""),
-                            variableWeight: false,
-                            weightPerSet:   [],
-                          });
-                        }}
-                        className="btn-icon w-7 h-7 flex-shrink-0"
-                        style={{ color: editingActivityId === a.id ? "var(--protein)" : "var(--text-muted)" }}
-                        title="Modifier"
-                      >
-                        <IconPencil size={12} />
-                      </button>
-                      <button onClick={() => handleDelete(a.id)} className="btn-icon w-7 h-7 flex-shrink-0"
-                        style={{ color: "#f87171" }}>
-                        <IconTrash size={12} />
-                      </button>
-                    </div>
 
-                    {/* Inline edit form */}
-                    <AnimatePresence>
-                      {editingActivityId === a.id && (
-                        <motion.div
-                          key={`edit-${a.id}`}
-                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                          style={{ overflow: "hidden" }}
-                        >
-                          <div className="pl-12 pt-1 pb-2 space-y-2">
-                            {/* Name */}
-                            <input
-                              value={editForm.customName}
-                              onChange={(e) => setEditForm((f) => ({ ...f, customName: e.target.value }))}
-                              placeholder="Nom de l'activité"
-                              className="input text-[12px] w-full"
-                            />
+                        {/* Manual inline edit form */}
+                        <AnimatePresence>
+                          {editingActivityId === a.id && (
+                            <motion.div key={`edit-${a.id}`}
+                              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                              style={{ overflow: "hidden" }}>
+                              <div className="pl-[52px] pt-1 pb-2 space-y-2">
+                                <input value={editForm.customName}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, customName: e.target.value }))}
+                                  placeholder="Nom de l'activité" className="input text-[12px] w-full" />
 
-                            {isMuscu(editForm.actType) ? (
-                              /* ── Musculation : séries · reps · poids ── */
-                              <>
-                                <div className="flex gap-2">
-                                  {/* Séries */}
-                                  <div className="flex-1 flex flex-col gap-1">
-                                    <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
-                                    <input
-                                      type="number" min="1" value={editForm.sets}
-                                      onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, sets: e.target.value }))}
-                                      className="input text-[12px] text-center"
-                                    />
-                                  </div>
-                                  {/* Répétitions */}
-                                  <div className="flex-1 flex flex-col gap-1">
-                                    <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
-                                    <input
-                                      type="number" min="1" value={editForm.reps}
-                                      onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, reps: e.target.value }))}
-                                      className="input text-[12px] text-center"
-                                    />
-                                  </div>
-                                  {/* Poids */}
-                                  <div className="flex-1 flex flex-col gap-1">
-                                    <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
-                                    <input
-                                      type="number" min="0" step="0.5" value={editForm.weightKg}
-                                      onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, weightKg: e.target.value }))}
+                                {isMuscu(editForm.actType) ? (
+                                  <>
+                                    <div className="flex gap-2">
+                                      <div className="flex-1 flex flex-col gap-1">
+                                        <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
+                                        <input type="number" min="1" value={editForm.sets}
+                                          onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, sets: e.target.value }))}
+                                          className="input text-[12px] text-center" />
+                                      </div>
+                                      <div className="flex-1 flex flex-col gap-1">
+                                        <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
+                                        <input type="number" min="1" value={editForm.reps}
+                                          onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, reps: e.target.value }))}
+                                          className="input text-[12px] text-center" />
+                                      </div>
+                                      <div className="flex-1 flex flex-col gap-1">
+                                        <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
+                                        <input type="number" min="0" step="0.5" value={editForm.weightKg}
+                                          onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, weightKg: e.target.value }))}
                                       className="input text-[12px] text-center"
                                       placeholder="—"
                                     />
@@ -1555,57 +1535,56 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   <div className="flex-1 flex flex-col gap-1">
                                     <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
                                     <input
-                                      type="number" min="0" value={editForm.calories}
-                                      onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
-                                      className="input text-[12px] text-center"
-                                    />
+                                          className="input text-[12px] text-center"
+                                          placeholder="—"
+                                        />
+                                      </div>
+                                      {/* Kcal */}
+                                      <div className="flex-1 flex flex-col gap-1">
+                                        <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
+                                        <input type="number" min="0" value={editForm.calories}
+                                          onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
+                                          className="input text-[12px] text-center" />
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  /* ── Cardio : durée + kcal ── */
+                                  <div className="flex gap-2">
+                                    <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                      <IconClock size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                                      <input type="number" min="1" value={editForm.duration}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, duration: e.target.value }))}
+                                        className="w-full bg-transparent text-[12px] outline-none" placeholder="min" />
+                                    </div>
+                                    <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
+                                      <IconFlame size={12} style={{ color: "var(--fit-red)", flexShrink: 0 }} />
+                                      <input type="number" min="0" value={editForm.calories}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
+                                        className="w-full bg-transparent text-[12px] outline-none" placeholder="kcal" />
+                                    </div>
                                   </div>
-                                </div>
-                              </>
-                            ) : (
-                              /* ── Cardio / autre : durée + kcal ── */
-                              <div className="flex gap-2">
-                                <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
-                                  <IconClock size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                                  <input
-                                    type="number" min="1" value={editForm.duration}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, duration: e.target.value }))}
-                                    className="w-full bg-transparent text-[12px] outline-none"
-                                    placeholder="min"
-                                  />
-                                </div>
-                                <div className="flex-1 flex items-center gap-1.5 input px-2 py-1.5">
-                                  <IconFlame size={12} style={{ color: "var(--fit-red)", flexShrink: 0 }} />
-                                  <input
-                                    type="number" min="0" value={editForm.calories}
-                                    onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
-                                    className="w-full bg-transparent text-[12px] outline-none"
-                                    placeholder="kcal"
-                                  />
+                                )}
+
+                                <div className="flex gap-2">
+                                  <button onClick={() => setEditingActivityId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
+                                  <button onClick={() => handleEditSave(a.id)} disabled={editSaving}
+                                    className="flex-1 btn btn-primary gap-1.5 text-[11px]">
+                                    {editSaving ? <><IconLoader2 size={11} className="animate-spin" />…</> : <><IconCheck size={11} />Enregistrer</>}
+                                  </button>
                                 </div>
                               </div>
-                            )}
-
-                            <div className="flex gap-2">
-                              <button onClick={() => setEditingActivityId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
-                              <button
-                                onClick={() => handleEditSave(a.id)}
-                                disabled={editSaving}
-                                className="flex-1 btn btn-primary gap-1.5 text-[11px]"
-                              >
-                                {editSaving ? <><IconLoader2 size={11} className="animate-spin" />…</> : <><IconCheck size={11} />Enregistrer</>}
-                              </button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* Sleep */}
         {gf?.sleepMinutes && (
@@ -1625,7 +1604,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
           </motion.div>
         )}
 
-        {!gf && activities.length === 0 && !showForm && (
+        {(gf?.sessions?.length ?? 0) === 0 && activities.length === 0 && !showForm && (
           <div className="flex flex-col items-center gap-3 py-12">
             <span className="text-5xl">🏃</span>
             <p className="text-[14px] font-medium" style={{ color: "var(--text-secondary)" }}>
