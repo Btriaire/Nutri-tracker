@@ -556,21 +556,67 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
         <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4 overflow-x-auto"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", scrollbarWidth: "none" }}>
           {([
-            { id: "synthese",      label: "🩺 Synthèse" },
-            { id: "cardiaque",     label: "❤️ Cœur" },
-            { id: "medical",       label: "🏥 Médical" },
-            { id: "bienetre",      label: "🧠 Bien-être" },
-          ] as const).map(({ id, label }) => (
-            <button key={id} onClick={() => setActiveTab(id)}
-              className="flex-shrink-0 flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap px-2"
-              style={{
-                background: activeTab === id ? "var(--surface-active)" : "transparent",
-                color:      activeTab === id ? "var(--text-primary)"   : "var(--text-muted)",
-                border:     activeTab === id ? "1px solid var(--border-strong)" : "1px solid transparent",
-              }}>
-              {label}
-            </button>
-          ))}
+            {
+              id: "synthese", label: "Synthèse",
+              color: "#c084fc",
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {/* Clipboard with pulse */}
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="1" />
+                  <path d="M5 14h2l1.5-3 2 6 1.5-4.5 1 2H17" />
+                </svg>
+              ),
+            },
+            {
+              id: "cardiaque", label: "Cœur",
+              color: "#f87171",
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  <path d="M3.5 12h3l1.5-3 2 6 1.5-4 1 2H20" strokeWidth="1.6" />
+                </svg>
+              ),
+            },
+            {
+              id: "medical", label: "Médical",
+              color: "#34d399",
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {/* Caducée simplifié : croix médicale */}
+                  <rect x="3" y="3" width="18" height="18" rx="4" />
+                  <path d="M12 8v8M8 12h8" strokeWidth="2.2" />
+                </svg>
+              ),
+            },
+            {
+              id: "bienetre", label: "Bien-être",
+              color: "#818cf8",
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {/* Cerveau stylisé */}
+                  <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
+                  <path d="M9 8.5C7.8 8.8 7 9.8 7 11" />
+                  <path d="M15 8.5c1.2.3 2 1.3 2 2.5" />
+                  <path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
+                </svg>
+              ),
+            },
+          ] as const).map(({ id, label, icon, color }) => {
+            const active = activeTab === id;
+            return (
+              <button key={id} onClick={() => setActiveTab(id)}
+                className="flex-shrink-0 flex-1 flex flex-col items-center gap-1 py-2 rounded-lg transition-all"
+                style={{
+                  background: active ? `${color}18` : "transparent",
+                  color:      active ? color : "var(--text-muted)",
+                  border:     active ? `1px solid ${color}35` : "1px solid transparent",
+                }}>
+                {icon}
+                <span className="text-[10px] font-medium leading-none whitespace-nowrap">{label}</span>
+              </button>
+            );
+          })}
         </motion.div>
 
         {/* Date nav — above all tabs */}
