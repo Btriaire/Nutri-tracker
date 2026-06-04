@@ -30,11 +30,13 @@ const FACTS = [
 ];
 
 export default function FunFactsBanner() {
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * FACTS.length));
+  const [idx,      setIdx]      = useState(() => Math.floor(Math.random() * FACTS.length));
   const [direction, setDirection] = useState(1);
+  const [expanded, setExpanded] = useState(false);
 
   const next = useCallback(() => {
     setDirection(1);
+    setExpanded(false);
     setIdx((i) => (i + 1) % FACTS.length);
   }, []);
 
@@ -45,13 +47,25 @@ export default function FunFactsBanner() {
 
   const fact = FACTS[idx];
 
+  const handleClick = () => {
+    if (expanded) {
+      // second click → next fact
+      next();
+    } else {
+      setExpanded(true);
+    }
+  };
+
   return (
-    <div className="glass px-3 py-2 mb-3 overflow-hidden relative cursor-pointer"
-      onClick={next}
+    <motion.div
+      layout
+      className="glass px-3 py-2 mb-3 overflow-hidden relative cursor-pointer"
+      onClick={handleClick}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="flex items-center gap-2 relative z-10">
-        <IconBulb size={13} stroke={2} style={{ color: "#fbbf24", flexShrink: 0 }} />
-        <p className="text-[10px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "#fbbf24" }}>
+      <div className="flex items-start gap-2 relative z-10">
+        <IconBulb size={13} stroke={2} style={{ color: "#fbbf24", flexShrink: 0, marginTop: 2 }} />
+        <p className="text-[10px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "#fbbf24", marginTop: 2 }}>
           Le saviez-vous ?
         </p>
         <AnimatePresence mode="wait" initial={false}>
@@ -61,13 +75,13 @@ export default function FunFactsBanner() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -direction * 12 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[11px] leading-snug truncate"
+            className={`text-[11px] leading-snug${expanded ? "" : " truncate"}`}
             style={{ color: "var(--text-muted)" }}
           >
             <span className="mr-1">{fact.emoji}</span>{fact.text}
           </motion.p>
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
