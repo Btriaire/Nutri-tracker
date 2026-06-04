@@ -138,8 +138,14 @@ export default function DashboardClient({
   useEffect(() => {
     fetch(`/api/mental-health?date=${date}`)
       .then((r) => r.json())
-      .then((d: { entry: unknown }) => setMoodFilled(d.entry !== null))
-      .catch(() => setMoodFilled(true)); // don't show on error
+      .then((d: { entry: unknown }) => {
+        console.log("[bienetre] entry for", date, "→", d.entry);
+        setMoodFilled(d.entry !== null);
+      })
+      .catch((err) => {
+        console.warn("[bienetre] fetch error:", err);
+        setMoodFilled(true); // don't show on error
+      });
   }, [date]);
 
   // Auto-sync both services on every dashboard open, then refresh data
@@ -500,11 +506,10 @@ export default function DashboardClient({
         {/* ── Bien-être reminder ── */}
         {moodFilled === false && (
           <motion.div
-            {...fade(0.046)}
-            className="mb-4"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-4"
           >
             <Link
               href="/health"
