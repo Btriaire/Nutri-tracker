@@ -13,6 +13,7 @@ import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
 import FunFactsBanner from "@/app/components/FunFactsBanner";
 import WelcomeChime from "@/app/components/WelcomeChime";
+import FastingTimer from "@/app/components/FastingTimer";
 import StreakWidget from "@/app/components/StreakWidget";
 import PhotoStrip from "@/app/components/PhotoStrip";
 import {
@@ -450,6 +451,11 @@ export default function DashboardClient({
             );
           })()}
         </motion.div>
+
+        {/* ── Fasting Timer ── */}
+        {goals.intermittentFasting?.enabled && (
+          <FastingTimer date={date} fastingConfig={goals.intermittentFasting} />
+        )}
 
         {/* Fun Facts banner */}
         <motion.div {...fade(0.04)} className="mb-4">

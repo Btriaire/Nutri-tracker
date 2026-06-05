@@ -190,6 +190,12 @@ export interface DayLog {
 
 export type Gender = "male" | "female";
 
+export interface IntermittentFasting {
+  enabled:   boolean;
+  durationH: 8 | 12 | 16 | 24;
+  days:      number[];   // 0 = Dimanche, 1 = Lundi … 6 = Samedi
+}
+
 export interface NutritionGoals {
   dailyCalories:    number;
   proteinGrams:     number;
@@ -212,7 +218,8 @@ export interface NutritionGoals {
   currentWeightKg?: number;   // pour tracking
   plan?:            NutritionPlan;
   activityPlan?:    ActivityPlan;
-  deductBurnedCalories?: boolean;   // false = ne pas soustraire les calories brûlées du budget
+  deductBurnedCalories?:  boolean;   // false = ne pas soustraire les calories brûlées du budget
+  intermittentFasting?:   IntermittentFasting;
 }
 
 export interface PlannedActivity {

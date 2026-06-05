@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
+import FastingTimer from "@/app/components/FastingTimer";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
@@ -218,6 +219,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         >
           <DateNav date={date} />
         </motion.div>
+
+        {/* ── Fasting Timer ── */}
+        {goals.intermittentFasting?.enabled && (
+          <FastingTimer date={date} fastingConfig={goals.intermittentFasting} />
+        )}
 
         {/* Day photos + type */}
         <motion.div
