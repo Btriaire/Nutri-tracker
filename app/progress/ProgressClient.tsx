@@ -14,7 +14,8 @@ import {
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
   IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
 } from "@tabler/icons-react";
-import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
+import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients, IntermittentFasting } from "@/app/lib/types";
+import type { FastingSession } from "@/app/api/fasting/route";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import MealTimingWidget from "@/app/components/MealTimingWidget";
 import BodyCompChart from "@/app/components/BodyCompChart";
@@ -281,8 +282,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   );
   const [showAlbum,       setShowAlbum]    = useState(false);
   const [showAnalysis,    setShowAnalysis] = useState(false);
-  const [meditSessions,   setMeditSessions] = useState<{ date: string; durationMin: number; programLabel: string }[]>([]);
-  const [nutriTab,        setNutriTab]     = useState<"macros" | "micros">("macros");
+  const [meditSessions,   setMeditSessions]  = useState<{ date: string; durationMin: number; programLabel: string }[]>([]);
+  const [fastingSessions, setFastingSessions] = useState<FastingSession[]>([]);
+  const [nutriTab,        setNutriTab]       = useState<"macros" | "micros">("macros");
 
   useEffect(() => {
     fetch("/api/goals")
@@ -301,6 +303,17 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
       })
       .catch(() => {});
   }, []);
+
+  // Load fasting history (last 90 days, always — used for compact tracker)
+  useEffect(() => {
+    if (!goals.intermittentFasting?.enabled) return;
+    const from = format(subDays(new Date(), 90), "yyyy-MM-dd");
+    const to   = format(new Date(), "yyyy-MM-dd");
+    fetch(`/api/fasting/history?from=${from}&to=${to}`)
+      .then(r => r.json())
+      .then((d: { sessions?: FastingSession[] }) => setFastingSessions(d.sessions ?? []))
+      .catch(() => {});
+  }, [goals.intermittentFasting?.enabled]);
 
   const loadData = useCallback(async (r: Range) => {
     setLoading(true);
@@ -1762,11 +1775,200 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               );
             })()}
 
+            {/* ── Fasting tracker ── */}
+            <FastingTracker
+              sessions={fastingSessions}
+              config={goals.intermittentFasting}
+            />
+
             {/* Meal timing widget */}
             <MealTimingWidget />
           </>
         )}
       </div>
     </div>
+  );
+}
+
+// ── Fasting Tracker (compact) ─────────────────────────────────────────────────
+function FastingTracker({
+  sessions,
+  config,
+}: {
+  sessions: FastingSession[];
+  config:   IntermittentFasting | undefined;
+}) {
+  if (!config?.enabled || sessions.length === 0) return null;
+
+  const today    = format(new Date(), "yyyy-MM-dd");
+  const DAYS     = 28; // show last 4 weeks
+  const byDate   = new Map(sessions.map(s => [s.date, s]));
+  const durationH = config.durationH;
+  const targetMs  = durationH * 3600_000;
+
+  // Build day cells: last DAYS days
+  const cells: { date: string; dow: number; session: FastingSession | null; isFastingDay: boolean }[] = [];
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d   = format(subDays(new Date(), i), "yyyy-MM-dd");
+    const dow = parseISO(d).getDay();
+    cells.push({
+      date:         d,
+      dow,
+      session:      byDate.get(d) ?? null,
+      isFastingDay: config.days.includes(dow),
+    });
+  }
+
+  // Stats
+  const completed = sessions.filter(s => s.completedAtMs != null);
+  const started   = sessions.filter(s => s.startedAtMs != null);
+  const avgHours  = completed.length
+    ? completed.reduce((sum, s) => {
+        const elapsed = Math.min(
+          (s.completedAtMs ?? 0) - (s.startedAtMs ?? 0),
+          targetMs,
+        );
+        return sum + elapsed;
+      }, 0) / completed.length / 3_600_000
+    : 0;
+
+  // Streak — consecutive completed sessions from today backwards
+  let streak = 0;
+  {
+    const sortedDates = sessions
+      .filter(s => s.completedAtMs != null)
+      .map(s => s.date)
+      .sort((a, b) => b.localeCompare(a));
+    // Walk back from today counting only scheduled fasting days
+    const scheduledDays = [...cells]
+      .filter(c => c.isFastingDay)
+      .map(c => c.date)
+      .sort((a, b) => b.localeCompare(a));
+    for (const d of scheduledDays) {
+      if (d > today) continue;
+      if (sortedDates.includes(d)) streak++;
+      else break;
+    }
+  }
+
+  // Cell color
+  function cellColor(c: typeof cells[0]): string {
+    const s = c.session;
+    if (!c.isFastingDay) return "rgba(255,255,255,0.04)";
+    if (!s) return "rgba(129,140,248,0.12)";         // scheduled, not started
+    if (s.completedAtMs != null) return "#22c55e";   // completed → green
+    if (s.active) return "#f97316";                  // in progress → orange
+    // started but stopped early
+    const pct = s.startedAtMs
+      ? Math.min((s.completedAtMs ?? Date.now()) - s.startedAtMs, targetMs) / targetMs
+      : 0;
+    return pct >= 0.5 ? "#fbbf24" : "#a855f7";      // half-done yellow / partial purple
+  }
+
+  function cellBorder(c: typeof cells[0]): string {
+    if (!c.isFastingDay) return "transparent";
+    if (!c.session) return "rgba(129,140,248,0.25)";
+    if (c.session.completedAtMs != null) return "rgba(34,197,94,0.4)";
+    if (c.session.active) return "rgba(249,115,22,0.4)";
+    return "rgba(168,85,247,0.35)";
+  }
+
+  function cellTitle(c: typeof cells[0]): string {
+    const label = format(parseISO(c.date), "d MMM", { locale: fr });
+    const s = c.session;
+    if (!c.isFastingDay) return label;
+    if (!s) return `${label} — jeûne prévu, non démarré`;
+    if (s.completedAtMs != null) {
+      const h = ((s.completedAtMs - (s.startedAtMs ?? 0)) / 3_600_000).toFixed(1);
+      return `${label} — complété · ${h}h`;
+    }
+    if (s.active) return `${label} — en cours`;
+    return `${label} — arrêté tôt`;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut", delay: 0.18 }}
+      className="mb-4 glass px-4 py-4"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: 13 }}>🌿</span>
+          <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
+            Jeûne Intermittent · {durationH}h
+          </p>
+        </div>
+        {/* Stats pills */}
+        <div className="flex items-center gap-1.5">
+          {streak > 0 && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}>
+              {streak}🔥
+            </span>
+          )}
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(129,140,248,0.12)", color: "#818cf8", border: "1px solid rgba(129,140,248,0.25)" }}>
+            {started.length} jeûnes
+          </span>
+          {avgHours > 0 && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.25)" }}>
+              ⌀ {avgHours.toFixed(1)}h
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Dot calendar — 4 rows of 7 (Mon→Sun) */}
+      <div className="grid gap-[4px]" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
+        {/* Day letters header */}
+        {["L","M","M","J","V","S","D"].map((d, i) => (
+          <div key={i} className="text-center text-[8px] font-medium mb-0.5"
+            style={{ color: "var(--text-muted)" }}>
+            {d}
+          </div>
+        ))}
+        {/* Offset empty cells so first day aligns to correct column */}
+        {(() => {
+          const firstDow = cells[0].dow; // 0=Sun…6=Sat
+          // Convert to Mon-first index (Mon=0…Sun=6)
+          const offset = firstDow === 0 ? 6 : firstDow - 1;
+          return Array.from({ length: offset }, (_, i) => (
+            <div key={`pad-${i}`} />
+          ));
+        })()}
+        {cells.map(c => (
+          <div
+            key={c.date}
+            title={cellTitle(c)}
+            className="rounded-[5px]"
+            style={{
+              aspectRatio: "1",
+              background: cellColor(c),
+              border: `1px solid ${cellBorder(c)}`,
+              opacity: c.date > today ? 0.3 : 1,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-3 mt-2.5 flex-wrap">
+        {[
+          { color: "rgba(129,140,248,0.3)", border: "rgba(129,140,248,0.4)", label: "Prévu" },
+          { color: "#a855f7",               border: "rgba(168,85,247,0.5)",  label: "Partiel" },
+          { color: "#22c55e",               border: "rgba(34,197,94,0.5)",   label: "Complété" },
+        ].map(l => (
+          <div key={l.label} className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-[3px]"
+              style={{ background: l.color, border: `1px solid ${l.border}` }} />
+            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
   );
 }
