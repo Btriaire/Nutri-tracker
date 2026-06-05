@@ -177,6 +177,47 @@ html, body {
 }
 .btn-icon:hover { background: var(--surface-hover); color: var(--text-primary); }
 
+/* ─── Mental Health Sliders ─────────────────────────────────────────────────── */
+.mh-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+.mh-slider::-webkit-slider-runnable-track { background: transparent; }
+.mh-slider::-moz-range-track { background: transparent; height: 5px; }
+.mh-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--thumb-color, #818cf8);
+  border: 2.5px solid #09090b;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--thumb-color, #818cf8) 55%, transparent),
+              0 0 0 3px color-mix(in srgb, var(--thumb-color, #818cf8) 22%, transparent);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  margin-top: -7px;
+}
+.mh-slider:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--thumb-color, #818cf8) 70%, transparent),
+              0 0 0 5px color-mix(in srgb, var(--thumb-color, #818cf8) 20%, transparent);
+}
+.mh-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--thumb-color, #818cf8);
+  border: 2.5px solid #09090b;
+  cursor: pointer;
+}
+
 /* ─── Accent text helpers ───────────────────────────────────────────────────── */
 .t-calories { color: var(--calories); }
 .t-protein  { color: var(--protein); }
