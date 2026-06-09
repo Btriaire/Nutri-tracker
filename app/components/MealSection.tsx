@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2,
-  IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
+  IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
+import PhotoMealAnalyzer from "./PhotoMealAnalyzer";
 import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
@@ -44,6 +45,7 @@ export default function MealSection({
   const [menuModal,     setMenuModal]     = useState(false);
   const [uploading,     setUploading]     = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
+  const [photoAnalyzer, setPhotoAnalyzer] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const meta = MEAL_META[meal];
@@ -147,7 +149,7 @@ export default function MealSection({
           </motion.span>
         </button>
 
-        {/* Camera button */}
+        {/* Camera button (meal photo) */}
         <button
           onClick={() => !uploading && cameraRef.current?.click()}
           disabled={uploading}
@@ -163,6 +165,21 @@ export default function MealSection({
             ? <span className="animate-spin text-[10px]">⏳</span>
             : <IconCamera size={16} stroke={photoUrl ? 2 : 1.5} />
           }
+        </button>
+
+        {/* Nutri-IA photo analyzer button */}
+        <button
+          onClick={() => setPhotoAnalyzer(true)}
+          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--border)",
+            color: "var(--text-muted)",
+          }}
+          aria-label="Analyser une photo avec l'IA"
+          title="Nutri-IA · analyser une photo"
+        >
+          <IconSparkles size={15} stroke={1.5} />
         </button>
 
         {/* Nutrition panel toggle */}
@@ -345,6 +362,22 @@ export default function MealSection({
       </AnimatePresence>
 
       <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded} />
+
+      {/* Nutri-IA photo analyzer */}
+      <AnimatePresence>
+        {photoAnalyzer && (
+          <PhotoMealAnalyzer
+            meal={meal}
+            date={date}
+            mealColor={meta.color}
+            onAdded={async () => {
+              setPhotoAnalyzer(false);
+              await handleAdded({ name: "", calories: 0 });
+            }}
+            onClose={() => setPhotoAnalyzer(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {goals && (
         <MenuSuggestionModal

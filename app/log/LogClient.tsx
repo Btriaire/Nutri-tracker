@@ -21,6 +21,140 @@ import { levelBarStyle, levelBarBg, levelBarClip, levelColor } from "@/app/lib/c
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
+// ─── SVG helpers for the daily summary ───────────────────────────────────────
+
+/** Donut arc showing calories eaten vs goal */
+function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; size?: number }) {
+  const cx   = size / 2;
+  const R    = cx - 6;
+  const circ = 2 * Math.PI * R;
+  const fraction = Math.min(1.05, eaten / Math.max(1, goal));
+  const over     = fraction > 1;
+  const col      = over ? "#ef4444" : fraction > 0.88 ? "#f97316" : fraction > 0.65 ? "#fbbf24" : "#22c55e";
+  const dashArr  = `${Math.min(fraction, 1) * circ} ${circ}`;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block", flexShrink: 0 }}>
+      {/* Track */}
+      <circle cx={cx} cy={cx} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={7} />
+      {/* Filled arc */}
+      <motion.circle
+        cx={cx} cy={cx} r={R}
+        fill="none" stroke={col} strokeWidth={7} strokeLinecap="round"
+        strokeDasharray={dashArr}
+        transform={`rotate(-90 ${cx} ${cx})`}
+        initial={{ strokeDasharray: `0 ${circ}` }}
+        animate={{ strokeDasharray: dashArr }}
+        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+      />
+      {/* Glow dot at tip */}
+      {fraction > 0.02 && fraction < 1 && (() => {
+        const angle = (fraction * 360 - 90) * (Math.PI / 180);
+        const tx = cx + R * Math.cos(angle);
+        const ty = cx + R * Math.sin(angle);
+        return <circle cx={tx} cy={ty} r={4} fill={col} opacity={0.7} />;
+      })()}
+      {/* Center text */}
+      <text x={cx} y={cx - 3} textAnchor="middle" dominantBaseline="auto"
+        fontSize={over ? 13 : 15} fontWeight="700"
+        fill="var(--calories)" fontFamily="monospace">
+        {eaten >= 1000 ? `${(eaten / 1000).toFixed(1)}k` : eaten}
+      </text>
+      <text x={cx} y={cx + 10} textAnchor="middle" dominantBaseline="auto"
+        fontSize={9} fill="rgba(255,255,255,0.38)">
+        kcal
+      </text>
+    </svg>
+  );
+}
+
+/** Horizontal SVG calorie budget bar */
+function CalorieBudgetBar({ eaten, goal, remaining }: { eaten: number; goal: number; remaining: number }) {
+  const fraction = Math.min(1.1, eaten / Math.max(1, goal));
+  const over     = remaining < 0;
+  const col      = over ? "#ef4444" : fraction > 0.88 ? "#f97316" : fraction > 0.65 ? "#fbbf24" : "#22c55e";
+  const W        = 200; // viewBox width
+  const H        = 8;
+  const fillW    = Math.min(1, fraction) * W;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ display: "block" }}>
+      {/* Track */}
+      <rect x={0} y={0} width={W} height={H} rx={H / 2} fill="rgba(255,255,255,0.07)" />
+      {/* Fill */}
+      <motion.rect
+        x={0} y={0} height={H} rx={H / 2}
+        fill={col}
+        initial={{ width: 0 }}
+        animate={{ width: fillW }}
+        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+      />
+      {/* Goal tick */}
+      <rect x={W - 1.5} y={0} width={1.5} height={H} rx={0.75} fill="rgba(255,255,255,0.25)" />
+      {/* Glow cap */}
+      {fraction > 0.04 && !over && (
+        <motion.circle
+          cy={H / 2} r={H / 2 + 1}
+          fill={col} opacity={0.45}
+          initial={{ cx: 0 }}
+          animate={{ cx: fillW }}
+          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+        />
+      )}
+    </svg>
+  );
+}
+
+/** Three SVG macro bars — P / G / L */
+function MacroSVGBars({
+  protein, carbs, fat,
+}: {
+  protein: { val: number; goal: number };
+  carbs:   { val: number; goal: number };
+  fat:     { val: number; goal: number };
+}) {
+  const rows = [
+    { label: "Prot.",   color: "#3b82f6", ...protein },
+    { label: "Gluc.",   color: "#fbbf24", ...carbs },
+    { label: "Lip.",    color: "#a78bfa", ...fat },
+  ];
+  const W = 200; // viewBox plot width per bar
+  const BH = 5;  // bar height
+  const RH = 22; // row height
+
+  return (
+    <div className="grid grid-cols-3 gap-x-3 gap-y-0">
+      {rows.map(({ label, color, val, goal }) => {
+        const fraction = goal > 0 ? Math.min(1, val / goal) : 0;
+        const fillW    = fraction * W;
+        const col      = fraction > 1 ? "#ef4444" : color;
+        return (
+          <div key={label}>
+            <div className="flex justify-between items-baseline mb-1">
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px] font-semibold tabular-nums" style={{ color: col }}>
+                {Math.round(val)}
+                <span className="text-[9px] font-normal" style={{ color: "var(--text-muted)" }}>g</span>
+              </span>
+            </div>
+            <svg viewBox={`0 0 ${W} ${BH}`} width="100%" height={BH} style={{ display: "block" }}>
+              <rect x={0} y={0} width={W} height={BH} rx={BH / 2} fill="rgba(255,255,255,0.07)" />
+              <motion.rect
+                x={0} y={0} height={BH} rx={BH / 2}
+                fill={col}
+                initial={{ width: 0 }}
+                animate={{ width: fillW }}
+                transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </svg>
+            <p className="text-[9px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}g</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TrackedNutrientPill({
   emoji, label, unit, value, goal, color, invertAlert = false,
 }: {
@@ -257,62 +391,35 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             border: "1px solid rgba(249,115,22,0.18)",
           }}
         >
-          <div className="flex justify-between items-start mb-4">
-            <div className="text-center">
-              <p className="text-[20px] font-bold t-calories tabular-nums leading-tight">
-                {Math.round(totals.calories)}
-              </p>
-              <p className="label-xs mt-0.5">Mangées</p>
-            </div>
-
-            <div className="flex-1 mx-4">
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <motion.div
-                  className="h-full rounded-full w-full"
-                  style={{ background: levelBarBg(remaining >= 0 ? pct(totals.calories, goals.dailyCalories) / 100 : 1.1) }}
-                  initial={{ clipPath: "inset(0 100% 0 0)" }}
-                  animate={{ clipPath: levelBarClip(pct(totals.calories, goals.dailyCalories) / 100) }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                />
+          {/* ── Calorie arc + stats row ── */}
+          <div className="flex items-center gap-4 mb-4">
+            <CalorieArc eaten={Math.round(totals.calories)} goal={goals.dailyCalories} size={80} />
+            <div className="flex-1 min-w-0">
+              {/* Budget bar SVG */}
+              <CalorieBudgetBar
+                eaten={Math.round(totals.calories)}
+                goal={goals.dailyCalories}
+                remaining={remaining}
+              />
+              {/* Stats under bar */}
+              <div className="flex justify-between mt-1.5">
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  Objectif {goals.dailyCalories} kcal
+                </span>
+                <span className="text-[11px] font-semibold tabular-nums"
+                  style={{ color: remaining >= 0 ? "var(--text-secondary)" : "#ef4444" }}>
+                  {remaining >= 0 ? `−${remaining}` : `+${Math.abs(remaining)}`} kcal
+                </span>
               </div>
-            </div>
-
-            <div className="text-center">
-              <p
-                className="text-[20px] font-bold tabular-nums leading-tight"
-                style={{ color: remaining >= 0 ? "var(--text-primary)" : "#ef4444" }}
-              >
-                {Math.abs(remaining)}
-              </p>
-              <p className="label-xs mt-0.5">{remaining >= 0 ? "Restantes" : "Dépassé"}</p>
             </div>
           </div>
 
-          {/* Macro bars */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: "Protéines", val: totals.proteinG, goal: goals.proteinGrams, color: "var(--protein)" },
-              { label: "Glucides",  val: totals.carbsG,   goal: goals.carbsGrams,  color: "var(--carbs)" },
-              { label: "Lipides",   val: totals.fatG,     goal: goals.fatGrams,    color: "var(--fat)" },
-            ].map(({ label, val, goal, color }) => (
-              <div key={label}>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span style={{ color: "var(--text-muted)" }}>{label}</span>
-                  <span style={{ color: levelColor(goal > 0 ? val / goal : 0) }}>{Math.round(val)}g</span>
-                </div>
-                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <motion.div
-                    className="h-full rounded-full w-full"
-                    style={{ background: levelBarBg(goal > 0 ? val / goal : 0) }}
-                    initial={{ clipPath: "inset(0 100% 0 0)" }}
-                    animate={{ clipPath: levelBarClip(goal > 0 ? val / goal : 0) }}
-                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  />
-                </div>
-                <p className="text-[10px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}g</p>
-              </div>
-            ))}
-          </div>
+          {/* ── SVG Macro bars ── */}
+          <MacroSVGBars
+            protein={{ val: totals.proteinG, goal: goals.proteinGrams }}
+            carbs={{   val: totals.carbsG,   goal: goals.carbsGrams }}
+            fat={{     val: totals.fatG,     goal: goals.fatGrams }}
+          />
 
           {/* Validate / Unlock button */}
           {validated ? (
