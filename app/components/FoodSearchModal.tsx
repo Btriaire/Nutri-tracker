@@ -6,13 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconX, IconSearch, IconPlus, IconChevronLeft, IconLoader2, IconChevronDown,
   IconToolsKitchen2, IconBookmark, IconToolsKitchen, IconTrash, IconCheck,
-  IconBarcode, IconCamera, IconStar, IconStarFilled,
+  IconBarcode, IconCamera, IconStar, IconStarFilled, IconHistory,
 } from "@tabler/icons-react";
 import MealBuilderModal from "./MealBuilderModal";
 import FoodPictogram from "./FoodPictogram";
 import type {
   FoodNutrition, FoodSearchResult, MealType, Lang,
-  ServingOption, SavedMeal, Recipe,
+  ServingOption, SavedMeal, Recipe, FoodEntry,
 } from "@/app/lib/types";
 import { COMMON_SERVING_UNITS } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
@@ -121,7 +121,7 @@ function MacroPills({ n }: { n: FoodNutrition }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab  = "aliments" | "repas" | "recettes" | "mes-aliments";
+type Tab  = "aliments" | "repas" | "recettes" | "hier" | "mes-aliments";
 type Step = "browse" | "configure" | "configure-recipe" | "save-meal";
 
 export interface AddedInfo { name: string; calories: number }
@@ -400,6 +400,12 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [recipeServings, setRecipeServings] = useState("1");
   const [addingRecipe, setAddingRecipe]   = useState(false);
 
+  // Hier / Avant-hier state
+  interface PrevDayLog { date: string; label: string; entries: FoodEntry[] }
+  const [prevLogs,        setPrevLogs]        = useState<PrevDayLog[]>([]);
+  const [loadingPrevLogs, setLoadingPrevLogs] = useState(false);
+  const [copyingGroup,    setCopyingGroup]    = useState<string | null>(null);
+
   // Portal mount (escape .glass backdrop-filter stacking context)
   const [mounted, setMounted] = useState(false);
 
@@ -486,11 +492,39 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     finally { setDeletingMyFoodId(null); }
   };
 
+  // ── Hier / Avant-hier ─────────────────────────────────────────────────────
+
+  const loadPrevLogs = useCallback(async () => {
+    setLoadingPrevLogs(true);
+    try {
+      // Compute yesterday and day-before-yesterday from current date prop
+      const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+      const base = new Date(date + "T12:00:00");
+
+      const days: Array<{ date: string; label: string }> = [
+        { date: toDateStr(new Date(base.getTime() - 86_400_000)), label: "Hier" },
+        { date: toDateStr(new Date(base.getTime() - 2 * 86_400_000)), label: "Avant-hier" },
+      ];
+
+      const results = await Promise.all(
+        days.map(async ({ date: d, label }) => {
+          try {
+            const res  = await fetch(`/api/log?date=${d}`);
+            const json = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
+            return { date: d, label, entries: json.dayLog?.entries ?? [] };
+          } catch { return { date: d, label, entries: [] }; }
+        }),
+      );
+      setPrevLogs(results.filter((r) => r.entries.length > 0));
+    } finally { setLoadingPrevLogs(false); }
+  }, [date]);
+
   useEffect(() => {
     if (open && tab === "repas")        loadMeals();
     if (open && tab === "recettes")     loadRecipes();
+    if (open && tab === "hier")         loadPrevLogs();
     if (open && tab === "mes-aliments") loadMyFoods();
-  }, [open, tab, loadMeals, loadRecipes, loadMyFoods]);
+  }, [open, tab, loadMeals, loadRecipes, loadPrevLogs, loadMyFoods]);
 
   // ── Aliments ──────────────────────────────────────────────────────────────
 
@@ -856,6 +890,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                   { id: "aliments",     label: "Aliments",  Icon: IconToolsKitchen2 },
                   { id: "repas",        label: "Repas",     Icon: IconToolsKitchen },
                   { id: "recettes",     label: "Recettes",  Icon: IconBookmark },
+                  { id: "hier",         label: "Hier",      Icon: IconHistory },
                   { id: "mes-aliments", label: "Mes aliments", Icon: IconStarFilled },
                 ] as const).map(({ id, label, Icon }) => (
                   <button key={id} onClick={() => setTab(id)}
@@ -1240,6 +1275,144 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       </motion.button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ── HIER / AVANT-HIER ── */}
+              {tab === "hier" && (
+                <div className="px-4 py-3">
+                  {loadingPrevLogs && (
+                    <div className="flex justify-center py-12">
+                      <IconLoader2 size={18} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                    </div>
+                  )}
+
+                  {!loadingPrevLogs && prevLogs.length === 0 && (
+                    <div className="flex flex-col items-center gap-3 py-12">
+                      <span className="text-4xl">📅</span>
+                      <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
+                        Pas encore d'historique.<br />Loggez vos repas au quotidien pour les retrouver ici.
+                      </p>
+                    </div>
+                  )}
+
+                  {!loadingPrevLogs && prevLogs.map((dayLog) => {
+                    const MEAL_GROUPS: Array<{ key: MealType; emoji: string; label: string }> = [
+                      { key: "breakfast", emoji: "🌅", label: "Petit-déjeuner" },
+                      { key: "lunch",     emoji: "🥗", label: "Déjeuner" },
+                      { key: "dinner",    emoji: "🍽️", label: "Dîner" },
+                      { key: "snacks",    emoji: "🍎", label: "Collations" },
+                    ];
+                    // Format label: "Hier — lun. 9 juin"
+                    const [y, m, d] = dayLog.date.split("-").map(Number);
+                    const dateLabel = new Date(y, m - 1, d).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
+
+                    return (
+                      <div key={dayLog.date} className="mb-5">
+                        {/* Day header */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+                            {dayLog.label} · {dateLabel}
+                          </span>
+                          <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+                        </div>
+
+                        <div className="space-y-3">
+                          {MEAL_GROUPS.map(({ key, emoji, label }) => {
+                            const mealEntries = dayLog.entries.filter((e) => e.meal === key);
+                            if (mealEntries.length === 0) return null;
+                            const totalKcal = Math.round(mealEntries.reduce((s, e) => s + e.nutrition.calories, 0));
+                            const groupId = `${dayLog.date}-${key}`;
+                            const isCopying = copyingGroup === groupId;
+
+                            const handleCopyGroup = async () => {
+                              setCopyingGroup(groupId);
+                              try {
+                                await fetch("/api/log/batch", {
+                                  method:  "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body:    JSON.stringify({
+                                    date,
+                                    entries: mealEntries.map((e) => ({
+                                      meal:         e.meal,
+                                      foodId:       e.foodId,
+                                      source:       e.source,
+                                      name:         e.name,
+                                      brand:        e.brand,
+                                      servingLabel: e.servingLabel,
+                                      servingGrams: e.servingGrams,
+                                      servingQty:   e.servingQty,
+                                      servingUnit:  e.servingUnit,
+                                      nutrition:    e.nutrition,
+                                    })),
+                                  }),
+                                });
+                                await onAdded({ name: `${label} (copie)`, calories: totalKcal });
+                              } finally { setCopyingGroup(null); }
+                            };
+
+                            return (
+                              <motion.div key={key}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="rounded-xl overflow-hidden"
+                                style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                                {/* Meal header */}
+                                <div className="flex items-center gap-2 px-3 py-2"
+                                  style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <span className="text-[14px]">{emoji}</span>
+                                  <span className="text-[12px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>{label}</span>
+                                  <span className="text-[11px] font-medium tabular-nums" style={{ color: "var(--calories)" }}>
+                                    {totalKcal} kcal
+                                  </span>
+                                  {/* Copy all button */}
+                                  <button
+                                    onClick={handleCopyGroup}
+                                    disabled={!!copyingGroup}
+                                    className="ml-2 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+                                    style={{
+                                      background: isCopying ? "rgba(167,139,250,0.12)" : "rgba(167,139,250,0.10)",
+                                      border:     "1px solid rgba(167,139,250,0.3)",
+                                      color:      "var(--protein)",
+                                      opacity:    copyingGroup && !isCopying ? 0.5 : 1,
+                                    }}>
+                                    {isCopying
+                                      ? <IconLoader2 size={10} className="animate-spin" />
+                                      : <IconPlus size={10} stroke={2} />
+                                    }
+                                    Copier
+                                  </button>
+                                </div>
+
+                                {/* Entries list */}
+                                <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+                                  {mealEntries.map((entry) => (
+                                    <div key={entry.id} className="flex items-center gap-2 px-3 py-2">
+                                      <FoodPictogram name={entry.name} />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                                          {entry.name}
+                                        </p>
+                                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                          {entry.servingLabel} · P&nbsp;{Math.round(entry.nutrition.proteinG)}g&ensp;G&nbsp;{Math.round(entry.nutrition.carbsG)}g&ensp;L&nbsp;{Math.round(entry.nutrition.fatG)}g
+                                        </p>
+                                      </div>
+                                      <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
+                                        style={{ color: "var(--calories)" }}>
+                                        {Math.round(entry.nutrition.calories)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
