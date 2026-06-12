@@ -12,13 +12,36 @@ interface RawTokens {
 
 export async function saveTokens(userId: string, tokens: RawTokens) {
   const db = getAdminFirestore();
+  // Use { merge: true } so we never accidentally wipe refreshToken or other fields.
+  // Only update the fields we explicitly set — preserves any existing metadata.
   await db.doc(`users/${userId}/oauthTokens/google_fit`).set({
-    provider:     "google_fit",
-    accessToken:  encrypt(tokens.accessToken),
-    refreshToken: encrypt(tokens.refreshToken),
-    expiresAt:    new Date(tokens.expiresAt),
-    updatedAt:    FieldValue.serverTimestamp(),
-  });
+    provider:          "google_fit",
+    accessToken:       encrypt(tokens.accessToken),
+    refreshToken:      encrypt(tokens.refreshToken),
+    expiresAt:         new Date(tokens.expiresAt),
+    updatedAt:         FieldValue.serverTimestamp(),
+    // Clear any stale error flags on successful save
+    refreshError:      null,
+    refreshFailedAt:   null,
+  }, { merge: true });
+}
+
+/** Connection states:
+ * - "connected"    → token doc exists, no recent refresh failure
+ * - "needs_reauth" → doc exists but last refresh failed (user must reconnect)
+ * - "disconnected" → no token doc
+ */
+export type ConnectionStatus = "connected" | "needs_reauth" | "disconnected";
+
+export async function getConnectionStatus(userId: string): Promise<ConnectionStatus> {
+  const db  = getAdminFirestore();
+  const doc = await db.doc(`users/${userId}/oauthTokens/google_fit`).get();
+  if (!doc.exists) return "disconnected";
+  const d = doc.data()!;
+  // If a refresh failed within the last 48h, flag as needs_reauth
+  const failedAt = d.refreshFailedAt?.toMillis?.() as number | undefined;
+  if (failedAt && Date.now() - failedAt < 48 * 3600_000) return "needs_reauth";
+  return "connected";
 }
 
 export async function getTokens(userId: string): Promise<RawTokens | null> {
@@ -29,16 +52,23 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
   const d            = doc.data()!;
   const expiresAt    = (d.expiresAt?.toMillis?.() ?? Number(d.expiresAt)) as number;
   const refreshToken = decrypt(d.refreshToken as string);
-  let   accessToken  = decrypt(d.accessToken  as string);
+  const accessToken  = decrypt(d.accessToken  as string);
 
-  if (Date.now() > expiresAt - 120_000) {
+  // Refresh proactively 10 min before expiry (was 2 min — too short, caused
+  // race conditions when parallel requests both tried to refresh)
+  if (Date.now() > expiresAt - 600_000) {
     try {
-      const fresh = await refreshAccessToken(refreshToken);
+      const fresh = await refreshWithRetry(refreshToken);
       await saveTokens(userId, fresh);
-      // Return fresh set — not the pre-refresh (now-stale) values
       return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
     } catch (err) {
       console.error("Google Fit token refresh failed:", err);
+      // Store the error so Settings can show a "reconnect required" warning
+      await db.doc(`users/${userId}/oauthTokens/google_fit`).set(
+        { refreshError: String(err), refreshFailedAt: new Date() },
+        { merge: true },
+      ).catch(() => {/* silent */});
+      // Return null — the token is expired and we couldn't refresh it
       return null;
     }
   }
@@ -51,6 +81,7 @@ export async function deleteTokens(userId: string) {
   await db.doc(`users/${userId}/oauthTokens/google_fit`).delete();
 }
 
+/** @deprecated Use getConnectionStatus() for richer state. */
 export async function isConnected(userId: string): Promise<boolean> {
   const db  = getAdminFirestore();
   const doc = await db.doc(`users/${userId}/oauthTokens/google_fit`).get();
@@ -69,14 +100,31 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
       client_id:     process.env.GOOGLE_CLIENT_ID!.trim(),
       client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
     }),
+    // 15s timeout — avoids hanging indefinitely on slow Vercel cold starts
+    signal: AbortSignal.timeout(15_000),
   });
   const json = await res.json() as { access_token: string; expires_in: number; error?: string };
   if (json.error) throw new Error(`Token refresh failed: ${json.error}`);
   return {
     accessToken:  json.access_token,
-    refreshToken,
+    refreshToken,                       // Google doesn't rotate refresh tokens
     expiresAt:    Date.now() + json.expires_in * 1000,
   };
+}
+
+/** Retry once on transient failures (network glitch, Vercel cold start) */
+async function refreshWithRetry(refreshToken: string): Promise<RawTokens> {
+  try {
+    return await refreshAccessToken(refreshToken);
+  } catch (firstErr) {
+    // Wait 2s then try once more before giving up
+    await new Promise((r) => setTimeout(r, 2000));
+    try {
+      return await refreshAccessToken(refreshToken);
+    } catch {
+      throw firstErr; // surface the original error
+    }
+  }
 }
 
 // ─── Activity type labels ─────────────────────────────────────────────────────

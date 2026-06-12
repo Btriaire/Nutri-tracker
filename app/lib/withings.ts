@@ -12,33 +12,77 @@ interface RawTokens {
 
 export async function saveTokens(userId: string, tokens: RawTokens) {
   const db = getAdminFirestore();
+  // { merge: true } — never accidentally wipe refreshToken or metadata fields.
   await db.doc(`users/${userId}/oauthTokens/withings`).set({
-    provider:     "withings",
-    accessToken:  encrypt(tokens.accessToken),
-    refreshToken: encrypt(tokens.refreshToken),
-    expiresAt:    new Date(tokens.expiresAt),
-    updatedAt:    FieldValue.serverTimestamp(),
-  });
+    provider:          "withings",
+    accessToken:       encrypt(tokens.accessToken),
+    refreshToken:      encrypt(tokens.refreshToken),
+    expiresAt:         new Date(tokens.expiresAt),
+    updatedAt:         FieldValue.serverTimestamp(),
+    refreshError:      null,
+    refreshFailedAt:   null,
+    refreshing:        false,
+  }, { merge: true });
+}
+
+/** Connection states:
+ * - "connected"    → token doc exists, no recent refresh failure
+ * - "needs_reauth" → doc exists but last refresh failed (user must reconnect)
+ * - "disconnected" → no token doc
+ */
+export type ConnectionStatus = "connected" | "needs_reauth" | "disconnected";
+
+export async function getConnectionStatus(userId: string): Promise<ConnectionStatus> {
+  const db  = getAdminFirestore();
+  const doc = await db.doc(`users/${userId}/oauthTokens/withings`).get();
+  if (!doc.exists) return "disconnected";
+  const d = doc.data()!;
+  const failedAt = d.refreshFailedAt?.toMillis?.() as number | undefined;
+  if (failedAt && Date.now() - failedAt < 48 * 3600_000) return "needs_reauth";
+  return "connected";
 }
 
 export async function getTokens(userId: string): Promise<RawTokens | null> {
   const db  = getAdminFirestore();
-  const doc = await db.doc(`users/${userId}/oauthTokens/withings`).get();
+  const ref = db.doc(`users/${userId}/oauthTokens/withings`);
+  const doc = await ref.get();
   if (!doc.exists) return null;
 
   const d            = doc.data()!;
   const expiresAt    = (d.expiresAt?.toMillis?.() ?? Number(d.expiresAt)) as number;
   const refreshToken = decrypt(d.refreshToken as string);
-  let   accessToken  = decrypt(d.accessToken  as string);
+  const accessToken  = decrypt(d.accessToken  as string);
 
-  if (Date.now() > expiresAt - 120_000) {
+  // Refresh proactively 10 min before expiry (Withings tokens last 3h).
+  // Larger buffer = much lower chance of two concurrent requests both trying
+  // to refresh the same token (Withings rotates tokens → race causes failures).
+  if (Date.now() > expiresAt - 600_000) {
+    // ── Anti-concurrent-refresh lock ──────────────────────────────────────────
+    // If another serverless invocation is already refreshing, the `refreshing`
+    // flag will be set. Wait briefly and re-read — the other invocation will
+    // have saved the new token by then.
+    if (d.refreshing === true) {
+      const lockSetAt = d.refreshingAt?.toMillis?.() as number | undefined;
+      // Honour the lock only if it was set less than 20s ago (stale lock guard)
+      if (lockSetAt && Date.now() - lockSetAt < 20_000) {
+        await new Promise((r) => setTimeout(r, 3000));
+        return getTokens(userId); // re-read after waiting
+      }
+    }
+
+    // Claim the lock
+    await ref.set({ refreshing: true, refreshingAt: new Date() }, { merge: true }).catch(() => {/* silent */});
+
     try {
-      const fresh = await refreshAccessToken(refreshToken);
+      const fresh = await refreshWithRetry(refreshToken);
       await saveTokens(userId, fresh);
-      // Return the fresh token set — not the pre-refresh (now-invalidated) values
       return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
     } catch (err) {
-      console.error("Withings token refresh failed — token likely expired:", err);
+      console.error("Withings token refresh failed:", err);
+      await ref.set(
+        { refreshError: String(err), refreshFailedAt: new Date(), refreshing: false },
+        { merge: true },
+      ).catch(() => {/* silent */});
       return null;
     }
   }
@@ -55,6 +99,7 @@ export async function deleteTokens(userId: string) {
   );
 }
 
+/** @deprecated Use getConnectionStatus() for richer state. */
 export async function isConnected(userId: string): Promise<boolean> {
   const db  = getAdminFirestore();
   const doc = await db.doc(`users/${userId}/oauthTokens/withings`).get();
@@ -74,14 +119,31 @@ async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
       client_secret: process.env.WITHINGS_CLIENT_SECRET!.trim(),
       refresh_token: refreshToken,
     }),
+    signal: AbortSignal.timeout(15_000),
   });
   const json = await res.json() as WithingsTokenResponse;
-  if (json.status !== 0) throw new Error(`Withings token refresh failed: ${json.status}`);
+  if (json.status !== 0) throw new Error(`Withings token refresh failed: status=${json.status}`);
+  // Withings always returns a new refresh_token (token rotation).
+  // Fall back to the old one only if the API unexpectedly omits it.
   return {
     accessToken:  json.body.access_token,
     refreshToken: json.body.refresh_token ?? refreshToken,
     expiresAt:    Date.now() + (json.body.expires_in ?? 10800) * 1000,
   };
+}
+
+/** Retry once on transient failures (Withings API flakiness, cold starts) */
+async function refreshWithRetry(refreshToken: string): Promise<RawTokens> {
+  try {
+    return await refreshAccessToken(refreshToken);
+  } catch (firstErr) {
+    await new Promise((r) => setTimeout(r, 2500));
+    try {
+      return await refreshAccessToken(refreshToken);
+    } catch {
+      throw firstErr;
+    }
+  }
 }
 
 // ─── Measures fetch ───────────────────────────────────────────────────────────

@@ -14,9 +14,11 @@ import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutri
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
 import { format as formatDate } from "date-fns";
 
+type OAuthStatus = "connected" | "needs_reauth" | "disconnected";
+
 interface Props {
-  fitConnected:       boolean;
-  withingsConnected:  boolean;
+  fitConnected:       OAuthStatus;
+  withingsConnected:  OAuthStatus;
   initialGoals:       NutritionGoals;
   initialPhotoUrl?:   string;
   initialDisplayName?: string;
@@ -34,12 +36,12 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   };
   const { theme, setTheme } = useTheme();
   const params = useSearchParams();
-  const [fit, setFit]                   = useState(initialFit);
+  const [fit, setFit]                   = useState<OAuthStatus>(initialFit);
   const [syncing, setSyncing]           = useState(false);
   const [syncMsg, setSyncMsg]           = useState("");
 
   // Withings
-  const [withings, setWithings]         = useState(initialWithings);
+  const [withings, setWithings]         = useState<OAuthStatus>(initialWithings);
   const [wSyncing,  setWSyncing]  = useState(false);
   const [wSyncMsg,  setWSyncMsg]  = useState("");
   const [wDebug,    setWDebug]    = useState(false);
@@ -58,9 +60,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   const [fullSyncDone, setFullSyncDone] = useState(false);
 
   useEffect(() => {
-    if (params.get("fit")      === "connected") setFit(true);
+    if (params.get("fit")      === "connected") setFit("connected");
     if (params.get("fit")      === "error")     setSyncMsg("Erreur lors de la connexion");
-    if (params.get("withings") === "connected") setWithings(true);
+    if (params.get("withings") === "connected") setWithings("connected");
     if (params.get("withings") === "error")     setWSyncMsg("Erreur lors de la connexion");
   }, [params]);
 
@@ -133,7 +135,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   const handleDisconnect = async () => {
     setDisconnecting(true);
     await fetch("/api/google-fit/disconnect", { method: "POST" });
-    setFit(false);
+    setFit("disconnected");
     setDisconnecting(false);
   };
 
@@ -163,7 +165,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   const handleWithingsDisconnect = async () => {
     setWDisconnecting(true);
     await fetch("/api/withings/disconnect", { method: "POST" });
-    setWithings(false);
+    setWithings("disconnected");
     setWSyncMsg("");
     setWDisconnecting(false);
   };
@@ -222,10 +224,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Google Fit</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Pas · Calories · Sommeil · Poids · Séances</p>
             </div>
-            {fit
-              ? <IconCircleCheck size={18} style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <IconCircleX    size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-            }
+            {fit === "connected"    && <IconCircleCheck size={18} style={{ color: "var(--fiber)",    flexShrink: 0 }} />}
+            {fit === "needs_reauth" && <IconAlertCircle  size={18} style={{ color: "#f59e0b",       flexShrink: 0 }} />}
+            {fit === "disconnected" && <IconCircleX      size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
             {fitOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
@@ -234,13 +235,31 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
           <div className="mt-4">
-          {fit ? (
+          {fit !== "disconnected" ? (
             <div className="space-y-2.5">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
-                <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
-              </div>
+              {fit === "needs_reauth" ? (
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
+                  style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.35)" }}>
+                  <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+                  <div>
+                    <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "rgba(245,158,11,0.75)" }}>
+                      Le token a expiré. Reconnectez Google Fit pour rétablir la sync.
+                    </p>
+                    <Link href="/api/google-fit/auth"
+                      className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                      style={{ background: "#f59e0b", color: "#000" }}>
+                      Reconnecter Google Fit
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                  <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
+                  <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
+                </div>
+              )}
 
               {syncMsg && (
                 <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>{syncMsg}</p>
@@ -397,10 +416,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Withings</p>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · % graisse · Masse musculaire</p>
             </div>
-            {withings
-              ? <IconCircleCheck size={18} style={{ color: "var(--fiber)", flexShrink: 0 }} />
-              : <IconCircleX    size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-            }
+            {withings === "connected"    && <IconCircleCheck  size={18} style={{ color: "var(--fiber)",      flexShrink: 0 }} />}
+            {withings === "needs_reauth" && <IconAlertCircle size={18} style={{ color: "#f59e0b",           flexShrink: 0 }} />}
+            {withings === "disconnected" && <IconCircleX     size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
             {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
@@ -409,13 +427,29 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
           <div className="mt-4">
-          {withings ? (
+          {withings !== "disconnected" ? (
             <div className="space-y-2.5">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
-                <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
-              </div>
+              {withings === "needs_reauth" ? (
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
+                  style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.35)" }}>
+                  <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
+                  </div>
+                  <a href="/api/withings/auth"
+                    className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                    style={{ background: "rgba(245,158,11,0.20)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.40)" }}>
+                    Reconnecter
+                  </a>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                  <IconCircleCheck size={13} style={{ color: "var(--fiber)" }} />
+                  <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
+                </div>
+              )}
 
               {wSyncMsg && (
                 <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
