@@ -743,3 +743,15 @@ html[data-theme="ocean"] .bg-orbs::before {
 html[data-theme="ocean"] .bg-orbs::after {
   background: radial-gradient(circle, rgba(255,112,67,0.07) 0%, transparent 65%);
 }
+
+/* ── Desktop mode: remove mobile width constraints ───────────────────────────
+   Target the root inner container of mobile clients (Progress, Settings,
+   Health, Activity) which uses .relative.max-w-md together on the same
+   element — inner cards don't combine these two classes.
+   Also upgrade padding to match DashboardClientDesktop (px-8 py-8).          */
+.dsk-full .relative.max-w-md {
+  max-width: none !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  padding-top: 2rem !important;
+}
