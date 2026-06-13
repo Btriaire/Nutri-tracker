@@ -24,6 +24,7 @@ import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
+type WeightRange = "3m" | "6m" | "1a" | "tout";
 
 const RANGES: { key: Range; label: string; days?: number }[] = [
   { key: "1j",  label: "Jour" },
@@ -33,6 +34,13 @@ const RANGES: { key: Range; label: string; days?: number }[] = [
   { key: "6m",  label: "6M",  days: 180 },
   { key: "1y",  label: "1A",  days: 365 },
   { key: "all", label: "Tout" },
+];
+
+const WEIGHT_RANGES: { key: WeightRange; label: string; days?: number }[] = [
+  { key: "3m",   label: "3M",   days: 90  },
+  { key: "6m",   label: "6M",   days: 180 },
+  { key: "1a",   label: "1A",   days: 365 },
+  { key: "tout", label: "Tout"             },
 ];
 
 function estimateTDEE(goals: NutritionGoals): number { return goals.dailyCalories; }
@@ -275,6 +283,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [calChart,        setCalChart]   = useState<CalChart>("area");
   const [points,          setPoints]     = useState<DayTrendPoint[]>([]);
   const [loading,         setLoading]    = useState(true);
+  const [weightRange,     setWeightRange] = useState<WeightRange>("6m");
+  const [weightPts,       setWeightPts]  = useState<DayTrendPoint[]>([]);
+  const [weightLoading,   setWeightLoading] = useState(false);
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
   const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
   const [targetDate,      setTargetDate] = useState<string>(
@@ -335,6 +346,22 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
   useEffect(() => { loadData(range); }, [range, loadData]);
 
+  const loadWeightData = useCallback(async (wr: WeightRange) => {
+    setWeightLoading(true);
+    try {
+      const today   = format(new Date(), "yyyy-MM-dd");
+      const obj     = WEIGHT_RANGES.find(x => x.key === wr);
+      const from    = obj?.days ? format(subDays(new Date(), obj.days), "yyyy-MM-dd") : "2020-01-01";
+      const res     = await fetch(`/api/progress?from=${from}&to=${today}`);
+      if (res.ok) {
+        const { points: p } = await res.json() as { points: DayTrendPoint[] };
+        setWeightPts(p ?? []);
+      }
+    } finally { setWeightLoading(false); }
+  }, []);
+
+  useEffect(() => { void loadWeightData(weightRange); }, [weightRange, loadWeightData]);
+
   const chartData = points.map((p) => ({
     ...p,
     label: format(parseISO(p.date), range === "1j" ? "HH:mm" : "dd/MM"),
@@ -354,22 +381,22 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     ? Math.round(activityPoints.filter((p) => (p.activeMinutes ?? 0) > 0).reduce((s, p) => s + (p.activeMinutes ?? 0), 0)
         / activityPoints.filter((p) => (p.activeMinutes ?? 0) > 0).length) : 0;
 
-  const firstWeight = weightData[0]?.weightKg;
-  const lastWeight  = weightData[weightData.length - 1]?.weightKg;
+  // ── Weight-specific data (independent range) ───────────────────────────
+  const weightPtsFiltered = weightPts.filter(p => (p.weightKg ?? 0) > 0);
+  const firstWeight = weightPtsFiltered[0]?.weightKg;
+  const lastWeight  = weightPtsFiltered[weightPtsFiltered.length - 1]?.weightKg;
   const weightDelta = (firstWeight && lastWeight) ? lastWeight - firstWeight : null;
 
-  // Use the last actual weight measurement from the chart data as "current" weight
-  // so the displayed stat always matches the last point on the curve.
-  // Fall back to the server-side prop when chart has no data yet.
+  // Use the last actual weight measurement from weight-range data as "current".
+  // Fall back to server-side prop when no weight data is available yet.
   const effectiveCurrentWeight = lastWeight ?? currentWeightKg;
 
-  // ── Weight deltas over 7 / 15 / 30 days ─────────────────────────────────
+  // ── Weight deltas over 7 / 15 / 30 days (always computed from weightPts) ─
   const findWeightBefore = (daysBack: number): number | null => {
-    const today = points[points.length - 1]?.date;
-    if (!today || !lastWeight) return null;
-    const cutoff = format(subDays(parseISO(today), daysBack), "yyyy-MM-dd");
-    // Find the closest measurement on or before cutoff
-    const candidates = points.filter(p => (p.weightKg ?? 0) > 0 && p.date <= cutoff);
+    const latestDate = weightPtsFiltered[weightPtsFiltered.length - 1]?.date;
+    if (!latestDate || !lastWeight) return null;
+    const cutoff = format(subDays(parseISO(latestDate), daysBack), "yyyy-MM-dd");
+    const candidates = weightPts.filter(p => (p.weightKg ?? 0) > 0 && p.date <= cutoff);
     return candidates.length ? (candidates[candidates.length - 1].weightKg ?? null) : null;
   };
   const delta7d  = (() => { const w = findWeightBefore(7);  return (w && lastWeight) ? lastWeight - w : null; })();
@@ -386,10 +413,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     : null;
   const weightTrend = weightDelta === null ? "stable" : weightDelta < -0.1 ? "down" : weightDelta > 0.1 ? "up" : "stable";
 
-  // ── Dual-axis weight chart data ──
+  // ── Dual-axis weight chart data (uses independent weightPts range) ──────
   const weightChartData = buildWeightChartData(
-    chartData.map(p => ({ label: p.label, date: p.date, weightKg: p.weightKg })),
-    chartData.map(p => ({ date: p.date, calories: p.calories })),
+    weightPts.map(p => ({ label: format(parseISO(p.date), "dd/MM"), date: p.date, weightKg: p.weightKg })),
+    weightPts.map(p => ({ date: p.date, calories: p.calories })),
     effectiveCurrentWeight,
     targetWeightKg,
     targetDate || undefined,
@@ -917,23 +944,45 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </motion.div>
 
             {/* ── Dual-axis weight + simulation chart ── */}
-            {(weightData.length > 0 || effectiveCurrentWeight) && (
+            {(weightPtsFiltered.length > 0 || effectiveCurrentWeight) && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <IconScale size={15} stroke={1.5} style={{ color: "var(--protein)" }} />
-                    <p className="label-xs">Poids &amp; Simulation</p>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <IconScale size={15} stroke={1.5} style={{ color: "var(--protein)" }} />
+                      <p className="label-xs">Poids &amp; Simulation</p>
+                      {weightLoading && (
+                        <IconLoader2 size={11} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+                      )}
+                    </div>
+                    {weightDelta !== null && (
+                      <span className="flex items-center gap-1 text-[12px] font-medium"
+                        style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "#f87171" : "var(--text-muted)" }}>
+                        {weightDelta < -0.1 ? <IconArrowDown size={11} stroke={2} /> : weightDelta > 0.1 ? <IconArrowUp size={11} stroke={2} /> : <IconMinus size={11} stroke={2} />}
+                        {Math.abs(weightDelta).toFixed(1)} kg sur la période
+                      </span>
+                    )}
                   </div>
-                  {weightDelta !== null && (
-                    <span className="flex items-center gap-1 text-[12px] font-medium"
-                      style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "#f87171" : "var(--text-muted)" }}>
-                      {weightDelta < -0.1 ? <IconArrowDown size={11} stroke={2} /> : weightDelta > 0.1 ? <IconArrowUp size={11} stroke={2} /> : <IconMinus size={11} stroke={2} />}
-                      {Math.abs(weightDelta).toFixed(1)} kg sur la période
-                    </span>
-                  )}
+                  {/* Independent period selector for the weight chart */}
+                  <div className="flex gap-1">
+                    {WEIGHT_RANGES.map(wr => (
+                      <button
+                        key={wr.key}
+                        onClick={() => setWeightRange(wr.key)}
+                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all"
+                        style={{
+                          background: weightRange === wr.key ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.05)",
+                          color:      weightRange === wr.key ? "var(--protein)"         : "var(--text-muted)",
+                          border:     `1px solid ${weightRange === wr.key ? "rgba(59,130,246,0.45)" : "var(--border)"}`,
+                        }}
+                      >
+                        {wr.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Stats row */}
