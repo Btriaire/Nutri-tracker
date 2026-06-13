@@ -146,7 +146,8 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
   const [items,   setItems]   = useState<DetectedItem[]>([]);
   const [error,   setError]   = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef    = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   // ── Scale nutrition from per-100g to current grams ────────────────────────
   const scale = (item: DetectedItem) => {
@@ -315,12 +316,23 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
           </button>
         </div>
 
-        {/* Hidden file input */}
+        {/* Hidden file inputs */}
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={galleryRef}
+          type="file"
+          accept="image/*"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
@@ -354,37 +366,45 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 </div>
               )}
 
-              {/* Capture button */}
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="w-full flex flex-col items-center gap-4 py-10 rounded-2xl transition-all active:scale-[0.98]"
-                style={{
-                  background: `${mealColor}0C`,
-                  border:     `2px dashed ${mealColor}45`,
-                }}
-              >
-                {/* SVG camera icon ring */}
-                <svg width="68" height="68" viewBox="0 0 68 68" style={{ display: "block" }}>
-                  <circle cx="34" cy="34" r="32" fill={`${mealColor}15`} />
-                  <circle cx="34" cy="34" r="32" fill="none" stroke={`${mealColor}35`} strokeWidth="1" />
-                  <text x="34" y="34" textAnchor="middle" dominantBaseline="middle" fontSize="28">📷</text>
-                </svg>
-                <div className="text-center px-4">
-                  <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                    Prendre ou choisir une photo
-                  </p>
-                  <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-                    L'IA identifie chaque aliment et estime les grammages automatiquement
-                  </p>
-                </div>
-              </button>
+              {/* Capture / gallery buttons */}
+              <div className="flex gap-3">
+                {/* Camera */}
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="flex-1 flex flex-col items-center gap-3 py-7 rounded-2xl transition-all active:scale-[0.97]"
+                  style={{ background: `${mealColor}0C`, border: `2px dashed ${mealColor}45` }}
+                >
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ display: "block" }}>
+                    <circle cx="26" cy="26" r="24" fill={`${mealColor}15`} />
+                    <text x="26" y="26" textAnchor="middle" dominantBaseline="middle" fontSize="22">📷</text>
+                  </svg>
+                  <span className="text-[13px] font-semibold px-2 text-center" style={{ color: "var(--text-primary)" }}>
+                    Appareil photo
+                  </span>
+                </button>
+
+                {/* Gallery */}
+                <button
+                  onClick={() => galleryRef.current?.click()}
+                  className="flex-1 flex flex-col items-center gap-3 py-7 rounded-2xl transition-all active:scale-[0.97]"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "2px dashed rgba(255,255,255,0.12)" }}
+                >
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ display: "block" }}>
+                    <circle cx="26" cy="26" r="24" fill="rgba(255,255,255,0.06)" />
+                    <text x="26" y="26" textAnchor="middle" dominantBaseline="middle" fontSize="22">🖼️</text>
+                  </svg>
+                  <span className="text-[13px] font-semibold px-2 text-center" style={{ color: "var(--text-primary)" }}>
+                    Galerie photo
+                  </span>
+                </button>
+              </div>
 
               {/* Tip */}
               <div className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <span className="text-[13px] flex-shrink-0">💡</span>
                 <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  Pour de meilleurs résultats : photo de dessus, bonne lumière, assiette entière visible
+                  Pour de meilleurs résultats : photo de dessus, bonne lumière, assiette entière visible. Vous pouvez aussi utiliser une photo déjà prise.
                 </p>
               </div>
             </div>

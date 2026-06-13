@@ -198,15 +198,6 @@ export default function MealSection({
           </button>
         )}
 
-        {/* Hunger slider — compact version in header */}
-        <div className="shrink-0" style={{ width: 100 }}>
-          <HungerSlider
-            value={hunger}
-            onChange={(v) => onHungerChange?.(meal, v)}
-            compact
-          />
-        </div>
-
         {/* Add food button */}
         <button
           onClick={() => setModal(true)}
@@ -235,6 +226,17 @@ export default function MealSection({
             )}
 
             <div className="px-4 pb-3">
+              {/* Hunger slider — inside expanded body */}
+              {onHungerChange && (
+                <div className="pt-2 pb-1">
+                  <HungerSlider
+                    value={hunger}
+                    onChange={(v) => onHungerChange(meal, v)}
+                    compact
+                  />
+                </div>
+              )}
+
               {entries.length > 0 ? (
                 <div className="py-1">
                   {entries.map((entry) => (

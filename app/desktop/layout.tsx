@@ -24,7 +24,13 @@ export default function DesktopLayout({ children }: { children: React.ReactNode 
           ← Mobile
         </a>
       </div>
-      {children}
+      {/* Override mobile max-width constraints for desktop sub-pages */}
+      <style>{`
+        .dsk-full .max-w-md,
+        .dsk-full .max-w-2xl,
+        .dsk-full .md\\:max-w-2xl { max-width: none !important; }
+      `}</style>
+      <div className="dsk-full">{children}</div>
     </>
   );
 }
