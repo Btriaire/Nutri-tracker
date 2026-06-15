@@ -6,7 +6,8 @@ import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType } from "@/app/lib/types";
+import AlcoolTracker from "@/app/components/AlcoolTracker";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
@@ -190,8 +191,11 @@ interface Props {
 }
 
 export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients }: Props) {
-  const [entries,    setEntries]    = useState<FoodEntry[]>(initialLog?.entries ?? []);
-  const [waterMl,   setWaterMl]    = useState(initialLog?.waterMl ?? 0);
+  const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
+  const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
+  const [alcoolDrinks, setAlcoolDrinks] = useState<AlcoolDrink[]>(
+    (initialLog as (DayLog & { alcoolDrinks?: AlcoolDrink[] }) | null)?.alcoolDrinks ?? []
+  );
   const [mealHunger, setMealHunger] = useState<Partial<Record<MealType, HungerLevel>>>(
     (initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {}
   );
@@ -234,6 +238,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
     setWaterMl(initialLog?.waterMl ?? 0);
+    setAlcoolDrinks((initialLog as (DayLog & { alcoolDrinks?: AlcoolDrink[] }) | null)?.alcoolDrinks ?? []);
     setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
     setMealHunger((initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {});
     // Load meal photos for this date
@@ -550,6 +555,23 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               onUpdate={setWaterMl}
             />
           </motion.div>
+
+          {/* Alcohol tracker — only when enabled in settings */}
+          {goals.alcoholTracking && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="mb-5"
+            >
+              <AlcoolTracker
+                date={date}
+                initialDrinks={alcoolDrinks}
+                weeklyGoalUnits={goals.weeklyAlcoolUnitsGoal}
+                onUpdate={setAlcoolDrinks}
+              />
+            </motion.div>
+          )}
 
           {/* Meal sections */}
           <div className="space-y-3">

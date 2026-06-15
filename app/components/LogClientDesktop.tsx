@@ -6,9 +6,10 @@ import MealSection   from "@/app/components/MealSection";
 import DateNav       from "@/app/components/DateNav";
 import WaterTracker  from "@/app/components/WaterTracker";
 import FastingTimer  from "@/app/components/FastingTimer";
+import AlcoolTracker from "@/app/components/AlcoolTracker";
 import DayPhotos     from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink } from "@/app/lib/types";
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import type { DayPhoto } from "@/app/api/photos/route";
 
@@ -74,8 +75,11 @@ function MacroBar({ value, goal, color, label }: {
 
 /* ── Main component ── */
 export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" }: Props) {
-  const [entries, setEntries] = useState<FoodEntry[]>(initialLog?.entries ?? []);
-  const [waterMl, setWaterMl] = useState(initialLog?.waterMl ?? 0);
+  const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
+  const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
+  const [alcoolDrinks, setAlcoolDrinks] = useState<AlcoolDrink[]>(
+    (initialLog as (DayLog & { alcoolDrinks?: AlcoolDrink[] }) | null)?.alcoolDrinks ?? []
+  );
 
   const mealHunger = useState<Partial<Record<MealType, HungerLevel>>>(
     (initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {}
@@ -149,6 +153,15 @@ export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" 
           </div>
 
           <WaterTracker date={date} waterMl={waterMl} goalMl={goals.waterMl ?? 2000} onUpdate={setWaterMl} />
+
+          {goals.alcoholTracking && (
+            <AlcoolTracker
+              date={date}
+              initialDrinks={alcoolDrinks}
+              weeklyGoalUnits={goals.weeklyAlcoolUnitsGoal}
+              onUpdate={setAlcoolDrinks}
+            />
+          )}
 
           {goals.intermittentFasting?.enabled && (
             <FastingTimer date={date} fastingConfig={goals.intermittentFasting} />

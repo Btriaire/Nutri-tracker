@@ -175,15 +175,26 @@ export interface DayTotals {
 
 export type DayType = "work" | "rest" | "travel";
 
+export interface AlcoolDrink {
+  id:    string;
+  type:  string;
+  emoji: string;
+  ml:    number;
+  abv:   number;
+  units: number;
+  kcal:  number;
+}
+
 export interface DayLog {
-  date:        string;     // YYYY-MM-DD
-  entries:     FoodEntry[];
-  totals:      DayTotals;
-  waterMl:     number;     // hydratation du jour
-  mealHunger?: Partial<Record<MealType, HungerLevel>>; // faim par repas
-  dayType?:    DayType;    // type de journée
-  jetlag?:     boolean;    // décalage horaire (si dayType==="travel")
-  updatedAt:   Timestamp;
+  date:          string;
+  entries:       FoodEntry[];
+  totals:        DayTotals;
+  waterMl:       number;
+  alcoolDrinks?: AlcoolDrink[];
+  mealHunger?:   Partial<Record<MealType, HungerLevel>>;
+  dayType?:      DayType;
+  jetlag?:       boolean;
+  updatedAt:     Timestamp;
 }
 
 // ─── User Profile ─────────────────────────────────────────────────────────────
@@ -218,8 +229,10 @@ export interface NutritionGoals {
   currentWeightKg?: number;   // pour tracking
   plan?:            NutritionPlan;
   activityPlan?:    ActivityPlan;
-  deductBurnedCalories?:  boolean;   // false = ne pas soustraire les calories brûlées du budget
+  deductBurnedCalories?:  boolean;
   intermittentFasting?:   IntermittentFasting;
+  alcoholTracking?:       boolean;
+  weeklyAlcoolUnitsGoal?: number;
 }
 
 export interface PlannedActivity {

@@ -950,7 +950,9 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [water,    setWater]    = useState(initialGoals.waterMl.toString());
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
-  const [deductBurned, setDeductBurned] = useState(initialGoals.deductBurnedCalories !== false);
+  const [deductBurned,   setDeductBurned]   = useState(initialGoals.deductBurnedCalories !== false);
+  const [alcoholTracking, setAlcoholTracking] = useState(initialGoals.alcoholTracking ?? false);
+  const [weeklyAlcool,    setWeeklyAlcool]    = useState((initialGoals.weeklyAlcoolUnitsGoal ?? 14).toString());
   const [weeklyGoal,     setWeeklyGoal]     = useState(initialGoals.weeklyGoal ?? "maintain");
   const [currentWeight,  setCurrentWeight]  = useState(initialGoals.currentWeightKg?.toString() ?? "");
   const [targetDate,     setTargetDate]     = useState<string>("");
@@ -1066,7 +1068,9 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
       stepsGoal:            parseInt(steps)    || 10000,
       sleepGoalMin:         (parseInt(sleep)   || 7) * 60,
       activityLevel:        activity,
-      deductBurnedCalories: deductBurned,
+      deductBurnedCalories:  deductBurned,
+      alcoholTracking:       alcoholTracking,
+      weeklyAlcoolUnitsGoal: alcoholTracking ? (parseFloat(weeklyAlcool) || 14) : undefined,
       weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
       targetWeightKg: parseFloat(weight) || null,
     };
@@ -1936,6 +1940,57 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                         style={{ transform: deductBurned ? "translateX(20px)" : "translateX(0)" }}
                       />
                     </button>
+                  </div>
+
+                  {/* Alcohol tracking toggle */}
+                  <div className="pt-1 border-t" style={{ borderColor: "var(--border)" }}>
+                    <div className="flex items-center justify-between py-1">
+                      <div>
+                        <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+                          🍷 Suivi consommation alcool
+                        </p>
+                        <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          {alcoholTracking
+                            ? "Verre SVG animé + presets rapides dans le Journal"
+                            : "Désactivé — n'apparaît pas dans le Journal"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setAlcoholTracking(v => !v)}
+                        className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
+                        style={{ background: alcoholTracking ? "#c084fc" : "rgba(255,255,255,0.12)" }}
+                      >
+                        <span
+                          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                          style={{ transform: alcoholTracking ? "translateX(20px)" : "translateX(0)" }}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Weekly goal input — only shown when enabled */}
+                    {alcoholTracking && (
+                      <div className="flex items-center gap-3 mt-2 px-1">
+                        <p className="text-[11px] flex-1" style={{ color: "var(--text-muted)" }}>
+                          Objectif hebdo. (unités standard)
+                        </p>
+                        <input
+                          type="number" value={weeklyAlcool} min="1" max="100" step="1"
+                          onChange={e => setWeeklyAlcool(e.target.value)}
+                          className="w-16 text-center text-[13px] font-bold rounded-xl outline-none tabular-nums"
+                          style={{
+                            background: "rgba(192,132,252,0.08)",
+                            border: "1px solid rgba(192,132,252,0.30)",
+                            color: "#c084fc", padding: "6px 4px",
+                          }}
+                        />
+                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>u/sem.</p>
+                      </div>
+                    )}
+                    {alcoholTracking && (
+                      <p className="text-[9px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>
+                        OMS recommande ≤ 10 unités/semaine pour les femmes, ≤ 14 pour les hommes.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
