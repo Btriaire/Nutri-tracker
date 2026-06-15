@@ -205,6 +205,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         {/* Nutrition & Profile Goals */}
         <GoalsPanel initialGoals={initialGoals} />
 
+        {/* Alcool */}
+        <AlcoolPanel initialGoals={initialGoals} />
+
         {/* Theme picker */}
         <ThemePicker current={theme} onChange={setTheme} />
 
@@ -951,8 +954,6 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
   const [steps,    setSteps]    = useState((initialGoals.stepsGoal ?? 10000).toString());
   const [sleep,    setSleep]    = useState(Math.round((initialGoals.sleepGoalMin ?? 420) / 60).toString());
   const [deductBurned,   setDeductBurned]   = useState(initialGoals.deductBurnedCalories !== false);
-  const [alcoholTracking, setAlcoholTracking] = useState(initialGoals.alcoholTracking ?? false);
-  const [weeklyAlcool,    setWeeklyAlcool]    = useState((initialGoals.weeklyAlcoolUnitsGoal ?? 14).toString());
   const [weeklyGoal,     setWeeklyGoal]     = useState(initialGoals.weeklyGoal ?? "maintain");
   const [currentWeight,  setCurrentWeight]  = useState(initialGoals.currentWeightKg?.toString() ?? "");
   const [targetDate,     setTargetDate]     = useState<string>("");
@@ -1068,9 +1069,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
       stepsGoal:            parseInt(steps)    || 10000,
       sleepGoalMin:         (parseInt(sleep)   || 7) * 60,
       activityLevel:        activity,
-      deductBurnedCalories:  deductBurned,
-      alcoholTracking:       alcoholTracking,
-      weeklyAlcoolUnitsGoal: alcoholTracking ? (parseFloat(weeklyAlcool) || 14) : undefined,
+      deductBurnedCalories: deductBurned,
       weeklyGoal:     weeklyGoal as "lose" | "maintain" | "gain",
       targetWeightKg: parseFloat(weight) || null,
     };
@@ -1099,10 +1098,11 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
       const goals = buildGoalsObject();
       const ap = buildActivityPlan();
       if (ap) goals.activityPlan = ap;
+      // PUT merges into existing goals (preserves alcoholTracking, fasting, etc.)
       await fetch("/api/goals", {
-        method:  "PATCH",
+        method:  "PUT",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ goals }),
+        body:    JSON.stringify(goals),
       });
       if (ap) setActivityPlan(ap);
       setSaved(true);
@@ -1123,12 +1123,12 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     setPlanLoading(true);
     setPlanResult(null);
     try {
-      // 1. Save goals first
+      // 1. Save goals first (PUT merges into existing goals, preserving other fields)
       const goalsObj = buildGoalsObject();
       await fetch("/api/goals", {
-        method:  "PATCH",
+        method:  "PUT",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ goals: goalsObj }),
+        body:    JSON.stringify(goalsObj),
       });
 
       // 2. Build NutritionPlan
@@ -1942,56 +1942,6 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                     </button>
                   </div>
 
-                  {/* Alcohol tracking toggle */}
-                  <div className="pt-1 border-t" style={{ borderColor: "var(--border)" }}>
-                    <div className="flex items-center justify-between py-1">
-                      <div>
-                        <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
-                          🍷 Suivi consommation alcool
-                        </p>
-                        <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                          {alcoholTracking
-                            ? "Verre SVG animé + presets rapides dans le Journal"
-                            : "Désactivé — n'apparaît pas dans le Journal"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setAlcoholTracking(v => !v)}
-                        className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                        style={{ background: alcoholTracking ? "#c084fc" : "rgba(255,255,255,0.12)" }}
-                      >
-                        <span
-                          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-                          style={{ transform: alcoholTracking ? "translateX(20px)" : "translateX(0)" }}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Weekly goal input — only shown when enabled */}
-                    {alcoholTracking && (
-                      <div className="flex items-center gap-3 mt-2 px-1">
-                        <p className="text-[11px] flex-1" style={{ color: "var(--text-muted)" }}>
-                          Objectif hebdo. (unités standard)
-                        </p>
-                        <input
-                          type="number" value={weeklyAlcool} min="1" max="100" step="1"
-                          onChange={e => setWeeklyAlcool(e.target.value)}
-                          className="w-16 text-center text-[13px] font-bold rounded-xl outline-none tabular-nums"
-                          style={{
-                            background: "rgba(192,132,252,0.08)",
-                            border: "1px solid rgba(192,132,252,0.30)",
-                            color: "#c084fc", padding: "6px 4px",
-                          }}
-                        />
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>u/sem.</p>
-                      </div>
-                    )}
-                    {alcoholTracking && (
-                      <p className="text-[9px] mt-1.5 px-1" style={{ color: "var(--text-muted)" }}>
-                        OMS recommande ≤ 10 unités/semaine pour les femmes, ≤ 14 pour les hommes.
-                      </p>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -2072,6 +2022,181 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Alcool Panel ────────────────────────────────────────────────────────────
+
+function AlcoolPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
+  const [open,       setOpen]       = useState(false);
+  const [enabled,    setEnabled]    = useState(initialGoals.alcoholTracking ?? false);
+  const [weeklyGoal, setWeeklyGoal] = useState((initialGoals.weeklyAlcoolUnitsGoal ?? 14).toString());
+  const [saving,     setSaving]     = useState(false);
+  const [saved,      setSaved]      = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/goals", {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          alcoholTracking:       enabled,
+          weeklyAlcoolUnitsGoal: enabled ? (parseFloat(weeklyGoal) || 14) : 0,
+        }),
+      });
+      setSaved(true);
+      // auto-collapse the panel after 1s so user sees the confirmation
+      setTimeout(() => {
+        setSaved(false);
+        setOpen(false);
+      }, 1200);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.04 }}
+      className="glass overflow-hidden mb-4"
+    >
+      {/* Collapsible header */}
+      <button className={`w-full flex items-center justify-between px-5 ${open ? "py-4" : "py-3"} transition-all`} onClick={() => setOpen(v => !v)}>
+        <div className="flex items-center gap-3">
+          <div className={`${open ? "w-9 h-9" : "w-7 h-7"} rounded-xl flex items-center justify-center flex-shrink-0 transition-all`}
+            style={{ background: "rgba(192,132,252,0.12)", border: "1px solid rgba(192,132,252,0.22)" }}>
+            {/* Wine glass SVG icon */}
+            <svg width={open ? 20 : 16} height={open ? 20 : 16} viewBox="0 0 24 28" fill="none">
+              <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="#c084fc" strokeWidth="1.7" strokeLinejoin="round" fill="#c084fc" fillOpacity="0.2" />
+              <line x1="12" y1="14" x2="12" y2="22" stroke="#c084fc" strokeWidth="1.7" strokeLinecap="round" />
+              <path d="M7 22 Q12 25 17 22" stroke="#c084fc" strokeWidth="1.7" strokeLinecap="round" fill="none" />
+              <circle cx="11" cy="9" r="1.2" fill="#c084fc" fillOpacity="0.5" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <p className={`font-semibold ${open ? "text-[13.5px]" : "text-[13px]"}`} style={{ color: "var(--text-primary)" }}>Suivi Alcool</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              {enabled ? `Activé · objectif ${weeklyGoal} u/sem.` : "Désactivé — cliquer pour configurer"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          {/* Quick toggle in header — stop propagation so it doesn't also open/close */}
+          <button
+            onClick={e => { e.stopPropagation(); setEnabled(v => !v); }}
+            className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
+            style={{ background: enabled ? "#c084fc" : "rgba(255,255,255,0.12)" }}
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+              style={{ transform: enabled ? "translateX(20px)" : "translateX(0)" }}
+            />
+          </button>
+          {open
+            ? <IconChevronUp  size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="alcool-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 space-y-4" style={{ borderTop: "1px solid var(--border)" }}>
+
+              {/* Toggle */}
+              <div className="flex items-center justify-between pt-4">
+                <div>
+                  <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+                    Activer le suivi
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    {enabled
+                      ? "Verre SVG animé + presets rapides dans le Journal"
+                      : "N'apparaît pas dans le Journal"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setEnabled(v => !v)}
+                  className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
+                  style={{ background: enabled ? "#c084fc" : "rgba(255,255,255,0.12)" }}
+                >
+                  <span
+                    className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                    style={{ transform: enabled ? "translateX(20px)" : "translateX(0)" }}
+                  />
+                </button>
+              </div>
+
+              {/* Weekly goal — only when enabled */}
+              <AnimatePresence initial={false}>
+                {enabled && (
+                  <motion.div
+                    key="alcool-goal"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="rounded-2xl p-4 space-y-3"
+                      style={{ background: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.18)" }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#c084fc" }}>
+                        Objectif hebdomadaire
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setWeeklyGoal(v => String(Math.max(1, (parseFloat(v) || 14) - 1)))}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                          style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}
+                        >−</button>
+                        <input
+                          type="number" value={weeklyGoal} min="1" max="100" step="1"
+                          onChange={e => setWeeklyGoal(e.target.value)}
+                          className="w-16 text-center text-[18px] font-bold rounded-xl outline-none tabular-nums"
+                          style={{
+                            background: "rgba(192,132,252,0.08)",
+                            border: "1px solid rgba(192,132,252,0.30)",
+                            color: "#c084fc", padding: "7px 4px",
+                          }}
+                        />
+                        <button
+                          onClick={() => setWeeklyGoal(v => String((parseFloat(v) || 14) + 1))}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                          style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}
+                        >+</button>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>unités / semaine</span>
+                      </div>
+                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        🌍 OMS : ≤ 10 u/sem pour les femmes · ≤ 14 u/sem pour les hommes.
+                        1 unité standard = 10 g d'alcool pur.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Save */}
+              <button onClick={handleSave} disabled={saving || saved}
+                className="btn btn-primary w-full gap-2" style={{ height: "40px" }}>
+                {saved
+                  ? <><IconCircleCheck size={14} stroke={2} /> Enregistré !</>
+                  : saving
+                    ? <><IconLoader2 size={13} stroke={2} className="animate-spin" /> Sauvegarde…</>
+                    : <><IconDeviceFloppy size={14} /> Enregistrer</>}
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -3294,51 +3419,75 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
 }
 
 function ThemePicker({ current, onChange }: { current: Theme; onChange: (t: Theme) => void }) {
+  const [open, setOpen] = useState(false);
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.03 }}
-      className="glass p-4 mb-4 mt-4"
+      className="glass overflow-hidden mb-4 mt-4"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(139,92,246,0.12)" }}
-        >
-          <IconSun size={16} style={{ color: "#a78bfa" }} />
-        </div>
-        <div>
-          <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence</p>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Choisir un thème</p>
-        </div>
-      </div>
-
-      {/* 2×2 grid */}
-      <div className="grid grid-cols-2 gap-2.5">
-        {THEME_DEFS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            className="text-left"
-            style={{ outline: "none" }}
+      {/* Collapsible header */}
+      <button
+        className="w-full flex items-center justify-between px-4 py-3"
+        onClick={() => setOpen(v => !v)}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(139,92,246,0.12)" }}
           >
-            <ThemePreview t={t} selected={current === t.id} />
-            <div className="mt-1.5 px-0.5">
-              <p
-                className="text-[12px] font-semibold leading-tight"
-                style={{ color: current === t.id ? "var(--text-primary)" : "var(--text-secondary)" }}
-              >
-                {t.name}
-              </p>
-              <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
-                {t.desc}
-              </p>
+            <IconSun size={15} style={{ color: "#a78bfa" }} />
+          </div>
+          <div className="text-left">
+            <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              {THEME_DEFS.find(t => t.id === current)?.name ?? "Thème actuel"}
+            </p>
+          </div>
+        </div>
+        {open
+          ? <IconChevronUp  size={14} style={{ color: "var(--text-muted)" }} />
+          : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="theme-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            {/* 2×2 grid */}
+            <div className="grid grid-cols-2 gap-2.5 px-4 pb-4" style={{ borderTop: "1px solid var(--border)" }}>
+              {THEME_DEFS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => { onChange(t.id); setOpen(false); }}
+                  className="text-left pt-3"
+                  style={{ outline: "none" }}
+                >
+                  <ThemePreview t={t} selected={current === t.id} />
+                  <div className="mt-1.5 px-0.5">
+                    <p
+                      className="text-[12px] font-semibold leading-tight"
+                      style={{ color: current === t.id ? "var(--text-primary)" : "var(--text-secondary)" }}
+                    >
+                      {t.name}
+                    </p>
+                    <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
+                      {t.desc}
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
-          </button>
-        ))}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

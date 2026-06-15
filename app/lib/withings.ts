@@ -37,8 +37,15 @@ export async function getConnectionStatus(userId: string): Promise<ConnectionSta
   const doc = await db.doc(`users/${userId}/oauthTokens/withings`).get();
   if (!doc.exists) return "disconnected";
   const d = doc.data()!;
-  const failedAt = d.refreshFailedAt?.toMillis?.() as number | undefined;
-  if (failedAt && Date.now() - failedAt < 48 * 3600_000) return "needs_reauth";
+  const failedAt  = d.refreshFailedAt?.toMillis?.() as number | undefined;
+  const expiresAt = (d.expiresAt?.toMillis?.() ?? Number(d.expiresAt ?? 0)) as number;
+
+  // Only show needs_reauth when:
+  // - a refresh genuinely failed (refreshFailedAt set)
+  // - AND no successful refresh has happened since (token still expired / nearly expired)
+  // This prevents phantom reauth prompts when a Firestore write failed but tokens are still valid.
+  const successfulRefreshSince = expiresAt > Date.now() + 60_000; // token valid for > 1 min
+  if (failedAt && Date.now() - failedAt < 48 * 3600_000 && !successfulRefreshSince) return "needs_reauth";
   return "connected";
 }
 
@@ -73,18 +80,33 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
     // Claim the lock
     await ref.set({ refreshing: true, refreshingAt: new Date() }, { merge: true }).catch(() => {/* silent */});
 
+    // Phase 1: call Withings API — a failure HERE means the refresh token is bad → needs_reauth
+    let fresh: RawTokens;
     try {
-      const fresh = await refreshWithRetry(refreshToken);
-      await saveTokens(userId, fresh);
-      return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
-    } catch (err) {
-      console.error("Withings token refresh failed:", err);
+      fresh = await refreshWithRetry(refreshToken);
+    } catch (apiErr) {
+      console.error("Withings token refresh (API) failed:", apiErr);
+      // Only permanently invalidate when Withings itself rejects the token
       await ref.set(
-        { refreshError: String(err), refreshFailedAt: new Date(), refreshing: false },
+        { refreshError: String(apiErr), refreshFailedAt: new Date(), refreshing: false },
         { merge: true },
       ).catch(() => {/* silent */});
       return null;
     }
+
+    // Phase 2: persist — a failure HERE (Firestore timeout, cold start) must NOT
+    // mark the connection as needing reauth. The new tokens are valid; we just
+    // failed to write them. Return them anyway for this request so the sync
+    // continues, and release the lock.
+    try {
+      await saveTokens(userId, fresh);
+    } catch (saveErr) {
+      console.error("Withings: failed to persist refreshed tokens (Firestore):", saveErr);
+      // Release lock without setting refreshFailedAt — token is still valid
+      await ref.set({ refreshing: false }, { merge: true }).catch(() => {/* silent */});
+    }
+
+    return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
   }
 
   return { accessToken, refreshToken, expiresAt };
@@ -377,6 +399,12 @@ export async function syncRange(userId: string, from: string, to: string): Promi
     { integrations: { withings: { connected: true, lastSyncedAt: ts } } },
     { merge: true },
   );
+
+  // Clear any stale refreshFailedAt after a successful sync — avoids phantom reauth prompts
+  await db.doc(`users/${userId}/oauthTokens/withings`).set(
+    { refreshError: null, refreshFailedAt: null },
+    { merge: true },
+  ).catch(() => {/* silent — not critical */});
 
   return written;
 }

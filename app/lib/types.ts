@@ -508,6 +508,7 @@ export interface DayTrendPoint {
   hungerLunch?:     number;
   hungerDinner?:    number;
   hungerSnacks?:    number;
+  alcoolUnits?:     number;  // sum of units from alcoolDrinks[]
 }
 
 // ─── Health Vitals ────────────────────────────────────────────────────────────

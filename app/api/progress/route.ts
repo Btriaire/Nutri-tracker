@@ -89,6 +89,9 @@ export async function GET(req: NextRequest) {
       hungerLunch:      mh.lunch ?? undefined,
       hungerDinner:     mh.dinner ?? undefined,
       hungerSnacks:     mh.snacks ?? undefined,
+      alcoolUnits:      log.alcoolDrinks?.length
+        ? Math.round(log.alcoolDrinks.reduce((s, d) => s + d.units, 0) * 10) / 10
+        : undefined,
     };
   });
 

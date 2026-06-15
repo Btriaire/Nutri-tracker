@@ -33,6 +33,7 @@ export default function Nav() {
     router.push("/login");
   }, [router]);
 
+  // Fetch once on mount — no need to re-fetch on every route change
   useEffect(() => {
     fetch("/api/goals")
       .then(r => r.json())
@@ -41,7 +42,7 @@ export default function Nav() {
         if (d.displayName) setDisplayName(d.displayName);
       })
       .catch(() => {});
-  }, [path]);
+  }, []);
 
   return (
     <>

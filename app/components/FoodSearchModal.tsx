@@ -420,6 +420,23 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (step !== "browse" || selected) {
+          closeOverlay(); // go back to browse first
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step, selected]);
+
   const closeOverlay = () => {
     setSelected(null);
     setSelectedRecipe(null);

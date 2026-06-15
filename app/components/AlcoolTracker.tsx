@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconMinus, IconX, IconChevronDown } from "@tabler/icons-react";
 import type { AlcoolDrink } from "@/app/lib/types";
@@ -29,6 +29,75 @@ const PRESETS = [
   { type: "Vodka",      emoji: "🥃", ml: 40,  abv: 40 },
   { type: "Cocktail",   emoji: "🍹", ml: 200, abv: 8  },
 ] as const;
+
+// ─── Drink SVG Icons ──────────────────────────────────────────────────────────
+
+function DrinkIcon({ type, color = "#c084fc" }: { type: string; color?: string }) {
+  const s = 26;
+  const c = color;
+
+  // Wine glass (Vin rouge, Vin blanc)
+  if (type.startsWith("Vin")) return (
+    <svg width={s} height={s} viewBox="0 0 24 28" fill="none">
+      <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" fill={c} fillOpacity="0.15" />
+      <line x1="12" y1="14" x2="12" y2="22" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M7 22 Q12 25 17 22" stroke={c} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {type === "Vin rouge" && (
+        <circle cx="11" cy="9" r="1.2" fill={c} fillOpacity="0.5" />
+      )}
+    </svg>
+  );
+
+  // Beer (Bière 25cl, Bière 33cl)
+  if (type.startsWith("Bière")) return (
+    <svg width={s} height={s} viewBox="0 0 24 28" fill="none">
+      {/* mug body */}
+      <rect x="2" y="7" width="15" height="17" rx="2" stroke={c} strokeWidth="1.6" fill={c} fillOpacity="0.12" />
+      {/* handle */}
+      <path d="M17 11 Q23 11 23 16 Q23 21 17 21" stroke={c} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+      {/* foam */}
+      <path d="M2 7 Q4.5 3 7 6 Q9 3 12 6 Q14 3 17 6 L17 7 L2 7 Z" fill={c} fillOpacity="0.4" stroke={c} strokeWidth="0.5" />
+      {/* bubbles */}
+      <circle cx="7" cy="14" r="1" fill={c} fillOpacity="0.35" />
+      <circle cx="11" cy="17" r="1" fill={c} fillOpacity="0.35" />
+    </svg>
+  );
+
+  // Champagne flute
+  if (type === "Champagne") return (
+    <svg width={s} height={s} viewBox="0 0 24 28" fill="none">
+      <path d="M8 2 L16 2 L13.5 17 L10.5 17 Z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" fill={c} fillOpacity="0.15" />
+      <line x1="12" y1="17" x2="12" y2="24" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8 24 Q12 27 16 24" stroke={c} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {/* bubbles */}
+      <circle cx="10.5" cy="12" r="0.8" fill={c} fillOpacity="0.6" />
+      <circle cx="13" cy="8"  r="0.8" fill={c} fillOpacity="0.6" />
+      <circle cx="11.5" cy="5"  r="0.8" fill={c} fillOpacity="0.4" />
+    </svg>
+  );
+
+  // Tumbler (Whisky, Vodka)
+  if (type === "Whisky" || type === "Vodka") return (
+    <svg width={s} height={s} viewBox="0 0 24 28" fill="none">
+      <path d="M4 5 L6 23 L18 23 L20 5 Z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" fill={c} fillOpacity="0.12" />
+      {/* ice cube */}
+      <rect x="9" y="13" width="7" height="6" rx="1.5" stroke={c} strokeWidth="1.2" strokeOpacity="0.6" fill="none" />
+      <line x1="9" y1="16" x2="16" y2="16" stroke={c} strokeWidth="0.7" strokeOpacity="0.35" />
+    </svg>
+  );
+
+  // Cocktail / Martini
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 28" fill="none">
+      <path d="M2 3 L22 3 L12 17 Z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" fill={c} fillOpacity="0.15" />
+      <line x1="12" y1="17" x2="12" y2="24" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M7 24 Q12 27 17 24" stroke={c} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      {/* cherry on rim */}
+      <circle cx="17" cy="6" r="2.2" fill={c} fillOpacity="0.4" stroke={c} strokeWidth="0.8" />
+      <path d="M17 4 Q15 1 13 3" stroke={c} strokeWidth="1" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
 
 // ─── SVG Wine Glass ───────────────────────────────────────────────────────────
 
@@ -166,6 +235,13 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
   const [customMl,   setCustomMl]   = useState(150);
   const [customAbv,  setCustomAbv]  = useState(12);
 
+  // Reset drinks when navigating to a different date
+  useEffect(() => {
+    setDrinks(initialDrinks);
+    setShowCustom(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
   const totalUnits = Math.round(drinks.reduce((s, d) => s + d.units, 0) * 10) / 10;
   const totalKcal  = drinks.reduce((s, d) => s + d.kcal, 0);
 
@@ -301,9 +377,9 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           const u = calcUnits(p.ml, p.abv);
           return (
             <button key={p.type} onClick={() => addPreset(p)} disabled={loading}
-              className="flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-xl transition-all active:scale-95 hover:border-purple-500/40"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-              <span className="text-[20px] leading-none">{p.emoji}</span>
+              className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all active:scale-95"
+              style={{ background: "rgba(192,132,252,0.07)", border: "1px solid rgba(192,132,252,0.18)" }}>
+              <DrinkIcon type={p.type} color="#c084fc" />
               <span className="text-[8px] text-center leading-tight w-full px-0.5 truncate"
                 style={{ color: "var(--text-muted)" }}>
                 {p.type.replace(" 25cl", "").replace(" 33cl", " 33")}
