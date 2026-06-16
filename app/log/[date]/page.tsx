@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { DayLog, FoodEntry, UserProfile } from "@/app/lib/types";
+import type { DayLog, FoodEntry, UserProfile, TrackedNutrients } from "@/app/lib/types";
 import LogClient from "../LogClient";
 
 function serializeDayLog(raw: DayLog): DayLog {
@@ -29,6 +29,7 @@ export default async function LogDatePage({ params }: Props) {
   let dayLog: DayLog | null = null;
   let goals = defaultGoals();
   let lang: "fr" | "en" = "fr";
+  let trackedNutrients: TrackedNutrients | undefined = undefined;
 
   try {
     const db = getAdminFirestore();
@@ -39,12 +40,13 @@ export default async function LogDatePage({ params }: Props) {
     if (logSnap.exists) dayLog = serializeDayLog(logSnap.data() as DayLog);
     if (profileSnap.exists) {
       const profile = profileSnap.data() as UserProfile;
-      goals = profile.goals ?? defaultGoals();
-      lang  = profile.lang ?? "fr";
+      goals             = profile.goals ?? defaultGoals();
+      lang              = profile.lang ?? "fr";
+      trackedNutrients  = profile.chartPrefs?.trackedNutrients;
     }
   } catch (e) {
     console.error("Firestore error:", e);
   }
 
-  return <LogClient date={date} initialLog={dayLog} goals={goals} lang={lang} />;
+  return <LogClient date={date} initialLog={dayLog} goals={goals} lang={lang} trackedNutrients={trackedNutrients} />;
 }
