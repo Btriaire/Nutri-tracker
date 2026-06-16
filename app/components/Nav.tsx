@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 
 const TABS = [
-  { href: "/dashboard", Icon: IconLayoutDashboard, label: "Accueil",  color: "#f97316", bg: "rgba(249,115,22,0.14)" },
+  { href: "/hub",       Icon: IconLayoutDashboard, label: "Accueil",  color: "#f97316", bg: "rgba(249,115,22,0.14)" },
   { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "#3b82f6", bg: "rgba(59,130,246,0.14)" },
   { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "#f43f5e", bg: "rgba(244,63,94,0.14)"  },
   { href: "/activity",  Icon: IconFlame,           label: "Activité", color: "#34d399", bg: "rgba(52,211,153,0.14)" },
@@ -54,7 +54,9 @@ export default function Nav() {
           backdropFilter: "blur(16px)",
           height: "48px",
         }}>
-        <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-10 w-auto" priority />
+        <Link href="/hub" className="flex items-center">
+          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-10 w-auto" priority />
+        </Link>
       </div>
 
       {/* Bottom nav (mobile) */}
@@ -103,10 +105,10 @@ export default function Nav() {
           backdropFilter: "blur(20px)",
         }}
       >
-        <div className="flex items-center px-2 mb-6">
+        <Link href="/hub" className="flex items-center px-2 mb-6">
           <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103}
             className="w-full max-w-[180px] h-auto" priority />
-        </div>
+        </Link>
 
         {TABS.map(({ href, Icon, label, color, bg }) => {
           const active = path.startsWith(href);

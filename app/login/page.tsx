@@ -24,7 +24,7 @@ export default function LoginPage() {
   const [loading,     setLoading]     = useState(false);
   const [googleLoad,  setGoogleLoad]  = useState(false);
 
-  const redirect = () => router.push("/log");
+  const redirect = () => router.push("/hub");
 
   // ── Email / password ────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
