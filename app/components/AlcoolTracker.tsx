@@ -119,7 +119,7 @@ function WineGlassSVG({ units, dailyGoal }: { units: number; dailyGoal: number }
   const bL = xL(bowlB),     bR = xR(bowlB);
 
   return (
-    <svg width={W} height={96} viewBox={`0 0 ${W} 96`} style={{ display: "block", overflow: "visible" }}>
+    <svg width={52} height={62} viewBox={`0 0 ${W} 96`} style={{ display: "block", overflow: "visible" }}>
       <defs>
         <clipPath id="ac-bowl">
           <polygon points={`${xL(bowlT)},${bowlT} ${xR(bowlT)},${bowlT} ${bR},${bowlB} ${bL},${bowlB}`} />
