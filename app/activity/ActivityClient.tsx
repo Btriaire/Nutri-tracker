@@ -8,7 +8,7 @@ import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
-  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge,
+  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge, IconMicrophone,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals, GoogleFitSession } from "@/app/lib/types";
 import RouteMap from "@/app/components/RouteMap";
@@ -19,6 +19,7 @@ function isGpsActivity(type: number): boolean { return GPS_ACTIVITY_TYPES.has(ty
 import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
+import VoiceActivityModal from "@/app/components/VoiceActivityModal";
 import ActivityCategoryPicker from "@/app/components/ActivityCategoryPicker";
 import ActivityDetailSheet from "@/app/components/ActivityDetailSheet";
 import type { ActivitySaveData } from "@/app/components/ActivityDetailSheet";
@@ -536,6 +537,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
 
   // ── Sport search modal
   const [showSportSearch, setShowSportSearch] = useState(false);
+  const [showVoice,       setShowVoice]       = useState(false);
 
   // ── Category picker favorites (localStorage)
   const [actFavorites, setActFavorites] = useState<string[]>([]);
@@ -1078,6 +1080,19 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowVoice(true)}
+              aria-label="Dicter mon activité"
+              className="flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style={{
+                width: 38, height: 38,
+                background: "rgba(56,189,248,0.12)",
+                border: "1px solid rgba(56,189,248,0.4)",
+                color: "#38bdf8",
+              }}
+            >
+              <IconMicrophone size={17} />
+            </button>
             <button
               onClick={() => setShowSportSearch(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all"
@@ -1797,6 +1812,21 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
         onCustomize={handleSportCustomize}
         onSave={handleSportSave}
       />
+
+      {/* Voice Activity Modal (Nutri-IA) */}
+      <AnimatePresence>
+        {showVoice && (
+          <VoiceActivityModal
+            date={date}
+            onClose={() => setShowVoice(false)}
+            onAdded={() => {
+              setShowVoice(false);
+              navigate(date);
+              showToast("✓ Activité(s) ajoutée(s) par Nutri-IA", true);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Hidden input for template photo editing */}
       <input
