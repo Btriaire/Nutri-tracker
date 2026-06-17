@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { addDays, format, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -11,10 +12,11 @@ interface Props {
 }
 
 export default function DateNav({ date, basePath = "/log" }: Props) {
-  const router  = useRouter();
-  const parsed  = parseISO(date);
-  const isTdy   = isToday(parsed);
-  const today   = format(new Date(), "yyyy-MM-dd");
+  const router    = useRouter();
+  const parsed    = parseISO(date);
+  const isTdy     = isToday(parsed);
+  const today     = format(new Date(), "yyyy-MM-dd");
+  const dateInput = useRef<HTMLInputElement>(null);
 
   const jump = (key: string) => {
     if (!key) return;
@@ -26,9 +28,18 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
     jump(format(next, "yyyy-MM-dd"));
   };
 
+  const openPicker = () => {
+    const el = dateInput.current;
+    if (!el) return;
+    // showPicker() is the reliable way to open the native calendar without
+    // overlaying a transparent input (which intercepts taps on mobile).
+    try { el.showPicker(); } catch { el.focus(); el.click(); }
+  };
+
   return (
     <div className="flex items-center justify-between gap-2">
       <button
+        type="button"
         onClick={() => go(-1)}
         className="btn-icon"
         aria-label="Jour précédent"
@@ -36,9 +47,14 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
         <IconChevronLeft size={13} stroke={2.5} />
       </button>
 
-      {/* Center label — tap to open a date picker and jump to any past day */}
-      <label className="text-center flex-1 relative cursor-pointer select-none">
-        <p
+      {/* Center — tap to open the date picker and jump to any past day */}
+      <button
+        type="button"
+        onClick={openPicker}
+        className="text-center flex-1 select-none"
+        aria-label="Choisir une date"
+      >
+        <span
           className="text-[14px] font-semibold capitalize flex items-center justify-center gap-1"
           style={{ color: isTdy ? "var(--text-primary)" : "var(--text-secondary)" }}
         >
@@ -46,21 +62,26 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
             ? "Aujourd'hui"
             : format(parsed, "EEEE d MMMM", { locale: fr })}
           <IconCalendar size={12} stroke={2} style={{ color: "var(--text-muted)", opacity: 0.7 }} />
-        </p>
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        </span>
+        <span className="block text-[11px]" style={{ color: "var(--text-muted)" }}>
           {format(parsed, "dd/MM/yyyy")}
-        </p>
-        <input
-          type="date"
-          value={date}
-          max={today}
-          onChange={(e) => jump(e.target.value)}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          aria-label="Choisir une date"
-        />
-      </label>
+        </span>
+      </button>
+
+      {/* Hidden native date input (no overlay) */}
+      <input
+        ref={dateInput}
+        type="date"
+        value={date}
+        max={today}
+        onChange={(e) => jump(e.target.value)}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
 
       <button
+        type="button"
         onClick={() => go(+1)}
         disabled={isTdy}
         className="btn-icon disabled:opacity-30"
