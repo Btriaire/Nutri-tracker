@@ -1066,9 +1066,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Chart */}
                 {weightChartData.length > 0 ? (
                   <>
-                    {/* Scrollable wrapper — min 52px per data point so labels never overlap */}
-                    <div style={{ overflowX: "auto", overflowY: "hidden", marginLeft: "-4px", marginRight: "-4px" }}>
-                    <div style={{ width: `${Math.max(100, weightChartData.length * 52)}px`, minWidth: "100%" }}>
+                    {/* Fit-to-width — the range buttons (3M/6M/1A/Tout) control how much history shows on one screen */}
+                    <div style={{ marginLeft: "-4px", marginRight: "-4px" }}>
                     <ResponsiveContainer width="100%" height={240}>
                       <ComposedChart data={weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
@@ -1087,7 +1086,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }}
-                          tickLine={false} axisLine={false} interval={0} />
+                          tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
                         {/* Left Y: weight */}
                         <YAxis yAxisId="w" orientation="left"
                           tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
@@ -1186,8 +1185,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           activeDot={{ r: 5 }} connectNulls={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
-                    </div>{/* inner width */}
-                    </div>{/* scroll wrapper */}
+                    </div>{/* chart wrapper */}
 
                     {/* Legend */}
                     <div className="flex items-center gap-3 mt-2.5 justify-center flex-wrap">
