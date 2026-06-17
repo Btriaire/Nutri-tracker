@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
+import VoiceMealModal from "@/app/components/VoiceMealModal";
 import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
@@ -13,7 +15,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -191,6 +193,8 @@ interface Props {
 }
 
 export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients }: Props) {
+  const router = useRouter();
+  const [showVoice,    setShowVoice]    = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
   const [alcoolDrinks, setAlcoolDrinks] = useState<AlcoolDrink[]>(
@@ -354,9 +358,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-5"
+          className="mb-5 flex items-center gap-2"
         >
-          <DateNav date={date} />
+          <div className="flex-1 min-w-0">
+            <DateNav date={date} />
+          </div>
+          {/* Voice meal logging — Nutri-IA */}
+          <button
+            onClick={() => setShowVoice(true)}
+            aria-label="Dicter mon repas"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "rgba(52,211,153,0.14)", border: "1px solid rgba(52,211,153,0.4)", color: "#34d399" }}
+          >
+            <IconMicrophone size={17} stroke={1.8} />
+          </button>
         </motion.div>
 
         {/* ── Fasting Timer ── */}
@@ -678,6 +693,17 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Voice meal modal — Nutri-IA */}
+      <AnimatePresence>
+        {showVoice && (
+          <VoiceMealModal
+            date={date}
+            onClose={() => setShowVoice(false)}
+            onAdded={() => { setShowVoice(false); router.refresh(); }}
+          />
         )}
       </AnimatePresence>
 
