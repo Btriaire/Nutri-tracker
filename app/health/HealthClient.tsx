@@ -723,7 +723,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               );
                             }}
                           />
-                          <Line type="monotone" dataKey="kg" stroke="#60a5fa" strokeWidth={2} dot={false} />
+                          <Line type="linear" dataKey="kg" stroke="#60a5fa" strokeWidth={2}
+                            dot={{ r: 2, fill: "#60a5fa", strokeWidth: 0 }} activeDot={{ r: 4 }} connectNulls />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -880,8 +881,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         <ReferenceLine y={120} stroke="rgba(251,188,4,0.5)"  strokeDasharray="4 3" />
                         <ReferenceLine y={140} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 3" />
                         <ReferenceLine y={80}  stroke="rgba(251,188,4,0.3)"  strokeDasharray="4 3" />
-                        <Line type="monotone" dataKey="sys" stroke="#EA4335" strokeWidth={1.5} dot={{ r: 3, fill: "#EA4335", strokeWidth: 0 }} connectNulls />
-                        <Line type="monotone" dataKey="dia" stroke="#7986CB" strokeWidth={1.5} dot={{ r: 3, fill: "#7986CB", strokeWidth: 0 }} connectNulls />
+                        <Line type="linear" dataKey="sys" stroke="#EA4335" strokeWidth={1.5} dot={{ r: 3, fill: "#EA4335", strokeWidth: 0 }} connectNulls />
+                        <Line type="linear" dataKey="dia" stroke="#7986CB" strokeWidth={1.5} dot={{ r: 3, fill: "#7986CB", strokeWidth: 0 }} connectNulls />
                       </LineChart>
                     </ResponsiveContainer>
                     <div className="flex items-center gap-4 mt-2 flex-wrap">
@@ -1714,7 +1715,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         </div>
                       );
                     }} />
-                    <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={1.5} fill="url(#g-hr)" dot={false} connectNulls />
+                    <Area type="linear" dataKey="hrAvg" stroke="#EA4335" strokeWidth={1.5} fill="url(#g-hr)" dot={{ r: 1.6, fill: "#EA4335", strokeWidth: 0 }} activeDot={{ r: 3.5 }} connectNulls />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

@@ -169,6 +169,7 @@ function buildWeightChartData(
   targetKg: number | null,
   targetDate: string | undefined,
   plan?: NutritionPlan | undefined,
+  maxFutureDays: number = Infinity,
 ): WeightChartPoint[] {
   const today    = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
@@ -245,22 +246,28 @@ function buildWeightChartData(
     isToday:   true,
   };
 
-  // Future points — one per week from today to target
+  // Future points — one per week from today to target.
+  // The horizon is capped (maxFutureDays) so a far-off target date doesn't
+  // stretch the timeline and squash the measured curve into a sliver — that
+  // was making the chart impossible to "zoom" into.
   const future: WeightChartPoint[] = [];
   const daysUntilTarget = Math.round((endDate.getTime() - today.getTime()) / 86400000);
-  const weeksTotal      = Math.ceil(daysUntilTarget / 7);
+  const horizonDays     = Math.max(0, Math.min(daysUntilTarget, maxFutureDays));
+  const reachesTarget   = horizonDays >= daysUntilTarget;
+  const weeksTotal      = Math.ceil(horizonDays / 7);
 
   for (let w = 1; w <= weeksTotal; w++) {
-    const daysFromNow = Math.min(w * 7, daysUntilTarget);
+    const daysFromNow = Math.min(w * 7, horizonDays);
     const d           = new Date(today.getTime() + daysFromNow * 86400000);
     const dateStr     = format(d, "yyyy-MM-dd");
     const proj        = getProjected(dateStr) ?? dailyKg[dailyKg.length - 1];
     const daysInSim   = Math.round((d.getTime() - simStart.getTime()) / 86400000);
     const bandKg      = Math.min(0.25 + (daysInSim / Math.max(totalDays, 1)) * 0.75, 1.0);
+    const atEnd       = daysFromNow >= horizonDays;
 
     future.push({
       date:      dateStr,
-      label:     daysFromNow >= daysUntilTarget ? format(endDate, "dd/MM/yy") : format(d, "dd/MM"),
+      label:     atEnd && reachesTarget ? format(endDate, "dd/MM/yy") : format(d, "dd/MM"),
       actual:    null,
       projected: Math.round(proj * 10) / 10,
       projLow:   Math.round((proj + (isLoss ?  bandKg : -bandKg)) * 10) / 10,
@@ -270,7 +277,7 @@ function buildWeightChartData(
       calories:  null,
       isFuture:  true,
     });
-    if (daysFromNow >= daysUntilTarget) break;
+    if (atEnd) break;
   }
 
   const filteredPast = past.filter(p => p.date !== todayStr);
@@ -433,6 +440,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const weightTrend = weightDelta === null ? "stable" : weightDelta < -0.1 ? "down" : weightDelta > 0.1 ? "up" : "stable";
 
   // ── Dual-axis weight chart data (uses independent weightPts range) ──────
+  // Cap the future projection horizon to the selected window so measured data
+  // keeps a fair share of the chart width (≈ matches the past window).
+  const futureHorizonDays = WEIGHT_RANGES.find(x => x.key === weightRange)?.days ?? Infinity;
   const weightChartData = buildWeightChartData(
     weightPts.map(p => ({ label: format(parseISO(p.date), "dd/MM"), date: p.date, weightKg: p.weightKg })),
     weightPts.map(p => ({ date: p.date, calories: p.calories })),
@@ -440,12 +450,20 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     targetWeightKg,
     targetDate || undefined,
     plan,
+    futureHorizonDays,
   );
+  // Y-domain is fit to the *measured* + projected line only — NOT the wide
+  // projLow/projHigh uncertainty band, which would otherwise flatten the
+  // real weight curve. Tight, adaptive padding gives the curve real vertical
+  // amplitude ("zoom") while still snapping to clean 0.5 kg gridlines.
   const allWeightValues = weightChartData.flatMap(p =>
-    [p.actual, p.projected, p.projLow, p.projHigh].filter((v): v is number => v != null && v > 0 && v < 999)
+    [p.actual, p.projected].filter((v): v is number => v != null && v > 0 && v < 999)
   );
-  const weightYMin = allWeightValues.length ? Math.floor(Math.min(...allWeightValues) - 0.5) : undefined;
-  const weightYMax = allWeightValues.length ? Math.ceil(Math.max(...allWeightValues)  + 0.5) : undefined;
+  const wMinRaw = allWeightValues.length ? Math.min(...allWeightValues) : 0;
+  const wMaxRaw = allWeightValues.length ? Math.max(...allWeightValues) : 0;
+  const wPad    = Math.max(0.4, (wMaxRaw - wMinRaw) * 0.12);
+  const weightYMin = allWeightValues.length ? Math.floor((wMinRaw - wPad) * 2) / 2 : undefined;
+  const weightYMax = allWeightValues.length ? Math.ceil((wMaxRaw + wPad) * 2) / 2  : undefined;
 
   const progressInsightData = {
     days:           points.length,
@@ -1173,8 +1191,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={3} fill="#4ade80" stroke="var(--bg)" strokeWidth={1.5} />;
                           }}
                           activeDot={{ r: 4, fill: "#4ade80" }} connectNulls />
-                        {/* Actual weight (solid area, on top) */}
-                        <Area yAxisId="w" type="monotone" dataKey="actual" name="actual"
+                        {/* Actual weight (solid area, on top) — linear keeps the real
+                            day-to-day variation visible instead of over-smoothing it */}
+                        <Area yAxisId="w" type="linear" dataKey="actual" name="actual"
                           stroke="var(--protein)" strokeWidth={2.5} fill="url(#actualGrad)"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           dot={(props: any) => {
@@ -1333,9 +1352,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           {goals.proteinGrams > 0 && <ReferenceLine y={goals.proteinGrams} stroke="var(--protein)" strokeDasharray="4 3" strokeOpacity={0.35} />}
                           {goals.carbsGrams   > 0 && <ReferenceLine y={goals.carbsGrams}   stroke="var(--carbs)"   strokeDasharray="4 3" strokeOpacity={0.35} />}
                           {goals.fatGrams     > 0 && <ReferenceLine y={goals.fatGrams}     stroke="var(--fat)"     strokeDasharray="4 3" strokeOpacity={0.35} />}
-                          <Line type="monotone" dataKey="proteinG" name="Protéines" stroke="var(--protein)" strokeWidth={2} dot={false} connectNulls />
-                          <Line type="monotone" dataKey="carbsG"   name="Glucides"  stroke="var(--carbs)"   strokeWidth={2} dot={false} connectNulls />
-                          <Line type="monotone" dataKey="fatG"     name="Lipides"   stroke="var(--fat)"     strokeWidth={2} dot={false} connectNulls />
+                          <Line type="linear" dataKey="proteinG" name="Protéines" stroke="var(--protein)" strokeWidth={2} dot={{ r: 1.5, fill: "var(--protein)", strokeWidth: 0 }} activeDot={{ r: 3.5 }} connectNulls />
+                          <Line type="linear" dataKey="carbsG"   name="Glucides"  stroke="var(--carbs)"   strokeWidth={2} dot={{ r: 1.5, fill: "var(--carbs)",   strokeWidth: 0 }} activeDot={{ r: 3.5 }} connectNulls />
+                          <Line type="linear" dataKey="fatG"     name="Lipides"   stroke="var(--fat)"     strokeWidth={2} dot={{ r: 1.5, fill: "var(--fat)",     strokeWidth: 0 }} activeDot={{ r: 3.5 }} connectNulls />
                         </ComposedChart>
                       </ResponsiveContainer>
                       {/* Average summary */}
@@ -1410,8 +1429,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                     );
                                   }} />
                                   <ReferenceLine y={ref.refLine} stroke={ref.color} strokeDasharray="3 3" strokeOpacity={0.5} />
-                                  <Area type="monotone" dataKey="value" stroke={ref.color} strokeWidth={1.5}
-                                    fill={`url(#micro-grad-${k})`} dot={false} connectNulls />
+                                  <Area type="linear" dataKey="value" stroke={ref.color} strokeWidth={1.5}
+                                    fill={`url(#micro-grad-${k})`} dot={{ r: 1.3, fill: ref.color, strokeWidth: 0 }} activeDot={{ r: 3 }} connectNulls />
                                 </AreaChart>
                               </ResponsiveContainer>
                               <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
