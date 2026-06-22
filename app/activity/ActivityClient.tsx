@@ -8,7 +8,7 @@ import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
-  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge, IconMicrophone, IconBarbell,
+  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge, IconMicrophone, IconBarbell, IconTrendingUp,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals, GoogleFitSession } from "@/app/lib/types";
 import RouteMap from "@/app/components/RouteMap";
@@ -21,6 +21,7 @@ import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
 import VoiceActivityModal from "@/app/components/VoiceActivityModal";
 import GymSessionModal from "@/app/components/GymSessionModal";
+import GymProgressModal from "@/app/components/GymProgressModal";
 import ActivityCategoryPicker from "@/app/components/ActivityCategoryPicker";
 import ActivityDetailSheet from "@/app/components/ActivityDetailSheet";
 import type { ActivitySaveData } from "@/app/components/ActivityDetailSheet";
@@ -540,6 +541,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
   const [showSportSearch, setShowSportSearch] = useState(false);
   const [showVoice,       setShowVoice]       = useState(false);
   const [showGym,         setShowGym]         = useState(false);
+  const [showGymProgress, setShowGymProgress] = useState(false);
 
   // ── Category picker favorites (localStorage)
   const [actFavorites, setActFavorites] = useState<string[]>([]);
@@ -1106,6 +1108,19 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               }}
             >
               <IconBarbell size={15} /> Salle
+            </button>
+            <button
+              onClick={() => setShowGymProgress(true)}
+              aria-label="Progression salle"
+              className="flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style={{
+                width: 38, height: 38,
+                background: "rgba(56,189,248,0.12)",
+                border: "1px solid rgba(56,189,248,0.4)",
+                color: "#38bdf8",
+              }}
+            >
+              <IconTrendingUp size={17} />
             </button>
             <button
               onClick={() => setShowSportSearch(true)}
@@ -1854,6 +1869,13 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               showToast("✓ Séance enregistrée", true);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Gym Progress Modal */}
+      <AnimatePresence>
+        {showGymProgress && (
+          <GymProgressModal onClose={() => setShowGymProgress(false)} />
         )}
       </AnimatePresence>
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IconX, IconPlus, IconMinus, IconCheck, IconTrash, IconChevronLeft,
-  IconBarbell, IconSearch,
+  IconBarbell, IconSearch, IconCamera, IconClock, IconPlayerSkipForward,
 } from "@tabler/icons-react";
 import MuscleBodyMap from "./MuscleBodyMap";
 import {
@@ -21,6 +21,7 @@ interface DraftExercise {
   primaryMuscle: Muscle;
   secondary:     Muscle[];
   sets:          DraftSet[];
+  machinePhoto?: string;
 }
 
 interface Props {
@@ -30,6 +31,28 @@ interface Props {
 }
 
 const NAME_PRESETS = ["Push", "Pull", "Jambes", "Haut du corps", "Full body"];
+const REST_SECONDS = 90;
+
+// Redimensionne une photo en JPEG base64 (max 480px) pour stockage léger
+function resizeImage(file: File, max = 480): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("no ctx")); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.7));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
 
 export default function GymSessionModal({ date, onSaved, onClose }: Props) {
   const [view,        setView]        = useState<"builder" | "picker">("builder");
@@ -40,6 +63,18 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
   const [query,       setQuery]       = useState("");
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState<string | null>(null);
+  const [restSec,     setRestSec]     = useState<number | null>(null);
+
+  const fileRef        = useRef<HTMLInputElement | null>(null);
+  const photoTargetRef = useRef<number | null>(null);
+
+  // ── Rest timer countdown ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (restSec === null) return;
+    if (restSec <= 0) { setRestSec(null); return; }
+    const t = setTimeout(() => setRestSec((s) => (s === null ? null : s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [restSec]);
 
   // ── Aggregate worked muscles for the live body map ──────────────────────────
   const { primaryMuscles, secondaryMuscles } = useMemo(() => {
@@ -84,6 +119,31 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
     setExercises((p) => p.map((ex, idx) => idx !== i ? ex : {
       ...ex, sets: ex.sets.map((s, j) => j !== si ? s : { ...s, [field]: Math.max(0, val) }),
     }));
+  const toggleSetDone = (i: number, si: number) => {
+    let nowDone = false;
+    setExercises((p) => p.map((ex, idx) => idx !== i ? ex : {
+      ...ex, sets: ex.sets.map((s, j) => {
+        if (j !== si) return s;
+        nowDone = !s.done;
+        return { ...s, done: nowDone };
+      }),
+    }));
+    // Démarre le minuteur de repos quand on valide une série
+    setTimeout(() => { if (nowDone) setRestSec(REST_SECONDS); }, 0);
+  };
+
+  // ── Machine photo ─────────────────────────────────────────────────────────────
+  const openCamera = (i: number) => { photoTargetRef.current = i; fileRef.current?.click(); };
+  const onPhotoPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const i = photoTargetRef.current;
+    e.target.value = "";
+    if (!file || i === null) return;
+    try {
+      const dataUrl = await resizeImage(file);
+      setExercises((p) => p.map((ex, idx) => idx !== i ? ex : { ...ex, machinePhoto: dataUrl }));
+    } catch { /* ignore */ }
+  };
 
   // ── Save ────────────────────────────────────────────────────────────────────
   const save = async () => {
@@ -102,6 +162,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             name:          ex.name,
             primaryMuscle: ex.primaryMuscle,
             sets:          ex.sets.map((s) => ({ reps: s.reps, weightKg: s.weightKg, done: s.done })),
+            ...(ex.machinePhoto ? { machinePhoto: ex.machinePhoto } : {}),
           })),
         }),
       });
@@ -262,11 +323,19 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               {exercises.map((ex, i) => (
                 <motion.div key={`${ex.exerciseId}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    {ex.machinePhoto && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={ex.machinePhoto} alt="appareil" className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                        style={{ border: "1px solid rgba(255,255,255,0.1)" }} />
+                    )}
+                    <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
                       <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{MUSCLE_LABELS[ex.primaryMuscle]}</p>
                     </div>
+                    <button onClick={() => openCamera(i)} aria-label="Photo de l'appareil"
+                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: `${ACCENT}1A`, color: ACCENT }}><IconCamera size={13} /></button>
                     <button onClick={() => removeExercise(i)} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}><IconTrash size={13} /></button>
                   </div>
@@ -275,7 +344,15 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                   <div className="space-y-1.5">
                     {ex.sets.map((s, si) => (
                       <div key={si} className="flex items-center gap-2">
-                        <span className="text-[11px] w-5 text-center flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>{si + 1}</span>
+                        <button onClick={() => toggleSetDone(i, si)} aria-label="Valider la série"
+                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                          style={{
+                            background: s.done ? ACCENT : "rgba(255,255,255,0.06)",
+                            border: `1.5px solid ${s.done ? ACCENT : "rgba(255,255,255,0.18)"}`,
+                            color: s.done ? "#fff" : "var(--text-muted)",
+                          }}>
+                          {s.done ? <IconCheck size={12} stroke={3} /> : <span className="text-[10px] tabular-nums">{si + 1}</span>}
+                        </button>
                         {/* reps */}
                         <div className="flex items-center gap-1 flex-1">
                           <button onClick={() => updateSet(i, si, "reps", s.reps - 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
@@ -317,6 +394,28 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             )}
           </div>
         )}
+
+        {/* Hidden camera input */}
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPhotoPicked} />
+
+        {/* Rest timer */}
+        <AnimatePresence>
+          {restSec !== null && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
+              className="flex-shrink-0 mx-5 mb-2 px-4 py-2.5 rounded-xl flex items-center gap-3"
+              style={{ background: `${ACCENT}1A`, border: `1px solid ${ACCENT}44` }}>
+              <IconClock size={16} style={{ color: ACCENT }} />
+              <span className="text-[13px] font-semibold tabular-nums" style={{ color: ACCENT }}>
+                Repos {Math.floor(restSec / 60)}:{String(restSec % 60).padStart(2, "0")}
+              </span>
+              <div className="flex-1" />
+              <button onClick={() => setRestSec((s) => (s ?? 0) + 15)} className="text-[11px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>+15s</button>
+              <button onClick={() => setRestSec(null)} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>
+                <IconPlayerSkipForward size={11} /> Passer
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Bottom save bar (builder only) */}
         {view === "builder" && (
