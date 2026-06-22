@@ -2,15 +2,18 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format, subDays } from "date-fns";
 import {
   IconX, IconPlus, IconMinus, IconCheck, IconTrash, IconChevronLeft,
   IconBarbell, IconSearch, IconCamera, IconClock, IconPlayerSkipForward,
+  IconPlayerPlay, IconDeviceFloppy, IconLayoutGrid,
 } from "@tabler/icons-react";
 import MuscleBodyMap from "./MuscleBodyMap";
 import {
   EXERCISES, EXERCISE_BY_ID, GROUP_ORDER, GROUP_LABELS, MUSCLE_LABELS,
   EQUIPMENT_LABELS, exercisesByGroup, type Muscle, type MuscleGroup, type Exercise,
 } from "@/app/lib/exercises";
+import type { GymProgram, GymSession } from "@/app/lib/types";
 
 const ACCENT = "#38bdf8";
 
@@ -64,9 +67,51 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState<string | null>(null);
   const [restSec,     setRestSec]     = useState<number | null>(null);
+  const [programs,    setPrograms]    = useState<GymProgram[]>([]);
+  const [lastByEx,    setLastByEx]    = useState<Record<string, DraftSet[]>>({});
+  const [savedNote,   setSavedNote]   = useState<string | null>(null);
 
   const fileRef        = useRef<HTMLInputElement | null>(null);
   const photoTargetRef = useRef<number | null>(null);
+
+  // ── Charge les programmes + derniers poids utilisés (90 derniers jours) ───────
+  useEffect(() => {
+    fetch("/api/gym/programs")
+      .then((r) => r.json())
+      .then((d: { programs?: GymProgram[] }) => setPrograms(d.programs ?? []))
+      .catch(() => {});
+
+    const to   = format(new Date(), "yyyy-MM-dd");
+    const from = format(subDays(new Date(), 90), "yyyy-MM-dd");
+    fetch(`/api/gym?from=${from}&to=${to}`)
+      .then((r) => r.json())
+      .then((d: { sessions?: GymSession[] }) => {
+        const sessions = (d.sessions ?? []).slice().sort((a, b) => b.date.localeCompare(a.date));
+        const map: Record<string, DraftSet[]> = {};
+        for (const s of sessions) {
+          for (const ex of s.exercises) {
+            if (map[ex.exerciseId]) continue; // garde la séance la plus récente
+            map[ex.exerciseId] = ex.sets.map((st) => ({ reps: st.reps, weightKg: st.weightKg, done: false }));
+          }
+        }
+        setLastByEx(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Séries par défaut pour un exercice : derniers poids utilisés sinon valeur de base
+  const defaultSets = (exerciseId: string, count?: number): DraftSet[] => {
+    const last = lastByEx[exerciseId];
+    if (last && last.length) {
+      const base = last.map((s) => ({ ...s, done: false }));
+      if (count == null) return base;
+      if (count <= base.length) return base.slice(0, count);
+      const fill = base[base.length - 1];
+      return [...base, ...Array.from({ length: count - base.length }, () => ({ ...fill, done: false }))];
+    }
+    const n = count ?? 1;
+    return Array.from({ length: n }, () => ({ reps: 10, weightKg: 20, done: false }));
+  };
 
   // ── Rest timer countdown ────────────────────────────────────────────────────
   useEffect(() => {
@@ -103,15 +148,62 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
       name:          ex.name,
       primaryMuscle: ex.primary,
       secondary:     ex.secondary,
-      sets:          [{ reps: 10, weightKg: 20, done: true }],
+      sets:          defaultSets(ex.id),
     }]);
     setView("builder");
+  };
+
+  // ── Programmes : lancer & enregistrer ─────────────────────────────────────────
+  const launchProgram = (p: GymProgram) => {
+    const drafts: DraftExercise[] = [];
+    for (const pe of p.exercises) {
+      const meta = EXERCISE_BY_ID[pe.exerciseId];
+      if (!meta) continue;
+      drafts.push({
+        exerciseId:    meta.id,
+        name:          meta.name,
+        primaryMuscle: meta.primary,
+        secondary:     meta.secondary,
+        sets:          defaultSets(meta.id, pe.sets),
+      });
+    }
+    if (drafts.length === 0) return;
+    setExercises(drafts);
+    setName(p.name);
+    setView("builder");
+  };
+
+  const saveAsProgram = async () => {
+    if (exercises.length === 0) return;
+    try {
+      const res = await fetch("/api/gym/programs", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim() || "Programme",
+          exercises: exercises.map((ex) => ({ exerciseId: ex.exerciseId, name: ex.name, sets: ex.sets.length })),
+        }),
+      });
+      if (!res.ok) throw new Error("api");
+      const d = await res.json() as { program?: GymProgram };
+      if (d.program) setPrograms((prev) => [d.program as GymProgram, ...prev]);
+      setSavedNote("✓ Programme enregistré");
+      setTimeout(() => setSavedNote(null), 2500);
+    } catch {
+      setSavedNote("Erreur d'enregistrement");
+      setTimeout(() => setSavedNote(null), 2500);
+    }
+  };
+
+  const deleteProgram = async (id: string) => {
+    setPrograms((prev) => prev.filter((p) => p.id !== id));
+    await fetch(`/api/gym/programs?id=${id}`, { method: "DELETE" }).catch(() => {});
   };
   const removeExercise = (i: number) => setExercises((p) => p.filter((_, idx) => idx !== i));
   const addSet = (i: number) => setExercises((p) => p.map((ex, idx) => {
     if (idx !== i) return ex;
-    const last = ex.sets[ex.sets.length - 1] ?? { reps: 10, weightKg: 20, done: true };
-    return { ...ex, sets: [...ex.sets, { ...last, done: true }] };
+    const last = ex.sets[ex.sets.length - 1] ?? { reps: 10, weightKg: 20, done: false };
+    return { ...ex, sets: [...ex.sets, { ...last, done: false }] };
   }));
   const removeSet = (i: number, si: number) => setExercises((p) => p.map((ex, idx) =>
     idx !== i ? ex : { ...ex, sets: ex.sets.filter((_, j) => j !== si) }).filter((ex) => ex.sets.length > 0));
@@ -307,6 +399,35 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               ))}
             </div>
 
+            {/* programmes — lancement en un tap */}
+            {programs.length > 0 && exercises.length === 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-2 px-0.5">
+                  <IconLayoutGrid size={13} style={{ color: "var(--text-muted)" }} />
+                  <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Tes programmes</p>
+                </div>
+                <div className="space-y-1.5">
+                  {programs.map((p) => (
+                    <div key={p.id} className="flex items-center gap-2 p-2.5 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <button onClick={() => launchProgram(p)} className="flex-1 flex items-center gap-2.5 min-w-0 text-left active:scale-[0.99] transition-transform">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}1A`, color: ACCENT }}>
+                          <IconPlayerPlay size={15} stroke={2.5} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{p.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.exercises.length} exercices</p>
+                        </div>
+                      </button>
+                      <button onClick={() => deleteProgram(p.id)} aria-label="Supprimer le programme"
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}><IconTrash size={13} /></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* live body map */}
             {exercises.length > 0 && (
               <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -388,6 +509,19 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               style={{ background: `${ACCENT}14`, border: `1px dashed ${ACCENT}55`, color: ACCENT }}>
               <IconPlus size={16} /> Ajouter un exercice
             </button>
+
+            {/* save as program */}
+            {exercises.length > 0 && (
+              <button onClick={saveAsProgram}
+                className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-medium flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)" }}>
+                <IconDeviceFloppy size={14} /> Enregistrer comme programme
+              </button>
+            )}
+
+            {savedNote && (
+              <p className="mt-2 text-center text-[12px]" style={{ color: ACCENT }}>{savedNote}</p>
+            )}
 
             {error && (
               <p className="mt-3 text-center text-[12px]" style={{ color: "#f87171" }}>{error}</p>

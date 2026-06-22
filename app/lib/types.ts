@@ -512,6 +512,21 @@ export interface GymSession {
   loggedAt:       Timestamp;
 }
 
+// Programme réutilisable : modèle de séance relançable en un tap
+export interface GymProgramExercise {
+  exerciseId: string;
+  name:       string;             // libellé FR (dénormalisé)
+  sets:       number;             // nombre de séries par défaut
+}
+
+export interface GymProgram {
+  id:         string;
+  name:       string;             // "Push", "Full body"…
+  exercises:  GymProgramExercise[];
+  createdAt:  Timestamp;
+  updatedAt:  Timestamp;
+}
+
 // ─── Trend Data ───────────────────────────────────────────────────────────────
 
 export interface DayTrendPoint {
