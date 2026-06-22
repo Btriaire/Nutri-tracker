@@ -103,12 +103,41 @@ async function main() {
     for (const [ciqualKey, docKey] of Object.entries(FIELD_MAP)) {
       per100g[docKey] = parseNum(item[ciqualKey]);
     }
+
     // Ensure required macros default to 0 if null
-    per100g.calories = per100g.calories ?? 0;
     per100g.proteinG = per100g.proteinG ?? 0;
     per100g.carbsG   = per100g.carbsG   ?? 0;
     per100g.fatG     = per100g.fatG     ?? 0;
     per100g.fiberG   = per100g.fiberG   ?? 0;
+    const alcoholG   = per100g.alcoholG ?? 0;
+
+    // --- Energy fallback chain ---------------------------------------------
+    // Many Ciqual rows have "-" in the primary kcal column. Try, in order:
+    //   1. Primary kcal column (already parsed into per100g.calories)
+    //   2. Alternate "N x facteur Jones, avec fibres" kcal column
+    //   3. kJ columns ÷ 4.184
+    //   4. Atwater estimate from macros (4/4/9/7 + 2 kcal/g fibre)
+    let calories = per100g.calories;
+    if (calories == null || calories === 0) {
+      calories =
+        parseNum(item["Energie, N x facteur Jones, avec fibres (kcal/100 g)"]);
+    }
+    if (calories == null || calories === 0) {
+      const kj =
+        parseNum(item["Energie, Règlement UE N° 1169/2011 (kJ/100 g)"]) ??
+        parseNum(item["Energie, N x facteur Jones, avec fibres (kJ/100 g)"]);
+      if (kj != null && kj > 0) calories = Math.round(kj / 4.184);
+    }
+    if (calories == null || calories === 0) {
+      const est =
+        per100g.proteinG * 4 +
+        per100g.carbsG   * 4 +
+        per100g.fatG     * 9 +
+        alcoholG         * 7 +
+        per100g.fiberG   * 2;
+      calories = est > 0 ? Math.round(est) : 0;
+    }
+    per100g.calories = calories;
 
     const doc = {
       id,
