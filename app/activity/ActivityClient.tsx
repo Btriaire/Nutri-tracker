@@ -8,7 +8,7 @@ import { fr } from "date-fns/locale";
 import {
   IconPlus, IconTrash, IconClock, IconBolt, IconHeart, IconMoon, IconShoe, IconFlame,
   IconBookmark, IconX, IconCheck, IconLoader2, IconCamera, IconPencil, IconChevronDown,
-  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge, IconMicrophone,
+  IconMaximize, IconChevronLeft, IconChevronRight, IconMap, IconRuler, IconGauge, IconMicrophone, IconBarbell,
 } from "@tabler/icons-react";
 import type { FitnessDay, ManualActivity, NutritionGoals, GoogleFitSession } from "@/app/lib/types";
 import RouteMap from "@/app/components/RouteMap";
@@ -20,6 +20,7 @@ import AIInsightBox from "@/app/components/AIInsightBox";
 import type { WorkoutTemplate } from "@/app/api/workout-templates/route";
 import SportSearchModal from "@/app/components/SportSearchModal";
 import VoiceActivityModal from "@/app/components/VoiceActivityModal";
+import GymSessionModal from "@/app/components/GymSessionModal";
 import ActivityCategoryPicker from "@/app/components/ActivityCategoryPicker";
 import ActivityDetailSheet from "@/app/components/ActivityDetailSheet";
 import type { ActivitySaveData } from "@/app/components/ActivityDetailSheet";
@@ -538,6 +539,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
   // ── Sport search modal
   const [showSportSearch, setShowSportSearch] = useState(false);
   const [showVoice,       setShowVoice]       = useState(false);
+  const [showGym,         setShowGym]         = useState(false);
 
   // ── Category picker favorites (localStorage)
   const [actFavorites, setActFavorites] = useState<string[]>([]);
@@ -1092,6 +1094,18 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               }}
             >
               <IconMicrophone size={17} />
+            </button>
+            <button
+              onClick={() => setShowGym(true)}
+              aria-label="Séance salle de sport"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+              style={{
+                background: "rgba(56,189,248,0.12)",
+                border: "1px solid rgba(56,189,248,0.4)",
+                color: "#38bdf8",
+              }}
+            >
+              <IconBarbell size={15} /> Salle
             </button>
             <button
               onClick={() => setShowSportSearch(true)}
@@ -1823,6 +1837,21 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               setShowVoice(false);
               navigate(date);
               showToast("✓ Activité(s) ajoutée(s) par Nutri-IA", true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Gym Session Modal (Salle de sport) */}
+      <AnimatePresence>
+        {showGym && (
+          <GymSessionModal
+            date={date}
+            onClose={() => setShowGym(false)}
+            onSaved={() => {
+              setShowGym(false);
+              navigate(date);
+              showToast("✓ Séance enregistrée", true);
             }}
           />
         )}

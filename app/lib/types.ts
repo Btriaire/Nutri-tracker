@@ -483,6 +483,35 @@ export interface ManualActivity {
   weightPerSet?:  number[] | null;
 }
 
+// ─── Salle de Sport (Gym) ───────────────────────────────────────────────────────
+
+export interface GymSet {
+  reps:     number;
+  weightKg: number;       // 0 = poids du corps
+  done:     boolean;      // coché pendant la séance (mode live)
+}
+
+export interface GymExercise {
+  exerciseId:    string;          // id dans app/lib/exercises.ts
+  name:          string;          // libellé FR (dénormalisé)
+  primaryMuscle: string;          // muscle principal (react-body-highlighter)
+  sets:          GymSet[];
+  machinePhoto?: string;          // base64 data url — photo de l'appareil/réglage
+  notes?:        string;
+}
+
+export interface GymSession {
+  id:             string;
+  date:           string;         // YYYY-MM-DD
+  name:           string;         // "Push", "Jambes", "Full body"…
+  exercises:      GymExercise[];
+  durationMin:    number;
+  totalVolumeKg:  number;         // Σ reps × poids (séries validées)
+  caloriesBurned: number | null;
+  activityId?:    string;         // ManualActivity miroir (intégration calories)
+  loggedAt:       Timestamp;
+}
+
 // ─── Trend Data ───────────────────────────────────────────────────────────────
 
 export interface DayTrendPoint {
