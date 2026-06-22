@@ -62,13 +62,29 @@ export async function getTokens(userId: string): Promise<RawTokens | null> {
       await saveTokens(userId, fresh);
       return { accessToken: fresh.accessToken, refreshToken: fresh.refreshToken, expiresAt: fresh.expiresAt };
     } catch (err) {
-      console.error("Google Fit token refresh failed:", err);
-      // Store the error so Settings can show a "reconnect required" warning
-      await db.doc(`users/${userId}/oauthTokens/google_fit`).set(
-        { refreshError: String(err), refreshFailedAt: new Date() },
-        { merge: true },
-      ).catch(() => {/* silent */});
-      // Return null — the token is expired and we couldn't refresh it
+      const permanent = err instanceof TokenRefreshError && err.permanent;
+      console.error(
+        `Google Fit token refresh failed (${permanent ? "permanent — reconnect required" : "transient — will retry later"}):`,
+        err,
+      );
+
+      // ONLY flag needs_reauth for a genuine invalid_grant (refresh token
+      // revoked/expired). Transient errors (cold-start timeout, 5xx, network)
+      // must NOT flip the connection status — that's what caused the app to
+      // appear "disconnected all the time" after a single network glitch.
+      if (permanent) {
+        await db.doc(`users/${userId}/oauthTokens/google_fit`).set(
+          { refreshError: String(err), refreshFailedAt: new Date() },
+          { merge: true },
+        ).catch(() => {/* silent */});
+        return null;
+      }
+
+      // Transient failure: if the current access token hasn't actually expired
+      // yet (we refresh 10 min early), keep using it rather than going dark.
+      if (Date.now() < expiresAt) {
+        return { accessToken, refreshToken, expiresAt };
+      }
       return null;
     }
   }
@@ -90,40 +106,67 @@ export async function isConnected(userId: string): Promise<boolean> {
 
 // ─── OAuth helpers ────────────────────────────────────────────────────────────
 
+/** A refresh failure. `permanent === true` means the refresh token is dead
+ *  (invalid_grant: revoked, expired, or consent withdrawn) and the user MUST
+ *  reconnect. Everything else (timeout, network, 5xx) is transient. */
+class TokenRefreshError extends Error {
+  permanent: boolean;
+  constructor(message: string, permanent: boolean) {
+    super(message);
+    this.name = "TokenRefreshError";
+    this.permanent = permanent;
+  }
+}
+
 async function refreshAccessToken(refreshToken: string): Promise<RawTokens> {
-  const res  = await fetch("https://oauth2.googleapis.com/token", {
-    method:  "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body:    new URLSearchParams({
-      grant_type:    "refresh_token",
-      refresh_token: refreshToken,
-      client_id:     process.env.GOOGLE_CLIENT_ID!.trim(),
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
-    }),
-    // 15s timeout — avoids hanging indefinitely on slow Vercel cold starts
-    signal: AbortSignal.timeout(15_000),
-  });
-  const json = await res.json() as { access_token: string; expires_in: number; error?: string };
-  if (json.error) throw new Error(`Token refresh failed: ${json.error}`);
+  let res: Response;
+  try {
+    res = await fetch("https://oauth2.googleapis.com/token", {
+      method:  "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body:    new URLSearchParams({
+        grant_type:    "refresh_token",
+        refresh_token: refreshToken,
+        client_id:     process.env.GOOGLE_CLIENT_ID!.trim(),
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
+      }),
+      // 15s timeout — avoids hanging indefinitely on slow Vercel cold starts
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (netErr) {
+    // Network error / timeout / abort → always transient
+    throw new TokenRefreshError(`Network error during refresh: ${netErr}`, false);
+  }
+
+  const json = await res.json().catch(() => ({})) as { access_token?: string; expires_in?: number; error?: string };
+
+  if (!res.ok || json.error || !json.access_token) {
+    // invalid_grant is the ONLY error meaning the refresh token is truly dead.
+    // 5xx / rate-limit / anything else is transient and worth retrying.
+    const permanent = json.error === "invalid_grant";
+    throw new TokenRefreshError(
+      `Token refresh failed: ${json.error ?? `HTTP ${res.status}`}`,
+      permanent,
+    );
+  }
+
   return {
     accessToken:  json.access_token,
     refreshToken,                       // Google doesn't rotate refresh tokens
-    expiresAt:    Date.now() + json.expires_in * 1000,
+    expiresAt:    Date.now() + (json.expires_in ?? 3600) * 1000,
   };
 }
 
-/** Retry once on transient failures (network glitch, Vercel cold start) */
+/** Retry transient failures (network glitch, Vercel cold start, 5xx).
+ *  A permanent invalid_grant is surfaced immediately — no point retrying. */
 async function refreshWithRetry(refreshToken: string): Promise<RawTokens> {
   try {
     return await refreshAccessToken(refreshToken);
   } catch (firstErr) {
+    if (firstErr instanceof TokenRefreshError && firstErr.permanent) throw firstErr;
     // Wait 2s then try once more before giving up
     await new Promise((r) => setTimeout(r, 2000));
-    try {
-      return await refreshAccessToken(refreshToken);
-    } catch {
-      throw firstErr; // surface the original error
-    }
+    return await refreshAccessToken(refreshToken);
   }
 }
 
