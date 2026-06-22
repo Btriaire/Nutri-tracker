@@ -42,7 +42,7 @@ export default function MuscleBodyMap({
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, flexWrap: "nowrap" }}>
       <Model {...common} type="anterior" />
       {showBack && <Model {...common} type="posterior" />}
     </div>
