@@ -14,6 +14,10 @@ const PUBLIC_PREFIXES = [
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Racine "/" : splash animé public (joué connecté ou non), redirige ensuite
+  if (pathname === "/") return NextResponse.next();
+
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (isPublic) return NextResponse.next();

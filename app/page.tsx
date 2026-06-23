@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
 import { getSession } from "@/app/lib/session";
+import Splash from "@/app/components/Splash";
 
 export default async function Home() {
   const session = await getSession();
-  if (session) redirect("/hub");
-  redirect("/login");
+  const target  = session ? "/hub" : "/login";
+  return <Splash target={target} />;
 }
