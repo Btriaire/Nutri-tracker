@@ -232,26 +232,45 @@ html, body {
 /* ─── Lumière theme (alias: html.light) ─────────────────────────────────────── */
 html[data-theme="lumiere"],
 html.light {
-  --bg:              #f4f4f8;
-  --bg-subtle:       #eeeef3;
-  --surface:         rgba(255, 255, 255, 0.72);
-  --surface-hover:   rgba(255, 255, 255, 0.90);
-  --surface-active:  rgba(0, 0, 0, 0.05);
+  /* Surfaces — blanc cassé chaud, plus propre que le gris-violet d'origine */
+  --bg:              #f7f8fa;
+  --bg-subtle:       #eef0f4;
+  --surface:         rgba(255, 255, 255, 0.78);
+  --surface-hover:   rgba(255, 255, 255, 0.95);
+  --surface-active:  rgba(15, 23, 42, 0.05);
 
-  --border:          rgba(0, 0, 0, 0.08);
-  --border-strong:   rgba(0, 0, 0, 0.14);
-  --border-focus:    rgba(139, 92, 246, 0.5);
+  --border:          rgba(15, 23, 42, 0.09);
+  --border-strong:   rgba(15, 23, 42, 0.15);
+  --border-focus:    rgba(124, 58, 237, 0.55);
 
-  --text-primary:    #0f0f12;
-  --text-secondary:  rgba(15, 15, 18, 0.58);
-  --text-muted:      rgba(15, 15, 18, 0.38);
+  /* Texte — encre froide profonde, meilleur contraste */
+  --text-primary:    #14161c;
+  --text-secondary:  rgba(20, 22, 28, 0.62);
+  --text-muted:      rgba(20, 22, 28, 0.45);
 
-  --glow-orange:     rgba(249, 115, 22, 0.10);
-  --glow-violet:     rgba(139, 92, 246, 0.09);
-  --glow-cyan:       rgba(34, 211, 238, 0.06);
+  /* Accents nutrition — versions saturées « 600 », lisibles sur blanc
+     (les pastels du thème sombre étaient délavés ici) */
+  --calories:        #ea580c;   /* orange profond */
+  --protein:         #7c3aed;   /* violet riche */
+  --carbs:           #d97706;   /* ambre lisible (vs jaune pâle) */
+  --fat:             #2563eb;   /* bleu franc */
+  --fiber:           #059669;   /* émeraude */
+  --weight:          #db2777;   /* rose magenta */
 
-  --nav-bg:          rgba(244, 244, 248, 0.88);
-  --nav-border:      rgba(0, 0, 0, 0.07);
+  /* Fitness — teintes assombries pour rester nettes sur blanc */
+  --fit-blue:        #1a73e8;
+  --fit-red:         #d93025;
+  --fit-green:       #1e8e3e;
+  --fit-yellow:      #c2820b;   /* le jaune Google illisible en clair */
+  --fit-indigo:      #3f51b5;
+  --steps:           #1a73e8;
+
+  --glow-orange:     rgba(234, 88, 12, 0.10);
+  --glow-violet:     rgba(124, 58, 237, 0.10);
+  --glow-cyan:       rgba(37, 99, 235, 0.07);
+
+  --nav-bg:          rgba(247, 248, 250, 0.90);
+  --nav-border:      rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme="lumiere"] ::-webkit-scrollbar-thumb,
