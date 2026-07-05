@@ -13,7 +13,7 @@ import type { BodyCompPoint } from "@/app/api/withings-body/route";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-type Tab = "composition" | "viscerale" | "vitaux" | "sommeil";
+type Tab = "composition" | "vitaux" | "sommeil";
 
 interface MetricDef {
   key:    keyof BodyCompPoint;
@@ -32,14 +32,6 @@ const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = 
       { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "#f97316" },
       { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "#8b5cf6", decimals: 1 },
       { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "#ef4444", decimals: 1 },
-    ],
-  },
-  {
-    id:    "viscerale",
-    label: "Viscérale",
-    emoji: "🎯",
-    metrics: [
-      { key: "visceralFat", label: "Graisse viscérale", unit: "", color: "#f97316", decimals: 1 },
     ],
   },
   {
@@ -82,15 +74,6 @@ function bpClass(sys: number, dia: number): { label: string; color: string; bg: 
   if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "#fb923c", bg: "rgba(251,146,60,0.08)"  };
   if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "#f87171", bg: "rgba(248,113,113,0.08)" };
   return                                  { label: "HTA grade 3",     color: "#ef4444", bg: "rgba(239,68,68,0.1)"   };
-}
-
-// ─── Visceral fat classification (indice Withings) ──────────────────────────────
-
-function vfClass(vf: number): { label: string; color: string; bg: string } {
-  if (vf <= 9)  return { label: "Optimal",    color: "#34d399", bg: "rgba(52,211,153,0.08)" };
-  if (vf <= 12) return { label: "Sain",       color: "#a3e635", bg: "rgba(163,230,53,0.08)" };
-  if (vf <= 14) return { label: "Élevé",      color: "#fb923c", bg: "rgba(251,146,60,0.08)" };
-  return                 { label: "Très élevé", color: "#ef4444", bg: "rgba(239,68,68,0.1)"  };
 }
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
@@ -159,8 +142,6 @@ export default function BodyCompChart() {
   const [loading,    setLoading]   = useState(false);
   const [hidden,     setHidden]    = useState<Set<string>>(new Set());
   const [bpListOpen, setBpListOpen] = useState(false);
-  const [vfListOpen, setVfListOpen] = useState(false);
-  const [viewMode,   setViewMode]  = useState<"absolute" | "delta">("absolute");
 
   useEffect(() => {
     setLoading(true);
@@ -181,36 +162,12 @@ export default function BodyCompChart() {
     : null;
 
   // Filter points that have at least one metric from this tab
-  let chartData = points.filter(p => metrics.some(m => p[m.key] != null));
-
-  // If "delta" view in composition tab, transform to show deviation vs mean
-  if (tab === "composition" && viewMode === "delta") {
-    const means: Record<string, number> = {};
-    for (const m of metrics) {
-      const vals = chartData.map(p => p[m.key] as number | null).filter((v): v is number => v != null);
-      if (vals.length > 0) means[m.key] = vals.reduce((a, b) => a + b, 0) / vals.length;
-    }
-    chartData = chartData.map(p => {
-      const row: any = { date: p.date };
-      for (const m of metrics) {
-        const val = p[m.key] as number | null;
-        row[m.key] = val != null && means[m.key] ? val - means[m.key] : null;
-      }
-      return row;
-    });
-  }
+  const chartData = points.filter(p => metrics.some(m => p[m.key] != null));
 
   // Y domain per-tab
   const allValues = chartData.flatMap(p => metrics.map(m => p[m.key] as number | null).filter((v): v is number => v != null));
-  let yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
-  let yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
-
-  // In delta view, center around 0 and use symmetric range
-  if (tab === "composition" && viewMode === "delta" && allValues.length > 0) {
-    const maxAbs = Math.max(Math.abs(Math.min(...allValues)), Math.abs(Math.max(...allValues)));
-    yMin = -maxAbs * 1.1;
-    yMax = maxAbs * 1.1;
-  }
+  const yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
+  const yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
 
   const toggleMetric = (label: string) => {
     setHidden(prev => {
@@ -232,45 +189,18 @@ export default function BodyCompChart() {
             Composition corporelle
           </h3>
         </div>
-        <div className="flex gap-3 items-center">
-          {/* Range selector */}
-          <div className="flex gap-1">
-            {RANGES.map(r => (
-              <button key={r.days} onClick={() => setDays(r.days)}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: days === r.days ? "rgba(167,139,250,0.15)" : "transparent",
-                  color:      days === r.days ? "var(--protein)"          : "var(--text-muted)",
-                  border:     days === r.days ? "1px solid rgba(167,139,250,0.4)" : "1px solid transparent",
-                }}>
-                {r.label}
-              </button>
-            ))}
-          </div>
-
-          {/* View mode toggle — composition tab only */}
-          {tab === "composition" && (
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-              <button onClick={() => setViewMode("absolute")}
-                className="px-2 py-0.5 rounded text-[10px] font-medium transition-all"
-                style={{
-                  background: viewMode === "absolute" ? "rgba(167,139,250,0.15)" : "transparent",
-                  color:      viewMode === "absolute" ? "var(--protein)" : "var(--text-muted)",
-                  border:     viewMode === "absolute" ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
-                }}>
-                Valeurs
-              </button>
-              <button onClick={() => setViewMode("delta")}
-                className="px-2 py-0.5 rounded text-[10px] font-medium transition-all"
-                style={{
-                  background: viewMode === "delta" ? "rgba(167,139,250,0.15)" : "transparent",
-                  color:      viewMode === "delta" ? "var(--protein)" : "var(--text-muted)",
-                  border:     viewMode === "delta" ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
-                }}>
-                Écart
-              </button>
-            </div>
-          )}
+        <div className="flex gap-1">
+          {RANGES.map(r => (
+            <button key={r.days} onClick={() => setDays(r.days)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+              style={{
+                background: days === r.days ? "rgba(167,139,250,0.15)" : "transparent",
+                color:      days === r.days ? "var(--protein)"          : "var(--text-muted)",
+                border:     days === r.days ? "1px solid rgba(167,139,250,0.4)" : "1px solid transparent",
+              }}>
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -308,18 +238,14 @@ export default function BodyCompChart() {
               ? "Aucune donnée de sommeil disponible"
               : tab === "vitaux"
                 ? "Aucun signal vital disponible"
-                : tab === "viscerale"
-                  ? "Aucune donnée de graisse viscérale"
-                  : "Aucune donnée de composition corporelle"}
+                : "Aucune donnée de composition corporelle"}
           </p>
           <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
             {tab === "sommeil"
               ? "Synchronisez Withings ou entrez le sommeil manuellement"
               : tab === "vitaux"
                 ? "SpO₂ requiert ScanWatch · TA requiert Withings BPM"
-                : tab === "viscerale"
-                  ? "Requiert une balance Withings compatible (Body+/Body Comp/Body Scan)"
-                  : "Synchronisez votre balance Withings dans Réglages"}
+                : "Synchronisez votre balance Withings dans Réglages"}
           </p>
         </div>
       )}
@@ -351,33 +277,7 @@ export default function BodyCompChart() {
                 </div>
               );
             })()}
-            {/* Highlighted visceral fat card — Viscérale tab only */}
-            {tab === "viscerale" && (() => {
-              const val  = latest?.visceralFat   ?? null;
-              const prev = previous?.visceralFat ?? null;
-              if (val == null) return null;
-              const cls   = vfClass(val);
-              const trend = prev != null ? val - prev : null;
-              return (
-                <div className="flex flex-col gap-0.5 p-3 rounded-xl flex-shrink-0"
-                  style={{ background: cls.bg, border: `1px solid ${cls.color}44`, minWidth: 140 }}>
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Indice viscéral</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[26px] font-bold tabular-nums leading-none" style={{ color: cls.color }}>
-                      {val % 1 === 0 ? val : val.toFixed(1)}
-                    </span>
-                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
-                      style={{ background: `${cls.color}22`, color: cls.color }}>{cls.label}</span>
-                  </div>
-                  {trend != null && (
-                    <span className="text-[10px] tabular-nums mt-0.5" style={{ color: trend > 0 ? "#f87171" : trend < 0 ? "#34d399" : "var(--text-muted)" }}>
-                      {trend > 0 ? "▲" : trend < 0 ? "▼" : "■"} {Math.abs(trend).toFixed(1)} vs précédent
-                    </span>
-                  )}
-                </div>
-              );
-            })()}
-            {tab !== "viscerale" && metrics.map(m => {
+            {metrics.map(m => {
               const val  = latest?.[m.key] as number | null ?? null;
               const prev = previous?.[m.key] as number | null ?? null;
               const trend = val != null && prev != null ? val - prev : null;
@@ -438,9 +338,7 @@ export default function BodyCompChart() {
                         if (!nonBP.length) return ["auto", "auto"] as ["auto","auto"];
                         return [Math.floor(Math.min(...nonBP) * 0.95), Math.ceil(Math.max(...nonBP) * 1.05)] as [number,number];
                       })()
-                    : tab === "viscerale"
-                      ? [Math.min(yMin, 5), Math.max(yMax, 15)] as [number, number]  // garde le seuil 13 visible
-                      : [yMin, yMax]}
+                    : [yMin, yMax]}
                   tick={{ fontSize: 9, fill: "var(--text-muted)" }}
                   tickLine={false}
                   axisLine={false}
@@ -466,8 +364,6 @@ export default function BodyCompChart() {
                 {tab === "vitaux"  && <ReferenceLine yAxisId="left" y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
-                {tab === "viscerale" && <ReferenceLine yAxisId="left" y={13} stroke="rgba(251,146,60,0.4)" strokeDasharray="4 4" label={{ value: "Seuil 13", fill: "rgba(251,146,60,0.6)", fontSize: 9, position: "insideTopRight" }} />}
-                {tab === "composition" && viewMode === "delta" && <ReferenceLine yAxisId="left" y={0} stroke="rgba(167,139,250,0.3)" strokeDasharray="4 4" label={{ value: "Moyenne", fill: "rgba(167,139,250,0.5)", fontSize: 9 }} />}
 
                 {metrics.map(m => {
                   const isBP = m.key === "systolicBP" || m.key === "diastolicBP";
@@ -574,78 +470,6 @@ export default function BodyCompChart() {
                                     <span className="text-[9px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
                                   </span>
                                   {/* Classification badge */}
-                                  <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
-                                    style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.color}33` }}>
-                                    {cls.label}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-          {tab === "viscerale" && (() => {
-            const vfPoints = [...points].filter(p => p.visceralFat != null).reverse();
-            return (
-              <div className="px-4 pb-1">
-                <div className="flex items-center justify-center flex-wrap gap-2 pb-2">
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                    — Seuil santé 13 · sain ≤ 12
-                  </p>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                    style={{ background: "rgba(249,115,22,0.08)", color: "#f97316", border: "1px solid rgba(249,115,22,0.25)" }}>
-                    Balance Withings
-                  </span>
-                </div>
-
-                {vfPoints.length > 0 && (
-                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                    <button
-                      onClick={() => setVfListOpen(o => !o)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
-                      style={{ background: "rgba(249,115,22,0.05)" }}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold" style={{ color: "#f97316" }}>
-                          🎯 Historique viscéral
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums"
-                          style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}>
-                          {vfPoints.length} mesures
-                        </span>
-                      </div>
-                      <motion.div animate={{ rotate: vfListOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                        <IconChevronDown size={14} style={{ color: "#f97316" }} />
-                      </motion.div>
-                    </button>
-
-                    <AnimatePresence initial={false}>
-                      {vfListOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                          style={{ overflow: "hidden" }}>
-                          <div style={{ maxHeight: 280, overflowY: "auto", scrollbarWidth: "none" }}>
-                            {vfPoints.map((p, i) => {
-                              const cls = vfClass(p.visceralFat!);
-                              return (
-                                <div key={p.date}
-                                  className="flex items-center gap-3 px-3 py-2"
-                                  style={{ borderTop: i === 0 ? "1px solid var(--border)" : "1px solid rgba(255,255,255,0.03)", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
-                                  <span className="text-[10px] w-[52px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
-                                    {format(parseISO(p.date), "dd MMM", { locale: fr })}
-                                  </span>
-                                  <span className="text-[13px] font-bold tabular-nums flex-1" style={{ color: cls.color }}>
-                                    {p.visceralFat! % 1 === 0 ? p.visceralFat : p.visceralFat!.toFixed(1)}
-                                    <span className="text-[9px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>indice</span>
-                                  </span>
                                   <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
                                     style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.color}33` }}>
                                     {cls.label}
