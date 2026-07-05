@@ -160,6 +160,7 @@ export default function BodyCompChart() {
   const [hidden,     setHidden]    = useState<Set<string>>(new Set());
   const [bpListOpen, setBpListOpen] = useState(false);
   const [vfListOpen, setVfListOpen] = useState(false);
+  const [viewMode,   setViewMode]  = useState<"absolute" | "delta">("absolute");
 
   useEffect(() => {
     setLoading(true);
@@ -180,12 +181,36 @@ export default function BodyCompChart() {
     : null;
 
   // Filter points that have at least one metric from this tab
-  const chartData = points.filter(p => metrics.some(m => p[m.key] != null));
+  let chartData = points.filter(p => metrics.some(m => p[m.key] != null));
+
+  // If "delta" view in composition tab, transform to show deviation vs mean
+  if (tab === "composition" && viewMode === "delta") {
+    const means: Record<string, number> = {};
+    for (const m of metrics) {
+      const vals = chartData.map(p => p[m.key] as number | null).filter((v): v is number => v != null);
+      if (vals.length > 0) means[m.key] = vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    chartData = chartData.map(p => {
+      const row: any = { date: p.date };
+      for (const m of metrics) {
+        const val = p[m.key] as number | null;
+        row[m.key] = val != null && means[m.key] ? val - means[m.key] : null;
+      }
+      return row;
+    });
+  }
 
   // Y domain per-tab
   const allValues = chartData.flatMap(p => metrics.map(m => p[m.key] as number | null).filter((v): v is number => v != null));
-  const yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
-  const yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
+  let yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
+  let yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
+
+  // In delta view, center around 0 and use symmetric range
+  if (tab === "composition" && viewMode === "delta" && allValues.length > 0) {
+    const maxAbs = Math.max(Math.abs(Math.min(...allValues)), Math.abs(Math.max(...allValues)));
+    yMin = -maxAbs * 1.1;
+    yMax = maxAbs * 1.1;
+  }
 
   const toggleMetric = (label: string) => {
     setHidden(prev => {
@@ -207,19 +232,45 @@ export default function BodyCompChart() {
             Composition corporelle
           </h3>
         </div>
-        {/* Range selector */}
-        <div className="flex gap-1">
-          {RANGES.map(r => (
-            <button key={r.days} onClick={() => setDays(r.days)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
-              style={{
-                background: days === r.days ? "rgba(167,139,250,0.15)" : "transparent",
-                color:      days === r.days ? "var(--protein)"          : "var(--text-muted)",
-                border:     days === r.days ? "1px solid rgba(167,139,250,0.4)" : "1px solid transparent",
-              }}>
-              {r.label}
-            </button>
-          ))}
+        <div className="flex gap-3 items-center">
+          {/* Range selector */}
+          <div className="flex gap-1">
+            {RANGES.map(r => (
+              <button key={r.days} onClick={() => setDays(r.days)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+                style={{
+                  background: days === r.days ? "rgba(167,139,250,0.15)" : "transparent",
+                  color:      days === r.days ? "var(--protein)"          : "var(--text-muted)",
+                  border:     days === r.days ? "1px solid rgba(167,139,250,0.4)" : "1px solid transparent",
+                }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          {/* View mode toggle — composition tab only */}
+          {tab === "composition" && (
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+              <button onClick={() => setViewMode("absolute")}
+                className="px-2 py-0.5 rounded text-[10px] font-medium transition-all"
+                style={{
+                  background: viewMode === "absolute" ? "rgba(167,139,250,0.15)" : "transparent",
+                  color:      viewMode === "absolute" ? "var(--protein)" : "var(--text-muted)",
+                  border:     viewMode === "absolute" ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
+                }}>
+                Valeurs
+              </button>
+              <button onClick={() => setViewMode("delta")}
+                className="px-2 py-0.5 rounded text-[10px] font-medium transition-all"
+                style={{
+                  background: viewMode === "delta" ? "rgba(167,139,250,0.15)" : "transparent",
+                  color:      viewMode === "delta" ? "var(--protein)" : "var(--text-muted)",
+                  border:     viewMode === "delta" ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
+                }}>
+                Écart
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -416,6 +467,7 @@ export default function BodyCompChart() {
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
                 {tab === "viscerale" && <ReferenceLine yAxisId="left" y={13} stroke="rgba(251,146,60,0.4)" strokeDasharray="4 4" label={{ value: "Seuil 13", fill: "rgba(251,146,60,0.6)", fontSize: 9, position: "insideTopRight" }} />}
+                {tab === "composition" && viewMode === "delta" && <ReferenceLine yAxisId="left" y={0} stroke="rgba(167,139,250,0.3)" strokeDasharray="4 4" label={{ value: "Moyenne", fill: "rgba(167,139,250,0.5)", fontSize: 9 }} />}
 
                 {metrics.map(m => {
                   const isBP = m.key === "systolicBP" || m.key === "diastolicBP";

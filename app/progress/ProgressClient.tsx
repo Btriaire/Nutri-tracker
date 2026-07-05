@@ -1447,6 +1447,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             })()}
 
 
+            {/* Body composition chart (Withings) */}
+            <BodyCompChart />
+
+
             {/* ── Méditation progression ── */}
             {(() => {
               const rangeObj = RANGES.find(x => x.key === range);
@@ -1589,10 +1593,6 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>Commencez à logger vos repas pour voir vos tendances.</p>
               </div>
             )}
-
-            {/* Body composition chart (Withings) */}
-            <BodyCompChart />
-
 
             {/* ── Hunger Heatmap ── */}
             {(() => {
