@@ -1448,7 +1448,12 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
 
             {/* Body composition chart (Withings) */}
-            <BodyCompChart />
+            <BodyCompChart
+              userAge={goals.age}
+              userGender={goals.gender}
+              userHeightCm={goals.heightCm}
+              userCurrentWeightKg={goals.currentWeightKg}
+            />
 
 
             {/* ── Méditation progression ── */}

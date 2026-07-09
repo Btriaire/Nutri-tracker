@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconLoader2, IconChartLine, IconChevronDown } from "@tabler/icons-react";
+import { IconLoader2, IconChartLine, IconChevronDown, IconInfoCircle } from "@tabler/icons-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -10,10 +10,11 @@ import {
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { BodyCompPoint } from "@/app/api/withings-body/route";
+import type { Gender } from "@/app/lib/types";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-type Tab = "composition" | "vitaux" | "sommeil";
+type Tab = "composition" | "vitaux" | "sommeil" | "visceral";
 
 interface MetricDef {
   key:    keyof BodyCompPoint;
@@ -23,7 +24,89 @@ interface MetricDef {
   decimals?: number;
 }
 
-const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = [
+// ─── Visceral Fat Estimation ─────────────────────────────────────────────────
+
+interface VisceralsEstimate {
+  vai: number | null;
+  wc: number | null;
+  tg: number | null;
+  hdl: number | null;
+  imc: number | null;
+}
+
+function estimateWaistCircumference(
+  imb: number,
+  bodyFatPct: number,
+  age: number,
+  gender: Gender | undefined
+): number {
+  // Simple regression-based estimation WC from IMC + %fat + age + sex
+  if (gender === "male") {
+    return Math.round((70 + 1.5 * imb + 0.2 * bodyFatPct + 0.05 * age) * 10) / 10;
+  } else {
+    return Math.round((65 + 1.2 * imb + 0.15 * bodyFatPct + 0.03 * age) * 10) / 10;
+  }
+}
+
+function estimateTriglycerides(
+  bodyFatPct: number,
+  age: number,
+  gender: Gender | undefined
+): number {
+  // Estimate TG (mg/dL) from body fat % + age + sex
+  if (gender === "male") {
+    return Math.round(50 + 2 * bodyFatPct + 0.05 * age);
+  } else {
+    return Math.round(40 + 1.5 * bodyFatPct + 0.03 * age);
+  }
+}
+
+function estimateHDL(bodyFatPct: number, gender: Gender | undefined): number {
+  // Estimate HDL (mg/dL) from body fat % — inverse correlation
+  if (gender === "male") {
+    return Math.round(60 - 0.3 * bodyFatPct);
+  } else {
+    return Math.round(70 - 0.2 * bodyFatPct);
+  }
+}
+
+function calculateVAI(
+  wc: number,
+  imc: number,
+  tg: number,
+  hdl: number,
+  gender: Gender | undefined
+): number {
+  // VAI formula (Amato et al., 2010) — adapted for mg/dL units
+  const genderCoef = gender === "male" ? { wc: 39.68, bmiFactor: 1.88, tgDiv: 1.03, hdlMult: 1.31 } :
+                                          { wc: 36.58, bmiFactor: 1.89, tgDiv: 0.81, hdlMult: 1.52 };
+
+  const numerator = (wc / (genderCoef.wc + genderCoef.bmiFactor * imc)) * (tg / genderCoef.tgDiv) * (genderCoef.hdlMult / hdl);
+  return Math.round(numerator * 100) / 100;
+}
+
+function calculateVisceralsForPoint(
+  point: BodyCompPoint,
+  userAge: number | undefined,
+  userGender: Gender | undefined,
+  userHeightCm: number | undefined,
+  userCurrentWeightKg: number | undefined
+): VisceralsEstimate {
+  if (!point.bodyFatPct || !userHeightCm || !userCurrentWeightKg || !userGender) {
+    return { vai: null, wc: null, tg: null, hdl: null, imc: null };
+  }
+
+  const heightM = userHeightCm / 100;
+  const imc = Math.round((userCurrentWeightKg / (heightM * heightM)) * 10) / 10;
+  const wc = estimateWaistCircumference(imc, point.bodyFatPct, userAge ?? 40, userGender);
+  const tg = estimateTriglycerides(point.bodyFatPct, userAge ?? 40, userGender);
+  const hdl = estimateHDL(point.bodyFatPct, userGender);
+  const vai = calculateVAI(wc, imc, tg, hdl, userGender);
+
+  return { vai, wc, tg, hdl, imc };
+}
+
+const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] = [
   {
     id:    "composition",
     label: "Composition",
@@ -56,6 +139,12 @@ const TABS: { id: Tab; label: string; emoji: string; metrics: MetricDef[] }[] = 
       { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "#7c3aed", decimals: 1 },
       { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "#34d399" },
     ],
+  },
+  {
+    id:    "visceral",
+    label: "Viscéral",
+    emoji: "🫀",
+    metrics: [], // Custom display, no standard metrics
   },
 ];
 
@@ -135,7 +224,19 @@ function MiniStat({ label, value, unit, color, trend }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function BodyCompChart() {
+interface BodyCompChartProps {
+  userAge?: number;
+  userGender?: Gender;
+  userHeightCm?: number;
+  userCurrentWeightKg?: number;
+}
+
+export default function BodyCompChart({
+  userAge,
+  userGender,
+  userHeightCm,
+  userCurrentWeightKg,
+}: BodyCompChartProps) {
   const [tab,        setTab]       = useState<Tab>("composition");
   const [days,       setDays]      = useState(90);
   const [points,     setPoints]    = useState<BodyCompPoint[]>([]);
@@ -153,16 +254,18 @@ export default function BodyCompChart() {
   }, [days]);
 
   const currentTab = TABS.find(t => t.id === tab)!;
-  const metrics    = currentTab.metrics;
+  const metrics    = currentTab.metrics ?? [];
 
   // Latest + previous values for stats
-  const latest   = [...points].reverse().find(p => metrics.some(m => p[m.key] != null));
+  const latest   = [...points].reverse().find(p => metrics.length === 0 || metrics.some(m => p[m.key] != null));
   const previous = latest
-    ? [...points].reverse().slice(1).find(p => metrics.some(m => p[m.key] != null))
+    ? [...points].reverse().slice(1).find(p => metrics.length === 0 || metrics.some(m => p[m.key] != null))
     : null;
 
-  // Filter points that have at least one metric from this tab
-  const chartData = points.filter(p => metrics.some(m => p[m.key] != null));
+  // Filter points that have at least one metric from this tab (or tab is visceral)
+  const chartData = tab === "visceral"
+    ? points.filter(p => p.bodyFatPct != null && (p.systolicBP != null || p.diastolicBP != null))
+    : points.filter(p => metrics.some(m => p[m.key] != null));
 
   // Y domain per-tab
   const allValues = chartData.flatMap(p => metrics.map(m => p[m.key] as number | null).filter((v): v is number => v != null));
@@ -252,10 +355,172 @@ export default function BodyCompChart() {
 
       {!loading && hasData && (
         <>
-          {/* Mini stats row */}
-          <div className="px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {/* Combined BP stat — Vitaux tab only */}
-            {tab === "vitaux" && (() => {
+          {/* Viscéral tab — chart + stats */}
+          {tab === "visceral" && (() => {
+            if (!userGender || !userHeightCm || !userCurrentWeightKg) {
+              return (
+                <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
+                  <span className="text-3xl">🫀</span>
+                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                    Veuillez compléter votre profil (âge, sexe, taille, poids) dans les réglages
+                  </p>
+                </div>
+              );
+            }
+
+            // Enrich all points with VAI estimation
+            const visceralsData = chartData.map(p => {
+              const v = calculateVisceralsForPoint(p, userAge, userGender, userHeightCm, userCurrentWeightKg);
+              return { ...p, estimatedVAI: v.vai };
+            }).filter(p => p.estimatedVAI != null);
+
+            if (visceralsData.length === 0) {
+              return (
+                <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
+                  <span className="text-3xl">🫀</span>
+                  <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                    Données de composition corporelle manquantes
+                  </p>
+                </div>
+              );
+            }
+
+            // Latest VAI and previous
+            const latestV = visceralsData[visceralsData.length - 1];
+            const previousV = visceralsData.length > 1 ? visceralsData[visceralsData.length - 2] : null;
+            const vaiTrend = latestV.estimatedVAI && previousV?.estimatedVAI
+              ? latestV.estimatedVAI - previousV.estimatedVAI
+              : null;
+
+            const vaiStatus = latestV.estimatedVAI
+              ? latestV.estimatedVAI < 1.0 ? { label: "Faible risque", color: "#34d399", bg: "rgba(52,211,153,0.08)" }
+              : latestV.estimatedVAI < 1.5 ? { label: "Risque modéré", color: "#fbbf24", bg: "rgba(251,191,36,0.08)" }
+              : latestV.estimatedVAI < 2.0 ? { label: "Risque élevé", color: "#fb923c", bg: "rgba(251,146,60,0.08)" }
+              :             { label: "Risque très élevé", color: "#ef4444", bg: "rgba(239,68,68,0.1)" }
+              : null;
+
+            const latestCalc = calculateVisceralsForPoint(latestV, userAge, userGender, userHeightCm, userCurrentWeightKg);
+
+            return (
+              <>
+                {/* Mini stat row */}
+                <div className="px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                  {/* VAI stat */}
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
+                    style={{ background: vaiStatus?.bg, border: `1px solid ${vaiStatus?.color}33` }}>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>VAI (estimé)</span>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-[18px] font-bold tabular-nums" style={{ color: vaiStatus?.color }}>
+                        {latestV.estimatedVAI?.toFixed(2)}
+                      </span>
+                    </div>
+                    {vaiTrend != null && (
+                      <span className="text-[9px] tabular-nums" style={{ color: vaiTrend >= 0 ? "#f87171" : "#34d399" }}>
+                        {vaiTrend >= 0 ? "▲" : "▼"} {Math.abs(vaiTrend).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Detail metrics */}
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>WC (cm)</span>
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                      {latestCalc.wc?.toFixed(1)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>TG (mg/dL)</span>
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                      {latestCalc.tg}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>HDL (mg/dL)</span>
+                    <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                      {latestCalc.hdl}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="px-4 pb-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      ⚠️ ESTIMATION · Normal VAI &lt; 1.0 · Risque &gt; 1.5
+                    </span>
+                  </div>
+                </div>
+
+                {/* Chart */}
+                <motion.div
+                  key={`visceral-${days}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="px-1 pb-4"
+                  style={{ height: 220 }}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={visceralsData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tickFormatter={d => format(parseISO(d), "d MMM", { locale: fr })}
+                        tickLine={false}
+                        axisLine={false}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis
+                        domain={[0.5, 2.5]}
+                        tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={36}
+                      />
+                      <Tooltip content={<CustomTooltip metrics={[{ key: "estimatedVAI" as keyof BodyCompPoint, label: "VAI", unit: "", color: "#8b5cf6" }]} />} />
+                      <ReferenceLine y={1.0} stroke="rgba(52,211,153,0.3)" strokeDasharray="4 4" />
+                      <ReferenceLine y={1.5} stroke="rgba(251,146,60,0.3)" strokeDasharray="4 4" />
+                      <Line
+                        type="monotone"
+                        yAxisId="left"
+                        dataKey="estimatedVAI"
+                        name="VAI"
+                        stroke="#8b5cf6"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </motion.div>
+
+                {/* Info card */}
+                <div className="px-4 pb-4">
+                  <div className="rounded-xl p-3" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.3)" }}>
+                    <div className="text-[11px] space-y-1" style={{ color: "var(--text-primary)" }}>
+                      <p>
+                        <strong>Formule VAI :</strong> [WC/(39.68+1.88×IMC)] × (TG/1.03) × (1.31/HDL)
+                      </p>
+                      <p style={{ color: "var(--text-muted)", fontSize: "10px" }}>
+                        WC = tour de taille (estimé) · TG/HDL = estimés à partir de % graisse
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
+          {tab !== "visceral" && (
+            <>
+              {/* Mini stats row */}
+              <div className="px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                {/* Combined BP stat — Vitaux tab only */}
+                {tab === "vitaux" && (() => {
               const latestBP = [...points].reverse().find(p => p.systolicBP != null && p.diastolicBP != null);
               if (!latestBP) return null;
               const cls = bpClass(latestBP.systolicBP!, latestBP.diastolicBP!);
@@ -486,6 +751,8 @@ export default function BodyCompChart() {
               </div>
             );
           })()}
+            </>
+          )}
         </>
       )}
     </div>
