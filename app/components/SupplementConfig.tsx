@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconWand2, IconCheck } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck } from "@tabler/icons-react";
 import type { SupplementProduct, SupplementFrequency } from "@/app/lib/types";
 
 interface SupplementConfigProps {
@@ -174,7 +174,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                       color: "var(--text-primary)",
                     }}
                   >
-                    {generatingAI ? <IconLoader2 size={14} className="animate-spin" /> : <IconWand2 size={14} />}
+                    {generatingAI ? <IconLoader2 size={14} className="animate-spin" /> : <IconWand size={14} />}
                   </button>
                 </div>
               </div>

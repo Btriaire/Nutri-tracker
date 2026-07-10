@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { SupplementProduct } from "@/app/lib/types";
-import Timestamp from "firebase-admin/firestore";
+import { Timestamp } from "firebase-admin/firestore";
 
 const USER = "owner";
 
