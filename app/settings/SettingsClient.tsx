@@ -13,6 +13,7 @@ import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
 import { format as formatDate } from "date-fns";
+import SupplementConfig from "@/app/components/SupplementConfig";
 
 type OAuthStatus = "connected" | "needs_reauth" | "disconnected";
 
@@ -207,6 +208,16 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Alcool */}
         <AlcoolPanel initialGoals={initialGoals} />
+
+        {/* Suppléments & Compléments */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.05 }}
+          className="glass p-5 mb-4"
+        >
+          <SupplementConfig />
+        </motion.div>
 
         {/* Theme picker */}
         <ThemePicker current={theme} onChange={setTheme} />

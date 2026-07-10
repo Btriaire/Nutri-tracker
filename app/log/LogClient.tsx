@@ -9,6 +9,7 @@ import VoiceMealModal from "@/app/components/VoiceMealModal";
 import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
+import SupplementLogger from "@/app/components/SupplementLogger";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
@@ -626,6 +627,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               mealHunger={mealHunger}
               onSetHunger={handleHungerChange}
             />
+          </motion.div>
+
+          {/* Supplements tracker */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.37 }}
+            className="mt-5 rounded-2xl p-5 overflow-hidden"
+            style={{
+              background: "linear-gradient(140deg, rgba(52,211,153,0.11) 0%, rgba(34,197,94,0.05) 100%)",
+              border: "1px solid rgba(52,211,153,0.18)",
+            }}
+          >
+            <SupplementLogger date={date} />
           </motion.div>
         </div>
       </div>
