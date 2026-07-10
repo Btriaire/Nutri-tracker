@@ -651,6 +651,13 @@ export default function DashboardClient({
                     onBurnedClick={burned && deductBurned ? () => setBurnedDetailOpen(true) : undefined}
                   />
 
+                  {/* ── Journal button (center) ── */}
+                  <Link href="/log" className="btn btn-primary text-[13px] w-full justify-center font-semibold"
+                    style={{ background: "rgba(249,115,22,0.15)", border: "1px solid rgba(249,115,22,0.4)", color: "var(--calories)" }}>
+                    📝 Journal
+                    <IconChevronRight size={16} stroke={2} />
+                  </Link>
+
                   {/* ── Deduct-burned toggle ── */}
                   {burned != null && burned > 0 && (
                     <button
@@ -699,12 +706,6 @@ export default function DashboardClient({
                       );
                     })}
                   </div>
-
-                  {/* Journal link */}
-                  <Link href="/log" className="btn btn-ghost text-[12.5px] w-full justify-center">
-                    Ouvrir le journal
-                    <IconChevronRight size={14} stroke={2} />
-                  </Link>
                 </div>
               </motion.div>
             )}
