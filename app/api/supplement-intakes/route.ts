@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json() as Partial<SupplementIntake>;
-    const { date, supplementId, supplementName, time } = body;
+    const { date, supplementId, supplementName, time, moment } = body;
 
     if (!date || !supplementId || !supplementName || !time) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
       supplementId,
       supplementName,
       time,
-      notes: body.notes,
+      ...(moment ? { moment } : {}),
+      ...(body.notes ? { notes: body.notes } : {}),
       loggedAt: Timestamp.now(),
     };
 

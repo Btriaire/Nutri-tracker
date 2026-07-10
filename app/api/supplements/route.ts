@@ -38,14 +38,14 @@ export async function POST(req: NextRequest) {
     const product: SupplementProduct = {
       id,
       name: body.name,
-      description: body.description,
       ingredients: body.ingredients || [],
-      dosagePerServing: body.dosagePerServing,
-      recommendedDosage: body.recommendedDosage,
-      notes: body.notes,
       frequency: body.frequency,
       createdAt: now,
       updatedAt: now,
+      ...(body.description       ? { description: body.description }             : {}),
+      ...(body.dosagePerServing  ? { dosagePerServing: body.dosagePerServing }    : {}),
+      ...(body.recommendedDosage ? { recommendedDosage: body.recommendedDosage } : {}),
+      ...(body.notes             ? { notes: body.notes }                         : {}),
     };
 
     await db.collection(`users/${USER}/supplements`).doc(id).set(product);

@@ -4,10 +4,30 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconLoader2, IconTrash, IconClock } from "@tabler/icons-react";
 import { format } from "date-fns";
-import type { SupplementProduct, SupplementLog } from "@/app/lib/types";
+import type { SupplementProduct, SupplementLog, SupplementMoment } from "@/app/lib/types";
 
 interface SupplementLoggerProps {
   date: string; // "YYYY-MM-DD"
+}
+
+const MOMENTS: { value: SupplementMoment; label: string; hour: number }[] = [
+  { value: "morning",     label: "Matin",              hour: 8  },
+  { value: "mid_morning", label: "Milieu de matinée",  hour: 10 },
+  { value: "noon",        label: "Midi",               hour: 12 },
+  { value: "afternoon",   label: "Après-midi",         hour: 16 },
+  { value: "evening",     label: "Soir",               hour: 20 },
+];
+
+const MOMENT_LABEL: Record<SupplementMoment, string> = Object.fromEntries(
+  MOMENTS.map(m => [m.value, m.label])
+) as Record<SupplementMoment, string>;
+
+function guessMoment(hour: number): SupplementMoment {
+  if (hour < 10) return "morning";
+  if (hour < 12) return "mid_morning";
+  if (hour < 14) return "noon";
+  if (hour < 18) return "afternoon";
+  return "evening";
 }
 
 export default function SupplementLogger({ date }: SupplementLoggerProps) {
@@ -20,6 +40,7 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
     supplementId: "",
     supplementName: "",
     time: format(new Date(), "HH:mm"),
+    moment: guessMoment(new Date().getHours()) as SupplementMoment,
     notes: "",
   });
 
@@ -70,6 +91,7 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
           supplementId: form.supplementId,
           supplementName: form.supplementName,
           time: form.time,
+          moment: form.moment,
           notes: form.notes,
         }),
       });
@@ -81,6 +103,7 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
           supplementId: "",
           supplementName: "",
           time: format(new Date(), "HH:mm"),
+          moment: guessMoment(new Date().getHours()),
           notes: "",
         });
         setShowForm(false);
@@ -166,10 +189,40 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
                   <input
                     type="time"
                     value={form.time}
-                    onChange={e => setForm({ ...form, time: e.target.value })}
+                    onChange={e => {
+                      const time = e.target.value;
+                      const hour = parseInt(time.split(":")[0] || "0", 10);
+                      setForm(prev => ({ ...prev, time, moment: guessMoment(hour) }));
+                    }}
                     className="flex-1 px-3 py-2 rounded-lg text-[12px]"
                     style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                  Moment de la journée *
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {MOMENTS.map(m => {
+                    const selected = form.moment === m.value;
+                    return (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, moment: m.value }))}
+                        className="px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                        style={{
+                          background: selected ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
+                          border: `1px solid ${selected ? "rgba(52,211,153,0.45)" : "var(--border)"}`,
+                          color: selected ? "var(--fiber)" : "var(--text-muted)",
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -242,6 +295,11 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {intake.time}
                   </span>
+                  {intake.moment && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
+                      {MOMENT_LABEL[intake.moment]}
+                    </span>
+                  )}
                 </div>
                 {intake.notes && (
                   <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>

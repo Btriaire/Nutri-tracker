@@ -640,10 +640,12 @@ export interface ChartPrefs {
 
 export type SupplementFrequency = "once" | "twice" | "thrice" | "four_times"; // 1x, 2x, 3x, 4x par jour
 
+export type SupplementMoment = "morning" | "mid_morning" | "noon" | "afternoon" | "evening";
+
 export interface SupplementProduct {
   id:             string;
   name:           string;           // ex: "Vitamine D3", "Oméga-3"
-  description?:   string;           // description générée par Jarvis
+  description?:   string;           // description générée par IA
   ingredients?:   string[];         // composants principaux
   dosagePerServing?: string;        // ex: "1000 IU", "500mg"
   recommendedDosage?: string;       // posologie recommandée
@@ -659,6 +661,7 @@ export interface SupplementIntake {
   supplementId:   string;           // FK vers SupplementProduct
   supplementName: string;           // dénormalisé pour affichage
   time:           string;           // "HH:MM"
+  moment?:        SupplementMoment; // matin / milieu de matinée / midi / après-midi / soir
   notes?:         string;
   loggedAt:       Timestamp;
 }

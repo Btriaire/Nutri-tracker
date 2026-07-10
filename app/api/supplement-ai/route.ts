@@ -1,67 +1,70 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 
-const JARVIS_API = process.env.JARVIS_API_URL || "http://localhost:9999";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+const SYSTEM_PROMPT = `Tu es un expert en nutrition et compléments alimentaires francophone. Pour le produit donné, retourne UNIQUEMENT un objet JSON valide (sans markdown) avec ces champs :
+- description: string       (courte description du produit et ses bénéfices, max 150 caractères)
+- ingredients: string[]     (liste des composants/ingrédients principaux)
+- dosagePerServing: string  (dosage par prise, ex: "1000 IU", "500 mg")
+- recommendedDosage: string (posologie recommandée, ex: "1 comprimé par jour au repas")
+
+Réponds uniquement en JSON. Ne fournis aucune explication hors du JSON.`;
+
+interface SupplementInfo {
+  description:       string;
+  ingredients:        string[];
+  dosagePerServing:   string;
+  recommendedDosage:  string;
+}
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  try {
-    const body = await req.json() as { productName: string };
-    if (!body.productName) {
-      return NextResponse.json({ error: "Missing productName" }, { status: 400 });
-    }
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY not set" }, { status: 500 });
 
-    // Call Jarvis API to generate supplement info
-    const response = await fetch(`${JARVIS_API}/api/chat`, {
+  let body: { productName: string };
+  try {
+    body = await req.json() as { productName: string };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const productName = body.productName?.trim();
+  if (!productName) return NextResponse.json({ error: "productName required" }, { status: 400 });
+
+  try {
+    const res = await fetch(GROQ_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        response_format: { type: "json_object" },
+        temperature: 0.2,
         messages: [
-          {
-            role: "user",
-            content: `Tu es expert en nutrition et suppléments. Pour le produit "${body.productName}", fournis UNIQUEMENT en JSON (sans markdown, sans explications):
-{
-  "description": "courte description du produit et ses bénéfices (2-3 lignes max)",
-  "ingredients": ["ingrédient 1", "ingrédient 2"],
-  "dosagePerServing": "dosage recommandé par prise (ex: 1000 IU, 500mg)",
-  "recommendedDosage": "posologie recommandée (ex: 1 comprimé par jour, 2 gélules le matin et soir)"
-}`,
-          },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user",   content: `Complément alimentaire : ${productName}` },
         ],
       }),
     });
 
-    if (!response.ok) {
-      console.error("[supplement-ai] Jarvis error:", await response.text());
-      return NextResponse.json(
-        { error: "AI service unavailable", fallback: { description: "", ingredients: [], dosagePerServing: "", recommendedDosage: "" } },
-        { status: 503 }
-      );
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("Groq supplement-ai error:", err);
+      return NextResponse.json({ error: "Groq API error" }, { status: 502 });
     }
 
-    const result = await response.json() as { message?: { content?: string } };
-    const content = result.message?.content || "";
+    const data = await res.json() as { choices: { message: { content: string } }[] };
+    const content = data.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(content) as SupplementInfo;
 
-    // Parse JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return NextResponse.json({
-        description: "Complément alimentaire",
-        ingredients: [],
-        dosagePerServing: "",
-        recommendedDosage: "",
-      });
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    return NextResponse.json(parsed);
+    return NextResponse.json({ ok: true, ...parsed });
   } catch (e) {
-    console.error("[supplement-ai]", e);
-    return NextResponse.json(
-      { error: "Failed to generate supplement info", fallback: { description: "", ingredients: [], dosagePerServing: "", recommendedDosage: "" } },
-      { status: 500 }
-    );
+    console.error("Supplement AI lookup error:", e);
+    return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
 }
