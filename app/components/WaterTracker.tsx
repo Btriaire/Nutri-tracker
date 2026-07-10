@@ -11,7 +11,7 @@ interface Props {
   onUpdate: (newMl: number) => void;
 }
 
-const QUICK_AMOUNTS = [150, 200, 250, 330, 500];
+const QUICK_AMOUNTS = [250, 500, 750, 1000];
 
 export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props) {
   const [loading, setLoading] = useState(false);
@@ -63,50 +63,50 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
       </div>
 
       {/* Glass icons */}
-      <div className="flex items-center gap-1 mb-3 flex-wrap">
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
         {Array.from({ length: Math.max(goalGlasses, glasses) }).map((_, i) => (
           <button
             key={i}
             onClick={() => adjust(i < glasses ? -(250) : 250)}
             disabled={loading}
-            className="p-1 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors hover:opacity-80"
             style={{ color: i < glasses ? "var(--steps)" : "var(--text-muted)" }}
             title={i < glasses ? "Retirer 250ml" : "Ajouter 250ml"}
           >
-            <IconDroplet size={16} stroke={i < glasses ? 2 : 1.5} />
+            <IconDroplet size={24} stroke={i < glasses ? 2 : 1.5} />
           </button>
         ))}
       </div>
 
       {/* Quick add buttons */}
-      <div className="flex gap-1.5 flex-wrap">
+      <div className="flex gap-2 flex-wrap">
         {QUICK_AMOUNTS.map((ml) => (
           <button
             key={ml}
             onClick={() => adjust(ml)}
             disabled={loading}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors hover:opacity-80"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
+              background: "rgba(56,189,248,0.12)",
+              border: "1px solid var(--steps)",
+              color: "var(--steps)",
             }}
           >
-            <IconPlus size={9} stroke={2} />
+            <IconPlus size={14} stroke={2} />
             {ml >= 1000 ? `${ml / 1000}L` : `${ml}ml`}
           </button>
         ))}
         <button
           onClick={() => adjust(-250)}
           disabled={loading || waterMl === 0}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-colors disabled:opacity-30"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-colors disabled:opacity-30 hover:opacity-80"
           style={{
             background: "rgba(255,255,255,0.04)",
             border: "1px solid var(--border)",
             color: "var(--text-muted)",
           }}
         >
-          <IconMinus size={9} stroke={2} />
+          <IconMinus size={14} stroke={2} />
           250ml
         </button>
       </div>
