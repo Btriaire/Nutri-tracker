@@ -67,6 +67,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
         ingredients: (data.ingredients || []).join(", "),
         dosagePerServing: data.dosagePerServing || "",
         recommendedDosage: data.recommendedDosage || "",
+        micronutrients: data.micronutrients || [],
       }));
     } catch (e) {
       console.error("AI generation failed:", e);
