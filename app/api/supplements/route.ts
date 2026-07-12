@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       ...(body.description       ? { description: body.description }             : {}),
       ...(body.dosagePerServing  ? { dosagePerServing: body.dosagePerServing }    : {}),
       ...(body.recommendedDosage ? { recommendedDosage: body.recommendedDosage } : {}),
+      ...(body.micronutrients    ? { micronutrients: body.micronutrients }        : {}),
       ...(body.notes             ? { notes: body.notes }                         : {}),
     };
 

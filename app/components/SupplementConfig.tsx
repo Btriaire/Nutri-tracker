@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck } from "@tabler/icons-react";
-import type { SupplementProduct, SupplementFrequency } from "@/app/lib/types";
+import type { SupplementProduct, SupplementFrequency, SupplementMicronutrient } from "@/app/lib/types";
+import MicronutrientSelector from "./MicronutrientSelector";
 
 interface SupplementConfigProps {
   onClose?: () => void;
@@ -28,6 +29,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
     ingredients: "",
     dosagePerServing: "",
     recommendedDosage: "",
+    micronutrients: [] as SupplementMicronutrient[],
     frequency: "once" as SupplementFrequency,
     notes: "",
   });
@@ -88,6 +90,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
           ingredients: form.ingredients.split(",").map(i => i.trim()).filter(Boolean),
           dosagePerServing: form.dosagePerServing,
           recommendedDosage: form.recommendedDosage,
+          micronutrients: form.micronutrients,
           frequency: form.frequency,
           notes: form.notes,
         }),
@@ -100,6 +103,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
           ingredients: "",
           dosagePerServing: "",
           recommendedDosage: "",
+          micronutrients: [],
           frequency: "once",
           notes: "",
         });
@@ -265,6 +269,13 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   placeholder="Notes personnelles (optionnel)"
                   className="w-full px-3 py-2 rounded-lg text-[12px]"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                />
+              </div>
+
+              <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                <MicronutrientSelector
+                  micronutrients={form.micronutrients}
+                  onChange={micronutrients => setForm({ ...form, micronutrients })}
                 />
               </div>
 

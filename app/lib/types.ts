@@ -649,6 +649,7 @@ export interface SupplementProduct {
   ingredients?:   string[];         // composants principaux
   dosagePerServing?: string;        // ex: "1000 IU", "500mg"
   recommendedDosage?: string;       // posologie recommandée
+  micronutrients?: SupplementMicronutrient[];  // profil micronutrimentaire
   notes?:         string;
   frequency:      SupplementFrequency;  // cadence journalière
   createdAt:      Timestamp;
@@ -669,5 +670,61 @@ export interface SupplementIntake {
 export interface SupplementLog {
   date:           string;           // "YYYY-MM-DD"
   intakes:        SupplementIntake[];
+  updatedAt?:     Timestamp;
+}
+
+// ─── Micronutrients ───────────────────────────────────────────────────────────
+
+export type MicronutrientCode =
+  | "magnesium"    // Mg
+  | "zinc"         // Zn
+  | "vitamin_d"    // D3
+  | "chromium"     // Cr
+  | "selenium"     // Se
+  | "iron"         // Fe
+  | "calcium"      // Ca
+  | "potassium"    // K
+  | "iodine"       // I
+  | "copper"       // Cu
+  | "manganese"    // Mn
+  | "molybdenum"   // Mo
+  | "vitamin_b12"  // B12
+  | "folate"       // B9
+  | "vitamin_c"    // C
+  | "vitamin_e"    // E
+  | "vitamin_k"    // K
+  | "biotin"       // B7
+  | "pantothenic"  // B5
+  | "niacin"       // B3
+  | "riboflavin"   // B2
+  | "thiamine";    // B1
+
+export interface MicronutrientInfo {
+  code:           MicronutrientCode;
+  label:          string;           // "Magnésium", "Zinc D3"
+  symbol:         string;           // "Mg", "Zn", "D3"
+  unit:           string;           // "mg", "µg", "IU"
+  recommendedDailyIntake?: number;  // RDA/RDI valeur
+  color:          string;           // hex pour UI — #10b981 (vert), #3b82f6 (bleu), etc.
+}
+
+export interface SupplementMicronutrient {
+  code:           MicronutrientCode;
+  amount:         number;           // quantité par prise
+  unit:           string;           // "mg", "µg", "IU"
+}
+
+export interface MicronutrientIntake {
+  code:           MicronutrientCode;
+  amount:         number;           // montant absorbé à cette prise
+  unit:           string;
+  source:         string;           // "Vitamine D3", nom du supplément
+  time:           string;           // "HH:MM"
+  loggedAt:       Timestamp;
+}
+
+export interface MicronutrientDay {
+  date:           string;           // "YYYY-MM-DD"
+  intakes:        MicronutrientIntake[];
   updatedAt?:     Timestamp;
 }

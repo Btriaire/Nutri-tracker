@@ -10,7 +10,8 @@ import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
 import SupplementLogger from "@/app/components/SupplementLogger";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink } from "@/app/lib/types";
+import MicronutrientTracker from "@/app/components/MicronutrientTracker";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
@@ -212,6 +213,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [mealPhotos, setMealPhotos] = useState<MealPhotos>({});
   const [dayPhotos,  setDayPhotos]  = useState<DayPhoto[]>([]);
+  const [micronutrientData, setMicronutrientData] = useState<MicronutrientDay | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
@@ -256,6 +258,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       .then((r) => r.ok ? r.json() : { photos: [] })
       .then((data: { photos?: DayPhoto[] }) => setDayPhotos(data.photos ?? []))
       .catch(() => setDayPhotos([]));
+    // Load micronutrient data
+    fetch(`/api/micronutrient-intakes?date=${date}`)
+      .then((r) => r.ok ? r.json() : {})
+      .then((data: { log?: MicronutrientDay }) => setMicronutrientData(data.log ?? null))
+      .catch(() => setMicronutrientData(null));
   }, [date, initialLog]);
 
   const handleValidate = async () => {
@@ -584,6 +591,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             }}
           >
             <SupplementLogger date={date} />
+          </motion.div>
+
+          {/* Micronutrient tracker */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="mb-5 rounded-2xl p-5 overflow-hidden"
+            style={{
+              background: "linear-gradient(140deg, rgba(99,102,241,0.09) 0%, rgba(139,92,246,0.05) 100%)",
+              border: "1px solid rgba(99,102,241,0.15)",
+            }}
+          >
+            <MicronutrientTracker date={date} micronutrientData={micronutrientData} />
           </motion.div>
 
           {/* Alcohol tracker — only when enabled in settings */}

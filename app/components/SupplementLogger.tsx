@@ -105,6 +105,26 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
       if (res.ok) {
         const data = await res.json();
         setLog(data.log);
+
+        // Also log micronutrients if the supplement has them
+        const product = products.find(p => p.id === form.supplementId);
+        if (product?.micronutrients) {
+          for (const micronutrient of product.micronutrients) {
+            await fetch("/api/micronutrient-intakes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                date,
+                code: micronutrient.code,
+                amount: micronutrient.amount,
+                unit: micronutrient.unit,
+                source: form.supplementName,
+                time: form.time,
+              }),
+            }).catch(err => console.warn("[micronutrient-intakes]", err));
+          }
+        }
+
         setForm({
           supplementId: "",
           supplementName: "",
