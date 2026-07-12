@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconClock } from "@tabler/icons-react";
-import { format } from "date-fns";
-import type { SupplementProduct, SupplementLog, SupplementMoment } from "@/app/lib/types";
+import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory } from "@tabler/icons-react";
+import { format, subDays } from "date-fns";
+import type { SupplementProduct, SupplementLog, SupplementIntake, SupplementMoment } from "@/app/lib/types";
 
 interface SupplementLoggerProps {
   date: string; // "YYYY-MM-DD"
@@ -33,7 +33,9 @@ function guessMoment(hour: number): SupplementMoment {
 export default function SupplementLogger({ date }: SupplementLoggerProps) {
   const [products, setProducts] = useState<SupplementProduct[]>([]);
   const [log, setLog] = useState<SupplementLog | null>(null);
+  const [yesterdayIntakes, setYesterdayIntakes] = useState<SupplementIntake[]>([]);
   const [loading, setLoading] = useState(false);
+  const [quickAdding, setQuickAdding] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState({
@@ -51,14 +53,18 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [productsRes, logRes] = await Promise.all([
+      const yesterday = format(subDays(new Date(date), 1), "yyyy-MM-dd");
+      const [productsRes, logRes, yesterdayRes] = await Promise.all([
         fetch("/api/supplements"),
         fetch(`/api/supplement-intakes?date=${date}`),
+        fetch(`/api/supplement-intakes?date=${yesterday}`),
       ]);
       const productsData = await productsRes.json();
       const logData = await logRes.json();
+      const yesterdayData = await yesterdayRes.json();
       setProducts(productsData.products || []);
       setLog(logData.log);
+      setYesterdayIntakes(yesterdayData.log?.intakes || []);
     } catch (e) {
       console.error("Failed to fetch data:", e);
     } finally {
@@ -115,6 +121,35 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
     }
   };
 
+  const quickAddFromYesterday = async (intake: SupplementIntake) => {
+    const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
+    setQuickAdding(key);
+    try {
+      const now = new Date();
+      const time = format(now, "HH:mm");
+      const res = await fetch("/api/supplement-intakes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          supplementId: intake.supplementId,
+          supplementName: intake.supplementName,
+          time,
+          moment: intake.moment ?? guessMoment(now.getHours()),
+          notes: intake.notes,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLog(data.log);
+      }
+    } catch (e) {
+      console.error("Failed to quick-add intake:", e);
+    } finally {
+      setQuickAdding(null);
+    }
+  };
+
   const handleDelete = async (intakeId: string) => {
     if (!confirm("Supprimer cette prise ?")) return;
     try {
@@ -131,6 +166,14 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
   };
 
   const sortedIntakes = log?.intakes?.sort((a, b) => a.time.localeCompare(b.time)) || [];
+
+  // Dedup yesterday's intakes by supplement+moment, then exclude ones already logged today for the same pair
+  const todayKeys = new Set(sortedIntakes.map(i => `${i.supplementId}-${i.moment ?? ""}`));
+  const yesterdaySuggestions = Array.from(
+    new Map(
+      yesterdayIntakes.map(i => [`${i.supplementId}-${i.moment ?? i.time}`, i])
+    ).values()
+  ).filter(i => !todayKeys.has(`${i.supplementId}-${i.moment ?? ""}`));
 
   return (
     <div className="space-y-4">
@@ -151,6 +194,43 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
           Ajouter prise
         </button>
       </div>
+
+      {/* Comme hier — quick re-add from yesterday's intakes */}
+      {yesterdaySuggestions.length > 0 && (
+        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <IconHistory size={13} style={{ color: "var(--text-muted)" }} />
+            <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+              Comme hier
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {yesterdaySuggestions.map(intake => {
+              const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
+              const isAdding = quickAdding === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => quickAddFromYesterday(intake)}
+                  disabled={isAdding}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 active:scale-95"
+                  style={{
+                    background: "rgba(52,211,153,0.1)",
+                    border: "1px solid rgba(52,211,153,0.3)",
+                    color: "var(--fiber)",
+                  }}
+                >
+                  {isAdding ? <IconLoader2 size={12} className="animate-spin" /> : <IconPlus size={12} />}
+                  {intake.supplementName}
+                  {intake.moment && (
+                    <span style={{ color: "var(--text-muted)" }}>· {MOMENT_LABEL[intake.moment]}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <AnimatePresence>
