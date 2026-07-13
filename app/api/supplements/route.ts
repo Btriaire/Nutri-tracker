@@ -56,3 +56,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to create supplement" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing id parameter" }, { status: 400 });
+    }
+
+    const db = getAdminFirestore();
+    await db.collection(`users/${USER}/supplements`).doc(id).delete();
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[supplements DELETE]", e);
+    return NextResponse.json({ error: "Failed to delete supplement" }, { status: 500 });
+  }
+}

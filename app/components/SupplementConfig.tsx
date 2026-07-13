@@ -63,11 +63,11 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
       const data = await res.json();
       setForm(prev => ({
         ...prev,
-        description: data.description || "",
-        ingredients: (data.ingredients || []).join(", "),
-        dosagePerServing: data.dosagePerServing || "",
-        recommendedDosage: data.recommendedDosage || "",
-        micronutrients: data.micronutrients || [],
+        description: data.description || prev.description,
+        ingredients: (data.ingredients || []).length > 0 ? (data.ingredients || []).join(", ") : prev.ingredients,
+        dosagePerServing: data.dosagePerServing || prev.dosagePerServing,
+        recommendedDosage: data.recommendedDosage || prev.recommendedDosage,
+        micronutrients: data.micronutrients && data.micronutrients.length > 0 ? data.micronutrients : prev.micronutrients,
       }));
     } catch (e) {
       console.error("AI generation failed:", e);
@@ -120,8 +120,18 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Supprimer ce supplément ?")) return;
-    // TODO: implement delete
-    setProducts(products.filter(p => p.id !== id));
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/supplements?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setProducts(products.filter(p => p.id !== id));
+      }
+    } catch (e) {
+      console.error("Failed to delete supplement:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
