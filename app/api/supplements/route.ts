@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -14,7 +17,7 @@ export async function GET() {
     const db = getAdminFirestore();
     const snap = await db.collection(`users/${USER}/supplements`).orderBy("createdAt", "desc").get();
     const products: SupplementProduct[] = snap.docs.map(d => d.data() as SupplementProduct);
-    return NextResponse.json({ products });
+    return NextResponse.json({ products }, { headers: { "Cache-Control": "no-store, must-revalidate" } });
   } catch (e) {
     console.error("[supplements GET]", e);
     return NextResponse.json({ error: "Failed to fetch supplements" }, { status: 500 });

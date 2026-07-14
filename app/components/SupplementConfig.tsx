@@ -41,7 +41,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/supplements");
+      const res = await fetch("/api/supplements", { cache: "no-store" });
       const data = await res.json();
       setProducts(data.products || []);
     } catch (e) {

@@ -55,9 +55,9 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
     try {
       const yesterday = format(subDays(new Date(date), 1), "yyyy-MM-dd");
       const [productsRes, logRes, yesterdayRes] = await Promise.all([
-        fetch("/api/supplements"),
-        fetch(`/api/supplement-intakes?date=${date}`),
-        fetch(`/api/supplement-intakes?date=${yesterday}`),
+        fetch("/api/supplements", { cache: "no-store" }),
+        fetch(`/api/supplement-intakes?date=${date}`, { cache: "no-store" }),
+        fetch(`/api/supplement-intakes?date=${yesterday}`, { cache: "no-store" }),
       ]);
       const productsData = await productsRes.json();
       const logData = await logRes.json();
