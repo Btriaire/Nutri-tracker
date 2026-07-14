@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
@@ -11,6 +12,7 @@ import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
 import SupplementLogger from "@/app/components/SupplementLogger";
 import MicronutrientTracker from "@/app/components/MicronutrientTracker";
+import { extractMicronutrientsFromFood, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
@@ -332,7 +334,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   }), [entries.length, Math.round(totals.calories), waterMl, mealHunger]);
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
+    const prevIds = new Set(entries.filter((e) => e.meal === meal).map((e) => e.id));
+    const newEntries = mealEntries.filter((e) => !prevIds.has(e.id));
+
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
+
+    if (newEntries.length) {
+      Promise.all(
+        newEntries.map((entry) => {
+          const time = format(new Date(Number(entry.loggedAt?.seconds ?? 0) * 1000 || Date.now()), "HH:mm");
+          const intakes = extractMicronutrientsFromFood(entry.nutrition, entry.name, time);
+          return logMicronutrients(date, intakes);
+        })
+      ).then(fetchMicronutrients);
+    }
   };
 
   const handleHungerChange = async (meal: MealType, level: HungerLevel | null) => {

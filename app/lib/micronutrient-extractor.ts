@@ -1,141 +1,63 @@
-import type { FoodNutrition, MicronutrientIntake, MicronutrientCode } from "./types";
-import { format } from "date-fns";
-import { Timestamp } from "firebase-admin/firestore";
+import type { FoodNutrition, MicronutrientCode } from "./types";
+
+export interface ExtractedMicronutrient {
+  code:   MicronutrientCode;
+  amount: number;
+  unit:   string;
+  source: string;
+  time:   string;
+}
+
+const FIELD_MAP: { field: keyof FoodNutrition; code: MicronutrientCode; unit: string }[] = [
+  { field: "magneziumMg",  code: "magnesium",   unit: "mg" },
+  { field: "zincMg",       code: "zinc",        unit: "mg" },
+  { field: "vitaminDUg",   code: "vitamin_d",   unit: "µg" },
+  { field: "ironMg",       code: "iron",        unit: "mg" },
+  { field: "calciumMg",    code: "calcium",     unit: "mg" },
+  { field: "potassiumMg",  code: "potassium",   unit: "mg" },
+  { field: "vitaminCMg",   code: "vitamin_c",   unit: "mg" },
+  { field: "vitaminB12Ug", code: "vitamin_b12", unit: "µg" },
+  { field: "vitaminB9Ug",  code: "folate",      unit: "µg" },
+];
 
 /**
- * Extract micronutrients from food nutrition data and prepare them for logging.
- * Maps FoodNutrition fields → MicronutrientIntake array
+ * Extract micronutrients from a food's nutrition data, ready to POST to
+ * /api/micronutrient-intakes (the server assigns the real Firestore timestamp).
  */
 export function extractMicronutrientsFromFood(
   nutrition: FoodNutrition,
   source: string,
-  time: string = format(new Date(), "HH:mm")
-): MicronutrientIntake[] {
-  const intakes: MicronutrientIntake[] = [];
-
-  // Minerals
-  if (nutrition.magneziumMg) {
-    intakes.push({
-      code: "magnesium",
-      amount: nutrition.magneziumMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.zincMg) {
-    intakes.push({
-      code: "zinc",
-      amount: nutrition.zincMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.vitaminDUg) {
-    intakes.push({
-      code: "vitamin_d",
-      amount: nutrition.vitaminDUg,
-      unit: "µg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.ironMg) {
-    intakes.push({
-      code: "iron",
-      amount: nutrition.ironMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.calciumMg) {
-    intakes.push({
-      code: "calcium",
-      amount: nutrition.calciumMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.potassiumMg) {
-    intakes.push({
-      code: "potassium",
-      amount: nutrition.potassiumMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  // Vitamins
-  if (nutrition.vitaminCMg) {
-    intakes.push({
-      code: "vitamin_c",
-      amount: nutrition.vitaminCMg,
-      unit: "mg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.vitaminB12Ug) {
-    intakes.push({
-      code: "vitamin_b12",
-      amount: nutrition.vitaminB12Ug,
-      unit: "µg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-  if (nutrition.vitaminB9Ug) {
-    intakes.push({
-      code: "folate",
-      amount: nutrition.vitaminB9Ug,
-      unit: "µg",
-      source,
-      time,
-      loggedAt: Timestamp.now(),
-    });
-  }
-
-  return intakes.filter(i => i.amount > 0);
+  time: string
+): ExtractedMicronutrient[] {
+  return FIELD_MAP
+    .map(({ field, code, unit }) => ({ code, unit, amount: nutrition[field] as number | undefined }))
+    .filter((m): m is { code: MicronutrientCode; unit: string; amount: number } => !!m.amount && m.amount > 0)
+    .map(m => ({ ...m, source, time }));
 }
 
 /**
- * Batch log micronutrients to Firestore
+ * Batch log micronutrients to Firestore via the API route.
  */
 export async function logMicronutrients(
   date: string,
-  intakes: MicronutrientIntake[]
+  intakes: ExtractedMicronutrient[]
 ): Promise<void> {
   if (!intakes.length) return;
 
-  try {
-    await Promise.all(
-      intakes.map(intake =>
-        fetch("/api/micronutrient-intakes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date,
-            code: intake.code,
-            amount: intake.amount,
-            unit: intake.unit,
-            source: intake.source,
-            time: intake.time,
-          }),
-        })
-      )
-    );
-  } catch (e) {
-    console.warn("[micronutrient-extraction]", e);
-  }
+  await Promise.all(
+    intakes.map(intake =>
+      fetch("/api/micronutrient-intakes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          code: intake.code,
+          amount: intake.amount,
+          unit: intake.unit,
+          source: intake.source,
+          time: intake.time,
+        }),
+      }).catch(err => console.warn("[micronutrient-extraction]", err))
+    )
+  );
 }
