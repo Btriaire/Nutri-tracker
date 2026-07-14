@@ -120,8 +120,17 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Supprimer ce supplément ?")) return;
-    // TODO: implement delete
-    setProducts(products.filter(p => p.id !== id));
+    try {
+      const res = await fetch(`/api/supplements?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setProducts(products.filter(p => p.id !== id));
+      } else {
+        alert("La suppression a échoué. Réessaie.");
+      }
+    } catch (e) {
+      console.error("Failed to delete supplement:", e);
+      alert("La suppression a échoué. Réessaie.");
+    }
   };
 
   return (
