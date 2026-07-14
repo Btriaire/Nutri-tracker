@@ -28,6 +28,7 @@ interface Props {
   mealColor: string;
   onAdded:   () => void;
   onClose:   () => void;
+  onPhotoSaved?: (url: string) => void;
 }
 
 const MEAL_FR: Record<string, string> = {
@@ -139,13 +140,14 @@ function FillBar({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onClose }: Props) {
+export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onClose, onPhotoSaved }: Props) {
   type Phase = "idle" | "analyzing" | "results" | "saving";
 
   const [phase,   setPhase]   = useState<Phase>("idle");
   const [items,   setItems]   = useState<DetectedItem[]>([]);
   const [error,   setError]   = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const fileRef    = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -169,7 +171,11 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
     setPhase("analyzing");
     setError(null);
     try {
-      const blob = await compressImage(file, 1200);
+      const [blob, thumbBlob] = await Promise.all([
+        compressImage(file, 1200),
+        compressImage(file, 800),
+      ]);
+      setPhotoBlob(thumbBlob);
       const form = new FormData();
       form.append("image", blob, "photo.jpg");
       const res  = await fetch("/api/food/photo", { method: "POST", body: form });
@@ -254,6 +260,21 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
           }),
         });
       }
+
+      // Best-effort: save the analyzed photo as this meal's illustration
+      if (photoBlob) {
+        const photoForm = new FormData();
+        photoForm.append("image", photoBlob, "photo.jpg");
+        photoForm.append("date", date);
+        photoForm.append("meal", meal);
+        fetch("/api/log/photo", { method: "POST", body: photoForm })
+          .then(r => r.ok ? r.json() : null)
+          .then((data: { photoUrl?: string } | null) => {
+            if (data?.photoUrl) onPhotoSaved?.(data.photoUrl);
+          })
+          .catch(() => {});
+      }
+
       onAdded();
     } catch {
       setError("Erreur lors de l'ajout");

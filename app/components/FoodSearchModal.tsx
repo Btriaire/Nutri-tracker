@@ -133,6 +133,25 @@ interface Props {
   lang?:   Lang;
   onClose: () => void;
   onAdded: (info: AddedInfo) => Promise<void>;
+  onPhotoSaved?: (url: string) => void;
+}
+
+async function compressImage(file: File, maxSide: number): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const w      = Math.round(img.width  * scale);
+      const h      = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.84);
+    };
+    img.src = url;
+  });
 }
 
 // ─── BarcodeScanner subcomponent (ZXing — cross-browser incl. iOS Safari) ────
@@ -358,7 +377,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose, onAdded }: Props) {
+export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose, onAdded, onPhotoSaved }: Props) {
   const [tab, setTab]   = useState<Tab>("aliments");
   const [step, setStep] = useState<Step>("browse");
 
@@ -413,6 +432,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [scanError, setScanError]   = useState("");
   const [photoMode, setPhotoMode]   = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
 
   const inputRef    = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -608,9 +628,11 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const handlePhotoRecognize = useCallback(async (file: File) => {
     setPhotoLoading(true);
     setScanError("");
+    setPhotoBlob(null);
     try {
       const fd = new FormData();
       fd.append("image", file);
+      compressImage(file, 800).then(setPhotoBlob).catch(() => {});
       const res  = await fetch("/api/food/photo", { method: "POST", body: fd });
       const json = await res.json() as { results: FoodSearchResult[]; error?: string };
       if (!res.ok || json.error) {
@@ -707,9 +729,25 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
         }),
       });
       if (!res.ok) return;
+      if (selected.source === "ai") savePhotoToMeal();
       onAdded({ name: selected.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setAdding(false); }
+  };
+
+  // Best-effort: save the recognized photo as this meal's illustration
+  const savePhotoToMeal = () => {
+    if (!photoBlob) return;
+    const form = new FormData();
+    form.append("image", photoBlob, "photo.jpg");
+    form.append("date", date);
+    form.append("meal", meal);
+    fetch("/api/log/photo", { method: "POST", body: form })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { photoUrl?: string } | null) => {
+        if (data?.photoUrl) onPhotoSaved?.(data.photoUrl);
+      })
+      .catch(() => {});
   };
 
   const handleQuickAdd = async (food: FoodSearchResult) => {
@@ -741,6 +779,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
         }),
       });
       if (!res.ok) return;
+      if (food.source === "ai") savePhotoToMeal();
       onAdded({ name: food.name, calories: Math.round(nutrition.calories) });
       onClose();
     } finally { setQuickAddingId(null); }

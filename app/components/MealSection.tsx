@@ -363,7 +363,8 @@ export default function MealSection({
         )}
       </AnimatePresence>
 
-      <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded} />
+      <FoodSearchModal open={modal} meal={meal} date={date} lang={lang} onClose={() => setModal(false)} onAdded={handleAdded}
+        onPhotoSaved={(url) => onPhotoChange?.(meal, url)} />
 
       {/* Nutri-IA photo analyzer */}
       <AnimatePresence>
@@ -377,6 +378,7 @@ export default function MealSection({
               await handleAdded({ name: "", calories: 0 });
             }}
             onClose={() => setPhotoAnalyzer(false)}
+            onPhotoSaved={(url) => onPhotoChange?.(meal, url)}
           />
         )}
       </AnimatePresence>
