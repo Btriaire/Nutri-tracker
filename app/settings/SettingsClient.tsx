@@ -451,7 +451,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                     <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
                   </div>
-                  <a href="/api/withings/auth"
+                  <a href="/api/withings/auth" target="_blank" rel="noopener noreferrer"
                     className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
                     style={{ background: "rgba(245,158,11,0.20)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.40)" }}>
                     Reconnecter
@@ -507,7 +507,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               )}
             </div>
           ) : (
-            <a href="/api/withings/auth" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
+            <a href="/api/withings/auth" target="_blank" rel="noopener noreferrer" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
               ⚖️ Connecter Withings
             </a>
           )}
