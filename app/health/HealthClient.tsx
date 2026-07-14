@@ -8,7 +8,7 @@ import { format, addDays, subDays, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconChevronLeft, IconChevronRight, IconChevronUp, IconChevronDown, IconPlus, IconX, IconHeartbeat, IconThermometer,
-  IconDroplet, IconLoader2, IconTrash, IconPencil, IconHeart, IconNote,
+  IconDroplet, IconLoader2, IconTrash, IconPencil, IconHeart, IconNote, IconRuler,
   IconBolt, IconMoon, IconAlertCircle, IconCircleCheck, IconArrowDown, IconArrowUp, IconMinus, IconRefresh,
   IconPill, IconCheck, IconPlayerStop, IconClock,
 } from "@tabler/icons-react";
@@ -215,6 +215,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const [synthesisLoading,   setSynthesisLoading]   = useState(false);
   const [synthesisError,     setSynthesisError]     = useState(false);
   const [synthesisExpanded,  setSynthesisExpanded]  = useState(false);
+  const [measurementsOpen,   setMeasurementsOpen]   = useState(false);
 
   // Cardio range
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
@@ -1044,7 +1045,29 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             </motion.div>
 
             {/* ── Mensurations corporelles ── */}
-            <BodyMeasurementsTab />
+            <motion.div {...fade(0.18)} className="mb-4 rounded-2xl p-4"
+              style={{
+                background: "linear-gradient(140deg, rgba(56,189,248,0.09) 0%, rgba(59,130,246,0.04) 100%)",
+                border: "1px solid rgba(56,189,248,0.15)",
+              }}
+            >
+              <button className="w-full flex items-center gap-2" onClick={() => setMeasurementsOpen(v => !v)}>
+                <IconRuler size={14} style={{ color: "var(--text-muted)" }} />
+                <p className="label-xs flex-1 text-left">Mensurations corporelles</p>
+                {measurementsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+              </button>
+
+              <AnimatePresence initial={false}>
+                {measurementsOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+                    <div className="mt-3">
+                      <BodyMeasurementsTab />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
           </>
         )}
