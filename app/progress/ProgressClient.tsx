@@ -21,6 +21,7 @@ import MealTimingWidget from "@/app/components/MealTimingWidget";
 import BodyCompChart from "@/app/components/BodyCompChart";
 import AlbumModal from "@/app/components/AlbumModal";
 import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
+import SupplementsProgressSection from "@/app/components/SupplementsProgressSection";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -1446,6 +1447,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               );
             })()}
 
+
+            {/* Suppléments & Vitamines */}
+            <SupplementsProgressSection />
 
             {/* Body composition chart (Withings) */}
             <BodyCompChart
