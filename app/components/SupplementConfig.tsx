@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck, IconPencil } from "@tabler/icons-react";
 import type { SupplementProduct, SupplementFrequency, SupplementMicronutrient } from "@/app/lib/types";
 import MicronutrientSelector from "./MicronutrientSelector";
 
@@ -22,6 +22,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -76,14 +77,50 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
     }
   };
 
+  const resetForm = () => {
+    setForm({
+      name: "",
+      description: "",
+      ingredients: "",
+      dosagePerServing: "",
+      recommendedDosage: "",
+      micronutrients: [],
+      frequency: "once",
+      notes: "",
+    });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const toggleAddForm = () => {
+    if (showForm) resetForm();
+    else { setEditingId(null); setShowForm(true); }
+  };
+
+  const handleEdit = (product: SupplementProduct) => {
+    setForm({
+      name: product.name,
+      description: product.description ?? "",
+      ingredients: (product.ingredients ?? []).join(", "),
+      dosagePerServing: product.dosagePerServing ?? "",
+      recommendedDosage: product.recommendedDosage ?? "",
+      micronutrients: product.micronutrients ?? [],
+      frequency: product.frequency,
+      notes: product.notes ?? "",
+    });
+    setEditingId(product.id);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
 
     setLoading(true);
     try {
-      const res = await fetch("/api/supplements", {
-        method: "POST",
+      const url = editingId ? `/api/supplements?id=${editingId}` : "/api/supplements";
+      const res = await fetch(url, {
+        method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
@@ -98,21 +135,13 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
       });
 
       if (res.ok) {
-        setForm({
-          name: "",
-          description: "",
-          ingredients: "",
-          dosagePerServing: "",
-          recommendedDosage: "",
-          micronutrients: [],
-          frequency: "once",
-          notes: "",
-        });
-        setShowForm(false);
+        resetForm();
         await fetchProducts();
+      } else {
+        alert(editingId ? "La modification a échoué. Réessaie." : "L'ajout a échoué. Réessaie.");
       }
     } catch (e) {
-      console.error("Failed to create supplement:", e);
+      console.error("Failed to save supplement:", e);
     } finally {
       setLoading(false);
     }
@@ -124,6 +153,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
       const res = await fetch(`/api/supplements?id=${id}`, { method: "DELETE" });
       if (res.ok) {
         setProducts(products.filter(p => p.id !== id));
+        if (editingId === id) resetForm();
       } else {
         alert("La suppression a échoué. Réessaie.");
       }
@@ -140,7 +170,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
           Suppléments & Compléments
         </h3>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={toggleAddForm}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
           style={{
             background: "rgba(99,102,241,0.12)",
@@ -301,11 +331,11 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   }}
                 >
                   {loading ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} />}
-                  Ajouter
+                  {editingId ? "Enregistrer" : "Ajouter"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={resetForm}
                   className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
                   style={{
                     background: "rgba(255,255,255,0.05)",
@@ -354,13 +384,22 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   </p>
                 )}
               </div>
-              <button
-                onClick={() => handleDelete(product.id)}
-                className="flex-shrink-0 p-1.5 rounded-lg ml-2 transition-all hover:opacity-70"
-                style={{ background: "rgba(239,68,68,0.1)" }}
-              >
-                <IconTrash size={14} style={{ color: "var(--error)" }} />
-              </button>
+              <div className="flex-shrink-0 flex items-center gap-1.5 ml-2">
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                  style={{ background: "rgba(99,102,241,0.1)" }}
+                >
+                  <IconPencil size={14} style={{ color: "var(--indigo)" }} />
+                </button>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                  style={{ background: "rgba(239,68,68,0.1)" }}
+                >
+                  <IconTrash size={14} style={{ color: "var(--error)" }} />
+                </button>
+              </div>
             </div>
           ))
         )}

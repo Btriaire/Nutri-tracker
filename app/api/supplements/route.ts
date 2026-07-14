@@ -60,6 +60,51 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const body = await req.json() as Partial<SupplementProduct>;
+    if (!body.name || !body.frequency) {
+      return NextResponse.json({ error: "Missing required fields: name, frequency" }, { status: 400 });
+    }
+
+    const db = getAdminFirestore();
+    const docRef = db.collection(`users/${USER}/supplements`).doc(id);
+    const existing = await docRef.get();
+    if (!existing.exists) {
+      return NextResponse.json({ error: "Supplement not found" }, { status: 404 });
+    }
+
+    const createdAt = (existing.data() as SupplementProduct).createdAt;
+
+    const product: SupplementProduct = {
+      id,
+      name: body.name,
+      ingredients: body.ingredients || [],
+      frequency: body.frequency,
+      createdAt,
+      updatedAt: Timestamp.now(),
+      ...(body.description       ? { description: body.description }             : {}),
+      ...(body.dosagePerServing  ? { dosagePerServing: body.dosagePerServing }    : {}),
+      ...(body.recommendedDosage ? { recommendedDosage: body.recommendedDosage } : {}),
+      ...(body.micronutrients    ? { micronutrients: body.micronutrients }        : {}),
+      ...(body.notes             ? { notes: body.notes }                         : {}),
+    };
+
+    await docRef.set(product);
+    return NextResponse.json({ id, product });
+  } catch (e) {
+    console.error("[supplements PATCH]", e);
+    return NextResponse.json({ error: "Failed to update supplement" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
