@@ -13,7 +13,7 @@ import AlcoolTracker from "@/app/components/AlcoolTracker";
 import SupplementLogger from "@/app/components/SupplementLogger";
 import MicronutrientTracker from "@/app/components/MicronutrientTracker";
 import { extractMicronutrientsFromFood, logMicronutrients } from "@/app/lib/micronutrient-extractor";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
@@ -216,6 +216,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [mealPhotos, setMealPhotos] = useState<MealPhotos>({});
   const [dayPhotos,  setDayPhotos]  = useState<DayPhoto[]>([]);
   const [micronutrientData, setMicronutrientData] = useState<MicronutrientDay | null>(null);
+  const [supplementLog, setSupplementLog] = useState<SupplementLog | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
@@ -249,6 +250,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       .then((r) => r.ok ? r.json() : {})
       .then((data: { log?: MicronutrientDay }) => setMicronutrientData(data.log ?? null))
       .catch(() => setMicronutrientData(null));
+    fetch(`/api/supplement-intakes?date=${date}`, { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : {})
+      .then((data: { log?: SupplementLog }) => setSupplementLog(data.log ?? null))
+      .catch(() => setSupplementLog(null));
   }, [date]);
 
   useEffect(() => {
@@ -330,8 +335,23 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     waterMl,
     waterGoal: goals.waterMl ?? 2000,
     mealHunger,
+    supplements: (supplementLog?.intakes ?? []).map((i) => ({
+      name:  i.supplementName,
+      time:  i.time,
+      moment: i.moment,
+    })),
+    micronutrients: Object.entries(
+      (micronutrientData?.intakes ?? []).reduce((acc, i) => {
+        acc[i.code] = (acc[i.code] ?? 0) + i.amount;
+        return acc;
+      }, {} as Record<string, number>)
+    ).map(([code, amount]) => ({
+      code,
+      amount: Math.round(amount * 10) / 10,
+      unit: micronutrientData?.intakes?.find((i) => i.code === code)?.unit ?? "",
+    })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [entries.length, Math.round(totals.calories), waterMl, mealHunger]);
+  }), [entries.length, Math.round(totals.calories), waterMl, mealHunger, supplementLog, micronutrientData]);
 
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     const prevIds = new Set(entries.filter((e) => e.meal === meal).map((e) => e.id));

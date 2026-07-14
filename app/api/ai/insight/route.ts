@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
+import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -24,9 +25,9 @@ function buildSystemPrompt(type: InsightType, hour: number): string {
   const timeNote = `\n\nCONTEXTE TEMPOREL : ${ctx}`;
 
   const base: Record<InsightType, string> = {
-    journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour, les objectifs et les niveaux de faim ressentis par repas.
+    journal: `Tu es un nutritionniste bienveillant. On te donne le journal alimentaire du jour, les objectifs, les niveaux de faim ressentis par repas, ainsi que les suppléments/compléments alimentaires pris et les micronutriments apportés.
 Rédige une analyse en 3 parties courtes :
-1. Bilan nutritionnel : compare calories, protéines, glucides, lipides, fibres et eau aux objectifs. Si des données supplémentaires sont fournies (sucres, sodium, lipides saturés), intègre-les dans l'analyse — signale tout dépassement de limite recommandée.
+1. Bilan nutritionnel : compare calories, protéines, glucides, lipides, fibres et eau aux objectifs. Si des données supplémentaires sont fournies (sucres, sodium, lipides saturés), intègre-les dans l'analyse — signale tout dépassement de limite recommandée. Si des suppléments/compléments ont été pris, mentionne-les et signale toute carence ou excès notable en micronutriments par rapport aux apports journaliers recommandés.
 2. Sensations de faim (UNIQUEMENT si des niveaux de faim sont fournis) : analyse le pattern de faim. Une faim élevée (4-5) avant un repas = repas précédent trop léger ou timing à ajuster. Une faim basse (1-2) = bon équilibre ou repas trop lourd. Grignotages avec faim élevée = signal métabolique à prendre au sérieux.
 3. 1 point fort + 1 conseil concret.
 Total : 3-4 phrases maximum. Réponds directement sans intro générique.`,
@@ -76,7 +77,7 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
   void hour; // used above
   switch (type) {
     case "journal": {
-      const { entries, totals, goals, waterMl, waterGoal, mealHunger, trackedNutrients } = data as {
+      const { entries, totals, goals, waterMl, waterGoal, mealHunger, trackedNutrients, supplements, micronutrients } = data as {
         entries:    { name: string; grams: number; calories: number }[];
         totals:     { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; sugarG?: number; sodiumMg?: number; saturatedFatG?: number };
         goals:      { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatGrams: number; fiberGrams: number; sugarGrams?: number; sodiumMg?: number; saturatedFatGrams?: number };
@@ -84,6 +85,8 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
         waterGoal:  number;
         mealHunger?: Partial<Record<string, number>>;
         trackedNutrients?: { protein?: boolean; sodium?: boolean; sugar?: boolean; saturatedFat?: boolean };
+        supplements?: { name: string; time: string; moment?: string }[];
+        micronutrients?: { code: string; amount: number; unit: string }[];
       };
       const HUNGER_LABELS: Record<number, string> = {
         1: "pas faim (1/5)",
@@ -118,6 +121,23 @@ function buildUserMessage(type: InsightType, data: Record<string, unknown>): str
       if (trackedNutrients?.saturatedFat && (totals.saturatedFatG ?? 0) > 0)
         extraLines.push(`- Lipides saturés : ${Math.round(totals.saturatedFatG ?? 0)}${goals.saturatedFatGrams ? ` / ${goals.saturatedFatGrams}` : ""} g`);
 
+      const MOMENT_LABELS: Record<string, string> = {
+        morning: "matin", mid_morning: "milieu de matinée", noon: "midi",
+        afternoon: "après-midi", evening: "soir",
+      };
+      const supplementLines = (supplements ?? [])
+        .map(s => `- ${s.name} à ${s.time}${s.moment ? ` (${MOMENT_LABELS[s.moment] ?? s.moment})` : ""}`)
+        .join("\n");
+
+      const micronutrientLines = (micronutrients ?? [])
+        .map(m => {
+          const info = MICRONUTRIENT_DB[m.code as keyof typeof MICRONUTRIENT_DB];
+          if (!info) return `- ${m.code} : ${m.amount}${m.unit}`;
+          const rda = info.recommendedDailyIntake;
+          return `- ${info.label} : ${m.amount}${m.unit}${rda ? ` / ${rda}${info.unit} recommandés` : ""}`;
+        })
+        .join("\n");
+
       return `${timePrefix}Aliments consommés aujourd'hui :
 ${foodList || "Aucun aliment enregistré"}
 
@@ -129,7 +149,9 @@ Totaux :
 - Fibres : ${Math.round(totals?.fiberG ?? 0)} / ${goals?.fiberGrams ?? 0} g
 - Eau : ${waterMl ?? 0} / ${waterGoal ?? 2000} mL
 ${extraLines.length ? extraLines.join("\n") : ""}
-${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}`;
+${hungerLines ? `\nNiveaux de faim ressentis :\n${hungerLines}` : ""}
+${supplementLines ? `\nSuppléments & compléments pris aujourd'hui :\n${supplementLines}` : ""}
+${micronutrientLines ? `\nMicronutriments apportés (aliments + suppléments) :\n${micronutrientLines}` : ""}`;
     }
 
     case "dashboard": {
