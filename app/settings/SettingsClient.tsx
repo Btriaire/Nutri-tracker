@@ -35,6 +35,13 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
     try { await signOut(getClientAuth()); } catch {}
     router.push("/login");
   };
+
+  // iOS standalone PWAs: a direct <a href> tap to account.withings.com gets hijacked by
+  // Universal Links (opens the native Withings app instead of completing the web OAuth
+  // flow). Navigating via JS from a click handler avoids the tap-triggered UL interception.
+  const openWithingsAuth = () => {
+    window.location.href = "/api/withings/auth";
+  };
   const { theme, setTheme } = useTheme();
   const params = useSearchParams();
   const [fit, setFit]                   = useState<OAuthStatus>(initialFit);
@@ -451,11 +458,11 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                     <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
                   </div>
-                  <a href="/api/withings/auth" target="_blank" rel="noopener noreferrer"
+                  <button type="button" onClick={openWithingsAuth}
                     className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
                     style={{ background: "rgba(245,158,11,0.20)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.40)" }}>
                     Reconnecter
-                  </a>
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
@@ -507,9 +514,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               )}
             </div>
           ) : (
-            <a href="/api/withings/auth" target="_blank" rel="noopener noreferrer" className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
+            <button type="button" onClick={openWithingsAuth} className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
               ⚖️ Connecter Withings
-            </a>
+            </button>
           )}
           </div>
           </motion.div>
