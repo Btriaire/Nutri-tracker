@@ -44,6 +44,7 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   usda:        { label: "USDA",            color: "var(--carbs)"   },
   edamam:      { label: "Edamam",          color: "#f59e0b"        },
   nutritionix: { label: "Nutritionix",     color: "#10b981"        },
+  fatsecret:   { label: "FatSecret",       color: "#3b82f6"        },
   custom:      { label: "Personnel",       color: "var(--protein)" },
   recipe:      { label: "Recette",         color: "var(--calories)" },
   ai:     { label: "Nutri-AI",         color: "#a855f7" },

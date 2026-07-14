@@ -304,6 +304,105 @@ function nutritionixToResult(f: NxFood, branded: boolean): FoodSearchResult {
   };
 }
 
+// FatSecret food shape (foods.search REST v1, format=json)
+interface FsFood {
+  food_id: string;
+  food_name: string;
+  brand_name?: string;
+  food_type?: string;
+  food_description: string; // e.g. "Per 100g - Calories: 52kcal | Fat: 0.17g | Carbs: 13.81g | Protein: 0.26g"
+}
+
+function fatsecretToResult(f: FsFood): FoodSearchResult | null {
+  const desc = f.food_description ?? "";
+  const cal  = /Calories:\s*([\d.]+)\s*kcal/i.exec(desc);
+  if (!cal) return null;
+  const fat     = /Fat:\s*([\d.]+)\s*g/i.exec(desc);
+  const carbs   = /Carbs:\s*([\d.]+)\s*g/i.exec(desc);
+  const protein = /Protein:\s*([\d.]+)\s*g/i.exec(desc);
+  const fiber   = /Fiber:\s*([\d.]+)\s*g/i.exec(desc);
+
+  // Try to read an explicit gram serving from the leading "Per X" segment (e.g. "Per 100g", "Per 1 slice (28g)")
+  const servingMatch = /^Per\s+([^-]+)-/i.exec(desc);
+  const servingText  = servingMatch?.[1]?.trim() ?? "1 portion";
+  const gramMatch     = /([\d.]+)\s*g\b/i.exec(servingText);
+  const servingSizeG  = gramMatch ? parseFloat(gramMatch[1]) : 100;
+
+  return {
+    id:           `fatsecret:${f.food_id}`,
+    source:       "fatsecret",
+    name:         f.food_name,
+    brand:        f.brand_name,
+    servingSizeG,
+    servingLabel: servingText,
+    nutrition: {
+      calories: Math.round(parseFloat(cal[1])),
+      proteinG: protein ? Math.round(parseFloat(protein[1]) * 10) / 10 : 0,
+      carbsG:   carbs   ? Math.round(parseFloat(carbs[1])   * 10) / 10 : 0,
+      fatG:     fat     ? Math.round(parseFloat(fat[1])     * 10) / 10 : 0,
+      fiberG:   fiber   ? Math.round(parseFloat(fiber[1])   * 10) / 10 : 0,
+    },
+  };
+}
+
+// ─── FatSecret OAuth2 (client_credentials) — module-level token cache ────────
+
+let _fsToken: { value: string; expiresAt: number } | null = null;
+let _fsTokenPromise: Promise<string | null> | null = null;
+
+async function getFatSecretToken(): Promise<string | null> {
+  const clientId     = process.env.FATSECRET_CLIENT_ID;
+  const clientSecret = process.env.FATSECRET_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+
+  if (_fsToken && _fsToken.expiresAt > Date.now()) return _fsToken.value;
+  if (_fsTokenPromise) return _fsTokenPromise;
+
+  _fsTokenPromise = (async () => {
+    try {
+      const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+      const res = await fetch("https://oauth.fatsecret.com/connect/token", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${basic}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "grant_type=client_credentials&scope=basic",
+        signal: AbortSignal.timeout(7000),
+      });
+      if (!res.ok) return null;
+      const json = await res.json() as { access_token: string; expires_in: number };
+      _fsToken = { value: json.access_token, expiresAt: Date.now() + (json.expires_in - 60) * 1000 };
+      return _fsToken.value;
+    } catch {
+      return null;
+    } finally {
+      _fsTokenPromise = null;
+    }
+  })();
+
+  return _fsTokenPromise;
+}
+
+async function searchFatSecret(query: string, limit = 20): Promise<FoodSearchResult[]> {
+  try {
+    const token = await getFatSecretToken();
+    if (!token) return [];
+    const url = `https://platform.fatsecret.com/rest/foods/search/v1?search_expression=${encodeURIComponent(query)}&max_results=${limit}&format=json`;
+    const res = await fetch(url, {
+      headers: { "Authorization": `Bearer ${token}` },
+      signal: AbortSignal.timeout(7000),
+    });
+    if (!res.ok) return [];
+    const json = await res.json() as { foods?: { food?: FsFood | FsFood[] } };
+    const raw = json.foods?.food;
+    const foods = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    return foods.map(fatsecretToResult).filter((r): r is FoodSearchResult => r !== null);
+  } catch {
+    return [];
+  }
+}
+
 // ─── Source fetchers ──────────────────────────────────────────────────────────
 
 async function searchCiqual(query: string, limit = 20): Promise<FoodSearchResult[]> {
@@ -444,6 +543,7 @@ function dedup(results: FoodSearchResult[]): FoodSearchResult[] {
 const SOURCE_PRIORITY: Record<string, number> = {
   ciqual:      5,  // most accurate for raw French foods
   nutritionix: 4,  // large database, strong on common foods
+  fatsecret:   4,  // large global database, strong on branded/common foods
   edamam:      3,
   off:         3,  // best for European packaged products
   usda:        2,
@@ -463,18 +563,19 @@ export async function searchFoods(query: string, lang: Lang = "fr"): Promise<Foo
   // Warm Ciqual cache on first call (non-blocking for subsequent calls)
   getCiqualCache().catch(() => {});
 
-  const [ciqual, off, usda, edamam, nutritionix] = await Promise.all([
+  const [ciqual, off, usda, edamam, nutritionix, fatsecret] = await Promise.all([
     searchCiqual(q),
     searchOpenFoodFacts(q, lang === "fr" ? "fr" : "en"),
     searchUSDA(q),
     searchEdamam(q),
     searchNutritionix(q),
+    searchFatSecret(q),
   ]);
 
   const words = normalize(q).split(/\s+/).filter((w) => w.length >= 2);
 
   // Merge all sources, re-score for relevance, deduplicate
-  const all = [...ciqual, ...nutritionix, ...edamam, ...off, ...usda];
+  const all = [...ciqual, ...nutritionix, ...fatsecret, ...edamam, ...off, ...usda];
   return dedup(
     all
       .map((r) => ({ r, score: rescoreResult(r, words) }))
