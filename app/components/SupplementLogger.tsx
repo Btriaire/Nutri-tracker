@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory, IconChevronDown } from "@tabler/icons-react";
 import { format, subDays } from "date-fns";
 import type { SupplementProduct, SupplementLog, SupplementIntake, SupplementMoment } from "@/app/lib/types";
 
@@ -38,6 +38,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   const [loading, setLoading] = useState(false);
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showYesterday, setShowYesterday] = useState(false);
 
   const [form, setForm] = useState({
     supplementId: "",
@@ -236,40 +237,60 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
         </button>
       </div>
 
-      {/* Comme hier — quick re-add from yesterday's intakes */}
+      {/* Comme hier — quick re-add from yesterday's intakes, collapsed by default */}
       {yesterdaySuggestions.length > 0 && (
-        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-1.5 mb-2">
+        <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+          <button
+            type="button"
+            onClick={() => setShowYesterday(v => !v)}
+            className="w-full flex items-center gap-1.5 px-3 py-2 transition-all"
+          >
             <IconHistory size={13} style={{ color: "var(--text-muted)" }} />
             <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
-              Comme hier
+              Comme hier ({yesterdaySuggestions.length})
             </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {yesterdaySuggestions.map(intake => {
-              const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
-              const isAdding = quickAdding === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => quickAddFromYesterday(intake)}
-                  disabled={isAdding}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 active:scale-95"
-                  style={{
-                    background: "rgba(52,211,153,0.1)",
-                    border: "1px solid rgba(52,211,153,0.3)",
-                    color: "var(--fiber)",
-                  }}
-                >
-                  {isAdding ? <IconLoader2 size={12} className="animate-spin" /> : <IconPlus size={12} />}
-                  {intake.supplementName}
-                  {intake.moment && (
-                    <span style={{ color: "var(--text-muted)" }}>· {MOMENT_LABEL[intake.moment]}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            <IconChevronDown
+              size={13}
+              style={{ color: "var(--text-muted)", marginLeft: "auto", transform: showYesterday ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+            />
+          </button>
+          <AnimatePresence>
+            {showYesterday && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap gap-1.5 px-3 pb-3">
+                  {yesterdaySuggestions.map(intake => {
+                    const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
+                    const isAdding = quickAdding === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => quickAddFromYesterday(intake)}
+                        disabled={isAdding}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 active:scale-95"
+                        style={{
+                          background: "rgba(52,211,153,0.1)",
+                          border: "1px solid rgba(52,211,153,0.3)",
+                          color: "var(--fiber)",
+                        }}
+                      >
+                        {isAdding ? <IconLoader2 size={12} className="animate-spin" /> : <IconPlus size={12} />}
+                        {intake.supplementName}
+                        {intake.moment && (
+                          <span style={{ color: "var(--text-muted)" }}>· {MOMENT_LABEL[intake.moment]}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
