@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -18,7 +21,7 @@ export async function GET(req: NextRequest) {
     const db = getAdminFirestore();
     const snap = await db.collection(`users/${USER}/micronutrientLogs`).doc(date).get();
     const log = snap.exists ? (snap.data() as MicronutrientDay) : { date, intakes: [] };
-    return NextResponse.json({ log });
+    return NextResponse.json({ log }, { headers: { "Cache-Control": "no-store, must-revalidate" } });
   } catch (e) {
     console.error("[micronutrient-intakes GET]", e);
     return NextResponse.json({ error: "Failed to fetch micronutrient intakes" }, { status: 500 });

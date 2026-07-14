@@ -242,6 +242,13 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     }
   }, [unlockTaps, date]);
 
+  const fetchMicronutrients = useCallback(() => {
+    fetch(`/api/micronutrient-intakes?date=${date}`, { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : {})
+      .then((data: { log?: MicronutrientDay }) => setMicronutrientData(data.log ?? null))
+      .catch(() => setMicronutrientData(null));
+  }, [date]);
+
   useEffect(() => {
     setEntries(initialLog?.entries ?? []);
     setWaterMl(initialLog?.waterMl ?? 0);
@@ -259,11 +266,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       .then((data: { photos?: DayPhoto[] }) => setDayPhotos(data.photos ?? []))
       .catch(() => setDayPhotos([]));
     // Load micronutrient data
-    fetch(`/api/micronutrient-intakes?date=${date}`)
-      .then((r) => r.ok ? r.json() : {})
-      .then((data: { log?: MicronutrientDay }) => setMicronutrientData(data.log ?? null))
-      .catch(() => setMicronutrientData(null));
-  }, [date, initialLog]);
+    fetchMicronutrients();
+  }, [date, initialLog, fetchMicronutrients]);
 
   const handleValidate = async () => {
     setValidating(true);
@@ -590,7 +594,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               border: "1px solid rgba(52,211,153,0.18)",
             }}
           >
-            <SupplementLogger date={date} />
+            <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
           </motion.div>
 
           {/* Micronutrient tracker */}

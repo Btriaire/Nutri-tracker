@@ -8,6 +8,7 @@ import type { SupplementProduct, SupplementLog, SupplementIntake, SupplementMome
 
 interface SupplementLoggerProps {
   date: string; // "YYYY-MM-DD"
+  onIntakeLogged?: () => void; // called after a supplement (and its micronutrients) is logged
 }
 
 const MOMENTS: { value: SupplementMoment; label: string; hour: number }[] = [
@@ -30,7 +31,7 @@ function guessMoment(hour: number): SupplementMoment {
   return "evening";
 }
 
-export default function SupplementLogger({ date }: SupplementLoggerProps) {
+export default function SupplementLogger({ date, onIntakeLogged }: SupplementLoggerProps) {
   const [products, setProducts] = useState<SupplementProduct[]>([]);
   const [log, setLog] = useState<SupplementLog | null>(null);
   const [yesterdayIntakes, setYesterdayIntakes] = useState<SupplementIntake[]>([]);
@@ -108,9 +109,9 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
 
         // Also log micronutrients if the supplement has them
         const product = products.find(p => p.id === form.supplementId);
-        if (product?.micronutrients) {
-          for (const micronutrient of product.micronutrients) {
-            await fetch("/api/micronutrient-intakes", {
+        if (product?.micronutrients?.length) {
+          await Promise.all(product.micronutrients.map(micronutrient =>
+            fetch("/api/micronutrient-intakes", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -121,9 +122,10 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
                 source: form.supplementName,
                 time: form.time,
               }),
-            }).catch(err => console.warn("[micronutrient-intakes]", err));
-          }
+            }).catch(err => console.warn("[micronutrient-intakes]", err))
+          ));
         }
+        onIntakeLogged?.();
 
         setForm({
           supplementId: "",
@@ -162,6 +164,25 @@ export default function SupplementLogger({ date }: SupplementLoggerProps) {
       if (res.ok) {
         const data = await res.json();
         setLog(data.log);
+
+        const product = products.find(p => p.id === intake.supplementId);
+        if (product?.micronutrients?.length) {
+          await Promise.all(product.micronutrients.map(micronutrient =>
+            fetch("/api/micronutrient-intakes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                date,
+                code: micronutrient.code,
+                amount: micronutrient.amount,
+                unit: micronutrient.unit,
+                source: intake.supplementName,
+                time,
+              }),
+            }).catch(err => console.warn("[micronutrient-intakes]", err))
+          ));
+        }
+        onIntakeLogged?.();
       }
     } catch (e) {
       console.error("Failed to quick-add intake:", e);
