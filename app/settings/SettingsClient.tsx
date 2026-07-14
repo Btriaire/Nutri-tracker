@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconTrash, IconAlertCircle, IconSun, IconMoon, IconRuler, IconUser, IconHeartbeat, IconShoe, IconCalculator, IconDeviceFloppy, IconLogout, IconFileTypePdf } from "@tabler/icons-react";
+import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconTrash, IconAlertCircle, IconSun, IconMoon, IconRuler, IconUser, IconHeartbeat, IconShoe, IconCalculator, IconDeviceFloppy, IconLogout, IconFileTypePdf, IconPill } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
@@ -61,6 +61,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
   // Full history sync state
   const [showFullSync, setShowFullSync] = useState(false);
   const [fitOpen,     setFitOpen]     = useState(false);
+  const [supplementsOpen, setSupplementsOpen] = useState(false);
   const [withingsOpen,setWithingsOpen]= useState(false);
   const [yearsBack, setYearsBack]       = useState(5);
   const [fullSyncRunning, setFullSyncRunning] = useState(false);
@@ -223,7 +224,28 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           transition={{ duration: 0.3, delay: 0.05 }}
           className="glass p-5 mb-4"
         >
-          <SupplementConfig />
+          <button className="w-full flex items-center gap-3" onClick={() => setSupplementsOpen(v => !v)}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.9), rgba(34,197,94,0.9))" }}>
+              <IconPill size={18} color="white" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Suppléments & Compléments</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Produits, dosages, micronutriments</p>
+            </div>
+            {supplementsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+          </button>
+
+          <AnimatePresence initial={false}>
+            {supplementsOpen && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+                <div className="mt-4">
+                  <SupplementConfig />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Theme picker */}
