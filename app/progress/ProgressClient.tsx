@@ -2,7 +2,7 @@
 import { levelBarStyle, levelBarBg, levelBarClip } from "@/app/lib/colors";
 
 import { useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -13,6 +13,7 @@ import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
   IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
+  IconChevronDown, IconChevronUp,
 } from "@tabler/icons-react";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients, IntermittentFasting } from "@/app/lib/types";
 import type { FastingSession } from "@/app/api/fasting/route";
@@ -295,6 +296,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [weightPts,       setWeightPts]  = useState<DayTrendPoint[]>([]);
   const [weightLoading,   setWeightLoading] = useState(false);
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
+  const [planOpen,        setPlanOpen]   = useState(false);
   const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
   const [targetDate,      setTargetDate] = useState<string>(
     initialTargetDate ?? plan?.projectedTargetDate ?? ""
@@ -426,6 +428,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     const candidates = weightPts.filter(p => (p.weightKg ?? 0) > 0 && p.date <= cutoff);
     return candidates.length ? (candidates[candidates.length - 1].weightKg ?? null) : null;
   };
+  const delta48h = (() => { const w = findWeightBefore(2);  return (w && lastWeight) ? lastWeight - w : null; })();
   const delta7d  = (() => { const w = findWeightBefore(7);  return (w && lastWeight) ? lastWeight - w : null; })();
   const delta15d = (() => { const w = findWeightBefore(15); return (w && lastWeight) ? lastWeight - w : null; })();
   const delta30d = (() => { const w = findWeightBefore(30); return (w && lastWeight) ? lastWeight - w : null; })();
@@ -573,107 +576,148 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           const progressPct = (startKg && targetKg && currentKg && startKg !== targetKg)
             ? Math.max(0, Math.min(100, Math.abs(currentKg - startKg) / Math.abs(targetKg - startKg) * 100))
             : null;
+          const totalLossKg = (startKg && currentKg) ? currentKg - startKg : null;
+          const lossSign = (v: number) => v <= 0 ? v.toFixed(1) : `+${v.toFixed(1)}`;
+          const lossColor = (v: number | null) => v === null ? "var(--text-muted)" : v <= 0 ? "var(--fiber)" : "var(--protein)";
+
           return (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.02 }}
-              className="glass p-4 mb-5">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[20px]">{plan.programEmoji}</span>
-                  <div>
-                    <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Démarré le {format(new Date(plan.startDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                    style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.3)" }}>
-                    Jour {daysInPlan}
-                  </span>
-                  <button onClick={handleRecalcPlan} disabled={planRecalcLoading}
-                    className="btn btn-ghost text-[11px] px-2 py-1 gap-1"
-                    style={{ height: "auto" }}>
-                    {planRecalcLoading
-                      ? <IconLoader2 size={11} stroke={2} className="animate-spin" />
-                      : "Recalculer"
-                    }
-                  </button>
-                </div>
-              </div>
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                {[
-                  { label: "Départ",  value: startKg   ? `${startKg} kg`   : "—", color: "var(--text-primary)" },
-                  { label: "Actuel",  value: currentKg ? `${currentKg.toFixed(1)} kg` : "—", color: "var(--protein)" },
-                  { label: "Cible",   value: targetKg  ? `${targetKg} kg`  : "—", color: "var(--fiber)" },
-                  { label: "Calories", value: `${plan.dailyCalories}`, color: "var(--calories)" },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                    <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{value}</span>
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Progress bar */}
-              {progressPct !== null && (
-                <div className="mb-3">
-                  <div className="flex justify-between text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
-                    <span>{startKg} kg</span>
-                    <span>{Math.round(progressPct)}% atteint</span>
-                    <span>{targetKg} kg</span>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
-                    <div className="h-full rounded-full w-full"
-                      style={levelBarStyle(progressPct / 100)} />
-                  </div>
-                </div>
-              )}
-
-              {/* Projection — weekly + monthly reduction */}
-              {(plan.projectedWeeklyLossKg !== undefined || plan.projectedTargetDate) && (() => {
-                const wk  = plan.projectedWeeklyLossKg ?? 0;
-                const mo  = Math.round(wk * 4.33 * 100) / 100;
-                const isLoss = wk < 0;
-                const color  = isLoss ? "var(--fiber)" : "var(--protein)";
-                const sign   = (v: number) => v <= 0 ? v.toFixed(2) : `+${v.toFixed(2)}`;
-                return (
-                  <div className="pt-3 mt-1" style={{ borderTop: "1px solid var(--border)" }}>
-                    {/* Weekly / Monthly chips */}
-                    <div className="grid grid-cols-2 gap-2 mb-2">
-                      <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
-                          {sign(wk)} kg
-                        </span>
-                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
-                      </div>
-                      <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
-                          {sign(mo)} kg
-                        </span>
-                        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
-                      </div>
+            <>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.02 }}
+                className="glass p-4 mb-3">
+                {/* Header — always visible, toggles the card */}
+                <button className="w-full flex items-center justify-between" onClick={() => setPlanOpen(v => !v)}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[20px]">{plan.programEmoji}</span>
+                    <div className="text-left">
+                      <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Démarré le {format(new Date(plan.startDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}</p>
                     </div>
-                    {/* Target date */}
-                    {plan.projectedTargetDate && (
-                      <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
-                        🎯 Objectif estimé le {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
-                      </p>
-                    )}
-                    {/* AI note */}
-                    {plan.projectedNote && (
-                      <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-muted)" }}>
-                        {plan.projectedNote}
-                      </p>
-                    )}
                   </div>
-                );
-              })()}
-            </motion.div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                      style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.3)" }}>
+                      Jour {daysInPlan}
+                    </span>
+                    {planOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {planOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+                      <div className="pt-3">
+                        <div className="flex justify-end mb-2">
+                          <button onClick={handleRecalcPlan} disabled={planRecalcLoading}
+                            className="btn btn-ghost text-[11px] px-2 py-1 gap-1"
+                            style={{ height: "auto" }}>
+                            {planRecalcLoading
+                              ? <IconLoader2 size={11} stroke={2} className="animate-spin" />
+                              : "Recalculer"
+                            }
+                          </button>
+                        </div>
+
+                        {/* Stats grid */}
+                        <div className="grid grid-cols-4 gap-2 mb-3">
+                          {[
+                            { label: "Départ",  value: startKg   ? `${startKg} kg`   : "—", color: "var(--text-primary)" },
+                            { label: "Actuel",  value: currentKg ? `${currentKg.toFixed(1)} kg` : "—", color: "var(--protein)" },
+                            { label: "Cible",   value: targetKg  ? `${targetKg} kg`  : "—", color: "var(--fiber)" },
+                            { label: "Calories", value: `${plan.dailyCalories}`, color: "var(--calories)" },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
+                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                              <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{value}</span>
+                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Progress bar */}
+                        {progressPct !== null && (
+                          <div className="mb-3">
+                            <div className="flex justify-between text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
+                              <span>{startKg} kg</span>
+                              <span>{Math.round(progressPct)}% atteint</span>
+                              <span>{targetKg} kg</span>
+                            </div>
+                            <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+                              <div className="h-full rounded-full w-full"
+                                style={levelBarStyle(progressPct / 100)} />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Projection — weekly + monthly reduction */}
+                        {(plan.projectedWeeklyLossKg !== undefined || plan.projectedTargetDate) && (() => {
+                          const wk  = plan.projectedWeeklyLossKg ?? 0;
+                          const mo  = Math.round(wk * 4.33 * 100) / 100;
+                          const isLoss = wk < 0;
+                          const color  = isLoss ? "var(--fiber)" : "var(--protein)";
+                          const sign   = (v: number) => v <= 0 ? v.toFixed(2) : `+${v.toFixed(2)}`;
+                          return (
+                            <div className="pt-3 mt-1" style={{ borderTop: "1px solid var(--border)" }}>
+                              {/* Weekly / Monthly chips */}
+                              <div className="grid grid-cols-2 gap-2 mb-2">
+                                <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
+                                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                                  <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+                                    {sign(wk)} kg
+                                  </span>
+                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
+                                </div>
+                                <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
+                                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                                  <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+                                    {sign(mo)} kg
+                                  </span>
+                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
+                                </div>
+                              </div>
+                              {/* Target date */}
+                              {plan.projectedTargetDate && (
+                                <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
+                                  🎯 Objectif estimé le {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
+                                </p>
+                              )}
+                              {/* AI note */}
+                              {plan.projectedNote && (
+                                <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-muted)" }}>
+                                  {plan.projectedNote}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* ── Pertes de poids — vue rapide toujours visible ── */}
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
+                className="glass p-4 mb-5">
+                <p className="label-xs mb-2">Pertes de poids</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Total",  value: totalLossKg },
+                    { label: "30 j",   value: delta30d },
+                    { label: "7 j",    value: delta7d },
+                    { label: "48 h",   value: delta48h },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      <span className="text-[13px] font-bold tabular-nums" style={{ color: lossColor(value) }}>
+                        {value !== null ? `${lossSign(value)} kg` : "—"}
+                      </span>
+                      <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </>
           );
         })()}
 
