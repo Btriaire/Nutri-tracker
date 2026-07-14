@@ -110,7 +110,7 @@ export function extractMicronutrientsFromFood(
 }
 
 /**
- * Batch log micronutrients to Firestore and trigger a refresh
+ * Batch log micronutrients to Firestore
  */
 export async function logMicronutrients(
   date: string,
@@ -135,10 +135,6 @@ export async function logMicronutrients(
         })
       )
     );
-
-    // Trigger a refetch by dispatching a custom event
-    // (The component listening for micronutrient updates can catch this)
-    window.dispatchEvent(new CustomEvent("micronutrients-updated", { detail: { date } }));
   } catch (e) {
     console.warn("[micronutrient-extraction]", e);
   }

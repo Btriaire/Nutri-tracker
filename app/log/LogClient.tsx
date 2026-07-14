@@ -217,23 +217,6 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [micronutrientData, setMicronutrientData] = useState<MicronutrientDay | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Listen for micronutrient updates and refetch
-  useEffect(() => {
-    const handleMicronutrientsUpdated = async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.date === date) {
-        const res = await fetch(`/api/micronutrient-intakes?date=${date}`);
-        if (res.ok) {
-          const data = await res.json();
-          setMicronutrientData(data.log ?? null);
-        }
-      }
-    };
-
-    window.addEventListener("micronutrients-updated", handleMicronutrientsUpdated);
-    return () => window.removeEventListener("micronutrients-updated", handleMicronutrientsUpdated);
-  }, [date]);
-
   // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
   const UNLOCK_TAPS = 3;
   const [unlockTaps,    setUnlockTaps]    = useState(0);
