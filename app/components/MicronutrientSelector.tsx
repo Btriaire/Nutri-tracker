@@ -43,6 +43,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
           Micronutriments
         </label>
         <button
+          type="button"
           onClick={() => setShowSelector(!showSelector)}
           className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all"
           style={{
@@ -80,6 +81,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                 {m.unit}
               </span>
               <button
+                type="button"
                 onClick={() => handleRemove(m.code)}
                 className="ml-auto p-1 rounded hover:opacity-70 transition-opacity"
               >
@@ -104,6 +106,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
               const info = MICRONUTRIENT_DB[code];
               return (
                 <button
+                  type="button"
                   key={code}
                   onClick={() => {
                     handleAdd(code);
