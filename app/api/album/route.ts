@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
   const db = getAdminFirestore();
 
-  const [logSnap, photosSnap, actSnap] = await Promise.all([
+  const [logSnap, photosSnap, mealPhotosSnap, actSnap] = await Promise.all([
     db.collection(`users/${USER}/foodLog`)
       .where(FieldPath.documentId(), ">=", from)
       .where(FieldPath.documentId(), "<=", to)
@@ -59,17 +59,38 @@ export async function GET(req: NextRequest) {
       .where(FieldPath.documentId(), "<=", to)
       .orderBy(FieldPath.documentId(), "asc")
       .get(),
+    db.collection(`users/${USER}/mealPhotos`)
+      .where(FieldPath.documentId(), ">=", from)
+      .where(FieldPath.documentId(), "<=", to)
+      .orderBy(FieldPath.documentId(), "asc")
+      .get(),
     db.collection(`users/${USER}/manualActivities`)
       .where("date", ">=", from)
       .where("date", "<=", to)
       .get(),
   ]);
 
-  // Build photos map
+  const MEAL_LABEL: Record<string, string> = {
+    breakfast: "Petit-déjeuner", lunch: "Déjeuner", dinner: "Dîner", snacks: "Collation",
+  };
+
+  // Build photos map — day photos + meal (dish) photos merged into the same strip
   const photosMap = new Map<string, DayPhoto[]>();
   for (const d of photosSnap.docs) {
     const doc = d.data() as DayPhotosDoc;
     photosMap.set(d.id, doc.photos ?? []);
+  }
+  for (const d of mealPhotosSnap.docs) {
+    const { updatedAt, ...mealShots } = d.data() as Record<string, unknown>;
+    const dishPhotos: DayPhoto[] = Object.entries(mealShots)
+      .filter(([, url]) => typeof url === "string" && url)
+      .map(([mealKey, url]) => ({
+        id:      `meal_${mealKey}`,
+        dataUrl: url as string,
+        addedAt: typeof updatedAt === "string" ? updatedAt : new Date().toISOString(),
+        label:   MEAL_LABEL[mealKey] ?? "Plat",
+      }));
+    photosMap.set(d.id, [...(photosMap.get(d.id) ?? []), ...dishPhotos]);
   }
 
   // Build activities map (date → activity with thumb)

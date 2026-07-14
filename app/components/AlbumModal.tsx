@@ -182,7 +182,7 @@ export default function AlbumModal({ open, onClose }: Props) {
                     {/* Photos strip (always visible if photos exist) */}
                     {hasContent && (
                       <div className="flex gap-2 px-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                        {[...day.photos.map(p => ({ src: p.dataUrl, key: p.id, label: "Photo du jour" })),
+                        {[...day.photos.map(p => ({ src: p.dataUrl, key: p.id, label: p.label ?? "Photo du jour" })),
                           ...day.activityThumbnails.map(t => ({ src: t.thumb, key: t.id, label: t.name }))
                         ].map(ph => (
                           <button key={ph.key}

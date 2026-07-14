@@ -5,9 +5,10 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 
 export interface DayPhoto {
-  id:        string;   // e.g. "photo_0", "photo_1", "photo_2"
+  id:        string;   // e.g. "photo_0", "photo_1", "photo_2", "meal_breakfast"
   dataUrl:   string;   // base64 data URL (compressed JPEG)
   addedAt:   string;   // ISO timestamp
+  label?:    string;   // e.g. "Petit-déjeuner" for meal photos merged into the album
 }
 
 export interface DayPhotosDoc {
