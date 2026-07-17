@@ -26,7 +26,7 @@ import SupplementsProgressSection from "@/app/components/SupplementsProgressSect
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
-type WeightRange = "3m" | "6m" | "1a" | "tout";
+type WeightRange = "14j" | "3m" | "6m" | "1a" | "tout";
 
 const RANGES: { key: Range; label: string; days?: number }[] = [
   { key: "1j",  label: "Jour" },
@@ -39,6 +39,7 @@ const RANGES: { key: Range; label: string; days?: number }[] = [
 ];
 
 const WEIGHT_RANGES: { key: WeightRange; label: string; days?: number }[] = [
+  { key: "14j",  label: "14J",  days: 14  },
   { key: "3m",   label: "3M",   days: 90  },
   { key: "6m",   label: "6M",   days: 180 },
   { key: "1a",   label: "1A",   days: 365 },

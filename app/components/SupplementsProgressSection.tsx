@@ -184,7 +184,9 @@ export default function SupplementsProgressSection() {
                         );
                       }} />
                       <Area type="monotone" dataKey="value" stroke={info.color} strokeWidth={2}
-                        fill={`url(#supp-grad-${code})`} dot={{ r: 1.5, fill: info.color, strokeWidth: 0 }} />
+                        fill={`url(#supp-grad-${code})`}
+                        dot={{ r: 3, fill: info.color, stroke: "var(--bg)", strokeWidth: 1.5 }}
+                        activeDot={{ r: 4.5 }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>

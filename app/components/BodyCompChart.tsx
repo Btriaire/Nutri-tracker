@@ -124,9 +124,7 @@ const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] =
     metrics: [
       { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "#f43f5e" },
       { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "#fb7185" },
-      { key: "spO2Pct",     label: "SpO₂",        unit: "%",   color: "#06b6d4" },
       { key: "restingHR",   label: "FC repos",     unit: "bpm", color: "#ec4899" },
-      { key: "tempCelsius", label: "Température",  unit: "°C",  color: "#f59e0b", decimals: 1 },
     ],
   },
   {
@@ -271,6 +269,17 @@ export default function BodyCompChart({
   const allValues = chartData.flatMap(p => metrics.map(m => p[m.key] as number | null).filter((v): v is number => v != null));
   const yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
   const yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
+
+  // Per-metric domain — used on tabs (e.g. Composition) that mix metrics with very
+  // different natural scales (body fat % vs muscle/fat mass in kg) on the same
+  // chart: sharing one axis would flatten the smaller-range metric's real variation.
+  const getMetricDomain = (key: keyof BodyCompPoint): [number, number] => {
+    const values = chartData.map(p => p[key] as number | null).filter((v): v is number => v != null);
+    if (!values.length) return [0, 100];
+    const min = Math.min(...values), max = Math.max(...values);
+    const pad = Math.max(0.3, (max - min) * 0.15);
+    return [Math.floor((min - pad) * 10) / 10, Math.ceil((max + pad) * 10) / 10];
+  };
 
   const toggleMetric = (label: string) => {
     setHidden(prev => {
@@ -590,31 +599,36 @@ export default function BodyCompChart({
                   axisLine={false}
                   interval="preserveStartEnd"
                 />
-                {/* Left Y — per-tab scale (SpO2 %, FC bpm, Temp °C, body comp) */}
+                {/* Left Y — FC repos (bpm) on Vitaux, or shared scale elsewhere */}
                 <YAxis
                   yAxisId="left"
-                  domain={tab === "vitaux"
-                    ? (() => {
-                        const nonBP = chartData.flatMap(p =>
-                          (["spO2Pct","restingHR","tempCelsius"] as (keyof BodyCompPoint)[])
-                            .map(k => p[k] as number | null)
-                            .filter((v): v is number => v != null)
-                        );
-                        if (!nonBP.length) return ["auto", "auto"] as ["auto","auto"];
-                        return [Math.floor(Math.min(...nonBP) * 0.95), Math.ceil(Math.max(...nonBP) * 1.05)] as [number,number];
-                      })()
-                    : [yMin, yMax]}
+                  domain={tab === "vitaux" ? getMetricDomain("restingHR") : (tab === "composition" ? [0, 100] : [yMin, yMax])}
+                  hide={tab === "composition"}
                   tick={{ fontSize: 9, fill: "var(--text-muted)" }}
                   tickLine={false}
                   axisLine={false}
                   width={36}
                 />
-                {/* Right Y — BP axis (mmHg 50–200) shown only on Vitaux */}
+                {/* Composition tab: one hidden axis per metric — bodyFatPct(%) and
+                    muscleMassKg/fatMassKg(kg) have very different natural ranges,
+                    sharing one axis flattens whichever has the smaller range */}
+                {tab === "composition" && metrics.map(m => (
+                  <YAxis key={`axis-${m.key}`} yAxisId={m.key as string} hide domain={getMetricDomain(m.key)} />
+                ))}
+                {/* Right Y — BP axis, zoomed to the actual readings instead of a fixed 50–200 span */}
                 {tab === "vitaux" && (
                   <YAxis
                     yAxisId="bp"
                     orientation="right"
-                    domain={[50, 200]}
+                    domain={(() => {
+                      const bpValues = chartData.flatMap(p =>
+                        [p.systolicBP, p.diastolicBP].filter((v): v is number => v != null)
+                      );
+                      if (!bpValues.length) return [50, 200] as [number, number];
+                      const min = Math.min(...bpValues), max = Math.max(...bpValues);
+                      const pad = Math.max(4, (max - min) * 0.15);
+                      return [Math.floor(min - pad), Math.ceil(max + pad)] as [number, number];
+                    })()}
                     tick={{ fontSize: 9, fill: "rgba(244,63,94,0.5)" }}
                     tickLine={false}
                     axisLine={false}
@@ -626,7 +640,6 @@ export default function BodyCompChart({
 
                 {/* Reference lines */}
                 {tab === "sommeil" && <ReferenceLine yAxisId="left" y={7}   stroke="rgba(99,102,241,0.3)"  strokeDasharray="4 4" />}
-                {tab === "vitaux"  && <ReferenceLine yAxisId="left" y={95}  stroke="rgba(6,182,212,0.25)"  strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
 
@@ -635,14 +648,14 @@ export default function BodyCompChart({
                   return (
                     <Line
                       key={m.key}
-                      type="monotone"
-                      yAxisId={isBP ? "bp" : "left"}
+                      type={isBP ? "linear" : "monotone"}
+                      yAxisId={isBP ? "bp" : (tab === "composition" ? (m.key as string) : "left")}
                       dataKey={m.key as string}
                       name={m.label}
                       stroke={m.color}
                       strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, strokeWidth: 0 }}
+                      dot={isBP ? { r: 3, fill: m.color, stroke: "var(--bg)", strokeWidth: 1.5 } : false}
+                      activeDot={{ r: 4.5, strokeWidth: 0 }}
                       connectNulls
                       hide={hidden.has(m.label)}
                     />
@@ -682,7 +695,7 @@ export default function BodyCompChart({
               <div className="px-4 pb-1">
                 {/* Legend row */}
                 <div className="flex items-center justify-center flex-wrap gap-2 pb-2">
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— SpO₂ 95% · TA 120/80 mmHg</p>
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— TA 120/80 mmHg</p>
                 </div>
 
                 {/* Collapsible BP list */}

@@ -1076,14 +1076,14 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-          className="flex items-start justify-between mb-3"
+          className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-start sm:justify-between"
         >
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Activité sportive
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setShowVoice(true)}
               aria-label="Dicter mon activité"
