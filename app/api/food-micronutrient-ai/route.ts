@@ -10,14 +10,22 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const MICRONUTRIENT_CODES = Object.keys(MICRONUTRIENT_DB);
 
-const SYSTEM_PROMPT = `Tu es un expert en nutrition francophone. Pour l'aliment donné, retourne UNIQUEMENT un objet JSON valide (sans markdown) avec ce champ :
-- micronutrients: array   (profil micronutrimentaire RÉEL de cet aliment POUR 100g, à partir de tes connaissances nutritionnelles)
+const SYSTEM_PROMPT = `Tu es un expert en nutrition francophone, avec une connaissance fine des tables de composition nutritionnelle (type CIQUAL/USDA). Pour l'aliment donné, retourne UNIQUEMENT un objet JSON valide (sans markdown) avec ce champ :
+- micronutrients: array   (profil micronutrimentaire de cet aliment POUR 100g)
   Chaque élément : { "code": string, "amount": number, "unit": string }
-  "code" DOIT être une valeur EXACTE parmi cette liste : ${MICRONUTRIENT_CODES.join(", ")}
-  N'invente pas de code hors de cette liste. Inclus tous les micronutriments de la liste réellement présents en quantité significative dans cet aliment pour 100g (par exemple une orange contient de la vitamine C, du potassium, du folate ; un poivron contient beaucoup de vitamine C ; un poisson gras contient de la vitamine D).
-  "amount" doit être calculé POUR 100 GRAMMES de cet aliment (pas pour une portion) — ce profil sera mis en cache et réutilisé pour d'autres quantités.
+  "code" DOIT être une valeur EXACTE parmi cette liste (${MICRONUTRIENT_CODES.length} valeurs) : ${MICRONUTRIENT_CODES.join(", ")}
+
+MÉTHODE — passe en revue CHACUN des ${MICRONUTRIENT_CODES.length} codes ci-dessus un par un pour cet aliment précis, comme le ferait une table de composition nutritionnelle complète, et inclus TOUS ceux présents en quantité mesurable (pas seulement les 2-3 plus évidents). Ne te limite pas au nutriment "signature" de l'aliment :
+- Un aliment végétal a presque toujours plusieurs minéraux (potassium, magnésium, souvent fer, manganèse) en plus de sa vitamine principale.
+- Un fruit riche en vitamine C contient généralement aussi du potassium et du folate.
+- Une viande/poisson contient typiquement fer, zinc, phosphore, plusieurs vitamines B, et pour les poissons gras de la vitamine D.
+- Un produit laitier contient typiquement calcium, phosphore, vitamine B12, souvent zinc et iode.
+- Une céréale complète ou légumineuse contient typiquement magnésium, manganèse, phosphore, folate, thiamine.
+Ne signale un micronutriment que s'il est réellement présent en quantité nutritionnellement significative (pas de traces négligeables), mais ne t'arrête pas après avoir trouvé 1 ou 2 nutriments évidents — un aliment courant a très souvent 4 à 8 micronutriments significatifs de cette liste, pas 1 seul.
+
+  "amount" doit être calculé POUR 100 GRAMMES de cet aliment (pas pour une portion) — ce profil sera mis en cache et réutilisé pour d'autres quantités, donc précis mais réutilisable.
   "unit" doit être cohérent avec le nutriment (mg ou µg).
-  Si l'aliment n'a vraiment aucun micronutriment notable de la liste, retourne un tableau vide [].
+  Si l'aliment n'a vraiment aucun micronutriment notable de la liste (ex: sucre blanc, huile raffinée), retourne un tableau vide [].
 
 Réponds uniquement en JSON. Ne fournis aucune explication hors du JSON.`;
 
@@ -54,9 +62,10 @@ export async function POST(req: NextRequest) {
         model: "llama-3.3-70b-versatile",
         response_format: { type: "json_object" },
         temperature: 0.2,
+        max_tokens: 1200,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user",   content: `Aliment : ${name}` },
+          { role: "user",   content: `Aliment : ${name}. Liste tous les micronutriments significatifs pour 100g, pas seulement les plus évidents.` },
         ],
       }),
     });

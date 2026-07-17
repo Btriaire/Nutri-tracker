@@ -35,15 +35,16 @@ export function extractMicronutrientsFromFood(
     .map(m => ({ ...m, source, time }));
 }
 
-const MIN_STRUCTURED_NUTRIENTS = 2; // below this, the source data is too sparse — ask the AI instead
-
 /**
  * Force micronutrient detection: structured data from food-search sources
  * (USDA/Edamam search endpoints in particular) is often abbreviated to just
- * calories/macros with no vitamin/mineral detail. When the structured
- * extraction comes back too sparse, ask Groq to estimate the food's real
- * micronutrient profile for this exact serving instead of silently showing
- * nothing (e.g. an orange with no Vitamin C).
+ * calories/macros with no vitamin/mineral detail, and even CIQUAL/OFF rarely
+ * cover the full micronutrient list for a given food. Always check the
+ * per-food micronutrient library (cached, reused across all users/quantities)
+ * — a cache hit costs one Firestore read, so there's no reason to gate this
+ * behind "is the structured data sparse enough". Only a genuine cache miss
+ * triggers a Groq call, which then gets cached for every future lookup of
+ * that food.
  */
 export async function extractMicronutrientsForced(
   nutrition: FoodNutrition,
@@ -53,7 +54,6 @@ export async function extractMicronutrientsForced(
   time: string
 ): Promise<ExtractedMicronutrient[]> {
   const structured = extractMicronutrientsFromFood(nutrition, source, time);
-  if (structured.length >= MIN_STRUCTURED_NUTRIENTS) return structured;
 
   try {
     const res = await fetch("/api/food-micronutrient-ai", {
