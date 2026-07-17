@@ -36,6 +36,7 @@ const CONFIDENCE_COLOR: Record<FaceScanConfidence, string> = {
 };
 
 const SOURCES = [
+  "Rohrich R.J. & Pessa J.E., \"The fat compartments of the face: anatomy and clinical implications for cosmetic surgery\", Plast Reconstr Surg (2007) — anatomie de la graisse faciale (boule de Bichat, fonte temporale) et son lien avec la perte de poids/le vieillissement",
   "Bickley, L. — Bates' Guide to Physical Examination and History-Taking (référence classique de sémiologie clinique, pâleur conjonctivale, ictère scléral, xanthélasma, arc cornéen)",
   "Sheth T.N. et al., \"The relation of conjunctival pallor to the presence of anemia\", J Gen Intern Med (1997) — validation clinique de la pâleur conjonctivale comme signe d'anémie",
   "Christoffersen M. et al., \"Xanthelasmata, arcus corneae, and ischaemic vascular disease and death in general population\", BMJ (2011) — xanthélasma/arc cornéen et risque cardiovasculaire",
@@ -178,7 +179,7 @@ export default function FaceScanClient() {
             Scan Visage
           </h1>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            Suivi bien-être basé sur des traits visuels documentés scientifiquement — pas un diagnostic médical
+            Fatigue, amaigrissement visage, teint — suivi bien-être basé sur des traits documentés scientifiquement, pas un diagnostic médical
           </p>
         </div>
 
