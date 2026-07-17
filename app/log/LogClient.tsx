@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
@@ -20,7 +21,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -411,6 +412,15 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <div className="flex-1 min-w-0">
             <DateNav date={date} />
           </div>
+          {/* Face & eye scan — Nutri-IA wellness photo analysis */}
+          <Link
+            href="/health/face-scan"
+            aria-label="Scan visage et œil"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "rgba(99,102,241,0.14)", border: "1px solid rgba(99,102,241,0.4)", color: "var(--indigo)" }}
+          >
+            <IconCamera size={17} stroke={1.8} />
+          </Link>
           {/* Voice meal logging — Nutri-IA */}
           <button
             onClick={() => setShowVoice(true)}

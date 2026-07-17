@@ -728,3 +728,30 @@ export interface MicronutrientDay {
   intakes:        MicronutrientIntake[];
   updatedAt?:     Timestamp;
 }
+
+// ─── Face & Eye Scan ────────────────────────────────────────────────────────
+
+export type FaceScanConfidence = "faible" | "modérée" | "élevée";
+
+export interface FaceScanFinding {
+  indicator:   string;             // e.g. "Pâleur conjonctivale"
+  observation: string;             // what the AI observed in the photo
+  relevance:   string;             // what this pattern is clinically associated with
+  confidence:  FaceScanConfidence; // how confident the visual read is
+}
+
+export interface FaceScanAnalysis {
+  summary:         string;
+  findings:        FaceScanFinding[];
+  comparisonNote?: string;         // vs previous scan(s), if any existed at analysis time
+  disclaimer:      string;
+}
+
+export interface FaceScanEntry {
+  id:            string;
+  date:          string;           // "YYYY-MM-DD"
+  faceImageUrl:  string;           // base64 data URL
+  eyeImageUrl:   string;           // base64 data URL
+  analysis:      FaceScanAnalysis;
+  createdAt:     Timestamp;
+}
