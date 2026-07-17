@@ -14,35 +14,39 @@ const MAX_IMAGE_BYTES = 500 * 1024; // 500KB per image after client-side compres
 
 const DISCLAIMER =
   "Ceci n'est pas un diagnostic médical. Ce sont des observations visuelles générales basées sur des signes " +
-  "cliniques documentés dans la littérature médicale — elles peuvent avoir de nombreuses causes bénignes " +
-  "(fatigue, lumière, éclairage de la photo) et ne remplacent en aucun cas un examen par un professionnel de " +
-  "santé. Consulte un médecin pour toute observation qui te préoccupe ou persiste.";
+  "documentés dans la littérature scientifique — elles peuvent avoir de nombreuses causes bénignes " +
+  "(fatigue, lumière, angle de la photo) et ne remplacent en aucun cas un examen par un professionnel de " +
+  "santé. Consulte un médecin pour toute observation qui te préoccupe ou persiste. Une seule photo du " +
+  "visage ne permet pas un examen de près (ex. paupière inférieure tirée) — certains signes ne peuvent " +
+  "être évalués qu'avec une confiance faible dans ces conditions.";
 
-const SYSTEM_PROMPT = `Tu es un assistant qui décrit des observations visuelles générales sur des photos de visage et d'œil, à des fins d'auto-suivi bien-être — PAS un outil de diagnostic médical.
+const SYSTEM_PROMPT = `Tu es un assistant qui décrit des observations visuelles générales sur une photo de visage, à des fins d'auto-suivi bien-être — PAS un outil de diagnostic médical. Une seule photo de visage (pas de gros plan dédié sur l'œil) t'est fournie.
 
-Analyse les 2 photos fournies (visage, œil) et cherche UNIQUEMENT des signes visuels bien documentés dans la littérature médicale de référence (sémiologie clinique classique) :
-- Pâleur conjonctivale (intérieur de la paupière inférieure) — associée à l'anémie
+Cherche UNIQUEMENT des traits/signes visuels documentés dans la littérature scientifique (sémiologie clinique, dermatologie) et indique une confiance réaliste selon ce qui est réellement visible sur une photo de visage standard :
+- Pâleur conjonctivale (visible si l'intérieur de la paupière inférieure apparaît sur la photo) — associée à l'anémie ; confiance "faible" si la paupière n'est pas clairement visible sans être tirée
 - Ictère scléral (jaunissement du blanc de l'œil) — associé à une hyperbilirubinémie (foie, voies biliaires, hémolyse)
 - Xanthélasma (plaques jaunâtres sur les paupières) — associé à une hyperlipidémie
-- Arc cornéen / gérontoxon (anneau gris-blanc autour de la cornée) — associé à une hyperlipidémie, surtout si présent avant 45 ans
-- Œdème périorbitaire / poches — peut être associé à rétention d'eau, thyroïde, sommeil, allergies
+- Arc cornéen visible (anneau gris-blanc autour de l'iris) — associé à une hyperlipidémie, surtout avant 45 ans
+- Œdème périorbitaire / poches sous les yeux — peut être associé à rétention d'eau, thyroïde, sommeil, allergies
 - Asymétrie faciale ou affaissement d'un côté — signe d'alerte AVC (protocole FAST), à signaler avec la plus grande prudence
 - Cyanose périorale (bleuissement autour des lèvres) — associée à une oxygénation insuffisante
 - Éruption malaire ("masque de loup", rougeur sur joues/nez) — associée au lupus
-- Cernes marqués — généralement bénin (fatigue, génétique), faible spécificité clinique
+- Cernes marqués — généralement bénin (fatigue, génétique), faible spécificité
 - Amincissement du tiers externe des sourcils — parfois associé à une hypothyroïdie
+- Texture et teint de la peau (rougeurs diffuses, sécheresse, éclat) — indicateurs généraux de bien-être, faible spécificité clinique
 
 Retourne UNIQUEMENT un JSON valide (sans markdown) avec :
 {
   "summary": "résumé en 2-3 phrases, ton neutre et rassurant",
   "findings": [
-    { "indicator": "nom du signe", "observation": "ce que tu observes concrètement sur la photo", "relevance": "à quoi ce type de signe est cliniquement associé dans la littérature", "confidence": "faible" | "modérée" | "élevée" }
+    { "indicator": "nom du trait", "observation": "ce que tu observes concrètement sur la photo", "relevance": "à quoi ce type de signe est associé dans la littérature scientifique", "confidence": "faible" | "modérée" | "élevée" }
   ]
 }
 
 Règles strictes :
-- N'invente RIEN. Si tu ne vois aucun signe notable, retourne un tableau "findings" vide et dis-le dans "summary".
+- N'invente RIEN. Si tu ne vois aucun trait notable, retourne un tableau "findings" vide et dis-le dans "summary".
 - Ne pose JAMAIS de diagnostic. Utilise "peut être associé à", jamais "vous avez" / "signe de".
+- Sois honnête sur les limites d'une photo unique de visage (pas de gros plan sur l'œil) — baisse la confiance en conséquence plutôt que d'affirmer.
 - Si tu détectes une possible asymétrie faciale (alerte AVC), sois factuel et invite à consulter en urgence si le signe est net et nouveau — sans dramatiser à tort.
 - Reste bienveillant, factuel, jamais alarmiste.`;
 
@@ -71,13 +75,12 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const date      = formData.get("date") as string | null;
   const faceFile  = formData.get("face") as File | null;
-  const eyeFile   = formData.get("eye") as File | null;
   const compareWithPrevious = formData.get("compareWithPrevious") === "true";
 
-  if (!date || !faceFile || !eyeFile) {
-    return NextResponse.json({ error: "Missing date, face or eye image" }, { status: 400 });
+  if (!date || !faceFile) {
+    return NextResponse.json({ error: "Missing date or face image" }, { status: 400 });
   }
-  if (faceFile.size > MAX_IMAGE_BYTES || eyeFile.size > MAX_IMAGE_BYTES) {
+  if (faceFile.size > MAX_IMAGE_BYTES) {
     return NextResponse.json({ error: "Image too large (max 500KB after compression)" }, { status: 413 });
   }
 
@@ -85,13 +88,9 @@ export async function POST(req: NextRequest) {
     const db = getAdminFirestore();
 
     const faceBuffer = Buffer.from(await faceFile.arrayBuffer());
-    const eyeBuffer   = Buffer.from(await eyeFile.arrayBuffer());
     const faceBase64  = faceBuffer.toString("base64");
-    const eyeBase64   = eyeBuffer.toString("base64");
     const faceMime    = faceFile.type || "image/jpeg";
-    const eyeMime     = eyeFile.type || "image/jpeg";
     const faceImageUrl = `data:${faceMime};base64,${faceBase64}`;
-    const eyeImageUrl  = `data:${eyeMime};base64,${eyeBase64}`;
 
     // Optionally fetch the most recent previous scan for a comparison prompt
     let previousScan: FaceScanEntry | null = null;
@@ -104,17 +103,13 @@ export async function POST(req: NextRequest) {
     const userContent: Array<Record<string, unknown>> = [
       { type: "text", text: `Photo du visage :` },
       { type: "image_url", image_url: { url: faceImageUrl } },
-      { type: "text", text: `Photo de l'œil :` },
-      { type: "image_url", image_url: { url: eyeImageUrl } },
     ];
 
     if (previousScan) {
       userContent.push(
         { type: "text", text: `Photo du visage prise précédemment (le ${previousScan.date}), pour comparaison :` },
         { type: "image_url", image_url: { url: previousScan.faceImageUrl } },
-        { type: "text", text: `Photo de l'œil prise précédemment (le ${previousScan.date}), pour comparaison :` },
-        { type: "image_url", image_url: { url: previousScan.eyeImageUrl } },
-        { type: "text", text: `Compare les nouvelles photos aux précédentes et ajoute un champ "comparisonNote" dans le JSON (string, 1-2 phrases) décrivant toute évolution visible notable, ou indiquant qu'aucune évolution notable n'est visible.` },
+        { type: "text", text: `Compare la nouvelle photo à la précédente et ajoute un champ "comparisonNote" dans le JSON (string, 1-2 phrases) décrivant toute évolution visible notable, ou indiquant qu'aucune évolution notable n'est visible.` },
       );
     }
 
@@ -153,7 +148,7 @@ export async function POST(req: NextRequest) {
 
     const id = db.collection(`users/${USER}/faceScans`).doc().id;
     const entry: FaceScanEntry = {
-      id, date, faceImageUrl, eyeImageUrl, analysis,
+      id, date, faceImageUrl, analysis,
       createdAt: Timestamp.now(),
     };
 

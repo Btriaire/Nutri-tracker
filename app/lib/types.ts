@@ -729,7 +729,7 @@ export interface MicronutrientDay {
   updatedAt?:     Timestamp;
 }
 
-// ─── Face & Eye Scan ────────────────────────────────────────────────────────
+// ─── Face Scan ──────────────────────────────────────────────────────────────
 
 export type FaceScanConfidence = "faible" | "modérée" | "élevée";
 
@@ -750,8 +750,7 @@ export interface FaceScanAnalysis {
 export interface FaceScanEntry {
   id:            string;
   date:          string;           // "YYYY-MM-DD"
-  faceImageUrl:  string;           // base64 data URL
-  eyeImageUrl:   string;           // base64 data URL
+  faceImageUrl:  string;           // base64 data URL, small thumbnail
   analysis:      FaceScanAnalysis;
   createdAt:     Timestamp;
 }

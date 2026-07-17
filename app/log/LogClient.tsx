@@ -415,7 +415,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           {/* Face & eye scan — Nutri-IA wellness photo analysis */}
           <Link
             href="/health/face-scan"
-            aria-label="Scan visage et œil"
+            aria-label="Scan visage"
             className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "rgba(99,102,241,0.14)", border: "1px solid rgba(99,102,241,0.4)", color: "var(--indigo)" }}
           >

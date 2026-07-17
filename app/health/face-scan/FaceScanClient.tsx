@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  IconCamera, IconSparkles, IconX, IconLoader2, IconCheck, IconTrash,
+  IconCamera, IconSparkles, IconX, IconLoader2, IconTrash,
   IconChevronDown, IconAlertCircle, IconClock,
 } from "@tabler/icons-react";
 import type { FaceScanEntry, FaceScanConfidence } from "@/app/lib/types";
@@ -42,15 +42,9 @@ const SOURCES = [
   "American Stroke Association — protocole FAST (Face, Arms, Speech, Time) pour la détection de l'AVC via l'asymétrie faciale",
 ];
 
-interface State {
-  faceBlob: Blob | null;
-  facePreview: string | null;
-  eyeBlob: Blob | null;
-  eyePreview: string | null;
-}
-
 export default function FaceScanClient() {
-  const [state, setState] = useState<State>({ faceBlob: null, facePreview: null, eyeBlob: null, eyePreview: null });
+  const [faceBlob, setFaceBlob] = useState<Blob | null>(null);
+  const [facePreview, setFacePreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<FaceScanEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +55,6 @@ export default function FaceScanClient() {
   const [compareWithPrevious, setCompareWithPrevious] = useState(true);
 
   const faceRef = useRef<HTMLInputElement>(null);
-  const eyeRef  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -82,26 +75,22 @@ export default function FaceScanClient() {
     }
   };
 
-  const handleCapture = async (which: "face" | "eye", file: File) => {
+  const handleCapture = async (file: File) => {
     const blob = await compressImage(file);
-    const preview = URL.createObjectURL(blob);
-    setState(prev => ({
-      ...prev,
-      ...(which === "face" ? { faceBlob: blob, facePreview: preview } : { eyeBlob: blob, eyePreview: preview }),
-    }));
+    setFaceBlob(blob);
+    setFacePreview(URL.createObjectURL(blob));
     setResult(null);
     setError(null);
   };
 
   const handleAnalyze = async () => {
-    if (!state.faceBlob || !state.eyeBlob) return;
+    if (!faceBlob) return;
     setAnalyzing(true);
     setError(null);
     try {
       const form = new FormData();
       form.append("date", format(new Date(), "yyyy-MM-dd"));
-      form.append("face", state.faceBlob, "face.jpg");
-      form.append("eye", state.eyeBlob, "eye.jpg");
+      form.append("face", faceBlob, "face.jpg");
       form.append("compareWithPrevious", compareWithPrevious ? "true" : "false");
 
       const res = await fetch("/api/face-scan", { method: "POST", body: form });
@@ -109,7 +98,8 @@ export default function FaceScanClient() {
         const data = await res.json() as { scan: FaceScanEntry };
         setResult(data.scan);
         setHistory(prev => [data.scan, ...prev]);
-        setState({ faceBlob: null, facePreview: null, eyeBlob: null, eyePreview: null });
+        setFaceBlob(null);
+        setFacePreview(null);
       } else {
         const err = await res.json().catch(() => ({}));
         setError(err.error || "L'analyse a échoué. Réessaie.");
@@ -123,7 +113,7 @@ export default function FaceScanClient() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce scan et ses photos ?")) return;
+    if (!confirm("Supprimer ce scan et sa photo ?")) return;
     try {
       const res = await fetch(`/api/face-scan?id=${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -185,64 +175,44 @@ export default function FaceScanClient() {
 
         <div className="mb-5">
           <h1 className="text-[20px] font-semibold tracking-tight mb-1" style={{ color: "var(--text-primary)" }}>
-            Scan Visage &amp; Œil
+            Scan Visage
           </h1>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            Suivi bien-être basé sur des signes visuels — pas un diagnostic médical
+            Suivi bien-être basé sur des traits visuels documentés scientifiquement — pas un diagnostic médical
           </p>
         </div>
 
         {/* Capture zone */}
         <div className="glass p-4 mb-4">
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            {/* Face */}
+          <div className="flex items-center gap-3 mb-3">
             <button
               onClick={() => faceRef.current?.click()}
-              className="flex flex-col items-center gap-2 py-6 rounded-2xl transition-all active:scale-[0.97] overflow-hidden relative"
+              className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center transition-all active:scale-[0.95] overflow-hidden relative"
               style={{ background: "rgba(99,102,241,0.06)", border: "2px dashed rgba(99,102,241,0.3)" }}
             >
-              {state.facePreview ? (
+              {facePreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={state.facePreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={facePreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
-                <>
-                  <IconCamera size={28} style={{ color: "var(--indigo)" }} />
-                  <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>Visage</span>
-                </>
-              )}
-              {state.facePreview && (
-                <div className="absolute bottom-1 right-1 rounded-full p-1" style={{ background: "rgba(0,0,0,0.5)" }}>
-                  <IconCheck size={12} color="#fff" />
-                </div>
+                <IconCamera size={22} style={{ color: "var(--indigo)" }} />
               )}
             </button>
-            {/* Eye */}
-            <button
-              onClick={() => eyeRef.current?.click()}
-              className="flex flex-col items-center gap-2 py-6 rounded-2xl transition-all active:scale-[0.97] overflow-hidden relative"
-              style={{ background: "rgba(52,211,153,0.06)", border: "2px dashed rgba(52,211,153,0.3)" }}
-            >
-              {state.eyePreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={state.eyePreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <>
-                  <IconCamera size={28} style={{ color: "var(--fiber)" }} />
-                  <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>Œil</span>
-                </>
-              )}
-              {state.eyePreview && (
-                <div className="absolute bottom-1 right-1 rounded-full p-1" style={{ background: "rgba(0,0,0,0.5)" }}>
-                  <IconCheck size={12} color="#fff" />
-                </div>
-              )}
-            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
+                {facePreview ? "Photo prête" : "Photo du visage"}
+              </p>
+              <button
+                onClick={() => faceRef.current?.click()}
+                className="text-[11px] font-medium mt-0.5"
+                style={{ color: "var(--indigo)" }}
+              >
+                {facePreview ? "Reprendre la photo" : "Prendre une photo"}
+              </button>
+            </div>
           </div>
 
           <input ref={faceRef} type="file" accept="image/*" capture="user" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture("face", f); e.target.value = ""; }} />
-          <input ref={eyeRef} type="file" accept="image/*" capture="user" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture("eye", f); e.target.value = ""; }} />
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture(f); e.target.value = ""; }} />
 
           {history.length > 0 && (
             <label className="flex items-center gap-2 mb-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -262,7 +232,7 @@ export default function FaceScanClient() {
 
           <button
             onClick={handleAnalyze}
-            disabled={!state.faceBlob || !state.eyeBlob || analyzing}
+            disabled={!faceBlob || analyzing}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all disabled:opacity-40"
             style={{ background: "var(--indigo)", color: "#fff" }}
           >
@@ -320,12 +290,8 @@ export default function FaceScanClient() {
                       onClick={() => setExpandedId(isOpen ? null : scan.id)}
                       className="w-full flex items-center gap-3 p-3"
                     >
-                      <div className="flex gap-1 flex-shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={scan.faceImageUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={scan.eyeImageUrl} alt="" className="w-9 h-9 rounded-lg object-cover" />
-                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={scan.faceImageUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0 text-left">
                         <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                           {format(new Date(scan.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
