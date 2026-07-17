@@ -12,7 +12,7 @@ import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
 import SupplementLogger from "@/app/components/SupplementLogger";
 import MicronutrientTracker from "@/app/components/MicronutrientTracker";
-import { extractMicronutrientsFromFood, logMicronutrients } from "@/app/lib/micronutrient-extractor";
+import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog } from "@/app/lib/types";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
@@ -361,9 +361,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
 
     if (newEntries.length) {
       Promise.all(
-        newEntries.map((entry) => {
+        newEntries.map(async (entry) => {
           const time = format(new Date(Number(entry.loggedAt?.seconds ?? 0) * 1000 || Date.now()), "HH:mm");
-          const intakes = extractMicronutrientsFromFood(entry.nutrition, entry.name, time);
+          const intakes = await extractMicronutrientsForced(entry.nutrition, entry.name, entry.servingGrams, entry.name, time);
           return logMicronutrients(date, intakes);
         })
       ).then(fetchMicronutrients);

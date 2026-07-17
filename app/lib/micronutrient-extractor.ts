@@ -35,6 +35,47 @@ export function extractMicronutrientsFromFood(
     .map(m => ({ ...m, source, time }));
 }
 
+const MIN_STRUCTURED_NUTRIENTS = 2; // below this, the source data is too sparse — ask the AI instead
+
+/**
+ * Force micronutrient detection: structured data from food-search sources
+ * (USDA/Edamam search endpoints in particular) is often abbreviated to just
+ * calories/macros with no vitamin/mineral detail. When the structured
+ * extraction comes back too sparse, ask Groq to estimate the food's real
+ * micronutrient profile for this exact serving instead of silently showing
+ * nothing (e.g. an orange with no Vitamin C).
+ */
+export async function extractMicronutrientsForced(
+  nutrition: FoodNutrition,
+  name: string,
+  grams: number,
+  source: string,
+  time: string
+): Promise<ExtractedMicronutrient[]> {
+  const structured = extractMicronutrientsFromFood(nutrition, source, time);
+  if (structured.length >= MIN_STRUCTURED_NUTRIENTS) return structured;
+
+  try {
+    const res = await fetch("/api/food-micronutrient-ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, grams }),
+    });
+    if (!res.ok) return structured;
+    const data = await res.json() as { micronutrients?: { code: MicronutrientCode; amount: number; unit: string }[] };
+    const aiCodes = new Set((data.micronutrients ?? []).map(m => m.code));
+    // Keep any structured values the AI didn't cover, prefer AI where both exist (AI accounts for the exact food/quantity)
+    const structuredExtra = structured.filter(m => !aiCodes.has(m.code));
+    const aiIntakes: ExtractedMicronutrient[] = (data.micronutrients ?? []).map(m => ({
+      code: m.code, amount: m.amount, unit: m.unit, source, time,
+    }));
+    return [...aiIntakes, ...structuredExtra];
+  } catch (e) {
+    console.warn("[micronutrient-ai-fallback]", e);
+    return structured;
+  }
+}
+
 /**
  * Batch log micronutrients to Firestore via the API route.
  */
