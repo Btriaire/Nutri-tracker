@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory, IconChevronDown } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory, IconChevronDown, IconPencil, IconCheck } from "@tabler/icons-react";
 import { format, subDays } from "date-fns";
 import type { SupplementProduct, SupplementLog, SupplementIntake, SupplementMoment } from "@/app/lib/types";
 
@@ -39,6 +39,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showYesterday, setShowYesterday] = useState(false);
+  const [editingIntakeId, setEditingIntakeId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     supplementId: "",
@@ -85,12 +86,60 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
     }
   };
 
+  const resetForm = () => {
+    setForm({
+      supplementId: "",
+      supplementName: "",
+      time: format(new Date(), "HH:mm"),
+      moment: guessMoment(new Date().getHours()),
+      notes: "",
+    });
+    setEditingIntakeId(null);
+    setShowForm(false);
+  };
+
+  const handleEditIntake = (intake: SupplementIntake) => {
+    setForm({
+      supplementId: intake.supplementId,
+      supplementName: intake.supplementName,
+      time: intake.time,
+      moment: intake.moment ?? guessMoment(parseInt(intake.time.split(":")[0] || "0", 10)),
+      notes: intake.notes ?? "",
+    });
+    setEditingIntakeId(intake.id);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.supplementId || !form.time) return;
 
     setLoading(true);
     try {
+      if (editingIntakeId) {
+        // Editing only touches the intake's schedule (time/moment/notes) — the
+        // micronutrients logged when it was first added are left untouched.
+        const res = await fetch("/api/supplement-intakes", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date,
+            intakeId: editingIntakeId,
+            time: form.time,
+            moment: form.moment,
+            notes: form.notes,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLog(data.log);
+          resetForm();
+        } else {
+          alert("La modification a échoué. Réessaie.");
+        }
+        return;
+      }
+
       const res = await fetch("/api/supplement-intakes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,15 +176,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           ));
         }
         onIntakeLogged?.();
-
-        setForm({
-          supplementId: "",
-          supplementName: "",
-          time: format(new Date(), "HH:mm"),
-          moment: guessMoment(new Date().getHours()),
-          notes: "",
-        });
-        setShowForm(false);
+        resetForm();
       }
     } catch (e) {
       console.error("Failed to log intake:", e);
@@ -201,6 +242,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
       if (res.ok) {
         const data = await res.json();
         setLog(data.log);
+        if (editingIntakeId === intakeId) resetForm();
       }
     } catch (e) {
       console.error("Failed to delete intake:", e);
@@ -224,7 +266,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           Suppléments & Compléments
         </h3>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => (showForm ? resetForm() : setShowForm(true))}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
           style={{
             background: "rgba(52,211,153,0.12)",
@@ -305,6 +347,11 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
             style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}
           >
             <form onSubmit={handleSubmit} className="space-y-3">
+              {editingIntakeId && (
+                <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
+                  Modifier l'horaire de la prise
+                </p>
+              )}
               <div>
                 <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Supplément *
@@ -312,7 +359,8 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                 <select
                   value={form.supplementId}
                   onChange={e => handleSelectProduct(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-[12px]"
+                  disabled={!!editingIntakeId}
+                  className="w-full px-3 py-2 rounded-lg text-[12px] disabled:opacity-60"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 >
                   <option value="">Sélectionner un supplément</option>
@@ -393,12 +441,12 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                     color: "var(--text-primary)",
                   }}
                 >
-                  {loading ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} />}
-                  Enregistrer
+                  {loading ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} />}
+                  {editingIntakeId ? "Enregistrer" : "Ajouter"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={resetForm}
                   className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
                   style={{
                     background: "rgba(255,255,255,0.05)",
@@ -449,13 +497,22 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   </p>
                 )}
               </div>
-              <button
-                onClick={() => handleDelete(intake.id)}
-                className="flex-shrink-0 p-1.5 rounded-lg ml-2 transition-all hover:opacity-70"
-                style={{ background: "rgba(239,68,68,0.1)" }}
-              >
-                <IconTrash size={14} style={{ color: "var(--error)" }} />
-              </button>
+              <div className="flex-shrink-0 flex items-center gap-1.5 ml-2">
+                <button
+                  onClick={() => handleEditIntake(intake)}
+                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                  style={{ background: "rgba(99,102,241,0.1)" }}
+                >
+                  <IconPencil size={14} style={{ color: "var(--indigo)" }} />
+                </button>
+                <button
+                  onClick={() => handleDelete(intake.id)}
+                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                  style={{ background: "rgba(239,68,68,0.1)" }}
+                >
+                  <IconTrash size={14} style={{ color: "var(--error)" }} />
+                </button>
+              </div>
             </motion.div>
           ))
         )}
