@@ -664,8 +664,11 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
           {(phase === "results" || phase === "saving") && selected.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-              className="flex-shrink-0 px-5 pt-3 pb-8"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+              className="flex-shrink-0 px-5 pt-3"
+              style={{
+                borderTop: "1px solid rgba(255,255,255,0.07)",
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)",
+              }}
             >
               <button
                 onClick={handleAdd}
