@@ -14,6 +14,7 @@ import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutri
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
 import { format as formatDate } from "date-fns";
 import SupplementConfig from "@/app/components/SupplementConfig";
+import AppleHealthPanel from "@/app/components/AppleHealthPanel";
 
 type OAuthStatus = "connected" | "needs_reauth" | "disconnected";
 
@@ -250,6 +251,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Theme picker */}
         <ThemePicker current={theme} onChange={setTheme} />
+
+        {/* Apple Health card */}
+        <AppleHealthPanel />
 
         {/* Google Fit card */}
         <motion.div
