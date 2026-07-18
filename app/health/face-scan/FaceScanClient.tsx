@@ -7,9 +7,11 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconCamera, IconSparkles, IconX, IconLoader2, IconTrash,
-  IconChevronDown, IconAlertCircle, IconClock,
+  IconChevronDown, IconAlertCircle, IconClock, IconStarFilled,
 } from "@tabler/icons-react";
-import type { FaceScanEntry, FaceScanConfidence } from "@/app/lib/types";
+import type { FaceScanEntry, FaceScanConfidence, FaceScanScorecard } from "@/app/lib/types";
+import FaceZoneDiagram from "@/app/components/FaceZoneDiagram";
+import FaceScanTrendChart from "@/app/components/FaceScanTrendChart";
 
 async function compressImage(file: File, maxSide = 640): Promise<Blob> {
   return new Promise((resolve) => {
@@ -34,6 +36,23 @@ const CONFIDENCE_COLOR: Record<FaceScanConfidence, string> = {
   "modérée": "#fbbf24",
   "élevée": "#f87171",
 };
+
+const SCORE_AXES: { key: keyof FaceScanScorecard; label: string; color: string }[] = [
+  { key: "amaigrissement", label: "Amaigrissement visage", color: "#6366f1" },
+  { key: "fatigue",        label: "Fatigue",               color: "#f59e0b" },
+  { key: "teint",          label: "Teint",                 color: "#f43f5e" },
+  { key: "hydratation",    label: "Hydratation",           color: "#06b6d4" },
+];
+
+function StarRow({ score, color }: { score: number; color: string }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(i => (
+        <IconStarFilled key={i} size={13} style={{ color: i <= score ? color : "rgba(255,255,255,0.1)" }} />
+      ))}
+    </div>
+  );
+}
 
 const SOURCES = [
   "Rohrich R.J. & Pessa J.E., \"The fat compartments of the face: anatomy and clinical implications for cosmetic surgery\", Plast Reconstr Surg (2007) — anatomie de la graisse faciale (boule de Bichat, fonte temporale) et son lien avec la perte de poids/le vieillissement",
@@ -128,6 +147,20 @@ export default function FaceScanClient() {
 
   const renderAnalysis = (scan: FaceScanEntry) => (
     <div className="space-y-3">
+      {scan.analysis.scorecard && (
+        <div className="flex items-center gap-4 rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+          <FaceZoneDiagram scorecard={scan.analysis.scorecard} size={72} />
+          <div className="flex-1 space-y-1.5">
+            {SCORE_AXES.map(axis => (
+              <div key={axis.key} className="flex items-center justify-between gap-2">
+                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{axis.label}</span>
+                <StarRow score={scan.analysis.scorecard[axis.key]} color={axis.color} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
         {scan.analysis.summary}
       </p>
@@ -271,6 +304,9 @@ export default function FaceScanClient() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Trend over time */}
+        <FaceScanTrendChart scans={history} />
 
         {/* History */}
         <div>

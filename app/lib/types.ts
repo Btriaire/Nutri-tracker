@@ -740,8 +740,18 @@ export interface FaceScanFinding {
   confidence:  FaceScanConfidence; // how confident the visual read is
 }
 
+// Qualitative 1-5 visual-intensity scale per axis — NOT a clinical severity
+// score, just "how pronounced does this trait appear on this photo".
+export interface FaceScanScorecard {
+  amaigrissement: number; // 1-5 — creusement joues/tempes, définition mâchoire
+  fatigue:        number; // 1-5 — cernes, poches, teint terne
+  teint:          number; // 1-5 — pâleur/rougeurs/uniformité du teint (5 = plus marqué)
+  hydratation:    number; // 1-5 — sécheresse/éclat cutané (5 = peau qui semble plus sèche)
+}
+
 export interface FaceScanAnalysis {
   summary:         string;
+  scorecard:       FaceScanScorecard;
   findings:        FaceScanFinding[];
   comparisonNote?: string;         // vs previous scan(s), if any existed at analysis time
   disclaimer:      string;

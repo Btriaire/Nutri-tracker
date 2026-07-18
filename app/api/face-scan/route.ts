@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding } from "@/app/lib/types";
+import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding, FaceScanScorecard } from "@/app/lib/types";
 
 const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -53,15 +53,28 @@ Concentre-toi sur 4 axes, tous basés sur des traits/signes visuels documentés 
 Retourne UNIQUEMENT un JSON valide (sans markdown) avec :
 {
   "summary": "résumé en 2-3 phrases, ton neutre et rassurant",
+  "scorecard": {
+    "amaigrissement": 1-5,
+    "fatigue": 1-5,
+    "teint": 1-5,
+    "hydratation": 1-5
+  },
   "findings": [
     { "indicator": "nom du trait", "observation": "ce que tu observes concrètement sur la photo", "relevance": "à quoi ce type de signe est associé dans la littérature scientifique", "confidence": "faible" | "modérée" | "élevée" }
   ]
 }
 
+Le "scorecard" est une échelle d'INTENSITÉ VISUELLE qualitative de 1 à 5 (PAS un score clinique/médical) :
+- "amaigrissement" : 1 = joues/tempes pleines, aucun creusement visible ; 5 = creusement très marqué des joues/tempes, mâchoire très définie
+- "fatigue" : 1 = pas de cernes/poches visibles, teint reposé ; 5 = cernes/poches très marqués
+- "teint" : 1 = teint uniforme et sain à l'œil ; 5 = pâleur, rougeurs ou irrégularités marquées
+- "hydratation" : 1 = peau qui semble hydratée/éclatante ; 5 = peau qui semble très sèche/terne
+Attribue TOUJOURS les 4 scores, même si le trait n'est pas notable (alors mets 1 ou 2). Sois cohérent : un score élevé doit correspondre à une observation concrète dans "findings" ou "summary".
+
 Règles strictes :
-- N'invente RIEN. Si tu ne vois aucun trait notable, retourne un tableau "findings" vide et dis-le dans "summary".
+- N'invente RIEN. Si tu ne vois aucun trait notable, retourne un tableau "findings" vide et dis-le dans "summary" (mais donne quand même le "scorecard").
 - Ne pose JAMAIS de diagnostic. Utilise "peut être associé à", jamais "vous avez" / "signe de".
-- Jamais de chiffre (% de graisse, kg, âge) — uniquement des observations qualitatives et relatives.
+- Jamais de chiffre médical (% de graisse, kg, âge) — le "scorecard" est une échelle d'intensité visuelle relative, pas une mesure clinique.
 - Sois honnête sur les limites d'une photo unique de visage — baisse la confiance en conséquence plutôt que d'affirmer.
 - Si tu détectes une possible asymétrie faciale (alerte AVC), sois factuel et invite à consulter en urgence si le signe est net et nouveau — sans dramatiser à tort.
 - Reste bienveillant, factuel, jamais alarmiste, jamais focalisé sur l'apparence/esthétique — l'angle est toujours la santé et le bien-être.`;
@@ -153,10 +166,29 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json() as { choices: { message: { content: string } }[] };
     const content = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { summary?: string; findings?: FaceScanFinding[]; comparisonNote?: string };
+    const parsed = JSON.parse(content) as {
+      summary?: string;
+      scorecard?: Partial<FaceScanScorecard>;
+      findings?: FaceScanFinding[];
+      comparisonNote?: string;
+    };
+
+    const clamp = (v: unknown): number => {
+      const n = typeof v === "number" ? v : parseFloat(String(v));
+      if (!Number.isFinite(n)) return 2;
+      return Math.min(5, Math.max(1, Math.round(n)));
+    };
+
+    const scorecard: FaceScanScorecard = {
+      amaigrissement: clamp(parsed.scorecard?.amaigrissement),
+      fatigue:        clamp(parsed.scorecard?.fatigue),
+      teint:          clamp(parsed.scorecard?.teint),
+      hydratation:    clamp(parsed.scorecard?.hydratation),
+    };
 
     const analysis: FaceScanAnalysis = {
       summary: parsed.summary || "Analyse indisponible.",
+      scorecard,
       findings: Array.isArray(parsed.findings) ? parsed.findings : [],
       ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote } : {}),
       disclaimer: DISCLAIMER,
