@@ -9,7 +9,10 @@ import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding, FaceScanScorecar
 
 const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+// meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq — migrated to
+// qwen/qwen3.6-27b, which also supports up to 5 images per request (needed for
+// the current + previous scan comparison, which the old model likely rejected).
+const VISION_MODEL = "qwen/qwen3.6-27b";
 const MAX_IMAGE_BYTES = 500 * 1024; // 500KB per image after client-side compression
 
 const DISCLAIMER =
