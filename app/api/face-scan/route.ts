@@ -151,8 +151,9 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: VISION_MODEL,
         temperature: 0.2,
-        max_tokens: 1500,
+        max_tokens: 2000,
         response_format: { type: "json_object" },
+        reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
@@ -168,7 +169,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json() as { choices: { message: { content: string } }[] };
-    const content = data.choices?.[0]?.message?.content ?? "{}";
+    const rawContent = data.choices?.[0]?.message?.content ?? "{}";
+    // Defensive: strip any stray reasoning/prose the model might prepend/append
+    // around the JSON object despite reasoning_effort: "none".
+    const jsonStart = rawContent.indexOf("{");
+    const jsonEnd = rawContent.lastIndexOf("}");
+    const content = jsonStart !== -1 && jsonEnd > jsonStart ? rawContent.slice(jsonStart, jsonEnd + 1) : rawContent;
     const parsed = JSON.parse(content) as {
       summary?: string;
       scorecard?: Partial<FaceScanScorecard>;

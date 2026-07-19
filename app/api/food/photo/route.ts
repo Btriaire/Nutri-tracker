@@ -61,6 +61,7 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
         temperature:     0.2,
         max_tokens:      1024,
         response_format: { type: "json_object" },
+        reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [{
           role: "user",
           content: [
@@ -79,7 +80,10 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
     }
 
     const data  = await res.json() as { choices: { message: { content: string } }[] };
-    const raw   = data.choices?.[0]?.message?.content ?? "{}";
+    const rawContent = data.choices?.[0]?.message?.content ?? "{}";
+    const jsonStart = rawContent.indexOf("{");
+    const jsonEnd = rawContent.lastIndexOf("}");
+    const raw   = jsonStart !== -1 && jsonEnd > jsonStart ? rawContent.slice(jsonStart, jsonEnd + 1) : rawContent;
     const parsed = JSON.parse(raw) as { foods?: DetectedFood[] };
     const foods  = parsed.foods ?? [];
 
