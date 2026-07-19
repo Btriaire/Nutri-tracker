@@ -13,7 +13,7 @@ import type { FaceScanEntry, FaceScanConfidence, FaceScanScorecard } from "@/app
 import FaceZoneDiagram from "@/app/components/FaceZoneDiagram";
 import FaceScanTrendChart from "@/app/components/FaceScanTrendChart";
 
-async function compressImage(file: File, maxSide = 640): Promise<Blob> {
+async function compressImage(file: File, maxSide = 480): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
