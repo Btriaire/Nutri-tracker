@@ -23,20 +23,34 @@ const DISCLAIMER =
   "visage ne permet pas un examen de près (ex. paupière inférieure tirée) — certains signes ne peuvent " +
   "être évalués qu'avec une confiance faible dans ces conditions.";
 
-const SYSTEM_PROMPT = `Assistant d'auto-suivi bien-être (PAS un diagnostic médical) à partir d'1 photo de visage.
+// Short reference keys the model must pick from (never invent a source) — full
+// citations are shown to the user in FaceScanClient's Sources panel.
+const REFERENCE_KEYS = [
+  "Rohrich2007",       // fat compartments of the face — amaigrissement/creusement
+  "Sheth1997",         // conjunctival pallor vs anemia
+  "Christoffersen2011", // xanthelasma/arcus corneae vs cardiovascular risk
+  "Axelsson2010",      // sleep deprivation and perceived facial fatigue signs (BMJ "Beauty sleep")
+  "BatesGuide",        // general clinical semiology — pallor, jaundice, cyanosis, malar rash, eyebrow thinning
+  "ASA_FAST",          // facial asymmetry / stroke warning sign
+] as const;
 
-4 axes à observer (traits documentés en anatomie faciale/dermatologie) :
-1. Amaigrissement : creusement joues (boule de Bichat)/tempes, mâchoire plus définie, moins de double menton, sillons nasogéniens marqués. Jamais de % de graisse ni de poids — que du qualitatif.
-2. Fatigue : cernes/poches, teint terne, léger ptosis (surtout si asymétrique/nouveau).
-3. Teint/santé : pâleur, ictère (peau/yeux), xanthélasma, arc cornéen, sécheresse/rougeurs, asymétrie faciale (alerte AVC, protocole FAST — à signaler factuellement sans dramatiser), cyanose péribuccale, éruption malaire, sourcils clairsemés.
-4. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (joues, tempes, mâchoire, cernes, teint) est un vrai signal de changement.
+const SYSTEM_PROMPT = `Assistant d'auto-suivi bien-être (PAS un diagnostic médical) à partir d'1 photo de visage. Analyse détaillée et systématique, chaque observation ancrée dans une référence scientifique précise.
+
+Passe en revue CHACUN de ces traits, pas seulement les plus évidents :
+1. Amaigrissement (réf. Rohrich2007) : creusement des joues (boule de Bichat), fonte temporale, définition mâchoire/pommettes, réduction double menton, sillons nasogéniens. Jamais de % de graisse ni de poids — que du qualitatif et comparatif.
+2. Fatigue (réf. Axelsson2010) : cernes, poches périorbitaires, teint terne/grisâtre, léger ptosis (surtout si asymétrique/nouveau), affaissement des coins de bouche.
+3. Teint/santé (réf. BatesGuide sauf mention) : pâleur cutanée (Sheth1997 si zone périoculaire), ictère peau/yeux, xanthélasma/arc cornéen (Christoffersen2011), sécheresse/rougeurs diffuses, cyanose péribuccale, éruption malaire, sourcils clairsemés (tiers externe).
+4. Asymétrie faciale (réf. ASA_FAST) : à signaler factuellement et avec prudence si net et nouveau, sans dramatiser à tort si léger/habituel.
+5. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (volume joues/tempes, mâchoire, cernes, teint) est un vrai signal de changement dans le temps.
+
+Sois exhaustif : un visage a presque toujours plusieurs observations pertinentes (souvent 3 à 6), pas juste 1. Pour chaque "finding", cite la référence dont l'observation se rapproche le plus, choisie EXACTEMENT parmi : ${REFERENCE_KEYS.join(", ")}. N'invente jamais d'autre référence.
 
 JSON uniquement, sans markdown :
-{"summary":"2-3 phrases, ton neutre","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"","relevance":"","confidence":"faible"|"modérée"|"élevée"}]}
+{"summary":"3-4 phrases détaillées, ton neutre","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"description précise et concrète de ce qui est visible","relevance":"lien avec la littérature scientifique","confidence":"faible"|"modérée"|"élevée","source":"une des clés ci-dessus"}]}
 
 Scorecard = intensité VISUELLE 1-5 (pas clinique) : amaigrissement 1=plein/5=très creusé ; fatigue 1=reposé/5=cernes marqués ; teint 1=sain/5=irrégulier ; hydratation 1=éclatant/5=très sec. Toujours les 4, cohérents avec findings/summary.
 
-Règles : n'invente rien (findings vide si rien à signaler) ; jamais de diagnostic ("peut être associé à", jamais "vous avez") ; jamais de chiffre médical ; confiance basse si signe pas clairement visible sur 1 seule photo ; bienveillant, factuel, jamais alarmiste, angle santé jamais esthétique.`;
+Règles : n'invente rien (findings vide si vraiment rien à signaler) ; jamais de diagnostic ("peut être associé à", jamais "vous avez") ; jamais de chiffre médical ; confiance basse si signe pas clairement visible sur 1 seule photo ; bienveillant, factuel, jamais alarmiste, angle santé jamais esthétique.`;
 
 export async function GET() {
   const session = await getSession();
@@ -107,7 +121,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: VISION_MODEL,
         temperature: 0.2,
-        max_tokens: 1100, // free tier TPM cap (8000) — 2 images + long system prompt leaves little room for output
+        max_tokens: 1400, // free tier TPM cap (8000) — balanced against 2 compressed images + prompt size for richer findings
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [
@@ -151,10 +165,17 @@ export async function POST(req: NextRequest) {
       hydratation:    clamp(parsed.scorecard?.hydratation),
     };
 
+    // Drop any hallucinated reference key the model might invent
+    const validRefs = new Set<string>(REFERENCE_KEYS);
+    const findings = (Array.isArray(parsed.findings) ? parsed.findings : []).map(f => ({
+      ...f,
+      ...(f.source && validRefs.has(f.source) ? { source: f.source } : {}),
+    }));
+
     const analysis: FaceScanAnalysis = {
       summary: parsed.summary || "Analyse indisponible.",
       scorecard,
-      findings: Array.isArray(parsed.findings) ? parsed.findings : [],
+      findings,
       ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote } : {}),
       disclaimer: DISCLAIMER,
     };

@@ -738,6 +738,7 @@ export interface FaceScanFinding {
   observation: string;             // what the AI observed in the photo
   relevance:   string;             // what this pattern is clinically associated with
   confidence:  FaceScanConfidence; // how confident the visual read is
+  source?:     string;             // short reference key (e.g. "Sheth1997") — see FaceScanClient SOURCES for full citation
 }
 
 // Qualitative 1-5 visual-intensity scale per axis — NOT a clinical severity

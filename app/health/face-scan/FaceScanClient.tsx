@@ -12,6 +12,7 @@ import {
 import type { FaceScanEntry, FaceScanConfidence, FaceScanScorecard } from "@/app/lib/types";
 import FaceZoneDiagram from "@/app/components/FaceZoneDiagram";
 import FaceScanTrendChart from "@/app/components/FaceScanTrendChart";
+import FaceOvalCamera from "@/app/components/FaceOvalCamera";
 
 async function compressImage(file: File, maxSide = 480): Promise<Blob> {
   return new Promise((resolve) => {
@@ -54,11 +55,21 @@ function StarRow({ score, color }: { score: number; color: string }) {
   );
 }
 
+const REFERENCE_LABELS: Record<string, string> = {
+  Rohrich2007:        "Rohrich & Pessa (2007)",
+  Sheth1997:           "Sheth et al. (1997)",
+  Christoffersen2011: "Christoffersen et al. (2011)",
+  Axelsson2010:        "Axelsson et al. (2010)",
+  BatesGuide:          "Bates' Guide",
+  ASA_FAST:            "Protocole FAST (AVC)",
+};
+
 const SOURCES = [
   "Rohrich R.J. & Pessa J.E., \"The fat compartments of the face: anatomy and clinical implications for cosmetic surgery\", Plast Reconstr Surg (2007) — anatomie de la graisse faciale (boule de Bichat, fonte temporale) et son lien avec la perte de poids/le vieillissement",
   "Bickley, L. — Bates' Guide to Physical Examination and History-Taking (référence classique de sémiologie clinique, pâleur conjonctivale, ictère scléral, xanthélasma, arc cornéen)",
   "Sheth T.N. et al., \"The relation of conjunctival pallor to the presence of anemia\", J Gen Intern Med (1997) — validation clinique de la pâleur conjonctivale comme signe d'anémie",
   "Christoffersen M. et al., \"Xanthelasmata, arcus corneae, and ischaemic vascular disease and death in general population\", BMJ (2011) — xanthélasma/arc cornéen et risque cardiovasculaire",
+  "Axelsson J. et al., \"Beauty sleep: experimental study on the perceived health and attractiveness of sleep deprived people\", BMJ (2010) — cernes, teint terne et ptosis comme signes visuels de fatigue/manque de sommeil",
   "American Stroke Association — protocole FAST (Face, Arms, Speech, Time) pour la détection de l'AVC via l'asymétrie faciale",
 ];
 
@@ -73,8 +84,9 @@ export default function FaceScanClient() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
   const [compareWithPrevious, setCompareWithPrevious] = useState(true);
+  const [showCamera, setShowCamera] = useState(false);
 
-  const faceRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -177,6 +189,11 @@ export default function FaceScanClient() {
               </div>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.observation}</p>
               <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-secondary)" }}>{f.relevance}</p>
+              {f.source && REFERENCE_LABELS[f.source] && (
+                <p className="text-[9px] mt-1.5 font-medium" style={{ color: "var(--indigo)" }}>
+                  📎 {REFERENCE_LABELS[f.source]}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -220,7 +237,7 @@ export default function FaceScanClient() {
         <div className="glass p-4 mb-4">
           <div className="flex items-center gap-3 mb-3">
             <button
-              onClick={() => faceRef.current?.click()}
+              onClick={() => setShowCamera(true)}
               className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center transition-all active:scale-[0.95] overflow-hidden relative"
               style={{ background: "rgba(99,102,241,0.06)", border: "2px dashed rgba(99,102,241,0.3)" }}
             >
@@ -235,17 +252,27 @@ export default function FaceScanClient() {
               <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                 {facePreview ? "Photo prête" : "Photo du visage"}
               </p>
-              <button
-                onClick={() => faceRef.current?.click()}
-                className="text-[11px] font-medium mt-0.5"
-                style={{ color: "var(--indigo)" }}
-              >
-                {facePreview ? "Reprendre la photo" : "Prendre une photo"}
-              </button>
+              <div className="flex items-center gap-2 mt-0.5">
+                <button
+                  onClick={() => setShowCamera(true)}
+                  className="text-[11px] font-medium"
+                  style={{ color: "var(--indigo)" }}
+                >
+                  {facePreview ? "Reprendre la photo" : "Prendre une photo"}
+                </button>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>·</span>
+                <button
+                  onClick={() => galleryRef.current?.click()}
+                  className="text-[11px] font-medium"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Galerie
+                </button>
+              </div>
             </div>
           </div>
 
-          <input ref={faceRef} type="file" accept="image/*" capture="user" className="hidden"
+          <input ref={galleryRef} type="file" accept="image/*" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture(f); e.target.value = ""; }} />
 
           {history.length > 0 && (
@@ -362,6 +389,14 @@ export default function FaceScanClient() {
           )}
         </div>
       </div>
+
+      {showCamera && (
+        <FaceOvalCamera
+          onCapture={(file) => { setShowCamera(false); handleCapture(file); }}
+          onCancel={() => setShowCamera(false)}
+          onError={(msg) => { setShowCamera(false); setError(msg); }}
+        />
+      )}
     </div>
   );
 }
