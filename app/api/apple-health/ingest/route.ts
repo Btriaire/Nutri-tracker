@@ -54,26 +54,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
+  // Fetch what's already synced for this date so a partial payload (e.g. a
+  // second Shortcut sending only sleep-stage data) merges field-by-field
+  // instead of overwriting the whole appleHealth object with 0/null for
+  // every field it didn't happen to send.
+  const docRef = db.doc(`users/${USER_ID}/fitnessData/${date}`);
+  const existingSnap = await docRef.get();
+  const existing = (existingSnap.data()?.appleHealth ?? {}) as Record<string, unknown>;
+
+  const setIfPresent = <K extends keyof IngestPayload>(key: K) =>
+    body[key] !== undefined ? { [key]: body[key] } : {};
+
   const appleHealth = {
-    steps:            body.steps            ?? 0,
-    activeCalories:   body.activeCalories   ?? 0,
-    activeMinutes:    body.activeMinutes     ?? 0,
-    heartRateAvg:     body.heartRateAvg     ?? null,
-    heartRateResting: body.heartRateResting ?? null,
-    hrv:              body.hrv              ?? null,
-    spO2:             body.spO2             ?? null,
-    sleepMinutes:      body.sleepMinutes      ?? null,
-    sleepLightMinutes: body.sleepLightMinutes ?? null,
-    sleepDeepMinutes:  body.sleepDeepMinutes  ?? null,
-    sleepRemMinutes:   body.sleepRemMinutes   ?? null,
-    distanceKm:       body.distanceKm       ?? null,
-    vo2Max:           body.vo2Max           ?? null,
-    weightKg:         body.weightKg         ?? null,
-    workouts:         body.workouts         ?? [],
-    syncedAt:         FieldValue.serverTimestamp(),
+    ...existing,
+    ...setIfPresent("steps"),
+    ...setIfPresent("activeCalories"),
+    ...setIfPresent("activeMinutes"),
+    ...setIfPresent("heartRateAvg"),
+    ...setIfPresent("heartRateResting"),
+    ...setIfPresent("hrv"),
+    ...setIfPresent("spO2"),
+    ...setIfPresent("sleepMinutes"),
+    ...setIfPresent("sleepLightMinutes"),
+    ...setIfPresent("sleepDeepMinutes"),
+    ...setIfPresent("sleepRemMinutes"),
+    ...setIfPresent("distanceKm"),
+    ...setIfPresent("vo2Max"),
+    ...setIfPresent("weightKg"),
+    ...setIfPresent("workouts"),
+    syncedAt: FieldValue.serverTimestamp(),
   };
 
-  await db.doc(`users/${USER_ID}/fitnessData/${date}`).set(
+  await docRef.set(
     { date, appleHealth },
     { merge: true },
   );
