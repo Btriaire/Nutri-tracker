@@ -36,7 +36,16 @@ export async function POST(req: NextRequest) {
   const stored  = (userDoc.data() as { integrations?: { appleHealth?: { token?: string } } })
     ?.integrations?.appleHealth?.token;
 
-  if (!stored || body.token !== stored) {
+  const received = typeof body.token === "string" ? body.token.trim() : body.token;
+
+  if (!stored || received !== stored) {
+    // Redacted diagnostic — lengths + first/last 4 chars only, never the full secret.
+    const redact = (s: unknown) => {
+      if (typeof s !== "string") return `<${typeof s}>`;
+      if (s.length <= 8) return `len=${s.length}`;
+      return `len=${s.length} ${s.slice(0, 4)}...${s.slice(-4)}`;
+    };
+    console.warn("[apple-health ingest] token mismatch — received:", redact(received), "stored:", redact(stored));
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
