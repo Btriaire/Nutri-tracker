@@ -10,7 +10,7 @@ export default function AppleHealthPanel() {
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"url" | "token" | null>(null);
 
   useEffect(() => {
     fetch("/api/apple-health/token", { cache: "no-store" })
@@ -34,11 +34,10 @@ export default function AppleHealthPanel() {
 
   const ingestUrl = typeof window !== "undefined" ? `${window.location.origin}/api/apple-health/ingest` : "/api/apple-health/ingest";
 
-  const copyToken = () => {
-    if (!token) return;
-    navigator.clipboard.writeText(token);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyText = (text: string, which: "url" | "token") => {
+    navigator.clipboard.writeText(text);
+    setCopied(which);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   return (
@@ -88,9 +87,16 @@ export default function AppleHealthPanel() {
 
                   <div>
                     <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>URL du webhook</label>
-                    <div className="px-3 py-2 rounded-lg text-[11px] font-mono break-all"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-                      {ingestUrl}
+                    <div className="flex gap-2">
+                      <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                        {ingestUrl}
+                      </div>
+                      <button onClick={() => copyText(ingestUrl, "url")}
+                        className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
+                        {copied === "url" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
+                      </button>
                     </div>
                   </div>
 
@@ -101,10 +107,10 @@ export default function AppleHealthPanel() {
                         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                         {token}
                       </div>
-                      <button onClick={copyToken}
+                      <button onClick={() => token && copyText(token, "token")}
                         className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
                         style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
-                        {copied ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
+                        {copied === "token" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
                       </button>
                     </div>
                   </div>
