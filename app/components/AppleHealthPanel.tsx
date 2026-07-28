@@ -117,17 +117,53 @@ export default function AppleHealthPanel() {
                 </>
               )}
 
-              <div className="rounded-lg p-3 space-y-1.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                <p className="text-[10px] font-semibold" style={{ color: "var(--text-secondary)" }}>Créer le Raccourci (gratuit, ~10 min) :</p>
-                <ol className="text-[10px] leading-relaxed list-decimal list-inside space-y-0.5" style={{ color: "var(--text-muted)" }}>
-                  <li>App Raccourcis → Nouveau raccourci</li>
-                  <li>Ajoute des blocs &quot;Santé&quot; : Nombre de pas, FC repos, Analyse du sommeil, Poids (un par métrique du jour)</li>
-                  <li>Ajoute un bloc &quot;Dictionnaire&quot; avec les clés : date, steps, heartRateResting, sleepMinutes, weightKg (relie chaque valeur santé à sa clé)</li>
-                  <li>Ajoute &quot;Obtenir le contenu de l&apos;URL&quot; → méthode POST → URL ci-dessus → Corps JSON → ajoute le champ &quot;token&quot; avec la valeur ci-dessus</li>
-                  <li>Automatisation → tous les jours à une heure fixe → Exécuter le raccourci (sans demander)</li>
-                </ol>
-                <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
-                  Alternative sans montage manuel : l&apos;app <strong>Health Auto Export</strong> exporte 100+ métriques automatiquement vers une API REST personnalisée — configure-la avec l&apos;URL et le token ci-dessus.
+              <div className="rounded-lg p-3 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                <p className="text-[10px] font-semibold" style={{ color: "var(--text-secondary)" }}>Créer le Raccourci — guide détaillé (gratuit, ~15 min) :</p>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>1. Créer le raccourci</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    App <strong>Raccourcis</strong> (icône violette) → onglet Raccourcis → <strong>+</strong> en haut à droite → renomme-le &quot;Sync Santé&quot;
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>2. Ajouter les données Santé</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Pour chaque métrique (pas, FC repos, sommeil, poids) : <strong>+</strong> → cherche &quot;Obtenir les échantillons de santé&quot; → choisis le type → plage &quot;Aujourd&apos;hui&quot;. Ajoute juste après un bloc &quot;Calculer la statistique&quot; (Somme pour pas/sommeil, Moyenne pour FC) en entrée = sortie du bloc précédent.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>3. Construire le paquet de données</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Ajoute un bloc &quot;Dictionnaire&quot; → &quot;Ajouter un élément&quot; pour chaque ligne : <code>token</code> (colle ton token, texte fixe), <code>date</code> (Sélectionner une variable → Date actuelle, format AAAA-MM-JJ), puis <code>steps</code>, <code>heartRateResting</code>, <code>sleepMinutes</code>, <code>weightKg</code> — pour chacune, tape le champ → &quot;Sélectionner une variable&quot; → choisis la sortie &quot;Calculer la statistique&quot; correspondante.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>4. Envoyer les données</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Ajoute &quot;Obtenir le contenu de l&apos;URL&quot; → colle l&apos;URL ci-dessus → &quot;Afficher plus&quot; → Méthode : <strong>POST</strong> → Corps de la requête : <strong>JSON</strong> → tape le corps → &quot;Sélectionner une variable&quot; → choisis <strong>tout le Dictionnaire</strong> de l&apos;étape 3 (pas champ par champ).
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>5. Tester</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Bouton ▶ en bas pour lancer une fois → autorise l&apos;accès Santé si demandé → vérifie dans Nutri-Tracker que les données arrivent.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>6. Automatiser (tous les jours)</p>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Onglet <strong>Automatisation</strong> → <strong>+</strong> → &quot;Créer une automatisation personnelle&quot; → &quot;Heure de la journée&quot; (ex: 8h, après le réveil) → &quot;Exécuter le raccourci&quot; → &quot;Sync Santé&quot; → <strong>désactive &quot;Demander avant d&apos;exécuter&quot;</strong>.
+                  </p>
+                </div>
+
+                <p className="text-[10px] pt-1.5" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
+                  Trop fastidieux ? L&apos;app <strong>Health Auto Export</strong> (App Store, ~5€) fait tout ça sans montage manuel : colle juste l&apos;URL et le token dans ses réglages.
                 </p>
               </div>
             </div>
