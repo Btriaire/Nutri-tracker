@@ -62,8 +62,25 @@ export async function POST(req: NextRequest) {
   const existingSnap = await docRef.get();
   const existing = (existingSnap.data()?.appleHealth ?? {}) as Record<string, unknown>;
 
-  const setIfPresent = <K extends keyof IngestPayload>(key: K) =>
-    body[key] !== undefined ? { [key]: body[key] } : {};
+  // Shortcuts often serializes numeric variables as strings in the JSON body
+  // (e.g. "63" instead of 63) — coerce to a real number, drop anything that
+  // doesn't parse (like an empty string from a missing weight sample) so we
+  // don't store NaN or "".
+  const NUMERIC_FIELDS = new Set<keyof IngestPayload>([
+    "steps", "activeCalories", "activeMinutes", "heartRateAvg", "heartRateResting",
+    "hrv", "spO2", "sleepMinutes", "sleepLightMinutes", "sleepDeepMinutes",
+    "sleepRemMinutes", "distanceKm", "vo2Max", "weightKg",
+  ]);
+
+  const setIfPresent = <K extends keyof IngestPayload>(key: K) => {
+    const raw = body[key];
+    if (raw === undefined) return {};
+    if (NUMERIC_FIELDS.has(key)) {
+      const n = typeof raw === "number" ? raw : parseFloat(String(raw));
+      return Number.isFinite(n) ? { [key]: n } : {};
+    }
+    return { [key]: raw };
+  };
 
   const appleHealth = {
     ...existing,
