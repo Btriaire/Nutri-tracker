@@ -412,10 +412,15 @@ export async function buildReportData(userId: string, from: string, to: string):
   const deficiencies = perNutrient.filter(n => n.status === "carence");
 
   // ── Face scan ──────────────────────────────────────────────────────────────
-  const faceScanEntries: FaceScanRow[] = faceScansSnap.docs.map(d => {
-    const e = d.data() as FaceScanEntry;
-    return { date: e.date, scorecard: e.analysis.scorecard };
-  });
+  // Older entries may predate the scorecard field/shape — skip anything malformed.
+  const faceScanEntries: FaceScanRow[] = faceScansSnap.docs
+    .map(d => d.data() as FaceScanEntry)
+    .filter(e => {
+      const s = e.analysis?.scorecard;
+      return s && typeof s.amaigrissement === "number" && typeof s.fatigue === "number"
+        && typeof s.teint === "number" && typeof s.hydratation === "number";
+    })
+    .map(e => ({ date: e.date, scorecard: e.analysis.scorecard }));
   const faceScanFirst  = faceScanEntries[0] ?? null;
   const faceScanLatest = faceScanEntries[faceScanEntries.length - 1] ?? null;
   const faceScanDelta = (faceScanFirst && faceScanLatest && faceScanFirst !== faceScanLatest)
