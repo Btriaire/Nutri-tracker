@@ -2,6 +2,7 @@ import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { generateReportSynthesis, type ReportSynthesis } from "@/app/lib/report-synthesis";
 import type {
   DayLog, FitnessDay, HealthEntry, UserProfile, AISynthesisResult,
   SupplementProduct, SupplementLog, MicronutrientDay, MicronutrientCode,
@@ -157,6 +158,7 @@ export interface ReportData {
     entries:    FaceScanRow[];
   };
   latestSynthesis: AISynthesisResult | null;
+  reportSynthesis: ReportSynthesis | null;
 }
 
 // ─── Builder ────────────────────────────────────────────────────────────────
@@ -425,7 +427,7 @@ export async function buildReportData(userId: string, from: string, to: string):
       }
     : null;
 
-  return {
+  const data: ReportData = {
     meta: {
       from,
       to,
@@ -505,5 +507,9 @@ export async function buildReportData(userId: string, from: string, to: string):
       entries: faceScanEntries,
     },
     latestSynthesis,
+    reportSynthesis: null,
   };
+
+  data.reportSynthesis = await generateReportSynthesis(data);
+  return data;
 }

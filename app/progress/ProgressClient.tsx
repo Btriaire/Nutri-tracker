@@ -13,8 +13,9 @@ import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
   IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
-  IconChevronDown, IconChevronUp,
+  IconChevronDown, IconChevronUp, IconFileTypePdf,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients, IntermittentFasting } from "@/app/lib/types";
 import type { FastingSession } from "@/app/api/fasting/route";
 import AIInsightBox from "@/app/components/AIInsightBox";
@@ -540,6 +541,18 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Progrès</h1>
             </div>
             <div className="flex gap-2 mt-1">
+              <Link
+                href="/report"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                style={{
+                  background: "rgba(248,113,113,0.1)",
+                  border: "1px solid rgba(248,113,113,0.3)",
+                  color: "#f87171",
+                }}
+              >
+                <IconFileTypePdf size={14} />
+                Rapport
+              </Link>
               <button
                 onClick={() => setShowAlbum(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"

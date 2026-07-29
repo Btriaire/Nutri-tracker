@@ -114,6 +114,63 @@ function GoalRing({ pct, color, size = 44 }: { pct: number; color: string; size?
   );
 }
 
+// ─── Horizontal bar (distribution / % AJR / adherence) ───────────────────────
+
+function HBarRow({
+  label, sub, pct, color, valueLabel,
+}: {
+  label: string; sub?: string; pct: number; color: string; valueLabel: string;
+}) {
+  const width = Math.max(2, Math.min(100, pct));
+  return (
+    <div className="mb-2.5">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10.5px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
+        <span className="text-[10px] font-semibold" style={{ color }}>{valueLabel}</span>
+      </div>
+      <div className="rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
+        <div style={{ width: `${width}%`, height: "100%", background: color, borderRadius: 999 }} />
+      </div>
+      {sub && <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ─── Mini line chart (trend across days, e.g. weight) ────────────────────────
+
+function MiniLineChart({
+  points, color, height = 70,
+}: {
+  points: { date: string; value: number }[];
+  color: string;
+  height?: number;
+}) {
+  if (points.length < 2) return null;
+  const W = 100;
+  const H = height;
+  const vals = points.map(p => p.value);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+  const pad = 6;
+
+  const coords = points.map((p, i) => {
+    const x = (i / (points.length - 1)) * W;
+    const y = pad + (1 - (p.value - min) / range) * (H - pad * 2);
+    return { x, y };
+  });
+  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ display: "block" }}>
+      <path d={path} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      {coords.map((c, i) => (
+        <circle key={i} cx={c.x} cy={c.y} r={1.4} fill={color} />
+      ))}
+    </svg>
+  );
+}
+
 // ─── Score badge ─────────────────────────────────────────────────────────────
 
 export function score(pct: number) {
@@ -491,6 +548,23 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           ))}
         </div>
 
+        {/* Adherence bar chart */}
+        {data.supplements.perProduct.length > 0 && (
+          <div className="glass p-3.5 rounded-xl mb-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+              Observance par complément (%)
+            </p>
+            {data.supplements.perProduct.map(row => (
+              <HBarRow key={row.id}
+                label={row.name}
+                pct={row.adherencePct}
+                color={score(row.adherencePct).color}
+                valueLabel={`${row.adherencePct}%`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Adherence table */}
         {data.supplements.perProduct.length > 0 && (
           <div className="rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--border)" }}>
@@ -519,6 +593,26 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Micronutrient % AJR bar chart */}
+        {data.micronutrients.perNutrient.length > 0 && (
+          <div className="glass p-3.5 rounded-xl mb-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+              Répartition des apports (% AJR)
+            </p>
+            {data.micronutrients.perNutrient.map(n => {
+              const barColor = n.status === "carence" ? "#f87171" : n.status === "exces" ? "#fbbf24" : "#34d399";
+              return (
+                <HBarRow key={n.code}
+                  label={n.label}
+                  pct={n.pctRda ?? 0}
+                  color={barColor}
+                  valueLabel={n.pctRda !== null ? `${n.pctRda}%` : "—"}
+                />
+              );
+            })}
           </div>
         )}
 
@@ -623,6 +717,23 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 </p>
               </div>
             </div>
+            {(() => {
+              const weightPoints = data.health.daily
+                .filter(d => d.weightKg !== null)
+                .map(d => ({ date: d.date, value: d.weightKg as number }));
+              if (weightPoints.length < 2) return null;
+              return (
+                <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                  <div className="rounded-xl overflow-hidden" style={{ height: 50, background: "rgba(255,255,255,0.02)" }}>
+                    <MiniLineChart points={weightPoints} color="#f472b6" height={50} />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(weightPoints[0].date)}</span>
+                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(weightPoints[weightPoints.length - 1].date)}</span>
+                  </div>
+                </div>
+              );
+            })()}
             {data.profile.goals.targetWeightKg && (
               <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--border)" }}>
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Objectif</span>
@@ -945,6 +1056,74 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           </div>
         );
       })()}
+
+      {/* ═══════════════════════════════════════════════════════════
+          SYNTHÈSE & PLAN D'ACTION (période complète)
+      ═══════════════════════════════════════════════════════════ */}
+      {data.reportSynthesis && (
+        <div className="glass p-5 mb-5 report-page-break">
+          <SectionTitle icon="📝" title="Synthèse & plan d'action" color="#34d399" />
+
+          <p className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+            {data.reportSynthesis.resume}
+          </p>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+              style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)" }}>
+              <span className="text-[13px] flex-shrink-0 mt-0.5">🔁</span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Habitudes observées</p>
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{data.reportSynthesis.habitudes}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+              style={{ background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.15)" }}>
+              <span className="text-[13px] flex-shrink-0 mt-0.5">📈</span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Évolution sur la période</p>
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{data.reportSynthesis.evolution}</p>
+              </div>
+            </div>
+          </div>
+
+          {data.reportSynthesis.defis.length > 0 && (
+            <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
+              <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>
+                  ⚠️ Défis identifiés
+                </p>
+              </div>
+              <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
+                {data.reportSynthesis.defis.map((d, i) => (
+                  <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#f87171" }}>{i + 1}</span>
+                    <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.reportSynthesis.propositions.length > 0 && (
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
+              <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>
+                  💡 Propositions pour la prochaine période
+                </p>
+              </div>
+              <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
+                {data.reportSynthesis.propositions.map((p, i) => (
+                  <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#34d399" }}>{i + 1}</span>
+                    <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{p}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
