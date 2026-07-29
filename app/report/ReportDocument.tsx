@@ -139,18 +139,20 @@ function HBarRow({
 // ─── Mini line chart (trend across days, e.g. weight) ────────────────────────
 
 function MiniLineChart({
-  points, color, height = 70,
+  points, color, height = 70, minMax, dots = true,
 }: {
   points: { date: string; value: number }[];
   color: string;
   height?: number;
+  minMax?: [number, number];
+  dots?: boolean;
 }) {
   if (points.length < 2) return null;
   const W = 100;
   const H = height;
   const vals = points.map(p => p.value);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
+  const min = minMax ? minMax[0] : Math.min(...vals);
+  const max = minMax ? minMax[1] : Math.max(...vals);
   const range = max - min || 1;
   const pad = 6;
 
@@ -162,12 +164,69 @@ function MiniLineChart({
   const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
       <path d={path} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-      {coords.map((c, i) => (
-        <circle key={i} cx={c.x} cy={c.y} r={1.4} fill={color} />
+      {dots && coords.map((c, i) => (
+        <circle key={i} cx={c.x} cy={c.y} r={1.6} fill={color} vectorEffect="non-scaling-stroke" />
       ))}
     </svg>
+  );
+}
+
+// ─── Trend chart card (bigger, with legend + value labels — mirrors the calories chart) ─
+
+function TrendChartCard({
+  title, series, from, to, unit = "",
+}: {
+  title: string;
+  series: { points: { date: string; value: number }[]; color: string; label: string }[];
+  from: string;
+  to: string;
+  unit?: string;
+}) {
+  const allVals = series.flatMap(s => s.points.map(p => p.value));
+  if (allVals.length < 2) return null;
+  const min = Math.min(...allVals);
+  const max = Math.max(...allVals);
+  const margin = (max - min) * 0.15 || 1;
+  const minMax: [number, number] = [min - margin, max + margin];
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{title}</p>
+        <div className="flex items-center gap-3">
+          {series.map(s => (
+            <div key={s.label} className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="relative rounded-xl overflow-hidden" style={{ height: 90, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+        {series.map(s => (
+          <div key={s.label} className="absolute inset-0 px-2 pt-2">
+            <MiniLineChart points={s.points} color={s.color} height={70} minMax={minMax} />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between mt-1.5">
+        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(from)}</span>
+        <div className="flex items-center gap-3">
+          {series.map(s => {
+            const first = s.points[0]?.value;
+            const last  = s.points[s.points.length - 1]?.value;
+            return (
+              <span key={s.label} className="text-[9px] font-medium" style={{ color: s.color }}>
+                {first}{unit} → {last}{unit}
+              </span>
+            );
+          })}
+        </div>
+        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(to)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -724,13 +783,13 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               if (weightPoints.length < 2) return null;
               return (
                 <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                  <div className="rounded-xl overflow-hidden" style={{ height: 50, background: "rgba(255,255,255,0.02)" }}>
-                    <MiniLineChart points={weightPoints} color="#f472b6" height={50} />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(weightPoints[0].date)}</span>
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(weightPoints[weightPoints.length - 1].date)}</span>
-                  </div>
+                  <TrendChartCard
+                    title="Évolution du poids"
+                    unit="kg"
+                    from={weightPoints[0].date}
+                    to={weightPoints[weightPoints.length - 1].date}
+                    series={[{ points: weightPoints, color: "#f472b6", label: "Poids" }]}
+                  />
                 </div>
               );
             })()}
@@ -775,40 +834,36 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           ))}
         </div>
 
-        {/* HR + BP trends */}
+        {/* Tension trend (systolique/diastolique) */}
         {(() => {
-          const hrPoints  = data.health.daily.filter(d => d.hrAvg !== null).map(d => ({ date: d.date, value: d.hrAvg as number }));
-          const sysPoints = data.health.daily.filter(d => d.sys   !== null).map(d => ({ date: d.date, value: d.sys as number }));
-          const diaPoints = data.health.daily.filter(d => d.dia   !== null).map(d => ({ date: d.date, value: d.dia as number }));
-          if (hrPoints.length < 2 && sysPoints.length < 2) return null;
+          const sysPoints = data.health.daily.filter(d => d.sys !== null).map(d => ({ date: d.date, value: d.sys as number }));
+          const diaPoints = data.health.daily.filter(d => d.dia !== null).map(d => ({ date: d.date, value: d.dia as number }));
+          if (sysPoints.length < 2) return null;
           return (
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {hrPoints.length > 1 && (
-                <div className="glass p-3 rounded-xl">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                    Évolution FC
-                  </p>
-                  <div style={{ height: 40 }}>
-                    <MiniLineChart points={hrPoints} color="#EA4335" height={40} />
-                  </div>
-                </div>
-              )}
-              {sysPoints.length > 1 && (
-                <div className="glass p-3 rounded-xl">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
-                    Évolution tension (sys/dia)
-                  </p>
-                  <div style={{ height: 40, position: "relative" }}>
-                    <MiniLineChart points={sysPoints} color="#f87171" height={40} />
-                    {diaPoints.length > 1 && (
-                      <div style={{ position: "absolute", inset: 0 }}>
-                        <MiniLineChart points={diaPoints} color="#fbbf24" height={40} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <TrendChartCard
+              title="Évolution de la tension (mmHg)"
+              from={sysPoints[0].date}
+              to={sysPoints[sysPoints.length - 1].date}
+              series={[
+                { points: sysPoints, color: "#f87171", label: "Systolique" },
+                ...(diaPoints.length > 1 ? [{ points: diaPoints, color: "#fbbf24", label: "Diastolique" }] : []),
+              ]}
+            />
+          );
+        })()}
+
+        {/* HR trend */}
+        {(() => {
+          const hrPoints = data.health.daily.filter(d => d.hrAvg !== null).map(d => ({ date: d.date, value: d.hrAvg as number }));
+          if (hrPoints.length < 2) return null;
+          return (
+            <TrendChartCard
+              title="Évolution FC (bpm)"
+              unit=" bpm"
+              from={hrPoints[0].date}
+              to={hrPoints[hrPoints.length - 1].date}
+              series={[{ points: hrPoints, color: "#EA4335", label: "FC" }]}
+            />
           );
         })()}
 
