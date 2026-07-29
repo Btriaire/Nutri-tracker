@@ -46,15 +46,17 @@ export async function POST(req: NextRequest) {
   const baseUrl  = getBaseUrl();
   const printUrl = `${baseUrl}/report/print?from=${from}&to=${to}&token=${secret}`;
 
+  const CHROMIUM_PACK_URL = "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
+
   let pdfBuffer: Buffer;
   try {
-    const chromium   = (await import("@sparticuz/chromium")).default;
+    const chromium   = (await import("@sparticuz/chromium-min")).default;
     const puppeteer   = await import("puppeteer-core");
 
     const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: true,
+      args: await puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
+      executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
+      headless: "shell",
     });
     try {
       const page = await browser.newPage();
@@ -66,32 +68,45 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error("[report/generate] PDF render failed", e);
-    return NextResponse.json({ error: "PDF render failed" }, { status: 500 });
+    const message = e instanceof Error ? e.message : String(e);
+    const stack   = e instanceof Error ? e.stack : undefined;
+    try {
+      await getAdminFirestore().doc("debug/report-generate-last-error").set({
+        message, stack: stack ?? null, at: new Date().toISOString(),
+      });
+    } catch {}
+    return NextResponse.json({ error: "PDF render failed", message }, { status: 500 });
   }
 
-  // ── Upload to Firebase Storage ────────────────────────────────────────────
-  const fileName = `${period}-${to}.pdf`;
-  const storagePath = `reports/${USER_ID}/${fileName}`;
-  const bucket = getAdminStorage();
-  const file   = bucket.file(storagePath);
-  await file.save(pdfBuffer, { contentType: "application/pdf" });
-  await file.makePublic();
-  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+  try {
+    // ── Upload to Firebase Storage ──────────────────────────────────────────
+    const fileName = `${period}-${to}.pdf`;
+    const storagePath = `reports/${USER_ID}/${fileName}`;
+    const bucket = getAdminStorage();
+    const file   = bucket.file(storagePath);
+    await file.save(pdfBuffer, { contentType: "application/pdf" });
+    await file.makePublic();
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
 
-  // ── Save history entry ────────────────────────────────────────────────────
-  const db = getAdminFirestore();
-  const id = db.collection(`users/${USER_ID}/reports`).doc().id;
-  await db.doc(`users/${USER_ID}/reports/${id}`).set({
-    id,
-    period,
-    from,
-    to,
-    generatedAt: new Date().toISOString(),
-    url: publicUrl,
-    sizeKb: Math.round(pdfBuffer.byteLength / 1024),
-  });
+    // ── Save history entry ──────────────────────────────────────────────────
+    const db = getAdminFirestore();
+    const id = db.collection(`users/${USER_ID}/reports`).doc().id;
+    await db.doc(`users/${USER_ID}/reports/${id}`).set({
+      id,
+      period,
+      from,
+      to,
+      generatedAt: new Date().toISOString(),
+      url: publicUrl,
+      sizeKb: Math.round(pdfBuffer.byteLength / 1024),
+    });
 
-  return NextResponse.json({ ok: true, id, url: publicUrl, period, from, to });
+    return NextResponse.json({ ok: true, id, url: publicUrl, period, from, to });
+  } catch (e) {
+    console.error("[report/generate] Storage upload failed", e);
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: "Storage upload failed", message }, { status: 500 });
+  }
 }
 
 export async function GET(req: NextRequest) {

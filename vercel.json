@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "app/api/report/generate/route.ts": { "memory": 2048, "maxDuration": 60 }
+  },
   "crons": [
     { "path": "/api/report/generate?period=7d",  "schedule": "0 8 * * 0" },
     { "path": "/api/report/generate?period=30d", "schedule": "0 8 1 * *" }
