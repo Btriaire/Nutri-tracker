@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "@sparticuz/chromium": "^149.0.0",
     "@tabler/icons-react": "^3.44.0",
     "@zxing/browser": "^0.2.0",
     "@zxing/library": "^0.22.0",
@@ -21,6 +22,7 @@
     "jszip": "^3.10.1",
     "nanoid": "^5.1.11",
     "next": "16.2.6",
+    "puppeteer-core": "^25.4.0",
     "react": "19.2.4",
     "react-body-highlighter": "^2.0.5",
     "react-dom": "19.2.4",
