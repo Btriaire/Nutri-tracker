@@ -5,6 +5,7 @@ import { calcTotals } from "@/app/lib/nutrition";
 import type { DayLog, FoodEntry } from "@/app/lib/types";
 import { nanoid } from "nanoid";
 import { Timestamp } from "firebase-admin/firestore";
+import { getCachedFoodImage } from "@/app/lib/food-image-library";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,13 @@ export async function POST(req: NextRequest) {
   const db = getAdminFirestore();
   const ref = db.doc(`users/${session.userId}/foodLog/${body.date}`);
 
+  // Auto-attach a previously captured photo for this exact food name, if the
+  // caller didn't already provide one — this is the "image bank" behavior.
+  const photoUrl = body.entry.photoUrl ?? (await getCachedFoodImage(body.entry.name)) ?? undefined;
+
   const newEntry: FoodEntry = {
     ...body.entry,
+    ...(photoUrl ? { photoUrl } : {}),
     id: nanoid(),
     loggedAt: Timestamp.now(),
   };
