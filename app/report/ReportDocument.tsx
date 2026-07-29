@@ -775,6 +775,43 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           ))}
         </div>
 
+        {/* HR + BP trends */}
+        {(() => {
+          const hrPoints  = data.health.daily.filter(d => d.hrAvg !== null).map(d => ({ date: d.date, value: d.hrAvg as number }));
+          const sysPoints = data.health.daily.filter(d => d.sys   !== null).map(d => ({ date: d.date, value: d.sys as number }));
+          const diaPoints = data.health.daily.filter(d => d.dia   !== null).map(d => ({ date: d.date, value: d.dia as number }));
+          if (hrPoints.length < 2 && sysPoints.length < 2) return null;
+          return (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {hrPoints.length > 1 && (
+                <div className="glass p-3 rounded-xl">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+                    Évolution FC
+                  </p>
+                  <div style={{ height: 40 }}>
+                    <MiniLineChart points={hrPoints} color="#EA4335" height={40} />
+                  </div>
+                </div>
+              )}
+              {sysPoints.length > 1 && (
+                <div className="glass p-3 rounded-xl">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+                    Évolution tension (sys/dia)
+                  </p>
+                  <div style={{ height: 40, position: "relative" }}>
+                    <MiniLineChart points={sysPoints} color="#f87171" height={40} />
+                    {diaPoints.length > 1 && (
+                      <div style={{ position: "absolute", inset: 0 }}>
+                        <MiniLineChart points={diaPoints} color="#fbbf24" height={40} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Symptoms summary */}
         {data.health.symptomsTotal > 0 && (
           <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid var(--border)" }}>
@@ -903,75 +940,29 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           SCAN VISAGE
       ═══════════════════════════════════════════════════════════ */}
       {data.faceScan.scansCount > 0 && (
-        <div className="glass p-5 mb-5 report-page-break">
-          <SectionTitle icon="🔎" title="Scan Visage — indicateurs visuels" color="#f472b6" />
-
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="glass p-3 rounded-xl">
-              <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Nombre de scans</p>
-              <p className="text-[16px] font-bold" style={{ color: "#f472b6" }}>{data.faceScan.scansCount}</p>
+        <div className="glass p-4 mb-5">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px]">🔎</span>
+              <p className="text-[12px] font-bold" style={{ color: "var(--text-primary)" }}>Scan Visage</p>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                {data.faceScan.scansCount} scan{data.faceScan.scansCount > 1 ? "s" : ""}
+              </span>
             </div>
-            <div className="glass p-3 rounded-xl">
-              <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Période</p>
-              <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                {data.faceScan.first ? fmtDate(data.faceScan.first.date) : "—"} → {data.faceScan.latest ? fmtDate(data.faceScan.latest.date) : "—"}
-              </p>
-            </div>
-          </div>
-
-          {/* Delta first vs latest */}
-          {data.faceScan.delta && (
-            <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid rgba(244,114,182,0.25)" }}>
-              <div className="px-3 py-2" style={{ background: "rgba(244,114,182,0.08)", borderBottom: "1px solid rgba(244,114,182,0.15)" }}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f472b6" }}>
-                  Évolution 1ᵉʳ scan → dernier scan
-                </p>
-              </div>
-              <div className="divide-y" style={{ borderColor: "rgba(244,114,182,0.15)" }}>
+            {data.faceScan.delta && (
+              <div className="flex items-center gap-2">
                 {Object.entries(data.faceScan.delta).map(([axis, delta]) => (
-                  <div key={axis} className="flex items-center justify-between px-3 py-2">
-                    <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{AXIS_LABEL[axis] ?? axis}</span>
-                    <div className="flex items-center gap-1.5">
-                      {delta < 0 ? <IconArrowDown size={11} style={{ color: "#34d399" }} /> :
-                       delta > 0 ? <IconArrowUp size={11} style={{ color: "#f87171" }} /> :
-                       <IconMinus size={11} style={{ color: "var(--text-muted)" }} />}
-                      <span className="text-[11px] font-semibold"
-                        style={{ color: delta < 0 ? "#34d399" : delta > 0 ? "#f87171" : "var(--text-muted)" }}>
-                        {delta > 0 ? "+" : ""}{delta} / 5
-                      </span>
-                    </div>
-                  </div>
+                  <span key={axis} className="flex items-center gap-0.5 text-[10px] font-semibold"
+                    style={{ color: delta < 0 ? "#34d399" : delta > 0 ? "#f87171" : "var(--text-muted)" }}>
+                    {delta < 0 ? <IconArrowDown size={10} /> : delta > 0 ? <IconArrowUp size={10} /> : <IconMinus size={10} />}
+                    {AXIS_LABEL[axis]?.slice(0, 4) ?? axis}
+                  </span>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Full history table */}
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <div className="px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                Historique des scores (échelle 1-5, indicatif)
-              </p>
-            </div>
-            <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-              {data.faceScan.entries.map(e => (
-                <div key={e.date} className="px-3 py-2 report-card">
-                  <p className="text-[11px] font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>{fmtDate(e.date)}</p>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {Object.entries(e.scorecard).map(([axis, val]) => (
-                      <div key={axis} className="text-center px-1.5 py-1 rounded-lg" style={{ background: "rgba(244,114,182,0.06)" }}>
-                        <p className="text-[8px] uppercase tracking-wide truncate" style={{ color: "var(--text-muted)" }}>{AXIS_LABEL[axis] ?? axis}</p>
-                        <p className="text-[13px] font-bold" style={{ color: "#f472b6" }}>{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </div>
-
-          <p className="text-[9px] mt-3 leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-            Scores visuels indicatifs (1-5) issus d&apos;une analyse par IA de photos, non diagnostiques. Ne remplacent pas un examen clinique.
+          <p className="text-[9px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+            Scores visuels indicatifs (1-5, non diagnostiques) — évolution du {data.faceScan.first ? fmtDate(data.faceScan.first.date) : "—"} au {data.faceScan.latest ? fmtDate(data.faceScan.latest.date) : "—"}.
           </p>
         </div>
       )}
