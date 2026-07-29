@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { getSession } from "@/app/lib/session";
-import { getAdminFirestore, getAdminStorage } from "@/app/lib/firebase-admin";
+import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 
 const USER_ID = "owner";
@@ -79,14 +80,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // ── Upload to Firebase Storage ──────────────────────────────────────────
+    // ── Upload to Vercel Blob ───────────────────────────────────────────────
     const fileName = `${period}-${to}.pdf`;
     const storagePath = `reports/${USER_ID}/${fileName}`;
-    const bucket = getAdminStorage();
-    const file   = bucket.file(storagePath);
-    await file.save(pdfBuffer, { contentType: "application/pdf" });
-    await file.makePublic();
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+    const blob = await put(storagePath, pdfBuffer, {
+      access: "public",
+      contentType: "application/pdf",
+      addRandomSuffix: true,
+    });
+    const publicUrl = blob.url;
 
     // ── Save history entry ──────────────────────────────────────────────────
     const db = getAdminFirestore();

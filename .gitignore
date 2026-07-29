@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Ciqual raw data (large, download separately)
 scripts/ciqual.json
+.env*.local

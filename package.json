@@ -13,6 +13,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@sparticuz/chromium-min": "^149.0.0",
     "@tabler/icons-react": "^3.44.0",
+    "@vercel/blob": "^2.6.1",
     "@zxing/browser": "^0.2.0",
     "@zxing/library": "^0.22.0",
     "date-fns": "^4.3.0",
