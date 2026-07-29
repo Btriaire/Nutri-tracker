@@ -1,11 +1,30 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil } from "@tabler/icons-react";
+import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
 import FoodPictogram from "./FoodPictogram";
+
+async function compressThumbnail(file: File, maxSide = 120): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const w      = Math.round(img.width  * scale);
+      const h      = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.6));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
 
 const SOURCE_DOT: Record<string, string> = {
   ciqual: "var(--fiber)",
@@ -46,10 +65,12 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
   const [editSaving, setEditSaving] = useState(false);
   const [swipeX,   setSwipeX]   = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef    = useRef<HTMLDivElement>(null);
   const swipeXRef    = useRef(0);
   const lockedRef    = useRef(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const n = entry.nutrition;
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -57,6 +78,27 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
     setDeleting(true);
     await fetch(`/api/log/${entry.id}?date=${date}`, { method: "DELETE" });
     onDelete(entry.id);
+  };
+
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const photoUrl = await compressThumbnail(file);
+      await fetch(`/api/log/${entry.id}?date=${date}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl }),
+      });
+      onUpdate?.(entry.id, { ...entry, photoUrl });
+    } catch (err) {
+      console.error("Failed to attach food photo:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const toggleExpand = () => {
@@ -207,8 +249,33 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
           }}
         >
           <div className="flex items-center gap-2.5 py-2.5">
-            {/* Food pictogram */}
-            <FoodPictogram name={entry.name} size={38} />
+            {/* Food photo thumbnail, or pictogram + capture button */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }}
+              className="relative flex-shrink-0 rounded-full overflow-hidden"
+              style={{ width: 38, height: 38 }}
+              aria-label={entry.photoUrl ? "Changer la photo" : "Ajouter une photo"}
+            >
+              {entry.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={entry.photoUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <FoodPictogram name={entry.name} size={38} />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center"
+                style={{ background: photoUploading ? "rgba(0,0,0,0.5)" : "transparent" }}>
+                {photoUploading && <IconLoader2 size={14} className="animate-spin" color="#fff" />}
+              </div>
+              {!entry.photoUrl && !photoUploading && (
+                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: "var(--indigo)", border: "1.5px solid var(--bg)" }}>
+                  <IconCamera size={9} color="#fff" />
+                </div>
+              )}
+            </button>
+            <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={handlePhotoCapture} />
 
             {/* Food info — click to toggle expanded */}
             <button className="flex-1 min-w-0 text-left" onClick={toggleExpand}>

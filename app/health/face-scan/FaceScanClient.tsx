@@ -83,7 +83,7 @@ export default function FaceScanClient() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
-  const [compareWithPrevious, setCompareWithPrevious] = useState(true);
+  const [compareMode, setCompareMode] = useState<"none" | "previous" | "first">("previous");
   const [showCamera, setShowCamera] = useState(false);
 
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -123,7 +123,7 @@ export default function FaceScanClient() {
       const form = new FormData();
       form.append("date", format(new Date(), "yyyy-MM-dd"));
       form.append("face", faceBlob, "face.jpg");
-      form.append("compareWithPrevious", compareWithPrevious ? "true" : "false");
+      form.append("compareMode", compareMode);
 
       const res = await fetch("/api/face-scan", { method: "POST", body: form });
       if (res.ok) {
@@ -201,7 +201,9 @@ export default function FaceScanClient() {
 
       {scan.analysis.comparisonNote && (
         <div className="rounded-lg p-3" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)" }}>
-          <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--indigo)" }}>Comparaison avec le scan précédent</p>
+          <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--indigo)" }}>
+            {scan.analysis.comparisonMode === "first" ? "Comparaison avec le tout premier scan" : "Comparaison avec le scan précédent"}
+          </p>
           <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{scan.analysis.comparisonNote}</p>
         </div>
       )}
@@ -276,10 +278,36 @@ export default function FaceScanClient() {
             onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture(f); e.target.value = ""; }} />
 
           {history.length > 0 && (
-            <label className="flex items-center gap-2 mb-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
-              <input type="checkbox" checked={compareWithPrevious} onChange={e => setCompareWithPrevious(e.target.checked)} />
-              Comparer avec le dernier scan ({format(new Date(history[0].date + "T00:00:00"), "d MMM", { locale: fr })})
-            </label>
+            <div className="mb-3">
+              <p className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>Comparer avec :</p>
+              <div className="flex gap-1.5">
+                {(() => {
+                  const first = history[history.length - 1];
+                  const options: { key: "none" | "previous" | "first"; label: string }[] = [
+                    { key: "none", label: "Rien" },
+                    { key: "previous", label: `Dernier (${format(new Date(history[0].date + "T00:00:00"), "d MMM", { locale: fr })})` },
+                    ...(first && first.id !== history[0].id
+                      ? [{ key: "first" as const, label: `1er scan (${format(new Date(first.date + "T00:00:00"), "d MMM", { locale: fr })})` }]
+                      : []),
+                  ];
+                  return options.map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setCompareMode(opt.key)}
+                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-medium transition-all"
+                      style={{
+                        background: compareMode === opt.key ? "rgba(99,102,241,0.18)" : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${compareMode === opt.key ? "rgba(99,102,241,0.45)" : "var(--border)"}`,
+                        color: compareMode === opt.key ? "var(--indigo)" : "var(--text-muted)",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ));
+                })()}
+              </div>
+            </div>
           )}
 
           <AnimatePresence>

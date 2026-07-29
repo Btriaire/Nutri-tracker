@@ -77,7 +77,9 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const date      = formData.get("date") as string | null;
   const faceFile  = formData.get("face") as File | null;
-  const compareWithPrevious = formData.get("compareWithPrevious") === "true";
+  // "previous" = most recent prior scan (day-to-day change, noisy);
+  // "first"    = the very first scan ever (cumulative change, more meaningful over time)
+  const compareMode = formData.get("compareMode") as "none" | "previous" | "first" | null;
 
   if (!date || !faceFile) {
     return NextResponse.json({ error: "Missing date or face image" }, { status: 400 });
@@ -94,12 +96,16 @@ export async function POST(req: NextRequest) {
     const faceMime    = faceFile.type || "image/jpeg";
     const faceImageUrl = `data:${faceMime};base64,${faceBase64}`;
 
-    // Optionally fetch the most recent previous scan for a comparison prompt
-    let previousScan: FaceScanEntry | null = null;
-    if (compareWithPrevious) {
-      const prevSnap = await db.collection(`users/${USER}/faceScans`)
-        .orderBy("date", "desc").limit(1).get();
-      if (!prevSnap.empty) previousScan = prevSnap.docs[0].data() as FaceScanEntry;
+    // Fetch a single reference scan for comparison — kept to at most 2 images
+    // total per request (current + 1 reference) to stay within Groq's free-tier
+    // TPM budget, which a 3-image request has already blown once this week.
+    let referenceScan: FaceScanEntry | null = null;
+    if (compareMode === "previous") {
+      const snap = await db.collection(`users/${USER}/faceScans`).orderBy("date", "desc").limit(1).get();
+      if (!snap.empty) referenceScan = snap.docs[0].data() as FaceScanEntry;
+    } else if (compareMode === "first") {
+      const snap = await db.collection(`users/${USER}/faceScans`).orderBy("date", "asc").limit(1).get();
+      if (!snap.empty) referenceScan = snap.docs[0].data() as FaceScanEntry;
     }
 
     const userContent: Array<Record<string, unknown>> = [
@@ -107,11 +113,12 @@ export async function POST(req: NextRequest) {
       { type: "image_url", image_url: { url: faceImageUrl } },
     ];
 
-    if (previousScan) {
+    if (referenceScan) {
+      const label = compareMode === "first" ? "le tout premier scan enregistré" : "le scan précédent";
       userContent.push(
-        { type: "text", text: `Photo du visage prise précédemment (le ${previousScan.date}), pour comparaison :` },
-        { type: "image_url", image_url: { url: previousScan.faceImageUrl } },
-        { type: "text", text: `Compare la nouvelle photo à la précédente, en particulier le volume des joues, le creux des tempes, la définition de la mâchoire, l'état des cernes et le teint. Ajoute un champ "comparisonNote" dans le JSON (string, 1-2 phrases) décrivant toute évolution visible notable, ou indiquant qu'aucune évolution notable n'est visible. Reste qualitatif, sans chiffre.` },
+        { type: "text", text: `Photo du visage — ${label} (le ${referenceScan.date}), pour comparaison :` },
+        { type: "image_url", image_url: { url: referenceScan.faceImageUrl } },
+        { type: "text", text: `Compare la nouvelle photo à celle-ci (${label}), en particulier le volume des joues, le creux des tempes, la définition de la mâchoire, l'état des cernes et le teint. ${compareMode === "first" ? "Comme c'est une comparaison sur toute la période de suivi, mets l'accent sur la tendance d'ensemble plutôt que sur le bruit jour-à-jour." : ""} Ajoute un champ "comparisonNote" dans le JSON (string, 1-2 phrases) décrivant toute évolution visible notable, ou indiquant qu'aucune évolution notable n'est visible. Reste qualitatif, sans chiffre.` },
       );
     }
 
@@ -176,7 +183,7 @@ export async function POST(req: NextRequest) {
       summary: parsed.summary || "Analyse indisponible.",
       scorecard,
       findings,
-      ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote } : {}),
+      ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote, comparisonMode: compareMode as "previous" | "first" } : {}),
       disclaimer: DISCLAIMER,
     };
 

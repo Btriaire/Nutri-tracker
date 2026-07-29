@@ -158,6 +158,7 @@ export interface FoodEntry {
   // User context
   notes?:       string;
   hunger?:      HungerLevel;
+  photoUrl?:    string;   // small base64 thumbnail captured for this specific food item
   loggedAt:     Timestamp;
 }
 
@@ -754,7 +755,8 @@ export interface FaceScanAnalysis {
   summary:         string;
   scorecard:       FaceScanScorecard;
   findings:        FaceScanFinding[];
-  comparisonNote?: string;         // vs previous scan(s), if any existed at analysis time
+  comparisonNote?: string;               // vs the reference scan below, if any existed at analysis time
+  comparisonMode?: "previous" | "first"; // which reference scan comparisonNote is against
   disclaimer:      string;
 }
 

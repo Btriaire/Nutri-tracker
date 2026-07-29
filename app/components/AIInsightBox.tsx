@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { IconSparkles, IconRefresh, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 
 interface Props {
-  type:       "journal" | "dashboard" | "activity" | "progress";
+  type:       "journal" | "dashboard" | "activity" | "progress" | "micronutrients";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data:       Record<string, any>;
   label?:     string;    // optional override for the header label
@@ -52,16 +52,18 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
 
   // ── Label per type
   const LABELS: Record<Props["type"], string> = {
-    journal:   "Analyse nutritionnelle du jour",
-    dashboard: "Bilan de la journée",
-    activity:  "Analyse de performance",
-    progress:  "Mise en perspective",
+    journal:        "Analyse nutritionnelle du jour",
+    dashboard:      "Bilan de la journée",
+    activity:       "Analyse de performance",
+    progress:       "Mise en perspective",
+    micronutrients: "Analyse micronutriments",
   };
   const ICONS: Record<Props["type"], string> = {
-    journal:   "🥗",
-    dashboard: "🌟",
-    activity:  "🏅",
-    progress:  "📈",
+    journal:        "🥗",
+    dashboard:      "🌟",
+    activity:       "🏅",
+    progress:       "📈",
+    micronutrients: "💊",
   };
 
   const displayLabel = label ?? LABELS[type];

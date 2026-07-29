@@ -11,6 +11,7 @@ import { IconPill, IconFlask } from "@tabler/icons-react";
 import type { SupplementProduct, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 import type { SupplementsProgressResponse } from "@/app/api/supplements-progress/route";
+import AIInsightBox from "@/app/components/AIInsightBox";
 
 const FREQUENCY_PER_DAY: Record<SupplementProduct["frequency"], number> = {
   once: 1,
@@ -56,6 +57,20 @@ export default function SupplementsProgressSection() {
   const adherenceByDate = new Map((data?.adherence ?? []).map(a => [a.date, new Set(a.taken)]));
   const micronutrientSeries = data?.micronutrientSeries ?? {};
   const trackedCodes = Object.keys(micronutrientSeries) as MicronutrientCode[];
+
+  const aiNutrients = trackedCodes
+    .map(code => {
+      const info = MICRONUTRIENT_DB[code];
+      const series = micronutrientSeries[code] ?? [];
+      if (series.length < 2) return null;
+      return {
+        label: info.label,
+        avgAmount: Math.round(avg(series.map(s => s.amount)) * 10) / 10,
+        unit: info.unit,
+        rda: info.recommendedDailyIntake || 0,
+      };
+    })
+    .filter((n): n is { label: string; avgAmount: number; unit: string; rda: number } => n !== null);
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -163,6 +178,11 @@ export default function SupplementsProgressSection() {
                       {avgVal}{info.unit} moy.
                     </span>
                   </div>
+                  {rda > 0 && (
+                    <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>
+                      Apport recommandé : {rda}{info.unit}/j
+                    </p>
+                  )}
                   <ResponsiveContainer width="100%" height={64}>
                     <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
                       <defs>
@@ -193,6 +213,17 @@ export default function SupplementsProgressSection() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {aiNutrients.length > 0 && (
+        <div className="pt-4 mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <AIInsightBox
+            key={days}
+            type="micronutrients"
+            data={{ days, nutrients: aiNutrients }}
+            label={`Analyse micronutriments (${days}j)`}
+          />
         </div>
       )}
     </motion.div>

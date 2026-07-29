@@ -6,7 +6,7 @@ import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-type InsightType = "journal" | "dashboard" | "activity" | "progress";
+type InsightType = "journal" | "dashboard" | "activity" | "progress" | "micronutrients";
 
 // ─── Time-of-day context ──────────────────────────────────────────────────────
 
@@ -57,10 +57,18 @@ Réponds directement sans intro ni conclusion générique.`,
 Fais une mise en perspective long terme de tous les paramètres (poids, calories, activité, sommeil, FC) en 3-4 phrases.
 Identifie les tendances positives et les axes de progression. Sois factuel, optimiste et motivant.
 Réponds directement sans intro ni conclusion générique.`,
+
+    micronutrients: `Tu es un nutritionniste expert en micronutrition. On te donne, pour une période donnée (7, 14 ou 30 jours), la moyenne quotidienne apportée pour chaque micronutriment suivi (vitamines, minéraux) et son apport journalier recommandé (AJR).
+Analyse en 3-4 phrases :
+1. Identifie les carences notables (moyenne < 70% de l'AJR) et les excès marqués (moyenne > 150% de l'AJR) — sois précis sur lesquels et de combien.
+2. Si tout est dans les clous, dis-le clairement et brièvement plutôt que d'inventer un problème.
+3. Termine par 1 conseil alimentaire concret pour corriger la carence la plus importante (ex : quel aliment ou supplément pourrait aider), ou pour maintenir l'équilibre si tout va bien.
+Sois factuel, précis sur les chiffres, jamais alarmiste — une carence ponctuelle sur quelques jours n'est pas grave, c'est la tendance qui compte.
+Réponds directement sans intro ni conclusion générique.`,
   };
 
-  // Progress is long-term → time of day is less relevant, skip the note
-  if (type === "progress") return base[type];
+  // Progress/micronutrients are long-term → time of day is less relevant, skip the note
+  if (type === "progress" || type === "micronutrients") return base[type];
   return base[type] + timeNote;
 }
 
@@ -233,6 +241,18 @@ ${d.avgHR ? `- FC moyenne : ${Math.round(d.avgHR)} bpm` : ""}
 - Tendance poids : ${d.weightTrend === "down" ? "↘ en baisse" : d.weightTrend === "up" ? "↗ en hausse" : "→ stable"}
 ${d.plan ? `- Plan : ${d.plan.emoji} ${d.plan.label} — Jour ${d.plan.day}${d.plan.weeklyLoss ? ` — perte estimée : ${d.plan.weeklyLoss} kg/sem` : ""}${d.plan.projectedDate ? ` — objectif le ${d.plan.projectedDate}` : ""}` : ""}`;
     }
+
+    case "micronutrients": {
+      const d = data as {
+        days: number;
+        nutrients: { label: string; avgAmount: number; unit: string; rda: number }[];
+      };
+      const lines = d.nutrients.map(n => {
+        const pct = n.rda > 0 ? Math.round((n.avgAmount / n.rda) * 100) : null;
+        return `- ${n.label} : ${n.avgAmount}${n.unit}/j en moyenne (AJR : ${n.rda}${n.unit})${pct !== null ? ` — ${pct}% de l'AJR` : ""}`;
+      });
+      return `Micronutriments suivis sur les ${d.days} derniers jours :\n${lines.join("\n")}`;
+    }
   }
 }
 
@@ -253,7 +273,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { type, data } = body;
-  if (!["journal", "dashboard", "activity", "progress"].includes(type)) {
+  if (!["journal", "dashboard", "activity", "progress", "micronutrients"].includes(type)) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
