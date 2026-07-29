@@ -28,7 +28,7 @@ function MiniBarChart({
   const barW  = Math.max(1, W / data.length - 1);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none" style={{ display: "block" }}>
       {data.map((d, i) => {
         const h = d.val ? Math.max(2, (d.val / maxV) * H) : 0;
         const x = i * (W / data.length);
@@ -164,7 +164,7 @@ function MiniLineChart({
   const path = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none" style={{ display: "block" }}>
       <path d={path} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
       {dots && coords.map((c, i) => (
         <circle key={i} cx={c.x} cy={c.y} r={1.6} fill={color} vectorEffect="non-scaling-stroke" />
