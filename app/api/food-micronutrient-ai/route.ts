@@ -44,9 +44,12 @@ export async function POST(req: NextRequest) {
   const grams = body.grams;
   if (!name || !grams) return NextResponse.json({ error: "name and grams required" }, { status: 400 });
 
-  // 1. Check the shared library cache first — avoids hitting Groq for foods already looked up
+  // 1. Check the shared library cache first — avoids hitting Groq for foods already looked up.
+  // An empty cached profile is treated as a miss and retried: a food genuinely having zero
+  // notable micronutrients is rare, so an empty result is far more likely a past bad/rushed
+  // AI answer than a real "no micronutrients" — don't let that poison the cache forever.
   const cached = await getCachedMicronutrientProfile(name);
-  if (cached) {
+  if (cached && cached.length > 0) {
     return NextResponse.json({ ok: true, micronutrients: scaleProfile(cached, grams), cached: true });
   }
 
@@ -87,8 +90,9 @@ export async function POST(req: NextRequest) {
         !!m.code && validCodes.has(m.code as MicronutrientCode) && typeof m.amount === "number" && m.amount > 0
     );
 
-    // Cache for next time (even an empty profile is worth caching — avoids re-asking for foods with no notable micronutrients)
-    await saveMicronutrientProfile(name, per100g);
+    // Cache non-empty profiles for next time. Empty results aren't cached — they read back
+    // as a miss anyway now, so caching them would just be a stale doc no one reads.
+    if (per100g.length > 0) await saveMicronutrientProfile(name, per100g);
 
     return NextResponse.json({ ok: true, micronutrients: scaleProfile(per100g, grams), cached: false });
   } catch (e) {
