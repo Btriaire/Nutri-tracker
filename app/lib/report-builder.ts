@@ -72,6 +72,16 @@ export interface FaceScanRow {
   scorecard:  { amaigrissement: number; fatigue: number; teint: number; hydratation: number };
 }
 
+export interface FoodFrequencyRow {
+  name:             string;
+  count:            number;
+  avgCalories:      number;
+  avgSugarG:        number;
+  avgSodiumMg:      number;
+  avgSaturatedFatG: number;
+  avgFiberG:        number;
+}
+
 export interface SymptomHistoryDay {
   date:     string;
   symptoms: { name: string; category: string; severity?: string; time?: string }[];
@@ -112,6 +122,7 @@ export interface ReportData {
     pctCalGoal:    number;
     pctWaterGoal:  number;
     daily:         DayNutrition[];
+    foodFrequency: FoodFrequencyRow[];
   };
   activity: {
     daysWithData:      number;
@@ -213,6 +224,36 @@ export async function buildReportData(userId: string, from: string, to: string):
 
   const daysLogged = dailyNutrition.length;
   const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+
+  // ── Food frequency (for the AI food-habits synthesis) ─────────────────────
+  const foodStats = new Map<string, { name: string; count: number; totalCalories: number; sugarG: number; sodiumMg: number; saturatedFatG: number; fiberG: number }>();
+  for (const d of foodSnaps.docs) {
+    const log = d.data() as DayLog;
+    for (const e of log.entries ?? []) {
+      const key = e.name.trim().toLowerCase();
+      if (!key) continue;
+      const s = foodStats.get(key) ?? { name: e.name.trim(), count: 0, totalCalories: 0, sugarG: 0, sodiumMg: 0, saturatedFatG: 0, fiberG: 0 };
+      s.count++;
+      s.totalCalories  += e.nutrition?.calories ?? 0;
+      s.sugarG         += e.nutrition?.sugarG ?? 0;
+      s.sodiumMg       += e.nutrition?.sodiumMg ?? 0;
+      s.saturatedFatG  += e.nutrition?.saturatedFatG ?? 0;
+      s.fiberG         += e.nutrition?.fiberG ?? 0;
+      foodStats.set(key, s);
+    }
+  }
+  const foodFrequency: FoodFrequencyRow[] = Array.from(foodStats.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 40)
+    .map(s => ({
+      name: s.name,
+      count: s.count,
+      avgCalories: Math.round(s.totalCalories / s.count),
+      avgSugarG: Math.round(s.sugarG / s.count),
+      avgSodiumMg: Math.round(s.sodiumMg / s.count),
+      avgSaturatedFatG: Math.round((s.saturatedFatG / s.count) * 10) / 10,
+      avgFiberG: Math.round((s.fiberG / s.count) * 10) / 10,
+    }));
 
   const avgCalories  = avg(dailyNutrition.map(d => d.calories));
   const avgProteinG  = avg(dailyNutrition.map(d => d.proteinG));
@@ -466,6 +507,7 @@ export async function buildReportData(userId: string, from: string, to: string):
       pctCalGoal:   goals.dailyCalories ? Math.round(avgCalories / goals.dailyCalories * 100) : 0,
       pctWaterGoal: goals.waterMl       ? Math.round(avgWaterMl  / goals.waterMl * 100)       : 0,
       daily: dailyNutrition,
+      foodFrequency,
     },
     activity: {
       daysWithData:  withData.length,

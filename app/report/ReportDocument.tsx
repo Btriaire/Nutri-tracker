@@ -535,6 +535,81 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
+          HABITUDES ALIMENTAIRES
+      ═══════════════════════════════════════════════════════════ */}
+      {data.reportSynthesis && (
+        (data.reportSynthesis.bonnesHabitudes.length > 0 || data.reportSynthesis.mauvaisesHabitudes.length > 0
+          || data.reportSynthesis.alimentsAFavoriser.length > 0 || data.reportSynthesis.alimentsAEviter.length > 0) && (
+          <div className="glass p-5 mb-5 report-page-break">
+            <SectionTitle icon="🍎" title="Habitudes alimentaires" color="#22c55e" />
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {data.reportSynthesis.bonnesHabitudes.length > 0 && (
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
+                  <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>👍 Bonnes habitudes</p>
+                  </div>
+                  <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
+                    {data.reportSynthesis.bonnesHabitudes.map((h, i) => (
+                      <p key={i} className="text-[11px] leading-relaxed px-3 py-2" style={{ color: "var(--text-secondary)" }}>{h}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {data.reportSynthesis.mauvaisesHabitudes.length > 0 && (
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
+                  <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>👎 À corriger</p>
+                  </div>
+                  <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
+                    {data.reportSynthesis.mauvaisesHabitudes.map((h, i) => (
+                      <p key={i} className="text-[11px] leading-relaxed px-3 py-2" style={{ color: "var(--text-secondary)" }}>{h}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {data.reportSynthesis.alimentsAFavoriser.length > 0 && (
+              <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
+                <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>✅ Aliments à favoriser</p>
+                </div>
+                <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
+                  {data.reportSynthesis.alimentsAFavoriser.map((f, i) => (
+                    <div key={i} className="px-3 py-2 report-card">
+                      <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{f.name}</p>
+                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.reportSynthesis.alimentsAEviter.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
+                <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>⛔ Aliments à limiter / éviter</p>
+                </div>
+                <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
+                  {data.reportSynthesis.alimentsAEviter.map((f, i) => (
+                    <div key={i} className="px-3 py-2 report-card">
+                      <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{f.name}</p>
+                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[9px] mt-3 leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+              Analyse générée par IA à partir des aliments réellement enregistrés sur la période. Ne remplace pas un avis nutritionnel professionnel.
+            </p>
+          </div>
+        )
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
           ACTIVITÉ PHYSIQUE
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5 report-page-break">
