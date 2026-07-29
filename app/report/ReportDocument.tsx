@@ -173,6 +173,19 @@ function MiniLineChart({
   );
 }
 
+// ─── Y-axis scale column (3 ticks: max / mid / min) — used alongside bar/line charts ────
+
+function YAxisScale({ max, mid, min, height, unit = "" }: { max: number; mid: number; min: number; height: number; unit?: string }) {
+  const fmt = (v: number) => (Number.isInteger(v) ? v : Math.round(v * 10) / 10).toLocaleString("fr-FR");
+  return (
+    <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ height, width: 30 }}>
+      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(max)}{unit}</span>
+      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(mid)}{unit}</span>
+      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(min)}{unit}</span>
+    </div>
+  );
+}
+
 // ─── Trend chart card (bigger, with legend + value labels — mirrors the calories chart) ─
 
 function TrendChartCard({
@@ -189,7 +202,11 @@ function TrendChartCard({
   const min = Math.min(...allVals);
   const max = Math.max(...allVals);
   const margin = (max - min) * 0.15 || 1;
-  const minMax: [number, number] = [min - margin, max + margin];
+  const scaleMin = min - margin;
+  const scaleMax = max + margin;
+  const scaleMid = (scaleMin + scaleMax) / 2;
+  const minMax: [number, number] = [scaleMin, scaleMax];
+  const fmt = (v: number) => Math.round(v * 10) / 10;
 
   return (
     <div className="mb-4">
@@ -204,14 +221,28 @@ function TrendChartCard({
           ))}
         </div>
       </div>
-      <div className="relative rounded-xl overflow-hidden" style={{ height: 90, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
-        {series.map(s => (
-          <div key={s.label} className="absolute inset-0 px-2 pt-2">
-            <MiniLineChart points={s.points} color={s.color} height={70} minMax={minMax} />
+      <div className="flex gap-1.5">
+        {/* Y-axis scale */}
+        <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ height: 90, width: 26 }}>
+          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMax)}{unit}</span>
+          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMid)}{unit}</span>
+          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMin)}{unit}</span>
+        </div>
+        <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 90, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+          {/* Gridlines */}
+          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+            <div style={{ borderTop: "1px dashed var(--border)" }} />
+            <div style={{ borderTop: "1px dashed var(--border)" }} />
+            <div style={{ borderTop: "1px dashed var(--border)" }} />
           </div>
-        ))}
+          {series.map(s => (
+            <div key={s.label} className="absolute inset-0 px-2 pt-2">
+              <MiniLineChart points={s.points} color={s.color} height={70} minMax={minMax} />
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="flex items-center justify-between mt-1.5">
+      <div className="flex items-center justify-between mt-1.5" style={{ paddingLeft: 30 }}>
         <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(from)}</span>
         <div className="flex items-center gap-3">
           {series.map(s => {
@@ -512,24 +543,32 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 </div>
               </div>
             </div>
-            <div className="relative rounded-xl overflow-hidden" style={{ height: 70, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
-              <MiniBarChart
-                data={(data.nutrition.daily as DayNutrition[]).map(d => ({ val: d.calories, label: d.date }))}
-                color="#f97316"
-                height={70}
-                maxOverride={Math.max(data.profile.goals.dailyCalories * 1.3, ...data.nutrition.daily.map((d: DayNutrition) => d.calories))}
-              />
-              {/* Goal line overlay */}
-              <div className="absolute inset-0 pointer-events-none">
-                <svg width="100%" height="100%" viewBox="0 0 100 70" preserveAspectRatio="none">
-                  <line
-                    x1="0" y1={70 - (data.profile.goals.dailyCalories / (data.profile.goals.dailyCalories * 1.3)) * 70}
-                    x2="100" y2={70 - (data.profile.goals.dailyCalories / (data.profile.goals.dailyCalories * 1.3)) * 70}
-                    stroke="rgba(249,115,22,0.4)" strokeWidth={0.8} strokeDasharray="3 2"
-                  />
-                </svg>
-              </div>
-            </div>
+            {(() => {
+              const calMax = Math.max(data.profile.goals.dailyCalories * 1.3, ...data.nutrition.daily.map((d: DayNutrition) => d.calories));
+              return (
+                <div className="flex gap-1.5">
+                  <YAxisScale max={calMax} mid={calMax / 2} min={0} height={70} unit=" kcal" />
+                  <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 70, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                    <MiniBarChart
+                      data={(data.nutrition.daily as DayNutrition[]).map(d => ({ val: d.calories, label: d.date }))}
+                      color="#f97316"
+                      height={70}
+                      maxOverride={calMax}
+                    />
+                    {/* Goal line overlay */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      <svg width="100%" height="100%" viewBox="0 0 100 70" preserveAspectRatio="none">
+                        <line
+                          x1="0" y1={70 - (data.profile.goals.dailyCalories / calMax) * 70}
+                          x2="100" y2={70 - (data.profile.goals.dailyCalories / calMax) * 70}
+                          stroke="rgba(249,115,22,0.4)" strokeWidth={0.8} strokeDasharray="3 2"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -627,33 +666,42 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         </div>
 
         {/* Steps trend */}
-        {data.activity.daily.filter(d => d.steps !== null).length > 1 && (
-          <div className="mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution des pas</p>
-            <div className="rounded-xl overflow-hidden" style={{ height: 60, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
-              <MiniBarChart
-                data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.steps, label: d.date }))}
-                color="#4285F4"
-                height={60}
-                maxOverride={Math.max(data.profile.goals.stepsGoal * 1.3, ...data.activity.daily.map((d: DayActivity) => d.steps ?? 0))}
-              />
+        {data.activity.daily.filter(d => d.steps !== null).length > 1 && (() => {
+          const stepsMax = Math.max(data.profile.goals.stepsGoal * 1.3, ...data.activity.daily.map((d: DayActivity) => d.steps ?? 0));
+          return (
+            <div className="mb-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution des pas</p>
+              <div className="flex gap-1.5">
+                <YAxisScale max={stepsMax} mid={stepsMax / 2} min={0} height={60} />
+                <div className="rounded-xl overflow-hidden flex-1" style={{ height: 60, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                  <MiniBarChart
+                    data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.steps, label: d.date }))}
+                    color="#4285F4"
+                    height={60}
+                    maxOverride={stepsMax}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Sleep trend */}
         {data.activity.daily.filter(d => d.sleepMin !== null).length > 1 && (
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution du sommeil</p>
-            <div className="rounded-xl overflow-hidden" style={{ height: 50, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
-              <MiniBarChart
-                data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.sleepMin ? d.sleepMin / 60 : null, label: d.date }))}
-                color="#7986CB"
-                height={50}
-                maxOverride={12}
-              />
+            <div className="flex gap-1.5">
+              <YAxisScale max={12} mid={6} min={0} height={50} unit="h" />
+              <div className="rounded-xl overflow-hidden flex-1" style={{ height: 50, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                <MiniBarChart
+                  data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.sleepMin ? d.sleepMin / 60 : null, label: d.date }))}
+                  color="#7986CB"
+                  height={50}
+                  maxOverride={12}
+                />
+              </div>
             </div>
-            <div className="flex justify-between mt-1">
+            <div className="flex justify-between mt-1" style={{ paddingLeft: 34 }}>
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.from)}</span>
               <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.to)}</span>
             </div>
