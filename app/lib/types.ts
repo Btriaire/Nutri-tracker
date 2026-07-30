@@ -757,6 +757,7 @@ export interface FaceScanAnalysis {
   findings:        FaceScanFinding[];
   comparisonNote?: string;               // vs the reference scan below, if any existed at analysis time
   comparisonMode?: "previous" | "first"; // which reference scan comparisonNote is against
+  conseil?:        string;               // 1 short actionable general-wellness tip tied to the findings
   disclaimer:      string;
 }
 

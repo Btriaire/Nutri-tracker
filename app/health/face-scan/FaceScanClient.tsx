@@ -208,6 +208,13 @@ export default function FaceScanClient() {
         </div>
       )}
 
+      {scan.analysis.conseil && (
+        <div className="rounded-lg p-3" style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)" }}>
+          <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>💡 Conseil bien-être</p>
+          <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{scan.analysis.conseil}</p>
+        </div>
+      )}
+
       <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
         <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
         <p className="text-[10px] leading-relaxed" style={{ color: "#f59e0b" }}>{scan.analysis.disclaimer}</p>

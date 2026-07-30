@@ -39,16 +39,17 @@ const SYSTEM_PROMPT = `Assistant d'auto-suivi bien-être (PAS un diagnostic méd
 Passe en revue CHACUN de ces traits, pas seulement les plus évidents :
 1. Amaigrissement (réf. Rohrich2007) : creusement des joues (boule de Bichat), fonte temporale, définition mâchoire/pommettes, réduction double menton, sillons nasogéniens. Jamais de % de graisse ni de poids — que du qualitatif et comparatif.
 2. Fatigue (réf. Axelsson2010) : cernes, poches périorbitaires, teint terne/grisâtre, léger ptosis (surtout si asymétrique/nouveau), affaissement des coins de bouche.
-3. Teint/santé (réf. BatesGuide sauf mention) : pâleur cutanée (Sheth1997 si zone périoculaire), ictère peau/yeux, xanthélasma/arc cornéen (Christoffersen2011), sécheresse/rougeurs diffuses, cyanose péribuccale, éruption malaire, sourcils clairsemés (tiers externe).
-4. Asymétrie faciale (réf. ASA_FAST) : à signaler factuellement et avec prudence si net et nouveau, sans dramatiser à tort si léger/habituel.
-5. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (volume joues/tempes, mâchoire, cernes, teint) est un vrai signal de changement dans le temps.
+3. Hydratation cutanée (réf. BatesGuide) : sécheresse/desquamation visible, lèvres gercées ou craquelées, aspect terne vs éclatant/rebondi de la peau, ridules de déshydratation. Signe distinct du teint — évalue-le spécifiquement, ne le fusionne pas avec le point 4.
+4. Teint/santé cutanée (réf. BatesGuide sauf mention) : pâleur cutanée (Sheth1997 si zone périoculaire), ictère peau/yeux, xanthélasma/arc cornéen (Christoffersen2011), rougeurs diffuses/rosacée, cyanose péribuccale, éruption malaire, texture (grain de peau, imperfections notables), sourcils clairsemés (tiers externe).
+5. Asymétrie faciale (réf. ASA_FAST) : à signaler factuellement et avec prudence si net et nouveau, sans dramatiser à tort si léger/habituel.
+6. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (volume joues/tempes, mâchoire, cernes, teint, hydratation) est un vrai signal de changement dans le temps.
 
 Sois exhaustif : un visage a presque toujours plusieurs observations pertinentes (souvent 3 à 6), pas juste 1. Pour chaque "finding", cite la référence dont l'observation se rapproche le plus, choisie EXACTEMENT parmi : ${REFERENCE_KEYS.join(", ")}. N'invente jamais d'autre référence.
 
 JSON uniquement, sans markdown :
-{"summary":"3-4 phrases détaillées, ton neutre","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"description précise et concrète de ce qui est visible","relevance":"lien avec la littérature scientifique","confidence":"faible"|"modérée"|"élevée","source":"une des clés ci-dessus"}]}
+{"summary":"3-4 phrases détaillées, ton neutre","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"description précise et concrète de ce qui est visible","relevance":"lien avec la littérature scientifique","confidence":"faible"|"modérée"|"élevée","source":"une des clés ci-dessus"}],"conseil":"1 phrase courte, bienveillante et actionnable de bien-être général (sommeil/hydratation/repos) directement liée à l'observation la plus marquante — jamais de conseil médical ou esthétique"}
 
-Scorecard = intensité VISUELLE 1-5 (pas clinique) : amaigrissement 1=plein/5=très creusé ; fatigue 1=reposé/5=cernes marqués ; teint 1=sain/5=irrégulier ; hydratation 1=éclatant/5=très sec. Toujours les 4, cohérents avec findings/summary.
+Scorecard = intensité VISUELLE 1-5 (pas clinique) : amaigrissement 1=plein/5=très creusé ; fatigue 1=reposé/5=cernes marqués ; teint 1=sain/5=irrégulier ; hydratation 1=éclatant-rebondi/5=très sec-terne. Toujours les 4, cohérents avec findings/summary.
 
 Règles : n'invente rien (findings vide si vraiment rien à signaler) ; jamais de diagnostic ("peut être associé à", jamais "vous avez") ; jamais de chiffre médical ; confiance basse si signe pas clairement visible sur 1 seule photo ; bienveillant, factuel, jamais alarmiste, angle santé jamais esthétique.`;
 
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: VISION_MODEL,
         temperature: 0.2,
-        max_tokens: 1400, // free tier TPM cap (8000) — balanced against 2 compressed images + prompt size for richer findings
+        max_tokens: 1500, // free tier TPM cap (8000) — balanced against 2 compressed images + prompt size for richer findings
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [
@@ -157,6 +158,7 @@ export async function POST(req: NextRequest) {
       scorecard?: Partial<FaceScanScorecard>;
       findings?: FaceScanFinding[];
       comparisonNote?: string;
+      conseil?: string;
     };
 
     const clamp = (v: unknown): number => {
@@ -184,6 +186,7 @@ export async function POST(req: NextRequest) {
       scorecard,
       findings,
       ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote, comparisonMode: compareMode as "previous" | "first" } : {}),
+      ...(parsed.conseil ? { conseil: parsed.conseil } : {}),
       disclaimer: DISCLAIMER,
     };
 

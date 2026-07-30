@@ -11,8 +11,17 @@ interface FoodImageLibraryEntry {
 
 const COLLECTION = "foodImageLibrary"; // shared, not per-user — same food looks the same regardless of who logs it
 
+// Photo matching only cares about "does this look like the same food", so it's fine (and
+// desirable) to be coarser than the micronutrient library's exact-name key: a database entry
+// named "Orange, pulpe, crue" and a manually typed "Orange" should share the same photo.
+// Strip parenthetical/comma-separated qualifiers down to the base food name before keying.
+function normalizeFoodImageKey(name: string): string {
+  const base = name.split(",")[0].split("(")[0].trim();
+  return normalizeFoodKey(base || name);
+}
+
 export async function getCachedFoodImage(name: string): Promise<string | null> {
-  const key = normalizeFoodKey(name);
+  const key = normalizeFoodImageKey(name);
   if (!key) return null;
   try {
     const db = getAdminFirestore();
@@ -26,7 +35,7 @@ export async function getCachedFoodImage(name: string): Promise<string | null> {
 }
 
 export async function saveFoodImage(name: string, photoUrl: string): Promise<void> {
-  const key = normalizeFoodKey(name);
+  const key = normalizeFoodImageKey(name);
   if (!key) return;
   try {
     const db = getAdminFirestore();

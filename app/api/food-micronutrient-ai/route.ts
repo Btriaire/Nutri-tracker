@@ -23,9 +23,10 @@ MÉTHODE — passe en revue CHACUN des ${MICRONUTRIENT_CODES.length} codes ci-de
 - Une céréale complète ou légumineuse contient typiquement magnésium, manganèse, phosphore, folate, thiamine.
 Ne signale un micronutriment que s'il est réellement présent en quantité nutritionnellement significative (pas de traces négligeables), mais ne t'arrête pas après avoir trouvé 1 ou 2 nutriments évidents — un aliment courant a très souvent 4 à 8 micronutriments significatifs de cette liste, pas 1 seul.
 
+ALIMENTS RÉGIONAUX / PEU COURANTS (ex : radis noir, topinambour, panais, rutabaga, cerfeuil tubéreux, salsifis) : ne conclus JAMAIS à "aucun micronutriment" simplement parce que le nom t'est moins familier. Raisonne par analogie botanique/nutritionnelle avec la famille de légumes/fruits la plus proche que tu connais bien (ex : le radis noir est une racine crucifère comme le radis rose et le navet — vitamine C, potassium, souvent folate et calcium) et donne une estimation raisonnable plutôt qu'un tableau vide. Un tableau vide ne doit être réservé qu'à des cas réellement dénués de micronutriments (sucre, huile raffinée, sel, eau).
+
   "amount" doit être calculé POUR 100 GRAMMES de cet aliment (pas pour une portion) — ce profil sera mis en cache et réutilisé pour d'autres quantités, donc précis mais réutilisable.
   "unit" doit être cohérent avec le nutriment (mg ou µg).
-  Si l'aliment n'a vraiment aucun micronutriment notable de la liste (ex: sucre blanc, huile raffinée), retourne un tableau vide [].
 
 Réponds uniquement en JSON. Ne fournis aucune explication hors du JSON.`;
 
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
         model: "llama-3.3-70b-versatile",
         response_format: { type: "json_object" },
         temperature: 0.2,
-        max_tokens: 1200,
+        max_tokens: 1400,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user",   content: `Aliment : ${name}. Liste tous les micronutriments significatifs pour 100g, pas seulement les plus évidents.` },
