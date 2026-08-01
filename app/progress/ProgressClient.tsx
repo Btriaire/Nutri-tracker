@@ -1166,16 +1166,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <ComposedChart data={weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.22} />
+                            <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.14} />
                             <stop offset="95%" stopColor="var(--protein)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#4ade80" stopOpacity={0.12} />
-                            <stop offset="95%" stopColor="#4ade80" stopOpacity={0.03} />
+                            <stop offset="5%"  stopColor="#4ade80" stopOpacity={0.08} />
+                            <stop offset="95%" stopColor="#4ade80" stopOpacity={0.02} />
                           </linearGradient>
                           <linearGradient id="gapGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#f87171" stopOpacity={0.22} />
-                            <stop offset="95%" stopColor="#f87171" stopOpacity={0.06} />
+                            <stop offset="5%"  stopColor="#f87171" stopOpacity={0.16} />
+                            <stop offset="95%" stopColor="#f87171" stopOpacity={0.04} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -1230,15 +1230,15 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {/* Target weight */}
                         {targetWeightKg && (
                           <ReferenceLine yAxisId="w" y={targetWeightKg}
-                            stroke="rgba(74,222,128,0.4)" strokeDasharray="5 3"
+                            stroke="rgba(74,222,128,0.3)" strokeWidth={1} strokeDasharray="4 3"
                             label={{ value: `🎯 ${targetWeightKg}kg`, fontSize: 9, fill: "#4ade80", position: "insideTopRight" }} />
                         )}
                         {/* Today line */}
                         <ReferenceLine yAxisId="w" x="Auj."
-                          stroke="rgba(255,255,255,0.18)" strokeDasharray="3 3" />
+                          stroke="rgba(255,255,255,0.14)" strokeWidth={1} strokeDasharray="3 3" />
                         {/* Calorie bars (right axis) */}
                         <Bar yAxisId="c" dataKey="calories" fill="var(--calories)"
-                          fillOpacity={0.15} radius={[2, 2, 0, 0]} />
+                          fillOpacity={0.1} radius={[2, 2, 0, 0]} />
                         {/* Goal calorie reference */}
                         <ReferenceLine yAxisId="c" y={goals.dailyCalories}
                           stroke="rgba(249,115,22,0.25)" strokeDasharray="3 3" />
@@ -1258,26 +1258,26 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           dot={false} activeDot={false} connectNulls={false} legendType="none" />
                         {/* Projected weight (dashed line, always shown) — drawn BEFORE actual so actual is on top */}
                         <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
-                          stroke="#4ade80" strokeWidth={2.5} strokeDasharray="6 3"
+                          stroke="#4ade80" strokeWidth={1.25} strokeDasharray="5 3"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           dot={(props: any) => {
                             const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
                             if (payload.projected == null) return <g key={`p-${payload.date}`} />;
                             if (!payload.isFuture) return <g key={`p-${payload.date}`} />;
-                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={3} fill="#4ade80" stroke="var(--bg)" strokeWidth={1.5} />;
+                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={1.8} fill="#4ade80" stroke="var(--bg)" strokeWidth={1} />;
                           }}
-                          activeDot={{ r: 4, fill: "#4ade80" }} connectNulls />
+                          activeDot={{ r: 3, fill: "#4ade80" }} connectNulls />
                         {/* Actual weight (solid area, on top) — linear keeps the real
                             day-to-day variation visible instead of over-smoothing it */}
                         <Area yAxisId="w" type="linear" dataKey="actual" name="actual"
-                          stroke="var(--protein)" strokeWidth={2.5} fill="url(#actualGrad)"
+                          stroke="var(--protein)" strokeWidth={1.5} fill="url(#actualGrad)"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           dot={(props: any) => {
                             const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
                             if (payload.actual == null) return <g key={`a-${payload.date}`} />;
-                            return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 5 : 3} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1.5} />;
+                            return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 3.2 : 2} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1} />;
                           }}
-                          activeDot={{ r: 5 }} connectNulls={false} />
+                          activeDot={{ r: 3.5 }} connectNulls={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
                     </div>{/* chart wrapper */}
