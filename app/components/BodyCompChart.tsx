@@ -270,6 +270,18 @@ export default function BodyCompChart({
   const yMin = allValues.length ? Math.floor(Math.min(...allValues) * 0.95) : 0;
   const yMax = allValues.length ? Math.ceil(Math.max(...allValues)  * 1.05) : 100;
 
+  // Realistic minimum span per metric — body composition changes slowly, and Withings'
+  // bioimpedance body-fat% reading in particular is noisy day-to-day (hydration, time of
+  // day) with no real underlying change. Padding tightly around the raw min/max (as before)
+  // turned that measurement noise into what looked like dramatic swings. These floors keep
+  // the chart honest: real trends still show fully, but normal noise doesn't dominate.
+  const METRIC_MIN_SPAN: Partial<Record<keyof BodyCompPoint, number>> = {
+    bodyFatPct:   6,   // percentage points
+    muscleMassKg: 4,   // kg
+    fatMassKg:    4,   // kg
+    restingHR:    20,  // bpm
+  };
+
   // Per-metric domain — used on tabs (e.g. Composition) that mix metrics with very
   // different natural scales (body fat % vs muscle/fat mass in kg) on the same
   // chart: sharing one axis would flatten the smaller-range metric's real variation.
@@ -277,8 +289,12 @@ export default function BodyCompChart({
     const values = chartData.map(p => p[key] as number | null).filter((v): v is number => v != null);
     if (!values.length) return [0, 100];
     const min = Math.min(...values), max = Math.max(...values);
-    const pad = Math.max(0.3, (max - min) * 0.15);
-    return [Math.floor((min - pad) * 10) / 10, Math.ceil((max + pad) * 10) / 10];
+    const dataSpan = max - min;
+    const minSpan  = METRIC_MIN_SPAN[key] ?? Math.max(2, Math.abs((min + max) / 2) * 0.1);
+    const span     = Math.max(dataSpan, minSpan);
+    const center   = (min + max) / 2;
+    const pad      = span * 0.1;
+    return [Math.floor((center - span / 2 - pad) * 10) / 10, Math.ceil((center + span / 2 + pad) * 10) / 10];
   };
 
   const toggleMetric = (label: string) => {

@@ -27,7 +27,7 @@ import SupplementsProgressSection from "@/app/components/SupplementsProgressSect
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
-type WeightRange = "14j" | "3m" | "6m" | "1a" | "tout";
+type WeightRange = "14j" | "30j" | "3m" | "6m" | "1a" | "tout";
 
 const RANGES: { key: Range; label: string; days?: number }[] = [
   { key: "1j",  label: "Jour" },
@@ -41,11 +41,15 @@ const RANGES: { key: Range; label: string; days?: number }[] = [
 
 const WEIGHT_RANGES: { key: WeightRange; label: string; days?: number }[] = [
   { key: "14j",  label: "14J",  days: 14  },
+  { key: "30j",  label: "30J",  days: 30  },
   { key: "3m",   label: "3M",   days: 90  },
   { key: "6m",   label: "6M",   days: 180 },
   { key: "1a",   label: "1A",   days: 365 },
   { key: "tout", label: "Tout"             },
 ];
+
+// Ranges that get weekly-averaged points for a smoother line instead of noisy daily raw data.
+const WEIGHT_AVERAGE_RANGES = new Set<WeightRange>(["3m", "6m"]);
 
 function estimateTDEE(goals: NutritionGoals): number { return goals.dailyCalories; }
 
@@ -164,6 +168,122 @@ function buildPlateauDailyKg(
     daily.push(Math.round(cur * 100) / 100);
   }
   return daily;
+}
+
+/**
+ * Group points into 7-day buckets and average weightKg/calories within each —
+ * used for longer ranges (3m/6m) so the line reflects the real trend instead
+ * of raw day-to-day water-weight noise. Each bucket is labeled by its most
+ * recent date.
+ */
+function averageWeeklyWeightPoints(
+  pts: { date: string; weightKg?: number; calories: number }[]
+): { date: string; weightKg?: number; calories: number }[] {
+  if (!pts.length) return pts;
+  const sorted = [...pts].sort((a, b) => a.date.localeCompare(b.date));
+  const firstDate = parseISO(sorted[0].date).getTime();
+  const buckets = new Map<number, typeof sorted>();
+  for (const p of sorted) {
+    const dayOffset = Math.floor((parseISO(p.date).getTime() - firstDate) / 86400000);
+    const bucketIdx = Math.floor(dayOffset / 7);
+    if (!buckets.has(bucketIdx)) buckets.set(bucketIdx, []);
+    buckets.get(bucketIdx)!.push(p);
+  }
+  return Array.from(buckets.values()).map(group => {
+    const weights = group.map(p => p.weightKg).filter((v): v is number => !!v && v > 0);
+    const cals    = group.map(p => p.calories).filter((v): v is number => v > 0);
+    return {
+      date:     group[group.length - 1].date,
+      weightKg: weights.length ? Math.round((weights.reduce((a, b) => a + b, 0) / weights.length) * 10) / 10 : undefined,
+      calories: cals.length ? Math.round(cals.reduce((a, b) => a + b, 0) / cals.length) : 0,
+    };
+  });
+}
+
+// Nearest point (within 3 days) with a non-null value for the given field — actual
+// measurements aren't logged every single day, so an exact-date lookup often misses.
+function findNearestWeightValue(
+  data: WeightChartPoint[], dateStr: string, field: "actual" | "projected"
+): number | null {
+  const target = new Date(dateStr + "T00:00:00").getTime();
+  let best: { value: number; distance: number } | null = null;
+  for (const p of data) {
+    const v = p[field];
+    if (v == null) continue;
+    const distance = Math.abs(new Date(p.date + "T00:00:00").getTime() - target);
+    if (distance > 3 * 86400000) continue;
+    if (!best || distance < best.distance) best = { value: v, distance };
+  }
+  return best?.value ?? null;
+}
+
+type AdequacyStatus = "onTrack" | "offTrack" | "unknown";
+
+interface AdequacyWindow {
+  days:          number;
+  actualDelta:   number | null;
+  expectedDelta: number | null;
+  status:        AdequacyStatus;
+}
+
+// Tolerant on purpose — the plan's plateau curve is an ambitious best case, so "on track"
+// means having achieved at least ~35% of the planned pace, not matching it exactly.
+const ADEQUACY_TOLERANCE = 0.35;
+
+function computeAdequacyStatus(actualDelta: number, expectedDelta: number | null, isLoss: boolean): AdequacyStatus {
+  if (expectedDelta == null || Math.abs(expectedDelta) < 0.05) return "unknown";
+  const threshold = expectedDelta * ADEQUACY_TOLERANCE;
+  return isLoss
+    ? (actualDelta <= threshold ? "onTrack" : "offTrack")
+    : (actualDelta >= threshold ? "onTrack" : "offTrack");
+}
+
+type WeightChartPointColored = WeightChartPoint & {
+  blueSeg: number | null; redSeg: number | null; neutralSeg: number | null;
+};
+
+/**
+ * Splits the actual-weight line into weekly buckets, each colored blue (on track vs the
+ * plan's plateau curve) or red (off track) — tolerant thresholds, see computeAdequacyStatus.
+ * Boundary points between two differently-colored buckets get both segment keys populated
+ * so the colored lines visually touch instead of leaving a gap.
+ */
+function attachAdequacySegments(data: WeightChartPoint[], isLoss: boolean): WeightChartPointColored[] {
+  const withSegs: WeightChartPointColored[] = data.map(p => ({ ...p, blueSeg: null, redSeg: null, neutralSeg: null }));
+  const actualIdxs = withSegs.map((p, i) => ({ p, i })).filter(x => x.p.actual != null);
+  if (actualIdxs.length < 2) return withSegs;
+
+  const firstTime = new Date(actualIdxs[0].p.date + "T00:00:00").getTime();
+  const bucketOf = (dateStr: string) => Math.floor((new Date(dateStr + "T00:00:00").getTime() - firstTime) / (7 * 86400000));
+
+  const bucketPts = new Map<number, { p: WeightChartPoint; i: number }[]>();
+  for (const x of actualIdxs) {
+    const b = bucketOf(x.p.date);
+    if (!bucketPts.has(b)) bucketPts.set(b, []);
+    bucketPts.get(b)!.push(x);
+  }
+  const bucketStatus = new Map<number, AdequacyStatus>();
+  for (const [b, pts] of bucketPts) {
+    if (pts.length < 2) { bucketStatus.set(b, "unknown"); continue; }
+    const first = pts[0].p, last = pts[pts.length - 1].p;
+    const actualDelta = last.actual! - first.actual!;
+    const expectedDelta = (first.projected != null && last.projected != null) ? last.projected - first.projected : null;
+    bucketStatus.set(b, computeAdequacyStatus(actualDelta, expectedDelta, isLoss));
+  }
+
+  const keyOf = (s: AdequacyStatus): "blueSeg" | "redSeg" | "neutralSeg" =>
+    s === "onTrack" ? "blueSeg" : s === "offTrack" ? "redSeg" : "neutralSeg";
+
+  for (let k = 0; k < actualIdxs.length; k++) {
+    const { p, i } = actualIdxs[k];
+    const status = bucketStatus.get(bucketOf(p.date)) ?? "unknown";
+    withSegs[i][keyOf(status)] = p.actual;
+    if (k < actualIdxs.length - 1) {
+      const nextStatus = bucketStatus.get(bucketOf(actualIdxs[k + 1].p.date)) ?? "unknown";
+      if (nextStatus !== status) withSegs[i][keyOf(nextStatus)] = p.actual;
+    }
+  }
+  return withSegs;
 }
 
 function buildWeightChartData(
@@ -295,6 +415,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [points,          setPoints]     = useState<DayTrendPoint[]>([]);
   const [loading,         setLoading]    = useState(true);
   const [weightRange,     setWeightRange] = useState<WeightRange>("6m");
+  const [showAdequacyColoring, setShowAdequacyColoring] = useState(false);
   const [weightPts,       setWeightPts]  = useState<DayTrendPoint[]>([]);
   const [weightLoading,   setWeightLoading] = useState(false);
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
@@ -382,7 +503,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     try {
       const today   = format(new Date(), "yyyy-MM-dd");
       const obj     = WEIGHT_RANGES.find(x => x.key === wr);
-      const from    = obj?.days ? format(subDays(new Date(), obj.days), "yyyy-MM-dd") : "2020-01-01";
+      // Always fetch at least 35 days so the 7j/14j/30j plan-adequacy checks always have
+      // enough history, even when a shorter chart range (14j/30j) is selected — the chart
+      // display itself is trimmed back down to the selected range client-side below.
+      const fetchDays = obj?.days ? Math.max(obj.days, 35) : undefined;
+      const from    = fetchDays ? format(subDays(new Date(), fetchDays), "yyyy-MM-dd") : "2020-01-01";
       const res     = await fetch(`/api/progress?from=${from}&to=${today}`);
       if (res.ok) {
         const { points: p } = await res.json() as { points: DayTrendPoint[] };
@@ -413,7 +538,14 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
         / activityPoints.filter((p) => (p.activeMinutes ?? 0) > 0).length) : 0;
 
   // ── Weight-specific data (independent range) ───────────────────────────
-  const weightPtsFiltered = weightPts.filter(p => (p.weightKg ?? 0) > 0);
+  // weightPts always covers >=35 days (see loadWeightData); slice it back down to the
+  // selected range for display/period-scoped stats, while 7j/14j/30j lookback below keeps
+  // using the full fetched history regardless of what's currently displayed.
+  const weightRangeDays  = WEIGHT_RANGES.find(x => x.key === weightRange)?.days;
+  const chartCutoffDate  = weightRangeDays ? format(subDays(new Date(), weightRangeDays), "yyyy-MM-dd") : null;
+  const weightPtsForChart = chartCutoffDate ? weightPts.filter(p => p.date >= chartCutoffDate) : weightPts;
+
+  const weightPtsFiltered = weightPtsForChart.filter(p => (p.weightKg ?? 0) > 0);
   const firstWeight = weightPtsFiltered[0]?.weightKg;
   const lastWeight  = weightPtsFiltered[weightPtsFiltered.length - 1]?.weightKg;
   const weightDelta = (firstWeight && lastWeight) ? lastWeight - firstWeight : null;
@@ -432,7 +564,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   };
   const delta48h = (() => { const w = findWeightBefore(2);  return (w && lastWeight) ? lastWeight - w : null; })();
   const delta7d  = (() => { const w = findWeightBefore(7);  return (w && lastWeight) ? lastWeight - w : null; })();
-  const delta15d = (() => { const w = findWeightBefore(15); return (w && lastWeight) ? lastWeight - w : null; })();
+  const delta15d = (() => { const w = findWeightBefore(14); return (w && lastWeight) ? lastWeight - w : null; })();
   const delta30d = (() => { const w = findWeightBefore(30); return (w && lastWeight) ? lastWeight - w : null; })();
 
   const avgSleepPts = points.filter((p) => (p.sleepMinutes ?? 0) > 0);
@@ -449,9 +581,14 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   // Cap the future projection horizon to the selected window so measured data
   // keeps a fair share of the chart width (≈ matches the past window).
   const futureHorizonDays = WEIGHT_RANGES.find(x => x.key === weightRange)?.days ?? Infinity;
+  // 3m/6m get weekly-averaged points — a smoother trend line instead of ~90-180 raw,
+  // noisy daily points crammed onto one small chart.
+  const weightPtsForChartSmoothed = WEIGHT_AVERAGE_RANGES.has(weightRange)
+    ? averageWeeklyWeightPoints(weightPtsForChart.map(p => ({ date: p.date, weightKg: p.weightKg, calories: p.calories })))
+    : weightPtsForChart;
   const weightChartData = buildWeightChartData(
-    weightPts.map(p => ({ label: format(parseISO(p.date), "dd/MM"), date: p.date, weightKg: p.weightKg })),
-    weightPts.map(p => ({ date: p.date, calories: p.calories })),
+    weightPtsForChartSmoothed.map(p => ({ label: format(parseISO(p.date), "dd/MM"), date: p.date, weightKg: p.weightKg })),
+    weightPtsForChartSmoothed.map(p => ({ date: p.date, calories: p.calories })),
     effectiveCurrentWeight,
     targetWeightKg,
     targetDate || undefined,
@@ -487,6 +624,36 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const weightCenter = (wMinRaw + wMaxRaw) / 2;
   const weightYMin = allWeightValues.length ? Math.floor((weightCenter - finalSpan / 2) * 2) / 2 : undefined;
   const weightYMax = allWeightValues.length ? Math.ceil((weightCenter + finalSpan / 2) * 2) / 2  : undefined;
+
+  // ── Plan adequacy (7j / 14j / 30j) — always checked against the full fetched history,
+  // independent of the currently selected chart range, using the plan's plateau curve as
+  // the expected trajectory rather than a naive straight line. ────────────────────────
+  const weightChartDataFull = buildWeightChartData(
+    weightPts.map(p => ({ label: format(parseISO(p.date), "dd/MM"), date: p.date, weightKg: p.weightKg })),
+    weightPts.map(p => ({ date: p.date, calories: p.calories })),
+    effectiveCurrentWeight,
+    targetWeightKg,
+    targetDate || undefined,
+    plan,
+    0,
+  );
+  const isLossOverall = targetWeightKg != null
+    && (plan?.startWeightKg ?? effectiveCurrentWeight ?? 0) >= targetWeightKg;
+  const lastActualDate = [...weightChartDataFull].reverse().find(p => p.actual != null)?.date ?? null;
+  const adequacyWindows: AdequacyWindow[] = !targetWeightKg || !lastActualDate ? [] : [7, 14, 30].map(days => {
+    const endActual   = findNearestWeightValue(weightChartDataFull, lastActualDate, "actual");
+    const startDateStr = format(subDays(parseISO(lastActualDate), days), "yyyy-MM-dd");
+    const startActual  = findNearestWeightValue(weightChartDataFull, startDateStr, "actual");
+    const endProjected   = findNearestWeightValue(weightChartDataFull, lastActualDate, "projected");
+    const startProjected = findNearestWeightValue(weightChartDataFull, startDateStr, "projected");
+    const actualDelta   = (endActual != null && startActual != null) ? Math.round((endActual - startActual) * 10) / 10 : null;
+    const expectedDelta = (endProjected != null && startProjected != null) ? Math.round((endProjected - startProjected) * 10) / 10 : null;
+    return {
+      days, actualDelta, expectedDelta,
+      status: actualDelta == null ? "unknown" : computeAdequacyStatus(actualDelta, expectedDelta, isLossOverall),
+    };
+  });
+  const weightChartDataColored = attachAdequacySegments(weightChartData, isLossOverall);
 
   const progressInsightData = {
     days:           points.length,
@@ -1096,6 +1263,21 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       </button>
                     ))}
                   </div>
+                  {/* Toggle: color the actual-weight line by weekly plan adequacy */}
+                  {targetWeightKg && (
+                    <button
+                      onClick={() => setShowAdequacyColoring(v => !v)}
+                      className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all"
+                      style={{
+                        background: showAdequacyColoring ? "rgba(96,165,250,0.14)" : "rgba(255,255,255,0.05)",
+                        color:      showAdequacyColoring ? "#60a5fa" : "var(--text-muted)",
+                        border:     `1px solid ${showAdequacyColoring ? "rgba(96,165,250,0.4)" : "var(--border)"}`,
+                      }}
+                    >
+                      <span>🎨</span>
+                      {showAdequacyColoring ? "Adéquation au plan : activée" : "Voir l'adéquation au plan"}
+                    </button>
+                  )}
                 </div>
 
                 {/* Stats row */}
@@ -1123,7 +1305,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <div className="flex gap-2 mb-3">
                     {([
                       { label: "7 jours",  delta: delta7d  },
-                      { label: "15 jours", delta: delta15d },
+                      { label: "14 jours", delta: delta15d },
                       { label: "30 jours", delta: delta30d },
                     ] as const).map(({ label, delta }) => {
                       if (delta === null) return null;
@@ -1138,6 +1320,30 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {Math.abs(delta).toFixed(1)} kg
                           </span>
                           <span className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Adéquation au plan (7j / 14j / 30j) — tolerant, the plan is ambitious */}
+                {adequacyWindows.length > 0 && (
+                  <div className="flex gap-2 mb-3">
+                    {adequacyWindows.map(({ days, actualDelta, status }) => {
+                      const cfg = status === "onTrack"
+                        ? { emoji: "🙂", label: "Conforme",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.3)" }
+                        : status === "offTrack"
+                        ? { emoji: "😕", label: "Sous rythme", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" }
+                        : { emoji: "🤷", label: "Pas assez de données", color: "var(--text-muted)", bg: "rgba(255,255,255,0.03)", border: "var(--border)" };
+                      return (
+                        <div key={days} className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl"
+                          style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                          <span className="text-[16px] leading-none">{cfg.emoji}</span>
+                          <span className="text-[11px] font-bold tabular-nums" style={{ color: cfg.color }}>
+                            {actualDelta != null ? `${actualDelta > 0 ? "+" : ""}${actualDelta.toFixed(1)} kg` : "—"}
+                          </span>
+                          <span className="text-[9px] text-center leading-tight" style={{ color: cfg.color }}>{cfg.label}</span>
+                          <span className="text-[8px] text-center" style={{ color: "var(--text-muted)" }}>sur {days} j</span>
                         </div>
                       );
                     })}
@@ -1163,7 +1369,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     {/* Fit-to-width — the range buttons (3M/6M/1A/Tout) control how much history shows on one screen */}
                     <div style={{ marginLeft: "-4px", marginRight: "-4px" }}>
                     <ResponsiveContainer width="100%" height={240}>
-                      <ComposedChart data={weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                      <ComposedChart data={showAdequacyColoring ? weightChartDataColored : weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="var(--protein)" stopOpacity={0.14} />
@@ -1267,27 +1473,60 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={1.8} fill="#4ade80" stroke="var(--bg)" strokeWidth={1} />;
                           }}
                           activeDot={{ r: 3, fill: "#4ade80" }} connectNulls />
-                        {/* Actual weight (solid area, on top) — linear keeps the real
-                            day-to-day variation visible instead of over-smoothing it */}
-                        <Area yAxisId="w" type="linear" dataKey="actual" name="actual"
-                          stroke="var(--protein)" strokeWidth={1.5} fill="url(#actualGrad)"
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          dot={(props: any) => {
-                            const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
-                            if (payload.actual == null) return <g key={`a-${payload.date}`} />;
-                            return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 3.2 : 2} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1} />;
-                          }}
-                          activeDot={{ r: 3.5 }} connectNulls={false} />
+                        {/* Actual weight — either a single line (default) or split into
+                            weekly blue/red segments showing adequacy vs the plan */}
+                        {showAdequacyColoring ? (
+                          <>
+                            {(["blueSeg", "redSeg", "neutralSeg"] as const).map(segKey => {
+                              const segColor = segKey === "blueSeg" ? "#60a5fa" : segKey === "redSeg" ? "#f87171" : "var(--text-muted)";
+                              return (
+                                <Line key={segKey} yAxisId="w" type="linear" dataKey={segKey} name={segKey}
+                                  stroke={segColor} strokeWidth={2} legendType="none"
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  dot={(props: any) => {
+                                    const { cx, cy, payload, value } = props as { cx: number; cy: number; payload: WeightChartPointColored; value: number | null };
+                                    if (value == null) return <g key={`${segKey}-${payload.date}`} />;
+                                    return <circle key={`${segKey}-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 3.2 : 2} fill={segColor} stroke="var(--bg)" strokeWidth={1} />;
+                                  }}
+                                  activeDot={{ r: 3.5, fill: segColor }} connectNulls={false} isAnimationActive={false} />
+                              );
+                            })}
+                          </>
+                        ) : (
+                          /* linear keeps the real day-to-day variation visible instead of over-smoothing it */
+                          <Area yAxisId="w" type="linear" dataKey="actual" name="actual"
+                            stroke="var(--protein)" strokeWidth={1.5} fill="url(#actualGrad)"
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            dot={(props: any) => {
+                              const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
+                              if (payload.actual == null) return <g key={`a-${payload.date}`} />;
+                              return <circle key={`a-${payload.date}`} cx={cx} cy={cy} r={payload.isToday ? 3.2 : 2} fill="var(--protein)" stroke="var(--bg)" strokeWidth={1} />;
+                            }}
+                            activeDot={{ r: 3.5 }} connectNulls={false} />
+                        )}
                       </ComposedChart>
                     </ResponsiveContainer>
                     </div>{/* chart wrapper */}
 
                     {/* Legend */}
                     <div className="flex items-center gap-3 mt-2.5 justify-center flex-wrap">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
-                      </div>
+                      {showAdequacyColoring ? (
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-0.5 rounded" style={{ background: "#60a5fa" }} />
+                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-0.5 rounded" style={{ background: "#f87171" }} />
+                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
+                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0" style={{ borderTop: "2px dashed #4ade80" }} />
                         <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
