@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
 import {
@@ -23,15 +22,16 @@ const TABS = [
 
 export default function Nav() {
   const path   = usePathname();
-  const router = useRouter();
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
 
   const handleLogout = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     try { await signOut(getClientAuth()); } catch {}
-    router.push("/login");
-  }, [router]);
+    // Hard navigation (not router.push) — ensures the cookie-clearing response is
+    // durably committed before the new page loads, same reasoning as the login redirect.
+    window.location.href = "/login";
+  }, []);
 
   // Fetch once on mount — no need to re-fetch on every route change
   useEffect(() => {

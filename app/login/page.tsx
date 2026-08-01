@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { IconMail, IconLock, IconChevronRight, IconLoader2 } from "@tabler/icons-react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
@@ -18,14 +17,15 @@ async function createServerSession(body: object): Promise<boolean> {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email,       setEmail]       = useState("");
   const [pass,        setPass]        = useState("");
   const [error,       setError]       = useState("");
   const [loading,     setLoading]     = useState(false);
   const [googleLoad,  setGoogleLoad]  = useState(false);
 
-  const redirect = () => router.push("/hub");
+  // Hard navigation (not router.push) — on iOS standalone PWAs, a session cookie set via
+  // fetch() doesn't always get durably persisted until a real top-level page load happens.
+  const redirect = () => { window.location.href = "/hub"; };
 
   // ── Email / password ────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
