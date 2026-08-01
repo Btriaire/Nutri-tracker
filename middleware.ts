@@ -9,6 +9,7 @@ const PUBLIC_PREFIXES = [
   "/api/google-fit/test-sleep",
   "/report/print",
   "/api/report/generate",
+  "/api/meditation",
   "/_next/",
   "/favicon",
   "/auth.txt",

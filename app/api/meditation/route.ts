@@ -7,6 +7,15 @@ import { FieldValue } from "firebase-admin/firestore";
 import { format } from "date-fns";
 
 const USER = "owner";
+const CRON_SECRET = process.env.CRON_SECRET || "";
+
+// Server-to-server auth for automated pushes (Halcyon-PaLaMa), same
+// convention as app/api/cron/sync-integrations/route.ts — bypasses the
+// session cookie, which a cross-origin app can never carry anyway.
+function isAutomatedRequest(req: NextRequest): boolean {
+  const secret = req.headers.get("x-cron-secret");
+  return !!secret && !!CRON_SECRET && secret === CRON_SECRET;
+}
 
 export interface MeditationSession {
   id?:          string;
@@ -35,7 +44,9 @@ export async function GET() {
 
 // POST — save a completed session
 export async function POST(req: NextRequest) {
-  const session = await getSession();
+  const session = isAutomatedRequest(req)
+    ? { userId: "owner", email: "", name: "" }
+    : await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as { programId: string; programLabel: string; durationMin: number };
