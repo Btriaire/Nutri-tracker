@@ -462,14 +462,31 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   // projLow/projHigh uncertainty band, which would otherwise flatten the
   // real weight curve. Tight, adaptive padding gives the curve real vertical
   // amplitude ("zoom") while still snapping to clean 0.5 kg gridlines.
-  const allWeightValues = weightChartData.flatMap(p =>
+  const allWeightValuesRaw = weightChartData.flatMap(p =>
     [p.actual, p.projected].filter((v): v is number => v != null && v > 0 && v < 999)
+  );
+  // Outlier guard — a single bad sync reading (e.g. a decimal-point glitch, 970 vs 97.0)
+  // would otherwise blow up the whole axis. Drop points far from the group median.
+  const sortedForMedian = [...allWeightValuesRaw].sort((a, b) => a - b);
+  const medianWeight    = sortedForMedian[Math.floor(sortedForMedian.length / 2)] ?? 0;
+  const allWeightValues = allWeightValuesRaw.filter(
+    v => medianWeight === 0 || Math.abs(v - medianWeight) <= Math.max(8, medianWeight * 0.15)
   );
   const wMinRaw = allWeightValues.length ? Math.min(...allWeightValues) : 0;
   const wMaxRaw = allWeightValues.length ? Math.max(...allWeightValues) : 0;
-  const wPad    = Math.max(0.4, (wMaxRaw - wMinRaw) * 0.12);
-  const weightYMin = allWeightValues.length ? Math.floor((wMinRaw - wPad) * 2) / 2 : undefined;
-  const weightYMax = allWeightValues.length ? Math.ceil((wMaxRaw + wPad) * 2) / 2  : undefined;
+  const dataSpan = wMaxRaw - wMinRaw;
+  // Realistic minimum span for the selected period: ~4kg/month is the fastest plausible
+  // real fat-loss trend, plus ~1.5kg of normal day-to-day water-weight noise. Short windows
+  // (7-14j) get a sensible floor so a single 0.5kg water fluctuation doesn't fill the whole
+  // chart and look dramatic; the real observed span still wins if it's genuinely larger.
+  const weightPeriodDays = WEIGHT_RANGES.find(x => x.key === weightRange)?.days;
+  const realisticMinSpan = weightPeriodDays
+    ? Math.min(20, Math.max(2, (weightPeriodDays / 30) * 4 + 1.5))
+    : Math.max(2, dataSpan); // "Tout" — no fixed period, defer to the real observed span
+  const finalSpan  = Math.max(dataSpan, realisticMinSpan);
+  const weightCenter = (wMinRaw + wMaxRaw) / 2;
+  const weightYMin = allWeightValues.length ? Math.floor((weightCenter - finalSpan / 2) * 2) / 2 : undefined;
+  const weightYMax = allWeightValues.length ? Math.ceil((weightCenter + finalSpan / 2) * 2) / 2  : undefined;
 
   const progressInsightData = {
     days:           points.length,
