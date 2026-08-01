@@ -10,6 +10,7 @@ const PUBLIC_PREFIXES = [
   "/report/print",
   "/api/report/generate",
   "/api/meditation",
+  "/api/mental-health",
   "/_next/",
   "/favicon",
   "/auth.txt",
