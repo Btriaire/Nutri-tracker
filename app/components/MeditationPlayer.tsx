@@ -521,11 +521,14 @@ export default function MeditationPlayer() {
     } catch {}
   }, []);
 
-  // Fetch full session history from API
+  // Fetch full session history from API — sessions under 2 min (accidental taps,
+  // stopped almost immediately) aren't shown or counted toward stats/streaks.
   useEffect(() => {
     fetch("/api/meditation")
       .then(r => r.ok ? r.json() : null)
-      .then((d: { sessions?: ApiSession[] } | null) => { if (d?.sessions) setAllSessions(d.sessions); })
+      .then((d: { sessions?: ApiSession[] } | null) => {
+        if (d?.sessions) setAllSessions(d.sessions.filter(s => s.durationMin >= 2));
+      })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

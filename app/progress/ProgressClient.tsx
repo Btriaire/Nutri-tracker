@@ -444,7 +444,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     fetch("/api/meditation")
       .then((r) => r.json())
       .then((d: { sessions?: { date: string; durationMin: number; programLabel: string }[] }) => {
-        setMeditSessions(d.sessions ?? []);
+        // Sessions under 2 min (accidental taps, stopped almost immediately) aren't shown.
+        setMeditSessions((d.sessions ?? []).filter(s => s.durationMin >= 2));
       })
       .catch(() => {});
   }, []);
