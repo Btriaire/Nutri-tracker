@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera } from "@tabler/icons-react";
+import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import { scaleNutrition } from "@/app/lib/nutrition";
 import FoodPictogram from "./FoodPictogram";
+import MicronutrientEditModal from "./MicronutrientEditModal";
 
 async function compressThumbnail(file: File, maxSide = 120): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -66,6 +67,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
   const [swipeX,   setSwipeX]   = useState(0);
   const [dragging, setDragging] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [showMicroEdit, setShowMicroEdit] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef    = useRef<HTMLDivElement>(null);
   const swipeXRef    = useRef(0);
@@ -274,7 +276,9 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                 </div>
               )}
             </button>
-            <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+            {/* No `capture` attribute — lets the OS offer both "Prendre une photo" and
+                "Choisir dans la bibliothèque" instead of forcing the camera open */}
+            <input ref={photoInputRef} type="file" accept="image/*" className="hidden"
               onChange={handlePhotoCapture} />
 
             {/* Food info — click to toggle expanded */}
@@ -472,8 +476,15 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
                 </div>
               )}
 
-              {/* Edit button */}
-              <div className="flex justify-end">
+              {/* Edit buttons */}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowMicroEdit(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                  style={{ background: "rgba(99,102,241,0.10)", color: "var(--indigo)", border: "1px solid rgba(99,102,241,0.20)" }}>
+                  <IconFlask size={11} stroke={2} />
+                  Micronutriments
+                </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditGrams(String(Math.round(entry.servingGrams))); setEditing(true); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
@@ -486,6 +497,10 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showMicroEdit && (
+        <MicronutrientEditModal foodName={entry.name} onClose={() => setShowMicroEdit(false)} />
+      )}
     </motion.div>
   );
 }

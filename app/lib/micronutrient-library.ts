@@ -13,6 +13,7 @@ export interface MicronutrientLibraryEntry {
   per100g:   LibraryMicronutrient[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  verifiedManually?: boolean; // user-entered/corrected — never overwritten by an AI guess
 }
 
 const COLLECTION = "micronutrientLibrary"; // shared, not per-user — food science doesn't depend on who's asking
@@ -42,7 +43,24 @@ export async function getCachedMicronutrientProfile(name: string): Promise<Libra
   }
 }
 
-export async function saveMicronutrientProfile(name: string, per100g: LibraryMicronutrient[]): Promise<void> {
+/** Full cached entry (including the manual-verification flag) — used by the edit UI. */
+export async function getMicronutrientLibraryEntry(name: string): Promise<MicronutrientLibraryEntry | null> {
+  const key = normalizeFoodKey(name);
+  if (!key) return null;
+  try {
+    const db = getAdminFirestore();
+    const snap = await db.collection(COLLECTION).doc(key).get();
+    if (!snap.exists) return null;
+    return snap.data() as MicronutrientLibraryEntry;
+  } catch (e) {
+    console.warn("[micronutrient-library] read failed", e);
+    return null;
+  }
+}
+
+export async function saveMicronutrientProfile(
+  name: string, per100g: LibraryMicronutrient[], verifiedManually = false
+): Promise<void> {
   const key = normalizeFoodKey(name);
   if (!key) return;
   try {
@@ -50,11 +68,14 @@ export async function saveMicronutrientProfile(name: string, per100g: LibraryMic
     const now = Timestamp.now();
     const ref = db.collection(COLLECTION).doc(key);
     const existing = await ref.get();
+    const existingData = existing.exists ? (existing.data() as MicronutrientLibraryEntry) : null;
     await ref.set({
       name,
       per100g,
-      createdAt: existing.exists ? (existing.data() as MicronutrientLibraryEntry).createdAt : now,
+      createdAt: existingData?.createdAt ?? now,
       updatedAt: now,
+      // A manual save always sets the flag; an AI-driven save never clears a manual one.
+      verifiedManually: verifiedManually || existingData?.verifiedManually || false,
     });
   } catch (e) {
     console.warn("[micronutrient-library] write failed", e);

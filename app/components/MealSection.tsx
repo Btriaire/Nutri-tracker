@@ -103,12 +103,12 @@ export default function MealSection({
         border: `1px solid ${meta.color}22`,
       }}
     >
-      {/* Hidden camera input */}
+      {/* Hidden photo input — no `capture` attribute, so the OS offers both
+          "Prendre une photo" and "Choisir dans la bibliothèque" */}
       <input
         ref={cameraRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];

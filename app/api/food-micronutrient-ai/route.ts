@@ -3,7 +3,10 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
-import { getCachedMicronutrientProfile, saveMicronutrientProfile, scaleProfile, type LibraryMicronutrient } from "@/app/lib/micronutrient-library";
+import {
+  getCachedMicronutrientProfile, getMicronutrientLibraryEntry, saveMicronutrientProfile,
+  scaleProfile, type LibraryMicronutrient,
+} from "@/app/lib/micronutrient-library";
 import type { MicronutrientCode } from "@/app/lib/types";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -100,4 +103,46 @@ export async function POST(req: NextRequest) {
     console.error("Food micronutrient AI lookup error:", e);
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
+}
+
+// GET /api/food-micronutrient-ai?name=... — raw per-100g profile for the manual editor
+// (unscaled, unlike POST which scales to a specific serving size).
+export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const name = req.nextUrl.searchParams.get("name")?.trim();
+  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+
+  const entry = await getMicronutrientLibraryEntry(name);
+  return NextResponse.json({
+    per100g: entry?.per100g ?? [],
+    verifiedManually: entry?.verifiedManually ?? false,
+  });
+}
+
+// PUT /api/food-micronutrient-ai — manually set/correct a food's per-100g profile.
+// Marked verifiedManually so it's never re-guessed or overwritten by the AI lookup above.
+export async function PUT(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let body: { name: string; micronutrients: LibraryMicronutrient[] };
+  try {
+    body = await req.json() as { name: string; micronutrients: LibraryMicronutrient[] };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const name = body.name?.trim();
+  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+
+  const validCodes = new Set<string>(MICRONUTRIENT_CODES);
+  const per100g = (Array.isArray(body.micronutrients) ? body.micronutrients : []).filter(
+    (m): m is LibraryMicronutrient =>
+      !!m?.code && validCodes.has(m.code as MicronutrientCode) && typeof m.amount === "number" && m.amount > 0
+  );
+
+  await saveMicronutrientProfile(name, per100g, true);
+  return NextResponse.json({ ok: true, per100g });
 }
