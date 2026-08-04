@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 import {
-  getCachedMicronutrientProfile, getMicronutrientLibraryEntry, saveMicronutrientProfile,
+  getMicronutrientLibraryEntry, saveMicronutrientProfile,
   scaleProfile, type LibraryMicronutrient,
 } from "@/app/lib/micronutrient-library";
 import type { MicronutrientCode } from "@/app/lib/types";
@@ -49,12 +49,14 @@ export async function POST(req: NextRequest) {
   if (!name || !grams) return NextResponse.json({ error: "name and grams required" }, { status: 400 });
 
   // 1. Check the shared library cache first — avoids hitting Groq for foods already looked up.
-  // An empty cached profile is treated as a miss and retried: a food genuinely having zero
-  // notable micronutrients is rare, so an empty result is far more likely a past bad/rushed
-  // AI answer than a real "no micronutrients" — don't let that poison the cache forever.
-  const cached = await getCachedMicronutrientProfile(name);
-  if (cached && cached.length > 0) {
-    return NextResponse.json({ ok: true, micronutrients: scaleProfile(cached, grams), cached: true });
+  // A missing/empty/sparse (<3 nutrients) cached profile is treated as a miss and retried:
+  // most whole foods genuinely have several trace nutrients, so a thin result is far more
+  // likely a past bad/rushed AI answer (or one predating a prompt improvement) than a real
+  // "barely anything in this food" — don't let that poison the cache forever. A manually
+  // verified profile is always trusted as-is, however sparse, since it's the user's own answer.
+  const entry = await getMicronutrientLibraryEntry(name);
+  if (entry?.per100g?.length && (entry.verifiedManually || entry.per100g.length >= 3)) {
+    return NextResponse.json({ ok: true, micronutrients: scaleProfile(entry.per100g, grams), cached: true });
   }
 
   // 2. Cache miss — ask Groq for a per-100g profile, cache it, then scale to the requested grams

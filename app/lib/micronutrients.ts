@@ -131,11 +131,22 @@ export const MICRONUTRIENT_DB: Record<MicronutrientCode, MicronutrientInfo> = {
   },
   vitamin_k: {
     code: "vitamin_k",
-    label: "Vitamine K",
-    symbol: "K",
+    label: "Vitamine K1",
+    symbol: "K1",
     unit: "µg",
     recommendedDailyIntake: 120,
     color: "#22c55e", // vert
+  },
+  vitamin_k2: {
+    code: "vitamin_k2",
+    label: "Vitamine K2",
+    symbol: "K2",
+    unit: "µg",
+    // Pas d'AJR officiel — 100µg/j est la valeur cible la plus souvent citée
+    // (rôle cardiovasculaire/osseux, distinct de la K1). Natto, fromages
+    // affinés, jaune d'œuf, foie en sont les sources principales.
+    recommendedDailyIntake: 100,
+    color: "#16a34a", // vert plus soutenu, distinct de la K1
   },
   biotin: {
     code: "biotin",
@@ -189,6 +200,19 @@ export function getMicronutrientColor(code: MicronutrientCode): string {
 
 export function getMicronutrientLabel(code: MicronutrientCode): string {
   return MICRONUTRIENT_DB[code]?.label || code;
+}
+
+/**
+ * Format a micronutrient amount for display. Rounding everything to 0 decimals
+ * (as this used to do) makes any real value under 1 — common for µg-scale
+ * nutrients like B12 (2.4µg RDA) or a modest mg-scale dose (e.g. 0.4mg iodine)
+ * — silently show as "0", which reads as "this food has none" when it isn't
+ * true. Small values keep one decimal instead.
+ */
+export function formatMicroAmount(amount: number): string {
+  if (amount === 0) return "0";
+  if (amount < 10) return (Math.round(amount * 10) / 10).toString();
+  return Math.round(amount).toString();
 }
 
 /**

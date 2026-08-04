@@ -693,7 +693,8 @@ export type BuiltinMicronutrientCode =
   | "folate"       // B9
   | "vitamin_c"    // C
   | "vitamin_e"    // E
-  | "vitamin_k"    // K
+  | "vitamin_k"    // K1
+  | "vitamin_k2"   // K2 (ménaquinone — natto, fromages affinés)
   | "biotin"       // B7
   | "pantothenic"  // B5
   | "niacin"       // B3

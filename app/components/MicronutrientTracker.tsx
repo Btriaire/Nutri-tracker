@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconChevronDown } from "@tabler/icons-react";
 import type { MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
-import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { MICRONUTRIENT_DB, formatMicroAmount } from "@/app/lib/micronutrients";
 import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 
 interface Props {
@@ -78,7 +78,7 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
           {info.symbol}
         </span>
         <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
-          {totalAmount.toFixed(0)}/{rda}{info.unit}
+          {formatMicroAmount(totalAmount)}/{formatMicroAmount(rda)}{info.unit}
         </span>
       </motion.div>
     );

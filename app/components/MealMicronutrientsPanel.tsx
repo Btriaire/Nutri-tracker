@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { IconChevronDown, IconFlask } from "@tabler/icons-react";
 import { format } from "date-fns";
 import type { FoodEntry, MealType, MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
-import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { MICRONUTRIENT_DB, formatMicroAmount } from "@/app/lib/micronutrients";
 import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 
 interface Props {
@@ -99,7 +99,7 @@ export default function MealMicronutrientsPanel({ entries, micronutrientData }: 
                                 className="text-[10px] px-2 py-1 rounded-full font-medium"
                                 style={{ background: `${info.color}15`, border: `1px solid ${info.color}33`, color: info.color }}
                               >
-                                {info.symbol} {m.amount.toFixed(0)}{m.unit}
+                                {info.symbol} {formatMicroAmount(m.amount)}{m.unit}
                               </span>
                             );
                           })}
