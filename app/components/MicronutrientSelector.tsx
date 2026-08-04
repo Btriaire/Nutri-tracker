@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
-import type { MicronutrientCode, SupplementMicronutrient } from "@/app/lib/types";
-import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { IconPlus, IconTrash, IconLoader2, IconSparkles } from "@tabler/icons-react";
+import type { MicronutrientCode, MicronutrientInfo, SupplementMicronutrient } from "@/app/lib/types";
+import { MICRONUTRIENT_DB, mergeCustomNutrients } from "@/app/lib/micronutrients";
+import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 
 interface Props {
   micronutrients: SupplementMicronutrient[];
@@ -12,7 +13,13 @@ interface Props {
 }
 
 export default function MicronutrientSelector({ micronutrients, onChange }: Props) {
+  useCustomNutrients();
   const [showSelector, setShowSelector] = useState(false);
+  const [showCreate,   setShowCreate]   = useState(false);
+  const [newLabel,     setNewLabel]     = useState("");
+  const [newUnit,      setNewUnit]      = useState("mg");
+  const [newRda,       setNewRda]       = useState("");
+  const [creating,     setCreating]     = useState(false);
 
   const allCodes = Object.keys(MICRONUTRIENT_DB) as MicronutrientCode[];
   const selectedCodes = new Set(micronutrients.map(m => m.code));
@@ -34,6 +41,33 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
     onChange(
       micronutrients.map(m => (m.code === code ? { ...m, amount } : m))
     );
+  };
+
+  const handleCreateCustom = async () => {
+    const label = newLabel.trim();
+    const unit  = newUnit.trim();
+    if (!label || !unit) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/custom-nutrients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label, unit,
+          ...(newRda ? { recommendedDailyIntake: parseFloat(newRda) } : {}),
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { nutrient: MicronutrientInfo };
+        mergeCustomNutrients([data.nutrient]);
+        handleAdd(data.nutrient.code);
+        setNewLabel(""); setNewUnit("mg"); setNewRda("");
+        setShowCreate(false);
+        setShowSelector(false);
+      }
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
@@ -94,7 +128,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
 
       {/* Selector dropdown */}
       <AnimatePresence>
-        {showSelector && availableCodes.length > 0 && (
+        {showSelector && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -102,6 +136,11 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
             className="space-y-1 mt-2 pt-2 border-t"
             style={{ borderColor: "var(--border)" }}
           >
+            {availableCodes.length === 0 && (
+              <p className="text-[10px] px-1 pb-1" style={{ color: "var(--text-muted)" }}>
+                Tous les micronutriments connus sont ajoutés
+              </p>
+            )}
             {availableCodes.map(code => {
               const info = MICRONUTRIENT_DB[code];
               return (
@@ -123,15 +162,58 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                 </button>
               );
             })}
+
+            {/* Create a custom nutrient */}
+            {!showCreate ? (
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] font-medium transition-all hover:opacity-80"
+                style={{ background: "rgba(232,121,249,0.1)", border: "1px dashed rgba(232,121,249,0.4)", color: "#e879f9" }}
+              >
+                <IconSparkles size={12} />
+                Créer un nutriment personnalisé
+              </button>
+            ) : (
+              <div className="p-2 rounded-lg space-y-1.5" style={{ background: "rgba(232,121,249,0.06)", border: "1px solid rgba(232,121,249,0.25)" }}>
+                <input
+                  type="text" placeholder="Nom (ex: Choline)" value={newLabel}
+                  onChange={e => setNewLabel(e.target.value)}
+                  className="w-full px-2 py-1 rounded text-[11px]"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                />
+                <div className="flex gap-1.5">
+                  <input
+                    type="text" placeholder="Unité (mg, µg...)" value={newUnit}
+                    onChange={e => setNewUnit(e.target.value)}
+                    className="flex-1 min-w-0 px-2 py-1 rounded text-[11px]"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  />
+                  <input
+                    type="number" placeholder="AJR (optionnel)" value={newRda}
+                    onChange={e => setNewRda(e.target.value)}
+                    className="flex-1 min-w-0 px-2 py-1 rounded text-[11px]"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div className="flex gap-1.5">
+                  <button type="button" onClick={() => setShowCreate(false)}
+                    className="flex-1 py-1 rounded text-[10px] font-medium"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
+                    Annuler
+                  </button>
+                  <button type="button" onClick={handleCreateCustom} disabled={creating || !newLabel.trim() || !newUnit.trim()}
+                    className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] font-semibold"
+                    style={{ background: "#e879f9", color: "#1a0a1f", opacity: (creating || !newLabel.trim() || !newUnit.trim()) ? 0.5 : 1 }}>
+                    {creating ? <IconLoader2 size={11} className="animate-spin" /> : <IconPlus size={11} />}
+                    Créer et ajouter
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {availableCodes.length === 0 && micronutrients.length > 0 && (
-        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-          Tous les micronutriments sont ajoutés
-        </p>
-      )}
     </div>
   );
 }

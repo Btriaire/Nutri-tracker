@@ -676,7 +676,7 @@ export interface SupplementLog {
 
 // ─── Micronutrients ───────────────────────────────────────────────────────────
 
-export type MicronutrientCode =
+export type BuiltinMicronutrientCode =
   | "magnesium"    // Mg
   | "zinc"         // Zn
   | "vitamin_d"    // D3
@@ -699,6 +699,11 @@ export type MicronutrientCode =
   | "niacin"       // B3
   | "riboflavin"   // B2
   | "thiamine";    // B1
+
+// Keeps autocomplete for the 22 built-ins while still accepting a user-defined
+// custom nutrient code (see app/api/custom-nutrients) — `string & {}` prevents
+// TS from collapsing the union down to plain `string`.
+export type MicronutrientCode = BuiltinMicronutrientCode | (string & {});
 
 export interface MicronutrientInfo {
   code:           MicronutrientCode;

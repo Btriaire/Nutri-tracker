@@ -1,12 +1,12 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { MICRONUTRIENT_DB, mergeCustomNutrients } from "@/app/lib/micronutrients";
 import { generateReportSynthesis, type ReportSynthesis } from "@/app/lib/report-synthesis";
 import type {
   DayLog, FitnessDay, HealthEntry, UserProfile, AISynthesisResult,
   SupplementProduct, SupplementLog, MicronutrientDay, MicronutrientCode,
-  FaceScanEntry, SupplementFrequency,
+  FaceScanEntry, SupplementFrequency, MicronutrientInfo,
 } from "@/app/lib/types";
 
 // ─── Output types ─────────────────────────────────────────────────────────────
@@ -181,6 +181,7 @@ export async function buildReportData(userId: string, from: string, to: string):
   const [
     foodSnaps, fitnessSnaps, healthSnaps, profileSnap,
     supplementProductsSnap, supplementLogsSnap, micronutrientLogsSnap, faceScansSnap,
+    customNutrientsSnap,
   ] = await Promise.all([
     db.collection(`users/${userId}/foodLog`)
       .where("date", ">=", from).where("date", "<=", to)
@@ -202,7 +203,12 @@ export async function buildReportData(userId: string, from: string, to: string):
     db.collection(`users/${userId}/faceScans`)
       .where("date", ">=", from).where("date", "<=", to)
       .orderBy("date", "asc").get(),
+    db.collection(`users/${userId}/customNutrients`).get(),
   ]);
+
+  // User-defined nutrients (see /api/custom-nutrients) — merged so the micronutrient
+  // rows below get a proper label/unit/color instead of falling back to the raw code.
+  mergeCustomNutrients(customNutrientsSnap.docs.map(d => d.data() as MicronutrientInfo));
 
   const profile = profileSnap.exists ? (profileSnap.data() as UserProfile) : null;
   const goals   = profile?.goals ?? defaultGoals();

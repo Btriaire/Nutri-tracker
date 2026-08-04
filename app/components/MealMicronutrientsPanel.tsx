@@ -6,6 +6,7 @@ import { IconChevronDown, IconFlask } from "@tabler/icons-react";
 import { format } from "date-fns";
 import type { FoodEntry, MealType, MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 
 interface Props {
   entries: FoodEntry[];
@@ -26,6 +27,7 @@ function entryTime(entry: FoodEntry): string {
 }
 
 export default function MealMicronutrientsPanel({ entries, micronutrientData }: Props) {
+  useCustomNutrients();
   const [open, setOpen] = useState(false);
 
   const intakes = micronutrientData?.intakes ?? [];

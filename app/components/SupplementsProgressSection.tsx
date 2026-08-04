@@ -10,8 +10,13 @@ import {
 import { IconPill, IconFlask } from "@tabler/icons-react";
 import type { SupplementProduct, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 import type { SupplementsProgressResponse } from "@/app/api/supplements-progress/route";
 import AIInsightBox from "@/app/components/AIInsightBox";
+
+function microInfo(code: MicronutrientCode) {
+  return MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "#94a3b8" };
+}
 
 const FREQUENCY_PER_DAY: Record<SupplementProduct["frequency"], number> = {
   once: 1,
@@ -26,6 +31,7 @@ function avg(values: number[]): number {
 }
 
 export default function SupplementsProgressSection() {
+  useCustomNutrients();
   const [data, setData] = useState<SupplementsProgressResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<7 | 14 | 30>(14);
@@ -60,7 +66,7 @@ export default function SupplementsProgressSection() {
 
   const aiNutrients = trackedCodes
     .map(code => {
-      const info = MICRONUTRIENT_DB[code];
+      const info = microInfo(code);
       const series = micronutrientSeries[code] ?? [];
       if (series.length < 2) return null;
       return {
@@ -154,7 +160,7 @@ export default function SupplementsProgressSection() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {trackedCodes.map(code => {
-              const info = MICRONUTRIENT_DB[code];
+              const info = microInfo(code);
               const series = micronutrientSeries[code] ?? [];
               if (series.length < 2) return null;
               const rda = info.recommendedDailyIntake || 0;

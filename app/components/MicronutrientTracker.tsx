@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { IconChevronDown } from "@tabler/icons-react";
 import type { MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
+import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 
 interface Props {
   date: string;
@@ -14,6 +15,7 @@ interface Props {
 const COLLAPSE_THRESHOLD = 4; // beyond this, chips would wrap to a 2nd line — collapse by default
 
 export default function MicronutrientTracker({ date, micronutrientData }: Props) {
+  useCustomNutrients();
   const [displayCodes, setDisplayCodes] = useState<MicronutrientCode[]>([]);
   const [expanded, setExpanded] = useState(false);
 
@@ -39,7 +41,9 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
   const shouldCollapse = displayCodes.length > COLLAPSE_THRESHOLD;
 
   const renderChip = (code: MicronutrientCode) => {
-    const info = MICRONUTRIENT_DB[code];
+    // Falls back gracefully if this is a custom nutrient whose definition hasn't
+    // finished loading yet (useCustomNutrients merges it in asynchronously).
+    const info = MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "#94a3b8" };
     const intakes = micronutrientData?.intakes?.filter(i => i.code === code) || [];
     const totalAmount = intakes.reduce((sum, i) => sum + i.amount, 0);
     const rda = info.recommendedDailyIntake || 0;

@@ -190,3 +190,15 @@ export function getMicronutrientColor(code: MicronutrientCode): string {
 export function getMicronutrientLabel(code: MicronutrientCode): string {
   return MICRONUTRIENT_DB[code]?.label || code;
 }
+
+/**
+ * Merge user-defined custom nutrients (see /api/custom-nutrients) into the shared
+ * lookup table so every component that reads MICRONUTRIENT_DB[code] — trackers,
+ * selectors, progress charts, the report — picks up their label/color/unit without
+ * each needing its own fetch. Safe to call repeatedly (idempotent).
+ */
+export function mergeCustomNutrients(custom: MicronutrientInfo[]): void {
+  for (const info of custom) {
+    MICRONUTRIENT_DB[info.code] = info;
+  }
+}
