@@ -1573,7 +1573,10 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 background: "rgba(15,15,22,0.99)",
                 border: "1px solid var(--border-strong)", borderBottom: "none",
                 backdropFilter: "blur(28px)",
-                maxHeight: "88vh",
+                // dvh (not vh) so the sheet shrinks with the on-screen keyboard on iOS —
+                // otherwise the bottom-anchored panel (and its save button) can end up
+                // partly hidden behind the keyboard while typing a quantity/grams value.
+                maxHeight: "88dvh",
               }}
             >
                   {/* Drag handle */}

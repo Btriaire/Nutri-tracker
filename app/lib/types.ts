@@ -311,7 +311,8 @@ export interface GoogleFitSession {
   calories:       number | null;
   distanceM:      number | null;   // distance in meters
   avgSpeedKmh:    number | null;   // average speed in km/h
-  heartRateAvg:   number | null;   // average heart rate in bpm
+  heartRateAvg:   number | null;   // average heart rate in bpm during the session
+  heartRateMax?:  number | null;   // peak heart rate in bpm during the session
   elevationGainM: number | null;   // elevation gain in meters
 }
 

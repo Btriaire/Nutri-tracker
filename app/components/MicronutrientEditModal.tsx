@@ -66,7 +66,10 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
           initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
           transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           className="glass-strong w-full md:max-w-md rounded-t-3xl md:rounded-3xl flex flex-col"
-          style={{ maxHeight: "85vh" }}
+          // dvh (not vh) so the modal — and its "Enregistrer" footer button — shrinks with
+          // the on-screen keyboard on iOS instead of staying sized to the full screen while
+          // the keyboard covers the bottom of it.
+          style={{ maxHeight: "85dvh" }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
