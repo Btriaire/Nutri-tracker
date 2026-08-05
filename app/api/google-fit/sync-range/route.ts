@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/app/lib/session";
 import { getTokens, activityLabel } from "@/app/lib/google-fit";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
@@ -6,7 +7,22 @@ import { format } from "date-fns";
 
 export const maxDuration = 60;
 
+// This route is listed as public in middleware.ts (the cron calls it without a session
+// cookie), so it checks its own auth: either a logged-in session (manual sync from the
+// app) or the same CRON_SECRET bearer token the cron endpoint accepts.
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const secret = process.env.CRON_SECRET;
+  const bearer = req.headers.get("authorization");
+  if (secret && bearer === `Bearer ${secret}`) return true;
+  const session = await getSession();
+  return !!session;
+}
+
 export async function POST(req: NextRequest) {
+  if (!(await isAuthorized(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { from, to } = await req.json() as { from: string; to: string };
   if (!from || !to) return NextResponse.json({ error: "from and to required" }, { status: 400 });
 

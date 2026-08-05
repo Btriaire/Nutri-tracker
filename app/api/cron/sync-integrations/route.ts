@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     const res = await fetch(`${getBaseUrl()}/api/google-fit/sync-range`, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${CRON_SECRET}` },
       body:    JSON.stringify({ from, to }),
     });
     const data = await res.json();

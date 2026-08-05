@@ -11,6 +11,8 @@ const PUBLIC_PREFIXES = [
   "/api/report/generate",
   "/api/meditation",
   "/api/mental-health",
+  "/api/cron/sync-integrations",
+  "/api/google-fit/sync-range",
   "/_next/",
   "/favicon",
   "/auth.txt",
