@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import * as withings from "@/app/lib/withings";
 import { subDays, format } from "date-fns";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const USER = "owner";
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
+function getBaseUrl() {
+  if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 /**
  * Cron endpoint: syncs Withings (body + sleep) and Google Fit data
- * Expects: X-Cron-Secret header matching CRON_SECRET
- * Usage: curl -H "X-Cron-Secret: $CRON_SECRET" https://nutri-tracker.vercel.app/api/cron/sync-integrations
+ * Accepts either the custom X-Cron-Secret header (any external caller, e.g. a VPS cron)
+ * or the standard Authorization: Bearer header Vercel's own Cron Jobs send automatically
+ * for the same CRON_SECRET — this is registered in vercel.json to run daily on its own.
+ * Manual usage: curl -H "X-Cron-Secret: $CRON_SECRET" https://nutri-tracker.vercel.app/api/cron/sync-integrations
  */
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!secret || secret !== CRON_SECRET) {
+  const xSecret  = req.headers.get("x-cron-secret");
+  const bearer   = req.headers.get("authorization");
+  const ok = (!!xSecret && xSecret === CRON_SECRET) || (!!bearer && bearer === `Bearer ${CRON_SECRET}`);
+  if (!CRON_SECRET || !ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results: Record<string, any> = {};
+  const results: Record<string, unknown> = {};
 
   // ─── Withings: sync last 30 days ─────────────────────────────────────────────
   try {
@@ -34,16 +44,20 @@ export async function POST(req: NextRequest) {
     console.error("[cron] Withings sync failed:", e);
   }
 
-  // ─── Google Fit: sync last 7 days ──────────────────────────────────────────────
+  // ─── Google Fit: sync last 7 days (sessions, HR avg/max, calories, steps) ───────
   try {
-    const db = getAdminFirestore();
     const to   = format(new Date(), "yyyy-MM-dd");
     const from = format(subDays(new Date(), 7), "yyyy-MM-dd");
 
-    // Call the sync endpoint via internal fetch if it exists,
-    // or manually fetch from Google Fit API
-    // For now, we'll just log a placeholder
-    results.googlefit = { status: "skipped", reason: "manual sync only" };
+    const res = await fetch(`${getBaseUrl()}/api/google-fit/sync-range`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ from, to }),
+    });
+    const data = await res.json();
+    results.googlefit = res.ok
+      ? { status: "ok", ...data }
+      : { status: "error", ...data };
   } catch (e) {
     const err = e as Error;
     results.googlefit = { status: "error", message: err.message };

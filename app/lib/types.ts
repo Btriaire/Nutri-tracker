@@ -313,6 +313,7 @@ export interface GoogleFitSession {
   avgSpeedKmh:    number | null;   // average speed in km/h
   heartRateAvg:   number | null;   // average heart rate in bpm during the session
   heartRateMax?:  number | null;   // peak heart rate in bpm during the session
+  steps?:         number | null;   // steps taken during the session
   elevationGainM: number | null;   // elevation gain in meters
 }
 

@@ -1489,6 +1489,8 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                         });
                       if (s.avgSpeedKmh != null)
                         gfMetrics.push({ value: String(s.avgSpeedKmh), unit: "km/h", color: "#60a5fa", icon: <IconGauge size={13} stroke={1.8}/> });
+                      if (s.steps != null && s.steps > 0)
+                        gfMetrics.push({ value: s.steps.toLocaleString("fr-FR"), unit: "pas", color: "var(--steps)", icon: <IconShoe size={13} stroke={1.8}/> });
                       if (s.heartRateAvg != null)
                         gfMetrics.push({ value: String(s.heartRateAvg), unit: "bpm moy.", color: "#f87171", icon: <IconHeart size={13} stroke={1.8}/> });
                       if (s.heartRateMax != null)

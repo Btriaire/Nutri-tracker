@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
   const endIso   = new Date(endMs).toISOString();
   const auth     = `Bearer ${tokens.accessToken}`;
 
-  // Session-level heart rate isn't in Google's sessions.list response — it only has
-  // start/end/activityType/name. To get avg/max BPM *during* each session, fetch HR at
-  // 1-minute resolution across the whole range and slice it per-session below, instead of
-  // firing one extra request per session (which wouldn't scale with many workouts).
-  const [activityRes, sleepRes, sessionsRes, hrMinuteRes] = await Promise.all([
+  // Google's sessions.list only has start/end/activityType/name — no heart rate, calories,
+  // or steps *during* the session. To capture all of that, fetch HR/calories/steps at
+  // 1-minute resolution across the whole range in one extra request (not one per session,
+  // which wouldn't scale with many workouts) and slice it per-session below.
+  const [activityRes, sleepRes, sessionsRes, minuteRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
-        aggregateBy:     [{ dataTypeName: "com.google.heart_rate.bpm" }],
+        aggregateBy: [
+          { dataTypeName: "com.google.heart_rate.bpm" },
+          { dataTypeName: "com.google.calories.expended" },
+          { dataTypeName: "com.google.step_count.delta" },
+        ],
         bucketByTime:    { durationMillis: 60_000 },
         startTimeMillis: startMs,
         endTimeMillis:   endMs,
@@ -66,23 +70,31 @@ export async function POST(req: NextRequest) {
     }),
   ]);
 
-  // Flatten the minute-bucketed response into {tMs, bpm} points, one per non-empty bucket.
-  const hrPoints: { tMs: number; bpm: number }[] = [];
-  if (hrMinuteRes.ok) {
-    const hrJson = await hrMinuteRes.json() as { bucket?: Bucket[] };
-    for (const b of hrJson.bucket ?? []) {
-      const pts = b.dataset?.[0]?.point ?? [];
-      if (!pts.length) continue;
-      const avg = pts.reduce((s: number, p: Point) => s + (p.value?.[0]?.fpVal ?? 0), 0) / pts.length;
-      hrPoints.push({ tMs: Number(b.startTimeMillis ?? 0), bpm: avg });
+  // Flatten the minute-bucketed response into one point per non-empty minute.
+  const minutePoints: { tMs: number; bpm: number | null; cal: number; steps: number }[] = [];
+  if (minuteRes.ok) {
+    const minuteJson = await minuteRes.json() as { bucket?: Bucket[] };
+    for (const b of minuteJson.bucket ?? []) {
+      const hrPts   = b.dataset?.[0]?.point ?? [];
+      const calPts  = b.dataset?.[1]?.point ?? [];
+      const stepPts = b.dataset?.[2]?.point ?? [];
+      if (!hrPts.length && !calPts.length && !stepPts.length) continue;
+      minutePoints.push({
+        tMs:   Number(b.startTimeMillis ?? 0),
+        bpm:   hrPts.length ? hrPts.reduce((s: number, p: Point) => s + (p.value?.[0]?.fpVal ?? 0), 0) / hrPts.length : null,
+        cal:   calPts.reduce((s: number, p: Point) => s + (p.value?.[0]?.fpVal ?? 0), 0),
+        steps: stepPts.reduce((s: number, p: Point) => s + (p.value?.[0]?.intVal ?? 0), 0),
+      });
     }
   }
-  const sessionHeartRate = (sStartMs: number, sEndMs: number): { avg: number | null; max: number | null } => {
-    const inWindow = hrPoints.filter(p => p.tMs >= sStartMs && p.tMs <= sEndMs).map(p => p.bpm);
-    if (!inWindow.length) return { avg: null, max: null };
+  const sessionMetrics = (sStartMs: number, sEndMs: number) => {
+    const inWindow = minutePoints.filter(p => p.tMs >= sStartMs && p.tMs <= sEndMs);
+    const bpms = inWindow.map(p => p.bpm).filter((v): v is number => v != null);
     return {
-      avg: Math.round(inWindow.reduce((a, b) => a + b, 0) / inWindow.length),
-      max: Math.round(Math.max(...inWindow)),
+      heartRateAvg: bpms.length ? Math.round(bpms.reduce((a, b) => a + b, 0) / bpms.length) : null,
+      heartRateMax: bpms.length ? Math.round(Math.max(...bpms)) : null,
+      calories:     inWindow.length ? Math.round(inWindow.reduce((s, p) => s + p.cal, 0)) : null,
+      steps:        inWindow.length ? inWindow.reduce((s, p) => s + p.steps, 0) : null,
     };
   };
 
@@ -135,7 +147,7 @@ export async function POST(req: NextRequest) {
       .map(s => {
         const sStartMs = Number(s.startTimeMillis);
         const sEndMs   = Number(s.endTimeMillis);
-        const hr = sessionHeartRate(sStartMs, sEndMs);
+        const m = sessionMetrics(sStartMs, sEndMs);
         return {
           id:          s.id,
           name:        s.name || activityLabel(s.activityType ?? 0),
@@ -143,9 +155,10 @@ export async function POST(req: NextRequest) {
           startMs:     sStartMs,
           endMs:       sEndMs,
           durationMin: Math.round((sEndMs - sStartMs) / 60_000),
-          calories:    null,
-          heartRateAvg: hr.avg,
-          heartRateMax: hr.max,
+          calories:     m.calories,
+          heartRateAvg: m.heartRateAvg,
+          heartRateMax: m.heartRateMax,
+          steps:        m.steps,
         };
       });
 
