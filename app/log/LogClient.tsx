@@ -13,6 +13,7 @@ import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
 import SupplementLogger from "@/app/components/SupplementLogger";
 import MicronutrientTracker from "@/app/components/MicronutrientTracker";
+import MacroContributionPanel from "@/app/components/MacroContributionPanel";
 import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog } from "@/app/lib/types";
@@ -735,6 +736,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             className="mt-3"
           >
             <MealMicronutrientsPanel entries={entries} micronutrientData={micronutrientData} />
+          </motion.div>
+
+          {/* Macro contribution per food (protein / carbs & sugar / fat & saturated) — collapsed by default */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.17 }}
+            className="mt-3"
+          >
+            <MacroContributionPanel entries={entries} />
           </motion.div>
 
           {/* Hunger timeline */}
