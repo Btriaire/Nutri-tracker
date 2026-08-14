@@ -355,21 +355,47 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [entries.length, Math.round(totals.calories), waterMl, mealHunger, supplementLog, micronutrientData]);
 
+  // Extracts + logs micronutrients for freshly-added entries — shared by every path that
+  // can introduce new food entries, so none of them can silently skip this step.
+  const syncNewEntryMicronutrients = (newEntries: FoodEntry[]) => {
+    if (!newEntries.length) return;
+    Promise.all(
+      newEntries.map(async (entry) => {
+        const time = format(new Date(Number(entry.loggedAt?.seconds ?? 0) * 1000 || Date.now()), "HH:mm");
+        const intakes = await extractMicronutrientsForced(entry.nutrition, entry.name, entry.servingGrams, entry.name, time);
+        return logMicronutrients(date, intakes);
+      })
+    ).then(fetchMicronutrients);
+  };
+
   const handleMealChange = (meal: MealType, mealEntries: FoodEntry[]) => {
     const prevIds = new Set(entries.filter((e) => e.meal === meal).map((e) => e.id));
     const newEntries = mealEntries.filter((e) => !prevIds.has(e.id));
 
     setEntries((prev) => [...prev.filter((e) => e.meal !== meal), ...mealEntries]);
+    syncNewEntryMicronutrients(newEntries);
+  };
 
-    if (newEntries.length) {
-      Promise.all(
-        newEntries.map(async (entry) => {
-          const time = format(new Date(Number(entry.loggedAt?.seconds ?? 0) * 1000 || Date.now()), "HH:mm");
-          const intakes = await extractMicronutrientsForced(entry.nutrition, entry.name, entry.servingGrams, entry.name, time);
-          return logMicronutrients(date, intakes);
-        })
-      ).then(fetchMicronutrients);
+  // Voice logging can distribute items across several meals in one go, so (unlike
+  // handleMealChange) it needs to diff against the *whole* day's entries, not just one
+  // meal's. Previously this only called router.refresh() — the calorie/macro totals
+  // updated, but the micronutrient-extraction step was silently skipped entirely.
+  const handleVoiceAdded = async () => {
+    setShowVoice(false);
+    try {
+      const res = await fetch(`/api/log?date=${date}`);
+      if (res.ok) {
+        const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[] } | null };
+        const freshEntries = dayLog?.entries ?? [];
+        const prevIds = new Set(entries.map((e) => e.id));
+        const newEntries = freshEntries.filter((e) => !prevIds.has(e.id));
+        setEntries(freshEntries);
+        syncNewEntryMicronutrients(newEntries);
+      }
+    } catch (err) {
+      console.error("Voice meal refetch failed:", err);
     }
+    router.refresh();
   };
 
   const handleHungerChange = async (meal: MealType, level: HungerLevel | null) => {
@@ -798,7 +824,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <VoiceMealModal
             date={date}
             onClose={() => setShowVoice(false)}
-            onAdded={() => { setShowVoice(false); router.refresh(); }}
+            onAdded={handleVoiceAdded}
           />
         )}
       </AnimatePresence>
