@@ -6,7 +6,7 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format } from "date-fns";
 import type { MicronutrientDay, MicronutrientIntake } from "@/app/lib/types";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 const USER = "owner";
 
@@ -47,8 +47,6 @@ export async function POST(req: NextRequest) {
 
     const db = getAdminFirestore();
     const docRef = db.collection(`users/${USER}/micronutrientLogs`).doc(date);
-    const snap = await docRef.get();
-    const log: MicronutrientDay = snap.exists ? (snap.data() as MicronutrientDay) : { date, intakes: [] };
 
     const intake: MicronutrientIntake = {
       code: code as any,
@@ -59,11 +57,18 @@ export async function POST(req: NextRequest) {
       loggedAt: Timestamp.now(),
     };
 
-    log.intakes.push(intake);
-    log.updatedAt = Timestamp.now();
-    await docRef.set(log);
+    // A day can get many of these POSTs fired concurrently (one per micronutrient,
+    // for every food just logged) — a read-modify-write (get → push → set) here
+    // would race: concurrent requests read the same snapshot and the last write()
+    // wins, silently dropping every intake but one. arrayUnion is an atomic
+    // server-side merge, so every concurrent call keeps its own entry regardless
+    // of ordering.
+    await docRef.set(
+      { date, intakes: FieldValue.arrayUnion(intake), updatedAt: Timestamp.now() },
+      { merge: true },
+    );
 
-    return NextResponse.json({ intake, log }, { status: 201 });
+    return NextResponse.json({ intake }, { status: 201 });
   } catch (e) {
     console.error("[micronutrient-intakes POST]", e);
     return NextResponse.json({ error: "Failed to log micronutrient intake" }, { status: 500 });

@@ -686,7 +686,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               border: "1px solid rgba(99,102,241,0.15)",
             }}
           >
-            <MicronutrientTracker date={date} micronutrientData={micronutrientData} />
+            <MicronutrientTracker date={date} micronutrientData={micronutrientData} onRefresh={fetchMicronutrients} />
           </motion.div>
 
           {/* Alcohol tracker — only when enabled in settings */}

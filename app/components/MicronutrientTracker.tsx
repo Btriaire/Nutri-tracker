@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconRefresh } from "@tabler/icons-react";
 import type { MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB, formatMicroAmount } from "@/app/lib/micronutrients";
 import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
@@ -10,6 +10,7 @@ import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
 interface Props {
   date: string;
   micronutrientData?: MicronutrientDay | null;
+  onRefresh?: () => void;
 }
 
 interface Row {
@@ -31,9 +32,26 @@ function statusOf(pct: number): { label: string; color: string } {
   return { label: "Élevé", color: "#60a5fa" };
 }
 
-export default function MicronutrientTracker({ date, micronutrientData }: Props) {
+export default function MicronutrientTracker({ date, micronutrientData, onRefresh }: Props) {
   useCustomNutrients();
   const [open, setOpen] = useState(false);
+  const [recomputing, setRecomputing] = useState(false);
+
+  const handleRecompute = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (recomputing) return;
+    setRecomputing(true);
+    try {
+      await fetch("/api/micronutrient-intakes/recompute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date }),
+      });
+      onRefresh?.();
+    } finally {
+      setRecomputing(false);
+    }
+  };
 
   const rows = useMemo<Row[]>(() => {
     const intakes = micronutrientData?.intakes ?? [];
@@ -54,10 +72,20 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
 
   if (!rows.length) {
     return (
-      <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+      <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        <p className="text-[11px] flex-1" style={{ color: "var(--text-muted)" }}>
           Aucun micronutriment suivi pour aujourd&apos;hui
         </p>
+        <button
+          type="button"
+          onClick={handleRecompute}
+          disabled={recomputing}
+          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full transition-all disabled:opacity-50"
+          style={{ color: "var(--text-muted)" }}
+          title="Recalculer à partir des aliments et suppléments du jour"
+        >
+          <IconRefresh size={13} stroke={1.6} className={recomputing ? "animate-spin" : ""} />
+        </button>
       </div>
     );
   }
@@ -129,9 +157,19 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
             {lowCount} faible{lowCount > 1 ? "s" : ""}
           </span>
         )}
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={handleRecompute}
+          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full transition-all ml-auto"
+          style={{ color: "var(--text-muted)", opacity: recomputing ? 0.5 : 1 }}
+          title="Recalculer à partir des aliments et suppléments du jour"
+        >
+          <IconRefresh size={13} stroke={1.6} className={recomputing ? "animate-spin" : ""} />
+        </span>
         <IconChevronDown
           size={13}
-          style={{ color: "var(--text-muted)", marginLeft: "auto", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+          style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
         />
       </button>
 
