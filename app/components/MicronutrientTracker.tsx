@@ -12,8 +12,6 @@ interface Props {
   micronutrientData?: MicronutrientDay | null;
 }
 
-const COLLAPSE_THRESHOLD = 5; // rows shown before "voir plus"
-
 interface Row {
   code: MicronutrientCode;
   label: string;
@@ -35,7 +33,7 @@ function statusOf(pct: number): { label: string; color: string } {
 
 export default function MicronutrientTracker({ date, micronutrientData }: Props) {
   useCustomNutrients();
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const rows = useMemo<Row[]>(() => {
     const intakes = micronutrientData?.intakes ?? [];
@@ -64,8 +62,6 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
     );
   }
 
-  const shouldCollapse = rows.length > COLLAPSE_THRESHOLD;
-  const visibleRows = shouldCollapse && !expanded ? rows.slice(0, COLLAPSE_THRESHOLD) : rows;
   const lowCount = rows.filter(r => r.rda > 0 && r.pct < 50).length;
 
   const renderRow = (row: Row, i: number) => {
@@ -119,12 +115,11 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
   };
 
   return (
-    <div className="rounded-xl p-3 space-y-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
       <button
         type="button"
-        onClick={() => shouldCollapse && setExpanded(v => !v)}
-        className="w-full flex items-center gap-1.5 pb-1"
-        style={{ cursor: shouldCollapse ? "pointer" : "default" }}
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-1.5 px-3 py-2.5"
       >
         <h3 className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
           Micronutriments ({rows.length})
@@ -134,30 +129,25 @@ export default function MicronutrientTracker({ date, micronutrientData }: Props)
             {lowCount} faible{lowCount > 1 ? "s" : ""}
           </span>
         )}
-        {shouldCollapse && (
-          <IconChevronDown
-            size={13}
-            style={{ color: "var(--text-muted)", marginLeft: "auto", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-          />
-        )}
+        <IconChevronDown
+          size={13}
+          style={{ color: "var(--text-muted)", marginLeft: "auto", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+        />
       </button>
 
-      <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-        {visibleRows.map(renderRow)}
-      </div>
-
-      <AnimatePresence>
-        {shouldCollapse && !expanded && (
-          <motion.button
-            type="button"
-            onClick={() => setExpanded(true)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="w-full text-[10px] pt-1 text-center"
-            style={{ color: "var(--text-muted)" }}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ overflow: "hidden" }}
           >
-            Voir {rows.length - COLLAPSE_THRESHOLD} de plus
-          </motion.button>
+            <div className="px-3 pb-3 divide-y" style={{ borderColor: "var(--border)" }}>
+              {rows.map(renderRow)}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

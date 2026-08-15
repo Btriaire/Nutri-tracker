@@ -39,6 +39,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showYesterday, setShowYesterday] = useState(false);
+  const [open, setOpen] = useState(false);
   const [editingIntakeId, setEditingIntakeId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -260,24 +261,50 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   ).filter(i => !todayKeys.has(`${i.supplementId}-${i.moment ?? ""}`));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-1.5"
+      >
         <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
           Suppléments & Compléments
         </h3>
-        <button
-          onClick={() => (showForm ? resetForm() : setShowForm(true))}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
-          style={{
-            background: "rgba(52,211,153,0.12)",
-            border: "1px solid rgba(52,211,153,0.3)",
-            color: "var(--text-primary)",
-          }}
-        >
-          <IconPlus size={14} />
-          Ajouter prise
-        </button>
-      </div>
+        {sortedIntakes.length > 0 && (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
+            {sortedIntakes.length} prise{sortedIntakes.length > 1 ? "s" : ""}
+          </span>
+        )}
+        <IconChevronDown
+          size={14}
+          style={{ color: "var(--text-muted)", marginLeft: "auto", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="space-y-4 pt-1">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => (showForm ? resetForm() : setShowForm(true))}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                  style={{
+                    background: "rgba(52,211,153,0.12)",
+                    border: "1px solid rgba(52,211,153,0.3)",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <IconPlus size={14} />
+                  Ajouter prise
+                </button>
+              </div>
 
       {/* Comme hier — quick re-add from yesterday's intakes, collapsed by default */}
       {yesterdaySuggestions.length > 0 && (
@@ -517,6 +544,10 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           ))
         )}
       </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

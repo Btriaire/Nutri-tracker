@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2,
-  IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles } from "@tabler/icons-react";
+  IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles, IconBookmarkPlus, IconCheck } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
 import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
 import MenuSuggestionModal from "./MenuSuggestionModal";
@@ -46,6 +46,7 @@ export default function MealSection({
   const [uploading,     setUploading]     = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
   const [photoAnalyzer, setPhotoAnalyzer] = useState(false);
+  const [saveMealOpen,  setSaveMealOpen]  = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const meta = MEAL_META[meal];
@@ -195,6 +196,23 @@ export default function MealSection({
             aria-label="Détail nutritionnel"
           >
             <IconChartBar size={16} stroke={showNutrition ? 2 : 1.5} />
+          </button>
+        )}
+
+        {/* Save as reusable meal */}
+        {entries.length > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setSaveMealOpen(true); }}
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid var(--border)",
+              color: "var(--text-muted)",
+            }}
+            aria-label="Enregistrer ce repas"
+            title="Enregistrer comme repas réutilisable"
+          >
+            <IconBookmarkPlus size={16} stroke={1.5} />
           </button>
         )}
 
@@ -394,7 +412,133 @@ export default function MealSection({
           onAdded={async (info) => { setMenuModal(false); await handleAdded(info); }}
         />
       )}
+
+      {saveMealOpen && (
+        <SaveMealModal
+          defaultName={meta[lang]}
+          entries={entries}
+          onClose={() => setSaveMealOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+// ── Save the current entries as a reusable meal (from a logged or in-progress meal) ──
+
+function SaveMealModal({ defaultName, entries, onClose }: {
+  defaultName: string; entries: FoodEntry[]; onClose: () => void;
+}) {
+  const [name, setName] = useState(defaultName);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          icon: "🍽️",
+          entries: entries.map((e) => ({
+            foodId:       e.foodId,
+            source:       e.source,
+            name:         e.name,
+            brand:        e.brand,
+            servingLabel: e.servingLabel,
+            servingGrams: e.servingGrams,
+            nutrition:    e.nutrition,
+          })),
+        }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(onClose, 900);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        key="save-meal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
+        className="fixed inset-0 z-[300] flex items-center justify-center px-5"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0, y: 8 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.92, opacity: 0, y: 8 }}
+          transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full rounded-2xl p-5"
+          style={{ maxWidth: 340, background: "var(--surface, #1a1a1f)", border: "1px solid var(--border)" }}
+        >
+          {saved ? (
+            <div className="flex flex-col items-center gap-2 py-3">
+              <span className="flex items-center justify-center w-10 h-10 rounded-full"
+                style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
+                <IconCheck size={20} stroke={2} />
+              </span>
+              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Repas enregistré</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Enregistrer comme repas
+                </p>
+                <button onClick={onClose} className="p-1 rounded-lg" style={{ color: "var(--text-muted)" }}>
+                  <IconX size={16} stroke={1.5} />
+                </button>
+              </div>
+              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>
+                {entries.length} aliment{entries.length > 1 ? "s" : ""} · réutilisable depuis « Repas » lors d&apos;un prochain ajout
+              </p>
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                placeholder="Nom du repas"
+                className="w-full px-3 py-2.5 rounded-xl text-[13px] mb-3"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl text-[12.5px] font-medium"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={!name.trim() || saving}
+                  className="flex-1 py-2.5 rounded-xl text-[12.5px] font-medium disabled:opacity-50"
+                  style={{ background: "var(--protein)", color: "#fff" }}
+                >
+                  {saving ? "..." : "Enregistrer"}
+                </button>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

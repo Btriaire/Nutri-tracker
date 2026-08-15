@@ -22,7 +22,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -166,9 +166,10 @@ function MacroSVGBars({
 }
 
 function TrackedNutrientPill({
-  emoji, label, unit, value, goal, color, invertAlert = false,
+  Icon, label, unit, value, goal, color, invertAlert = false,
 }: {
-  emoji: string; label: string; unit: string;
+  Icon: React.ComponentType<{ size?: number; stroke?: number; style?: React.CSSProperties }>;
+  label: string; unit: string;
   value: number; goal: number; color: string; invertAlert?: boolean;
 }) {
   const fraction = goal > 0 ? value / goal : 0;
@@ -176,7 +177,7 @@ function TrackedNutrientPill({
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1 mb-1">
-        <span className="text-[11px]">{emoji}</span>
+        <Icon size={12} stroke={1.6} style={{ color, flexShrink: 0 }} />
         <span className="text-[9px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
         <span className="ml-auto text-[10px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
           {value}<span className="font-normal text-[8px]">{unit}</span>
@@ -582,21 +583,25 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <div className="flex items-stretch gap-2.5">
               {trackedNutrients.protein && (
-                <TrackedNutrientPill emoji="💪" label="Protéines" unit="g"
+                <TrackedNutrientPill Icon={IconMeat} label="Protéines" unit="g"
                   value={Math.round(totals.proteinG)} goal={goals.proteinGrams} color="var(--protein)" />
               )}
               {trackedNutrients.sodium && (
-                <TrackedNutrientPill emoji="🧂" label="Sel" unit="mg"
+                <TrackedNutrientPill Icon={IconSalt} label="Sel" unit="mg"
                   value={Math.round(totals.sodiumMg ?? 0)} goal={goals.sodiumMg ?? 2000} color="#f59e0b" invertAlert />
               )}
               {trackedNutrients.sugar && (
-                <TrackedNutrientPill emoji="🍬" label="Sucres" unit="g"
+                <TrackedNutrientPill Icon={IconCandy} label="Sucres" unit="g"
                   value={Math.round(totals.sugarG ?? 0)} goal={goals.sugarGrams ?? 50} color="#ec4899" invertAlert />
               )}
               {trackedNutrients.saturatedFat && (
-                <TrackedNutrientPill emoji="🧈" label="Lip.sat." unit="g"
+                <TrackedNutrientPill Icon={IconAvocado} label="Lip.sat." unit="g"
                   value={Math.round(totals.saturatedFatG ?? 0)} goal={goals.saturatedFatGrams ?? 20} color="var(--fat)" invertAlert />
               )}
+            </div>
+
+            <div className="mt-2.5">
+              <MacroContributionPanel entries={entries} trackedNutrients={trackedNutrients} />
             </div>
           </motion.div>
         )}
@@ -736,16 +741,6 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             className="mt-3"
           >
             <MealMicronutrientsPanel entries={entries} micronutrientData={micronutrientData} />
-          </motion.div>
-
-          {/* Macro contribution per food (protein / carbs & sugar / fat & saturated) — collapsed by default */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.17 }}
-            className="mt-3"
-          >
-            <MacroContributionPanel entries={entries} />
           </motion.div>
 
           {/* Hunger timeline */}
