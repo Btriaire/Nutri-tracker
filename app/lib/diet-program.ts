@@ -33,8 +33,11 @@ export interface DietReport {
   violationsByEntryId: Record<string, DietViolation[]>;
 }
 
-function normalize(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+/** Sans accent, minuscule — utilisé à la fois pour le matching des mots-clés
+ * et comme clé stable pour les exceptions ("café" reste "café" même écrit
+ * "Café", "CAFÉ" ou "cafe"). */
+export function normalizeFoodName(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
 function escapeRegExp(s: string): string {
@@ -197,16 +200,23 @@ function checkQuantity(meal: MealType, normalizedName: string, grams: number): s
   return null;
 }
 
-export function checkDietCompliance(entries: FoodEntry[]): DietReport {
+/**
+ * `exceptions` : noms d'aliments (déjà normalizeFoodName()) que l'utilisateur a
+ * explicitement marqués "ce n'est pas un écart" — jamais signalés, quel que
+ * soit le repas ou la quantité.
+ */
+export function checkDietCompliance(entries: FoodEntry[], exceptions: string[] = []): DietReport {
   const violationsByEntryId: Record<string, DietViolation[]> = {};
   const perMeal = {} as Record<MealType, DietMealReport>;
+  const exceptionSet = new Set(exceptions);
 
   (Object.keys(MEAL_RULES) as MealType[]).forEach((meal) => {
     const mealEntries = entries.filter((e) => e.meal === meal);
     const violations: DietViolation[] = [];
 
     for (const entry of mealEntries) {
-      const normalized = normalize(entry.name);
+      const normalized = normalizeFoodName(entry.name);
+      if (exceptionSet.has(normalized)) continue;
       const reasons: string[] = [];
 
       const forbidden = checkForbiddenKeywords(normalized);

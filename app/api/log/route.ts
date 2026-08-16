@@ -95,6 +95,7 @@ export async function PATCH(req: NextRequest) {
     mealHunger?: Partial<Record<string, number>>;
     dayType?:    "work" | "rest" | "travel" | null;
     jetlag?:     boolean | null;
+    dietPaused?: boolean | null;
   };
   try { dateKey(body.date); } catch {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
@@ -109,6 +110,7 @@ export async function PATCH(req: NextRequest) {
   if (body.mealHunger !== undefined) update.mealHunger = body.mealHunger;
   if (body.dayType    !== undefined) update.dayType    = body.dayType;
   if (body.jetlag     !== undefined) update.jetlag     = body.jetlag;
+  if (body.dietPaused !== undefined) update.dietPaused = body.dietPaused;
 
   await ref.set(update, { merge: true });
 

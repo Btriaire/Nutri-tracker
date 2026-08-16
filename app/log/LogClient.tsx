@@ -17,14 +17,14 @@ import MacroContributionPanel from "@/app/components/MacroContributionPanel";
 import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
-import { checkDietCompliance, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
+import { checkDietCompliance, normalizeFoodName, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado, IconInfoCircle } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -225,6 +225,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [micronutrientData, setMicronutrientData] = useState<MicronutrientDay | null>(null);
   const [supplementLog, setSupplementLog] = useState<SupplementLog | null>(null);
   const [showDietInfo, setShowDietInfo] = useState(false);
+  const [dietExceptions, setDietExceptions] = useState<string[]>(dietProgram?.exceptions ?? []);
+  const [dietPaused, setDietPaused] = useState(initialLog?.dietPaused ?? false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
@@ -270,6 +272,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     setAlcoolDrinks((initialLog as (DayLog & { alcoolDrinks?: AlcoolDrink[] }) | null)?.alcoolDrinks ?? []);
     setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
     setMealHunger((initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {});
+    setDietPaused(initialLog?.dietPaused ?? false);
     // Load meal photos for this date
     fetch(`/api/log/photos?date=${date}`)
       .then((r) => r.ok ? r.json() : {})
@@ -314,9 +317,33 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const remaining = goals.dailyCalories - Math.round(totals.calories);
 
   const dietReport = useMemo(
-    () => (dietProgram?.enabled ? checkDietCompliance(entries) : null),
-    [entries, dietProgram?.enabled]
+    () => (dietProgram?.enabled && !dietPaused ? checkDietCompliance(entries, dietExceptions) : null),
+    [entries, dietProgram?.enabled, dietPaused, dietExceptions]
   );
+
+  const handleDismissViolation = (foodName: string) => {
+    const key = normalizeFoodName(foodName);
+    setDietExceptions((prev) => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key];
+      fetch("/api/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dietProgram: { enabled: dietProgram?.enabled ?? true, exceptions: next } }),
+      }).catch((err) => console.error("Failed to save diet exception:", err));
+      return next;
+    });
+  };
+
+  const handleToggleDietPause = () => {
+    const next = !dietPaused;
+    setDietPaused(next);
+    fetch("/api/log", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, dietPaused: next }),
+    }).catch((err) => console.error("Failed to save diet pause:", err));
+  };
 
   const journalInsightData = useMemo(() => ({
     entries: entries.map((e) => ({
@@ -616,33 +643,51 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         )}
 
         {/* Diet program compliance — day-level badge */}
-        {dietReport && (
+        {dietProgram?.enabled && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.068 }}
             className="mb-5 flex items-center gap-2 px-3 py-2.5 rounded-xl"
             style={{
-              background: dietReport.day.status === "ecarts" ? "rgba(239,68,68,0.08)"
-                : dietReport.day.status === "conforme" ? "rgba(34,197,94,0.08)"
+              background: dietPaused ? "rgba(255,255,255,0.03)"
+                : dietReport?.day.status === "ecarts" ? "rgba(239,68,68,0.08)"
+                : dietReport?.day.status === "conforme" ? "rgba(34,197,94,0.08)"
                 : "rgba(255,255,255,0.03)",
-              border: `1px solid ${dietReport.day.status === "ecarts" ? "rgba(239,68,68,0.25)"
-                : dietReport.day.status === "conforme" ? "rgba(34,197,94,0.25)" : "var(--border)"}`,
+              border: `1px solid ${dietPaused ? "var(--border)"
+                : dietReport?.day.status === "ecarts" ? "rgba(239,68,68,0.25)"
+                : dietReport?.day.status === "conforme" ? "rgba(34,197,94,0.25)" : "var(--border)"}`,
             }}
           >
             <span className="text-[13px]">🩺</span>
             <span className="text-[12px] font-medium flex-1" style={{
-              color: dietReport.day.status === "ecarts" ? "#f87171"
-                : dietReport.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
+              color: dietPaused ? "var(--text-muted)"
+                : dietReport?.day.status === "ecarts" ? "#f87171"
+                : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
             }}>
               {DIET_PROGRAM_NAME}
               {" — "}
-              {dietReport.day.status === "ecarts"
-                ? `${dietReport.day.violationCount} écart${dietReport.day.violationCount > 1 ? "s" : ""} aujourd'hui`
-                : dietReport.day.status === "conforme"
-                  ? "conforme"
-                  : "aucun aliment loggué"}
+              {dietPaused
+                ? "jour libre, écarts non comptabilisés"
+                : dietReport?.day.status === "ecarts"
+                  ? `${dietReport.day.violationCount} écart${dietReport.day.violationCount > 1 ? "s" : ""} aujourd'hui`
+                  : dietReport?.day.status === "conforme"
+                    ? "conforme"
+                    : "aucun aliment loggué"}
             </span>
+            <button
+              type="button"
+              onClick={handleToggleDietPause}
+              className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
+              style={{
+                background: dietPaused ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
+                color: dietPaused ? "#fbbf24" : "var(--text-muted)",
+              }}
+              aria-label={dietPaused ? "Réactiver le suivi du régime" : "Ne pas suivre le régime aujourd'hui"}
+              title={dietPaused ? "Réactiver le suivi aujourd'hui" : "Je ne peux pas suivre le régime aujourd'hui"}
+            >
+              {dietPaused ? <IconPlayerPlay size={12} stroke={1.8} /> : <IconPlayerPause size={12} stroke={1.8} />}
+            </button>
             <button
               type="button"
               onClick={() => setShowDietInfo(true)}
@@ -782,6 +827,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   onHungerChange={handleHungerChange}
                   dietMealReport={dietReport?.perMeal[meal] ?? null}
                   dietViolationsByEntryId={dietReport?.violationsByEntryId}
+                  onDismissViolation={handleDismissViolation}
                 />
               </motion.div>
             ))}

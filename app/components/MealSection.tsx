@@ -36,13 +36,14 @@ interface Props {
   onHungerChange?: (meal: MealType, level: HungerLevel | null) => void;
   dietMealReport?: DietMealReport | null;
   dietViolationsByEntryId?: Record<string, DietViolation[]>;
+  onDismissViolation?: (foodName: string) => void;
 }
 
 export default function MealSection({
   meal, entries, date, lang = "fr",
   photoUrl, hunger, goals, alreadyKcal = 0,
   onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
-  dietMealReport, dietViolationsByEntryId,
+  dietMealReport, dietViolationsByEntryId, onDismissViolation,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
@@ -275,7 +276,7 @@ export default function MealSection({
                 <div className="py-1">
                   {entries.map((entry) => (
                     <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate}
-                      dietViolations={dietViolationsByEntryId?.[entry.id]} />
+                      dietViolations={dietViolationsByEntryId?.[entry.id]} onDismissViolation={onDismissViolation} />
                   ))}
                 </div>
               ) : (

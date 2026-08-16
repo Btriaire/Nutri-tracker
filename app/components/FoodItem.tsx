@@ -56,11 +56,12 @@ interface Props {
   onDelete:  (id: string) => void;
   onUpdate?: (id: string, updated: FoodEntry) => void;
   dietViolations?: DietViolation[];
+  onDismissViolation?: (foodName: string) => void;
 }
 
 const SNAP = 76; // px revealed when swiped open
 
-export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolations }: Props) {
+export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolations, onDismissViolation }: Props) {
   const [expanded,   setExpanded]   = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [editing,    setEditing]    = useState(false);
@@ -290,7 +291,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   <span
                     className="flex-shrink-0"
                     style={{ color: "#ef4444" }}
-                    title={`Hors régime : ${dietViolations.map(v => v.reason).join(", ")}`}
+                    title="Hors régime — toucher pour le détail"
                   >
                     <IconExclamationCircle size={13} stroke={2} />
                   </span>
@@ -434,6 +435,29 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
             style={{ overflow: "hidden" }}
           >
             <div className="pb-3 pl-3 pr-2 pt-1">
+              {/* Diet program violation — explanation + dismiss */}
+              {dietViolations && dietViolations.length > 0 && (
+                <div className="flex items-start gap-2 px-2.5 py-2 rounded-lg mb-2"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <IconExclamationCircle size={14} stroke={2} style={{ color: "#ef4444", flexShrink: 0, marginTop: 1 }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium" style={{ color: "#f87171" }}>Hors régime</p>
+                    <ul className="text-[10.5px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                      {dietViolations.map((v, i) => <li key={i}>{v.reason}</li>)}
+                    </ul>
+                    {onDismissViolation && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDismissViolation(entry.name); }}
+                        className="mt-1.5 text-[10.5px] font-medium underline underline-offset-2"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        Ce n&apos;est pas un écart — ne plus signaler « {entry.name} »
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Macro pills row */}
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {[

@@ -195,6 +195,7 @@ export interface DayLog {
   mealHunger?:   Partial<Record<MealType, HungerLevel>>;
   dayType?:      DayType;
   jetlag?:       boolean;
+  dietPaused?:   boolean; // écarts non comptabilisés ce jour-là (jour "libre")
   updatedAt:     Timestamp;
 }
 
@@ -287,6 +288,7 @@ export interface UserProfile {
 
 export interface DietProgramPrefs {
   enabled: boolean; // Programme Dr.T-L actif
+  exceptions?: string[]; // noms d'aliments (normalisés) jamais signalés comme écart
 }
 
 // ─── Fitness Data ─────────────────────────────────────────────────────────────
