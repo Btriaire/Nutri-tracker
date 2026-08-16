@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import type { NutritionGoals, UserProfile, ChartPrefs } from "@/app/lib/types";
+import type { NutritionGoals, UserProfile, ChartPrefs, DietProgramPrefs } from "@/app/lib/types";
 import { Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,7 @@ export async function GET() {
     chartPrefs:  profile.chartPrefs  ?? null,
     photoUrl:    profile.photoUrl    ?? null,
     displayName: profile.displayName ?? null,
+    dietProgram: profile.dietProgram ?? null,
   });
 }
 
@@ -32,7 +33,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string };
+  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string; dietProgram?: DietProgramPrefs };
   const db = getAdminFirestore();
   await db.doc(`users/${session.userId}`).set(body, { merge: true });
   return NextResponse.json({ ok: true });

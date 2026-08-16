@@ -282,6 +282,11 @@ export interface UserProfile {
   };
   chartPrefs?:  ChartPrefs;
   photoUrl?:    string;
+  dietProgram?: DietProgramPrefs;
+}
+
+export interface DietProgramPrefs {
+  enabled: boolean; // Programme Dr.T-L actif
 }
 
 // ─── Fitness Data ─────────────────────────────────────────────────────────────

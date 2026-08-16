@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask } from "@tabler/icons-react";
+import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask, IconExclamationCircle } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
+import type { DietViolation } from "@/app/lib/diet-program";
 import { scaleNutrition } from "@/app/lib/nutrition";
 import FoodPictogram from "./FoodPictogram";
 import MicronutrientEditModal from "./MicronutrientEditModal";
@@ -54,11 +55,12 @@ interface Props {
   date:      string;
   onDelete:  (id: string) => void;
   onUpdate?: (id: string, updated: FoodEntry) => void;
+  dietViolations?: DietViolation[];
 }
 
 const SNAP = 76; // px revealed when swiped open
 
-export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
+export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolations }: Props) {
   const [expanded,   setExpanded]   = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [editing,    setEditing]    = useState(false);
@@ -284,6 +286,15 @@ export default function FoodItem({ entry, date, onDelete, onUpdate }: Props) {
             {/* Food info — click to toggle expanded */}
             <button className="flex-1 min-w-0 text-left" onClick={toggleExpand}>
               <div className="flex items-baseline gap-1.5">
+                {dietViolations && dietViolations.length > 0 && (
+                  <span
+                    className="flex-shrink-0"
+                    style={{ color: "#ef4444" }}
+                    title={`Hors régime : ${dietViolations.map(v => v.reason).join(", ")}`}
+                  >
+                    <IconExclamationCircle size={13} stroke={2} />
+                  </span>
+                )}
                 <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>
                   {entry.name}
                 </p>

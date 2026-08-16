@@ -16,7 +16,8 @@ import MicronutrientTracker from "@/app/components/MicronutrientTracker";
 import MacroContributionPanel from "@/app/components/MacroContributionPanel";
 import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
-import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
+import { checkDietCompliance, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
@@ -198,9 +199,10 @@ interface Props {
   goals:            NutritionGoals;
   lang?:            Lang;
   trackedNutrients?: TrackedNutrients;
+  dietProgram?:     DietProgramPrefs;
 }
 
-export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients }: Props) {
+export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
@@ -308,6 +310,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   );
 
   const remaining = goals.dailyCalories - Math.round(totals.calories);
+
+  const dietReport = useMemo(
+    () => (dietProgram?.enabled ? checkDietCompliance(entries) : null),
+    [entries, dietProgram?.enabled]
+  );
 
   const journalInsightData = useMemo(() => ({
     entries: entries.map((e) => ({
@@ -606,6 +613,37 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </motion.div>
         )}
 
+        {/* Diet program compliance — day-level badge */}
+        {dietReport && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.068 }}
+            className="mb-5 flex items-center gap-2 px-3 py-2.5 rounded-xl"
+            style={{
+              background: dietReport.day.status === "ecarts" ? "rgba(239,68,68,0.08)"
+                : dietReport.day.status === "conforme" ? "rgba(34,197,94,0.08)"
+                : "rgba(255,255,255,0.03)",
+              border: `1px solid ${dietReport.day.status === "ecarts" ? "rgba(239,68,68,0.25)"
+                : dietReport.day.status === "conforme" ? "rgba(34,197,94,0.25)" : "var(--border)"}`,
+            }}
+          >
+            <span className="text-[13px]">🩺</span>
+            <span className="text-[12px] font-medium flex-1" style={{
+              color: dietReport.day.status === "ecarts" ? "#f87171"
+                : dietReport.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
+            }}>
+              {DIET_PROGRAM_NAME}
+              {" — "}
+              {dietReport.day.status === "ecarts"
+                ? `${dietReport.day.violationCount} écart${dietReport.day.violationCount > 1 ? "s" : ""} aujourd'hui`
+                : dietReport.day.status === "conforme"
+                  ? "conforme"
+                  : "aucun aliment loggué"}
+            </span>
+          </motion.div>
+        )}
+
         {/* AI Insight */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -728,6 +766,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   onFoodAdded={showToast}
                   onPhotoChange={handlePhotoChange}
                   onHungerChange={handleHungerChange}
+                  dietMealReport={dietReport?.perMeal[meal] ?? null}
+                  dietViolationsByEntryId={dietReport?.violationsByEntryId}
                 />
               </motion.div>
             ))}

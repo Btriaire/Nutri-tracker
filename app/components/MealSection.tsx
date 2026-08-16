@@ -11,6 +11,7 @@ import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 import PhotoMealAnalyzer from "./PhotoMealAnalyzer";
 import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
+import type { DietMealReport, DietViolation } from "@/app/lib/diet-program";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
   breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "#fbbf24", color2: "#f97316" },
@@ -33,12 +34,15 @@ interface Props {
   onFoodAdded?:    (info: AddedInfo) => void;
   onPhotoChange?:  (meal: MealType, url: string | null) => void;
   onHungerChange?: (meal: MealType, level: HungerLevel | null) => void;
+  dietMealReport?: DietMealReport | null;
+  dietViolationsByEntryId?: Record<string, DietViolation[]>;
 }
 
 export default function MealSection({
   meal, entries, date, lang = "fr",
   photoUrl, hunger, goals, alreadyKcal = 0,
   onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
+  dietMealReport, dietViolationsByEntryId,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
@@ -139,6 +143,18 @@ export default function MealSection({
             <span className="text-[12px] font-medium shrink-0" style={{ color: meta.color }}>{cal} kcal</span>
           ) : (
             <span className="label-xs shrink-0">{lang === "fr" ? "Vide" : "Empty"}</span>
+          )}
+          {dietMealReport && dietMealReport.status !== "vide" && (
+            <span
+              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              style={{
+                color: dietMealReport.status === "ecarts" ? "#f87171" : "#22c55e",
+                background: dietMealReport.status === "ecarts" ? "#ef444418" : "#22c55e18",
+              }}
+              title={dietMealReport.status === "ecarts" ? dietMealReport.violations.map(v => v.reason).join(", ") : "Aucun écart détecté"}
+            >
+              {dietMealReport.status === "ecarts" ? `⚠️ ${dietMealReport.violations.length}` : "✓"}
+            </span>
           )}
           <motion.span
             animate={{ rotate: open ? 180 : 0 }}
@@ -258,7 +274,8 @@ export default function MealSection({
               {entries.length > 0 ? (
                 <div className="py-1">
                   {entries.map((entry) => (
-                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate} />
+                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate}
+                      dietViolations={dietViolationsByEntryId?.[entry.id]} />
                   ))}
                 </div>
               ) : (

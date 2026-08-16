@@ -11,7 +11,8 @@ import { getClientAuth } from "@/app/lib/firebase-client";
 import { useTheme, type Theme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
-import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients } from "@/app/lib/types";
+import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients, DietProgramPrefs, MealType } from "@/app/lib/types";
+import { DIET_PROGRAM_NAME, dietMealSummary } from "@/app/lib/diet-program";
 import { format as formatDate } from "date-fns";
 import SupplementConfig from "@/app/components/SupplementConfig";
 import AppleHealthPanel from "@/app/components/AppleHealthPanel";
@@ -555,6 +556,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Tracked nutrients */}
         <TrackedNutrientsPanel />
+
+        {/* Programme diététique prescrit */}
+        <DietProgramPanel />
 
         {/* Export data */}
         <ExportPanel />
@@ -2763,6 +2767,133 @@ function TrackedNutrientsPanel() {
             {saving ? <IconLoader2 size={13} className="animate-spin" /> : saved ? <IconCircleCheck size={13} /> : <IconDeviceFloppy size={13} />}
             {saved ? "Enregistré !" : "Enregistrer"}
           </button>
+        </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Programme diététique (Dr.T-L) ─────────────────────────────────────────────
+
+const DIET_MEAL_ORDER: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const DIET_MEAL_LABEL: Record<MealType, string> = {
+  breakfast: "Petit-déjeuner",
+  lunch:     "Déjeuner",
+  snacks:    "Goûter",
+  dinner:    "Dîner",
+};
+
+function DietProgramPanel() {
+  const [open,    setOpen]    = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => {
+    fetch("/api/goals")
+      .then(r => r.json())
+      .then((d: { dietProgram?: DietProgramPrefs | null }) => {
+        if (d.dietProgram?.enabled) setEnabled(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSave = async (next: boolean) => {
+    setEnabled(next);
+    setSaving(true);
+    try {
+      await fetch("/api/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dietProgram: { enabled: next } as DietProgramPrefs }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.075 }} className="glass p-4 mb-4">
+
+      {/* Header */}
+      <button className="w-full flex items-center gap-3" onClick={() => setOpen(v => !v)}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+          style={{ background: "rgba(56,189,248,0.12)" }}>🩺</div>
+        <div className="flex-1 min-w-0 text-left">
+          <p className="font-semibold text-[13.5px]" style={{ color: "var(--text-primary)" }}>{DIET_PROGRAM_NAME}</p>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            {enabled ? "Actif — repères par repas + écarts signalés" : "Régime prescrit — inactif"}
+          </p>
+        </div>
+        {open ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+               : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+      </button>
+
+      <AnimatePresence initial={false}>
+      {open && (
+      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
+        <div className="mt-4 space-y-3">
+
+          {/* Toggle */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Activer le programme</p>
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                Ajoute un indicateur de suivi par repas/jour et signale les aliments hors régime
+              </p>
+            </div>
+            <button onClick={() => handleSave(!enabled)} disabled={saving}
+              className="relative flex-shrink-0 w-[44px] h-[24px] rounded-full transition-all"
+              style={{ background: enabled ? "#38bdf8" : "rgba(255,255,255,0.1)", border: "1px solid var(--border)" }}>
+              <span className="absolute top-[2px] w-[18px] h-[18px] rounded-full transition-all"
+                style={{ background: "#fff", left: enabled ? "calc(100% - 20px)" : "2px", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+            </button>
+          </div>
+
+          {saved && (
+            <p className="text-[11px] flex items-center gap-1.5 px-1" style={{ color: "#22c55e" }}>
+              <IconCircleCheck size={13} /> Enregistré
+            </p>
+          )}
+
+          {/* Repères par repas */}
+          <div>
+            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+              Repères par repas
+            </p>
+            <div className="space-y-1.5">
+              {DIET_MEAL_ORDER.map((meal) => (
+                <div key={meal} className="px-3 py-2 rounded-lg"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{DIET_MEAL_LABEL[meal]}</p>
+                  <p className="text-[10.5px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interdits */}
+          <div>
+            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+              Interdits (tous repas)
+            </p>
+            <p className="text-[10.5px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+              Sucre/sucreries, farine blanche (pain, pâtes, quiche, pizza), vin/apéritif,
+              fruits hors liste autorisée et jus de fruits, légumes secs/pomme de terre/carotte/
+              betterave/avocat/maïs/potiron/artichaut/salsifis et assimilés.
+            </p>
+          </div>
+
+          <p className="text-[9px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+            Détection automatique par mots-clés sur le nom des aliments — vérifiez toujours
+            visuellement, ce n&apos;est pas un contrôle médical.
+          </p>
+
         </div>
       </motion.div>
       )}
