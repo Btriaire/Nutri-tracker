@@ -18,12 +18,13 @@ import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
 import { checkDietCompliance, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
+import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado, IconInfoCircle } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -223,6 +224,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [dayPhotos,  setDayPhotos]  = useState<DayPhoto[]>([]);
   const [micronutrientData, setMicronutrientData] = useState<MicronutrientDay | null>(null);
   const [supplementLog, setSupplementLog] = useState<SupplementLog | null>(null);
+  const [showDietInfo, setShowDietInfo] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
@@ -641,8 +643,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   ? "conforme"
                   : "aucun aliment loggué"}
             </span>
+            <button
+              type="button"
+              onClick={() => setShowDietInfo(true)}
+              className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
+              style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}
+              aria-label="Voir les repères du régime"
+              title="Voir ce qui est interdit / à favoriser"
+            >
+              <IconInfoCircle size={13} stroke={1.6} />
+            </button>
           </motion.div>
         )}
+
+        {showDietInfo && <DietProgramInfoModal onClose={() => setShowDietInfo(false)} />}
 
         {/* AI Insight */}
         <motion.div

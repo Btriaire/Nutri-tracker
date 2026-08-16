@@ -137,6 +137,11 @@ const MEAL_RULES: Record<MealType, MealRule> = {
 
 export const DIET_PROGRAM_NAME = "Programme Dr.T-L";
 
+export const DIET_INTERDITS_SUMMARY =
+  "Sucre/sucreries, farine blanche (pain non complet, pâtes, quiche, pizza), " +
+  "vin/apéritif, fruits hors liste autorisée et jus de fruits, légumes secs/" +
+  "pomme de terre/carotte/betterave/avocat/maïs/potiron/artichaut/salsifis et assimilés.";
+
 export function dietMealSummary(meal: MealType): string {
   return MEAL_RULES[meal].summary;
 }

@@ -12,7 +12,7 @@ import { useTheme, type Theme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients, DietProgramPrefs, MealType } from "@/app/lib/types";
-import { DIET_PROGRAM_NAME, dietMealSummary } from "@/app/lib/diet-program";
+import { DIET_PROGRAM_NAME, dietMealSummary, DIET_INTERDITS_SUMMARY } from "@/app/lib/diet-program";
 import { format as formatDate } from "date-fns";
 import SupplementConfig from "@/app/components/SupplementConfig";
 import AppleHealthPanel from "@/app/components/AppleHealthPanel";
@@ -2883,9 +2883,7 @@ function DietProgramPanel() {
               Interdits (tous repas)
             </p>
             <p className="text-[10.5px] px-0.5" style={{ color: "var(--text-secondary)" }}>
-              Sucre/sucreries, farine blanche (pain, pâtes, quiche, pizza), vin/apéritif,
-              fruits hors liste autorisée et jus de fruits, légumes secs/pomme de terre/carotte/
-              betterave/avocat/maïs/potiron/artichaut/salsifis et assimilés.
+              {DIET_INTERDITS_SUMMARY}
             </p>
           </div>
 
