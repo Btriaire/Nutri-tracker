@@ -12,7 +12,10 @@ import { useTheme, type Theme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import { calcTDEE, TDEE_FORMULA_CONFIG, type TDEEFormula } from "@/app/lib/nutrition";
 import type { NutritionGoals, NutritionPlan, ActivityLevel, Gender, PlannedActivity, ActivityPlan, TrackedNutrients, DietProgramPrefs, MealType } from "@/app/lib/types";
-import { DIET_PROGRAM_NAME, dietMealSummary, DIET_INTERDITS_SUMMARY } from "@/app/lib/diet-program";
+import {
+  DIET_PROGRAM_NAME, dietMealSummary, DIET_INTERDITS_SUMMARY,
+  APPROVED_FRUITS_SUMMARY, FORBIDDEN_FRUITS_SUMMARY,
+} from "@/app/lib/diet-program";
 import { format as formatDate } from "date-fns";
 import SupplementConfig from "@/app/components/SupplementConfig";
 import AppleHealthPanel from "@/app/components/AppleHealthPanel";
@@ -2875,6 +2878,26 @@ function DietProgramPanel() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Fruits autorisés */}
+          <div>
+            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+              Fruits autorisés
+            </p>
+            <p className="text-[10.5px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+              {APPROVED_FRUITS_SUMMARY}
+            </p>
+          </div>
+
+          {/* Fruits interdits */}
+          <div>
+            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+              Fruits interdits
+            </p>
+            <p className="text-[10.5px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+              {FORBIDDEN_FRUITS_SUMMARY}
+            </p>
           </div>
 
           {/* Interdits */}

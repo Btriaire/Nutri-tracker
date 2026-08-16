@@ -22,7 +22,11 @@ const SYSTEM_PROMPT = `Tu es un expert en nutrition et compléments alimentaires
   "code" DOIT être une valeur EXACTE parmi cette liste : ${MICRONUTRIENT_CODES.join(", ")}
   N'invente pas de code hors de cette liste. N'inclus QUE les micronutriments réellement présents et significatifs dans ce produit (souvent 1 à 3 pour un produit mono-nutriment comme "Vitamine D3", potentiellement plus pour un multivitamine).
   Si le produit ne contient aucun micronutriment de la liste (ex: probiotique, oméga-3 pur), retourne un tableau vide [].
-  "unit" doit être cohérent (mg, µg ou IU selon le nutriment).
+  "unit" DOIT être en mg ou µg UNIQUEMENT — jamais "IU"/"UI". Les apports issus de la
+  nourriture pour ce même nutriment sont toujours en mg/µg dans cette appli ; renvoyer une
+  valeur en IU la ferait s'additionner à tort avec ces apports comme si c'était la même unité.
+  Si tu ne connais le dosage qu'en IU (fréquent pour la vitamine D), convertis-le toi-même :
+  vitamine D — µg = IU ÷ 40 ; vitamine E — mg ≈ IU × 0.67.
 
 Réponds uniquement en JSON. Ne fournis aucune explication hors du JSON.`;
 
@@ -38,6 +42,21 @@ interface SupplementInfo {
   dosagePerServing:   string;
   recommendedDosage:  string;
   micronutrients?:    SupplementMicronutrientAI[];
+}
+
+/**
+ * Safety net in case the model returns IU despite the prompt instruction (temperature
+ * isn't 0, so this does happen occasionally) — food-derived intakes for the same
+ * micronutrient are always logged in mg/µg, and summing an IU amount straight into that
+ * total silently produces a wildly wrong daily figure (e.g. a 2000 IU vitamin D3 capsule
+ * read as "2000µg" instead of the correct 50µg).
+ */
+function normalizeUnit(m: SupplementMicronutrientAI): SupplementMicronutrientAI {
+  const unit = m.unit?.trim().toUpperCase();
+  if (unit !== "IU" && unit !== "UI") return m;
+  if (m.code === "vitamin_d") return { ...m, amount: Math.round((m.amount / 40) * 100) / 100, unit: "µg" };
+  if (m.code === "vitamin_e") return { ...m, amount: Math.round(m.amount * 0.67 * 100) / 100, unit: "mg" };
+  return m; // unexpected IU on another nutrient — leave as-is rather than guess a factor
 }
 
 export async function POST(req: NextRequest) {
@@ -84,9 +103,9 @@ export async function POST(req: NextRequest) {
 
     // Filter out any hallucinated micronutrient codes not in our known list
     const validCodes = new Set<string>(MICRONUTRIENT_CODES);
-    const micronutrients = (parsed.micronutrients || []).filter(
-      m => m.code && validCodes.has(m.code) && typeof m.amount === "number" && m.amount > 0
-    );
+    const micronutrients = (parsed.micronutrients || [])
+      .filter(m => m.code && validCodes.has(m.code) && typeof m.amount === "number" && m.amount > 0)
+      .map(normalizeUnit);
 
     return NextResponse.json({ ok: true, ...parsed, micronutrients });
   } catch (e) {

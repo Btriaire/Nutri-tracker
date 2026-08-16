@@ -24,7 +24,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconMeat, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -609,8 +609,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           )}
         </motion.div>
 
-        {/* Tracked nutrients — compact strip */}
-        {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (
+        {/* Tracked nutrients — compact strip. Protein is deliberately excluded here:
+            it's already shown as its own bar in the daily summary card just above,
+            so repeating it as a pill would be the same number twice on screen. */}
+        {trackedNutrients && (trackedNutrients.sodium || trackedNutrients.sugar || trackedNutrients.saturatedFat) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -618,10 +620,6 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             className="glass px-3 py-2.5 mb-5"
           >
             <div className="flex items-stretch gap-2.5">
-              {trackedNutrients.protein && (
-                <TrackedNutrientPill Icon={IconMeat} label="Protéines" unit="g"
-                  value={Math.round(totals.proteinG)} goal={goals.proteinGrams} color="var(--protein)" />
-              )}
               {trackedNutrients.sodium && (
                 <TrackedNutrientPill Icon={IconSalt} label="Sel" unit="mg"
                   value={Math.round(totals.sodiumMg ?? 0)} goal={goals.sodiumMg ?? 2000} color="#f59e0b" invertAlert />

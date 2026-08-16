@@ -140,6 +140,15 @@ const MEAL_RULES: Record<MealType, MealRule> = {
 
 export const DIET_PROGRAM_NAME = "Programme Dr.T-L";
 
+export const APPROVED_FRUITS_SUMMARY =
+  "½ pamplemousse, 1 kiwi, 150g fraises ou fruits rouges (sauf cerises), 100g pastèque, " +
+  "100g melon jaune, 1 poire ou 1 pêche, 2 abricots, 2 prunes, ½ grenade — un seul choix par repas, " +
+  "jamais en jus.";
+
+export const FORBIDDEN_FRUITS_SUMMARY =
+  "Tout fruit hors liste ci-dessus, notamment banane, pomme, orange, raisin, ananas, mangue, " +
+  "cerises, figue, datte, litchi — et tout jus de fruits, même 100% pur jus.";
+
 export const DIET_INTERDITS_SUMMARY =
   "Sucre/sucreries, farine blanche (pain non complet, pâtes, quiche, pizza), " +
   "vin/apéritif, fruits hors liste autorisée et jus de fruits, légumes secs/" +

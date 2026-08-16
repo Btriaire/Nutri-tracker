@@ -4,7 +4,10 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconX } from "@tabler/icons-react";
 import type { MealType } from "@/app/lib/types";
-import { DIET_PROGRAM_NAME, dietMealSummary, DIET_INTERDITS_SUMMARY } from "@/app/lib/diet-program";
+import {
+  DIET_PROGRAM_NAME, dietMealSummary, DIET_INTERDITS_SUMMARY,
+  APPROVED_FRUITS_SUMMARY, FORBIDDEN_FRUITS_SUMMARY,
+} from "@/app/lib/diet-program";
 
 const MEAL_ORDER: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 const MEAL_LABEL: Record<MealType, string> = {
@@ -64,6 +67,24 @@ export default function DietProgramInfoModal({ onClose }: Props) {
                     <p className="text-[10.5px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                Fruits autorisés
+              </p>
+              <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                <p className="text-[10.5px]" style={{ color: "var(--text-secondary)" }}>{APPROVED_FRUITS_SUMMARY}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                Fruits interdits
+              </p>
+              <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                <p className="text-[10.5px]" style={{ color: "var(--text-secondary)" }}>{FORBIDDEN_FRUITS_SUMMARY}</p>
               </div>
             </div>
 

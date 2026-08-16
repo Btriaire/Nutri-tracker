@@ -21,8 +21,12 @@ export const MICRONUTRIENT_DB: Record<MicronutrientCode, MicronutrientInfo> = {
     code: "vitamin_d",
     label: "Vitamine D3",
     symbol: "D3",
-    unit: "IU",
-    recommendedDailyIntake: 600,
+    // Tous les apports (aliments comme compléments) sont enregistrés en µg dans cette
+    // appli — 600 IU (l'AJR usuel affiché sur les emballages) équivaut à 15µg, jamais
+    // "600" en unité IU : sinon le % AJR se retrouve divisé par ~40 par rapport à la
+    // réalité (un apport de 15µg, soit 100% de l'AJR, ne montrerait plus que 2.5%).
+    unit: "µg",
+    recommendedDailyIntake: 15,
     color: "#fbbf24", // jaune
   },
   chromium: {
