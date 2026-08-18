@@ -13,7 +13,8 @@ import {
   type SubstitutionResult, type MatchLevel,
 } from "@/app/lib/food-substitution";
 import type { RecentFood } from "@/app/api/food/recent/route";
-import type { SuggestedFood } from "@/app/api/food/suggest-alternatives/route";
+
+const NUTRI_IA_ACCENT = "#34d399"; // Nutri-IA green — matches VoiceMealModal/FoodSearchModal branding
 
 interface PickedFood {
   name:    string;
@@ -200,14 +201,14 @@ function SuggestionsPanel({
   if (!loading && suggestions.length === 0) return null;
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "#a78bfa" }}>
-        <IconSparkles size={11} stroke={2} /> Suggestions pour vous{!loading && suggestions.length > 0 ? ` (${suggestions.length})` : ""}
+      <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: NUTRI_IA_ACCENT }}>
+        <IconSparkles size={11} stroke={2} /> Suggestions Nutri-IA{!loading && suggestions.length > 0 ? ` (${suggestions.length})` : ""}
       </p>
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-3">
             <IconLoader2 size={13} className="animate-spin" style={{ color: "var(--text-muted)" }} />
-            <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Recherche d&apos;équivalents…</span>
+            <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Nutri-IA cherche des équivalents…</span>
           </div>
         ) : (
           <div className="max-h-[260px] overflow-y-auto">
@@ -222,7 +223,7 @@ function SuggestionsPanel({
                   key={`${s.name}-${i}`}
                   onClick={() => onPick(s)}
                   className="w-full flex items-center justify-between gap-2 px-2.5 py-2 text-left transition-colors active:bg-white/5"
-                  style={i > 0 ? { borderTop: "1px solid rgba(167,139,250,0.15)" } : undefined}
+                  style={i > 0 ? { borderTop: "1px solid rgba(52,211,153,0.15)" } : undefined}
                 >
                   <span className="flex items-center gap-1.5 flex-1 min-w-0">
                     {sameFamily && (
@@ -317,20 +318,25 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
     setSuggestions([]);
     const sourceKey = source.name.trim().toLowerCase();
 
+    const aiParams = new URLSearchParams({
+      q:        source.name,
+      mode:     "substitutes",
+      calories: String(Math.round(source.per100g.calories)),
+      protein:  String(source.per100g.proteinG),
+      carbs:    String(source.per100g.carbsG),
+      fat:      String(source.per100g.fatG),
+    });
+
     Promise.allSettled([
       fetch("/api/food/recent").then((r) => r.json()) as Promise<{ results?: RecentFood[] }>,
-      fetch("/api/food/suggest-alternatives", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ name: source.name, per100g: source.per100g }),
-      }).then((r) => r.json()) as Promise<{ suggestions?: SuggestedFood[] }>,
+      fetch(`/api/food/ai-search?${aiParams}`).then((r) => r.json()) as Promise<{ results?: FoodSearchResult[] }>,
     ]).then(([recentRes, aiRes]) => {
       if (cancelled) return;
       const fromRecent: PickedFood[] = recentRes.status === "fulfilled"
         ? (recentRes.value.results ?? []).map((r) => ({ name: r.name, brand: r.brand, per100g: r.nutritionPer100g }))
         : [];
       const fromAI: PickedFood[] = aiRes.status === "fulfilled"
-        ? (aiRes.value.suggestions ?? []).map((s) => ({ name: s.name, per100g: s.per100g }))
+        ? (aiRes.value.results ?? []).map((r) => ({ name: r.name, per100g: nutritionPer100gFromServing(r.nutrition, r.servingSizeG) }))
         : [];
 
       const seen = new Set([sourceKey]);
