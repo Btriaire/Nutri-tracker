@@ -108,10 +108,11 @@ export async function GET(req: NextRequest) {
       method:  "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:           "llama-3.3-70b-versatile",
+        model:           "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        reasoning_effort: "low",
         response_format: { type: "json_object" },
         temperature:     isSubstitutes ? 0.4 : 0.2,
-        max_tokens:      isSubstitutes ? 2000 : undefined,
+        max_tokens:      isSubstitutes ? 2000 : 800,
         messages: [
           { role: "system", content: isSubstitutes ? SUBSTITUTES_PROMPT : VARIANTS_PROMPT },
           { role: "user",   content: userMessage },

@@ -72,10 +72,11 @@ Example output: meditation 432hz healing frequency Meditative Mind`;
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+      reasoning_effort: "low",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
-      max_tokens: 60,
+      max_tokens: 150,
     }),
     signal: AbortSignal.timeout(10000),
   });
@@ -102,10 +103,11 @@ Choose the 3 best matches for this theme. Return ONLY a JSON array of indices, e
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+      reasoning_effort: "low",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_tokens: 30,
+      max_tokens: 120,
     }),
     signal: AbortSignal.timeout(10000),
   });

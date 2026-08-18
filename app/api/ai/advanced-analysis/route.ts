@@ -175,8 +175,9 @@ Réponds en français. Maximum 300 mots.`;
       method:  "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model:       "llama-3.3-70b-versatile",
-        max_tokens:  600,
+        model:       "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        reasoning_effort: "low",
+        max_tokens:  900,
         temperature: 0.4,
         messages: [
           { role: "system",  content: systemPrompt },
