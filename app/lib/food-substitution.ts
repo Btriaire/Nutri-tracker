@@ -83,3 +83,59 @@ export function computeSubstitution(
     overallMatch,
   };
 }
+
+// ─── Spontaneous suggestions ────────────────────────────────────────────────
+
+/**
+ * Share of calories coming from each macro, per-100g — scale-invariant, so it
+ * predicts how close computeSubstitution's iso-calorie result will land
+ * without having to run the full comparison for every candidate.
+ */
+function macroCalorieShares(n: FoodNutrition): { protein: number; carbs: number; fat: number } {
+  const proteinKcal = Math.max(n.proteinG, 0) * 4;
+  const carbKcal     = Math.max(n.carbsG,   0) * 4;
+  const fatKcal       = Math.max(n.fatG,     0) * 9;
+  const total = Math.max(proteinKcal + carbKcal + fatKcal, 1);
+  return { protein: proteinKcal / total, carbs: carbKcal / total, fat: fatKcal / total };
+}
+
+/** Lower = more nutritionally similar (0 = identical macro-calorie split). */
+export function profileDistance(aPer100g: FoodNutrition, bPer100g: FoodNutrition): number {
+  const a = macroCalorieShares(aPer100g);
+  const b = macroCalorieShares(bPer100g);
+  return Math.abs(a.protein - b.protein) + Math.abs(a.carbs - b.carbs) + Math.abs(a.fat - b.fat);
+}
+
+/** Quick match label from a profileDistance value (0..2 range), for a suggestion badge. */
+export function quickMatchFromDistance(distance: number): Exclude<MatchLevel, "na"> {
+  if (distance <= 0.2) return "close";
+  if (distance <= 0.5) return "medium";
+  return "far";
+}
+
+// Positive = candidate is the healthier pick (lower carb- and fat-calorie share than source).
+function healthinessBonus(sourcePer100g: FoodNutrition, candidatePer100g: FoodNutrition): number {
+  const s = macroCalorieShares(sourcePer100g);
+  const c = macroCalorieShares(candidatePer100g);
+  return (s.carbs - c.carbs) + (s.fat - c.fat);
+}
+
+// Weight given to "healthier" (less carbs, less fat) over pure macro-profile closeness
+// when ranking spontaneous suggestions — a candidate a bit further in raw profile but
+// clearly lighter on carbs/fat should still surface above a closer but heavier one.
+const HEALTH_BIAS = 0.4;
+
+function suggestionScore(sourcePer100g: FoodNutrition, candidatePer100g: FoodNutrition): number {
+  return profileDistance(sourcePer100g, candidatePer100g) - HEALTH_BIAS * healthinessBonus(sourcePer100g, candidatePer100g);
+}
+
+export function rankBySimilarity<T>(
+  sourcePer100g: FoodNutrition,
+  candidates: T[],
+  getPer100g: (c: T) => FoodNutrition,
+  limit = 5,
+): T[] {
+  return [...candidates]
+    .sort((a, b) => suggestionScore(sourcePer100g, getPer100g(a)) - suggestionScore(sourcePer100g, getPer100g(b)))
+    .slice(0, limit);
+}

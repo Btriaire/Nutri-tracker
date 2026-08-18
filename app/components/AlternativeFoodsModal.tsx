@@ -4,12 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  IconX, IconSearch, IconLoader2, IconHistory, IconArrowsExchange, IconScale,
+  IconX, IconSearch, IconLoader2, IconHistory, IconArrowsExchange, IconScale, IconSparkles,
 } from "@tabler/icons-react";
 import type { FoodNutrition, FoodSearchResult, Lang } from "@/app/lib/types";
 import { nutritionPer100gFromServing } from "@/app/lib/nutrition";
-import { computeSubstitution, type SubstitutionResult, type MatchLevel } from "@/app/lib/food-substitution";
+import {
+  computeSubstitution, rankBySimilarity, profileDistance, quickMatchFromDistance,
+  type SubstitutionResult, type MatchLevel,
+} from "@/app/lib/food-substitution";
 import type { RecentFood } from "@/app/api/food/recent/route";
+import type { SuggestedFood } from "@/app/api/food/suggest-alternatives/route";
 
 interface PickedFood {
   name:    string;
@@ -183,6 +187,58 @@ function PickedCard({
   );
 }
 
+// ─── Spontaneous suggestions ───────────────────────────────────────────────
+
+function SuggestionsPanel({
+  source, loading, suggestions, onPick,
+}: {
+  source:      PickedFood;
+  loading:     boolean;
+  suggestions: PickedFood[];
+  onPick:      (f: PickedFood) => void;
+}) {
+  if (!loading && suggestions.length === 0) return null;
+  return (
+    <div>
+      <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "#a78bfa" }}>
+        <IconSparkles size={11} stroke={2} /> Suggestions pour vous
+      </p>
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-3">
+            <IconLoader2 size={13} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+            <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Recherche d&apos;équivalents…</span>
+          </div>
+        ) : (
+          suggestions.map((s, i) => {
+            const match = quickMatchFromDistance(profileDistance(source.per100g, s.per100g));
+            const style = MATCH_STYLE[match];
+            return (
+              <button
+                key={`${s.name}-${i}`}
+                onClick={() => onPick(s)}
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-2 text-left transition-colors active:bg-white/5"
+                style={i > 0 ? { borderTop: "1px solid rgba(167,139,250,0.15)" } : undefined}
+              >
+                <span className="text-[12px] truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{s.name}</span>
+                <span className="text-[10px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                  {Math.round(s.per100g.calories)} kcal/100g
+                </span>
+                <span
+                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                  style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}` }}
+                >
+                  {style.label}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Result: equivalence + macro proximity ────────────────────────────────────
 
 function MacroRow({ row }: { row: SubstitutionResult["rows"][number] }) {
@@ -229,12 +285,56 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
   const [source, setSource]   = useState<PickedFood | null>(null);
   const [target, setTarget]   = useState<PickedFood | null>(null);
   const [sourceGrams, setSourceGrams] = useState("100");
+  const [suggestions, setSuggestions] = useState<PickedFood[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  // Spontaneous suggestions — as soon as a reference food is picked, blend the user's
+  // own recent history with AI-proposed alternatives, ranked by nutritional closeness
+  // (biased toward lower carbs/fat). The manual search below stays available regardless.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!source) { setSuggestions([]); return; }
+    let cancelled = false;
+    setLoadingSuggestions(true);
+    setSuggestions([]);
+    const sourceKey = source.name.trim().toLowerCase();
+
+    Promise.allSettled([
+      fetch("/api/food/recent").then((r) => r.json()) as Promise<{ results?: RecentFood[] }>,
+      fetch("/api/food/suggest-alternatives", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ name: source.name, per100g: source.per100g }),
+      }).then((r) => r.json()) as Promise<{ suggestions?: SuggestedFood[] }>,
+    ]).then(([recentRes, aiRes]) => {
+      if (cancelled) return;
+      const fromRecent: PickedFood[] = recentRes.status === "fulfilled"
+        ? (recentRes.value.results ?? []).map((r) => ({ name: r.name, brand: r.brand, per100g: r.nutritionPer100g }))
+        : [];
+      const fromAI: PickedFood[] = aiRes.status === "fulfilled"
+        ? (aiRes.value.suggestions ?? []).map((s) => ({ name: s.name, per100g: s.per100g }))
+        : [];
+
+      const seen = new Set([sourceKey]);
+      const candidates = [...fromAI, ...fromRecent].filter((f) => {
+        const key = f.name.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      setSuggestions(rankBySimilarity(source.per100g, candidates, (f) => f.per100g, 4));
+      setLoadingSuggestions(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [source]);
 
   if (typeof document === "undefined") return null;
 
@@ -299,10 +399,20 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
               </div>
             </div>
 
+            {/* Spontaneous suggestions — shown until a substitute is chosen */}
+            {source && !target && (
+              <SuggestionsPanel
+                source={source}
+                loading={loadingSuggestions}
+                suggestions={suggestions}
+                onPick={setTarget}
+              />
+            )}
+
             {/* Slot B */}
             <div>
               <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "#4ade80" }}>
-                B · Substitut
+                {target ? "B · Substitut" : "Ou recherchez un autre aliment"}
               </p>
               {target
                 ? <PickedCard picked={target} onClear={() => setTarget(null)} />
