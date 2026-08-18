@@ -1141,7 +1141,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Aucune donnée</span>
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height={140}>
+                <ResponsiveContainer key={`${range}-${calChart}`} width="100%" height={140}>
                   {calChart === "area" ? (
                     <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                       <defs>
@@ -1369,7 +1369,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <>
                     {/* Fit-to-width — the range buttons (3M/6M/1A/Tout) control how much history shows on one screen */}
                     <div style={{ marginLeft: "-4px", marginRight: "-4px" }}>
-                    <ResponsiveContainer width="100%" height={240}>
+                    <ResponsiveContainer key={weightRange} width="100%" height={240}>
                       <ComposedChart data={showAdequacyColoring ? weightChartDataColored : weightChartData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                         <defs>
                           <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1646,7 +1646,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           );
                         })}
                       </div>
-                      <ResponsiveContainer width="100%" height={140}>
+                      <ResponsiveContainer key={range} width="100%" height={140}>
                         <ComposedChart data={macroChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
                           <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
