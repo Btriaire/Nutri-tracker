@@ -36,26 +36,18 @@ const MATCH_STYLE: Record<Exclude<MatchLevel, "na">, { color: string; bg: string
 // ─── Food picker (search + recent history) ────────────────────────────────────
 
 function FoodSlot({
-  placeholder, onPick, lang,
+  placeholder, onPick, lang, recent, loadingRecent,
 }: {
   placeholder: string;
   onPick: (f: PickedFood) => void;
   lang: Lang;
+  recent: RecentFood[];
+  loadingRecent: boolean;
 }) {
   const [query, setQuery]     = useState("");
   const [results, setResults] = useState<FoodSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [recent, setRecent]   = useState<RecentFood[]>([]);
-  const [loadingRecent, setLoadingRecent] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    fetch("/api/food/recent")
-      .then((r) => r.json())
-      .then((d: { results?: RecentFood[] }) => setRecent(d.results ?? []))
-      .catch(() => {})
-      .finally(() => setLoadingRecent(false));
-  }, []);
 
   const doSearch = (value: string) => {
     setQuery(value);
@@ -300,12 +292,24 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
   const [sourceGrams, setSourceGrams] = useState("100");
   const [suggestions, setSuggestions] = useState<PickedFood[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [recent, setRecent] = useState<RecentFood[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  // Fetched once per modal open and shared between both food slots and the
+  // suggestions panel below — was previously fetched up to 3x per use.
+  useEffect(() => {
+    fetch("/api/food/recent")
+      .then((r) => r.json())
+      .then((d: { results?: RecentFood[] }) => setRecent(d.results ?? []))
+      .catch(() => {})
+      .finally(() => setLoadingRecent(false));
+  }, []);
 
   // Spontaneous suggestions — as soon as a reference food is picked, blend the user's
   // own recent history with AI-proposed alternatives, ranked by nutritional closeness
@@ -327,17 +331,10 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
       fat:      String(source.per100g.fatG),
     });
 
-    Promise.allSettled([
-      fetch("/api/food/recent").then((r) => r.json()) as Promise<{ results?: RecentFood[] }>,
-      fetch(`/api/food/ai-search?${aiParams}`).then((r) => r.json()) as Promise<{ results?: FoodSearchResult[] }>,
-    ]).then(([recentRes, aiRes]) => {
+    fetch(`/api/food/ai-search?${aiParams}`).then((r) => r.json()).then((aiRes: { results?: FoodSearchResult[] }) => {
       if (cancelled) return;
-      const fromRecent: PickedFood[] = recentRes.status === "fulfilled"
-        ? (recentRes.value.results ?? []).map((r) => ({ name: r.name, brand: r.brand, per100g: r.nutritionPer100g }))
-        : [];
-      const fromAI: PickedFood[] = aiRes.status === "fulfilled"
-        ? (aiRes.value.results ?? []).map((r) => ({ name: r.name, per100g: nutritionPer100gFromServing(r.nutrition, r.servingSizeG) }))
-        : [];
+      const fromRecent: PickedFood[] = recent.map((r) => ({ name: r.name, brand: r.brand, per100g: r.nutritionPer100g }));
+      const fromAI: PickedFood[] = (aiRes.results ?? []).map((r) => ({ name: r.name, per100g: nutritionPer100gFromServing(r.nutrition, r.servingSizeG) }));
 
       const seen = new Set([sourceKey]);
       const candidates = [...fromAI, ...fromRecent].filter((f) => {
@@ -349,10 +346,12 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
 
       setSuggestions(rankBySimilarity(source, candidates, (f) => f.per100g, (f) => f.name, 20));
       setLoadingSuggestions(false);
+    }).catch(() => {
+      if (!cancelled) setLoadingSuggestions(false);
     });
 
     return () => { cancelled = true; };
-  }, [source]);
+  }, [source, recent]);
 
   if (typeof document === "undefined") return null;
 
@@ -405,7 +404,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
               {source
                 ? <PickedCard picked={source} onClear={() => setSource(null)}
                     gramsInput={{ value: sourceGrams, onChange: setSourceGrams }} />
-                : <FoodSlot placeholder="Rechercher un aliment…" lang={lang} onPick={setSource} />
+                : <FoodSlot placeholder="Rechercher un aliment…" lang={lang} onPick={setSource} recent={recent} loadingRecent={loadingRecent} />
               }
             </div>
 
@@ -434,7 +433,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
               </p>
               {target
                 ? <PickedCard picked={target} onClear={() => setTarget(null)} />
-                : <FoodSlot placeholder="Rechercher un substitut…" lang={lang} onPick={setTarget} />
+                : <FoodSlot placeholder="Rechercher un substitut…" lang={lang} onPick={setTarget} recent={recent} loadingRecent={loadingRecent} />
               }
             </div>
 
