@@ -19,12 +19,13 @@ import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micron
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
 import { checkDietCompliance, normalizeFoodName, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
+import AlternativeFoodsModal from "@/app/components/AlternativeFoodsModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
 
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -206,6 +207,7 @@ interface Props {
 export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
   const [alcoolDrinks, setAlcoolDrinks] = useState<AlcoolDrink[]>(
@@ -493,6 +495,15 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             style={{ background: "rgba(52,211,153,0.14)", border: "1px solid rgba(52,211,153,0.4)", color: "#34d399" }}
           >
             <IconMicrophone size={17} stroke={1.8} />
+          </button>
+          {/* Aliments Alternatifs — calorie-matched food substitution tool */}
+          <button
+            onClick={() => setShowAlternatives(true)}
+            aria-label="Aliments Alternatifs"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "rgba(59,130,246,0.14)", border: "1px solid rgba(59,130,246,0.4)", color: "var(--protein)" }}
+          >
+            <IconArrowsExchange size={17} stroke={1.8} />
           </button>
         </motion.div>
 
@@ -932,6 +943,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           />
         )}
       </AnimatePresence>
+
+      {/* Aliments Alternatifs — calorie-matched food substitution tool */}
+      {showAlternatives && (
+        <AlternativeFoodsModal lang={lang} onClose={() => setShowAlternatives(false)} />
+      )}
 
       {/* Toast */}
       <AnimatePresence>

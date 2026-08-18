@@ -62,6 +62,11 @@ export function scaleNutrition(nutrition: FoodNutrition, servingGrams: number): 
   };
 }
 
+/** Converts a food's nutrition (already scaled to servingGrams) back to a per-100g basis. */
+export function nutritionPer100gFromServing(nutrition: FoodNutrition, servingGrams: number): FoodNutrition {
+  return scaleNutrition(nutrition, 10000 / Math.max(servingGrams, 1));
+}
+
 export function defaultGoals(): NutritionGoals {
   return {
     dailyCalories:  2000,
