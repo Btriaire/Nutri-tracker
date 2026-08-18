@@ -131,9 +131,12 @@ function suggestionScore(sourcePer100g: FoodNutrition, candidatePer100g: FoodNut
 
 // Coarse food-family buckets, keyword-matched on the (accent-stripped, lowercased) name —
 // good enough to tell "another bread" from "a dairy product", not a full taxonomy.
+// Bread, cereals/pasta and starchy tubers are merged into one "féculents" family — for
+// substitution purposes pain/riz/pâtes/pommes de terre are interchangeable, not distinct.
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  pain:         ["pain", "baguette", "brioche", "biscotte", "krissprol", "wasa", "toast"],
-  cereales:     ["riz", "pate", "pates", "quinoa", "avoine", "boulgour", "semoule", "cereale", "muesli", "flocon", "polenta", "ble"],
+  feculents:    ["pain", "baguette", "brioche", "biscotte", "krissprol", "wasa", "toast",
+                 "riz", "pate", "pates", "quinoa", "avoine", "boulgour", "semoule", "cereale",
+                 "muesli", "flocon", "polenta", "ble", "pomme de terre", "patate", "igname", "manioc"],
   legumineuses: ["lentille", "pois chiche", "haricot sec", "haricot blanc", "haricot rouge", "feve", "soja", "tofu", "tempeh", "edamame"],
   viande:       ["poulet", "boeuf", "porc", "dinde", "veau", "agneau", "jambon", "steak", "viande", "lardon", "saucisse", "canard", "bacon"],
   poisson:      ["poisson", "saumon", "thon", "cabillaud", "colin", "truite", "sardine", "crevette", "fruits de mer", "sushi", "sashimi", "maquereau", "merlu"],
