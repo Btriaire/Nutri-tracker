@@ -201,7 +201,7 @@ function SuggestionsPanel({
   return (
     <div>
       <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "#a78bfa" }}>
-        <IconSparkles size={11} stroke={2} /> Suggestions pour vous
+        <IconSparkles size={11} stroke={2} /> Suggestions pour vous{!loading && suggestions.length > 0 ? ` (${suggestions.length})` : ""}
       </p>
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
         {loading ? (
@@ -210,7 +210,8 @@ function SuggestionsPanel({
             <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Recherche d&apos;équivalents…</span>
           </div>
         ) : (
-          suggestions.map((s, i) => {
+          <div className="max-h-[260px] overflow-y-auto">
+          {suggestions.map((s, i) => {
             const match = quickMatchFromDistance(profileDistance(source.per100g, s.per100g));
             const style = MATCH_STYLE[match];
             return (
@@ -232,7 +233,8 @@ function SuggestionsPanel({
                 </span>
               </button>
             );
-          })
+          })}
+          </div>
         )}
       </div>
     </div>
@@ -329,7 +331,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
         return true;
       });
 
-      setSuggestions(rankBySimilarity(source.per100g, candidates, (f) => f.per100g, 4));
+      setSuggestions(rankBySimilarity(source.per100g, candidates, (f) => f.per100g, 20));
       setLoadingSuggestions(false);
     });
 
