@@ -28,10 +28,14 @@ export async function GET() {
   const to   = format(new Date(), "yyyy-MM-dd");
   const from = format(subDays(new Date(), LOOKBACK_DAYS), "yyyy-MM-dd");
 
+  // Ascending __name__ order needs no extra composite index (unlike descending, which
+  // Firestore only auto-indexes in the forward direction) — see /api/progress for the
+  // same pattern. Iterating oldest → newest and overwriting lastLoggedAt on repeats
+  // still lands on the most recent occurrence for each food.
   const snap = await db.collection(`users/${session.userId}/foodLog`)
     .where(FieldPath.documentId(), ">=", from)
     .where(FieldPath.documentId(), "<=", to)
-    .orderBy(FieldPath.documentId(), "desc")
+    .orderBy(FieldPath.documentId(), "asc")
     .get();
 
   const byName = new Map<string, RecentFood>();
@@ -41,7 +45,7 @@ export async function GET() {
       if (!entry.servingGrams || entry.servingGrams <= 0) continue;
       const key = entry.name.trim().toLowerCase();
       const existing = byName.get(key);
-      if (existing) { existing.timesLogged += 1; continue; }
+      if (existing) { existing.timesLogged += 1; existing.lastLoggedAt = doc.id; continue; }
       byName.set(key, {
         name:             entry.name,
         brand:            entry.brand,

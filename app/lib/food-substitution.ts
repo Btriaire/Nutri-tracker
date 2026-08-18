@@ -129,13 +129,51 @@ function suggestionScore(sourcePer100g: FoodNutrition, candidatePer100g: FoodNut
   return profileDistance(sourcePer100g, candidatePer100g) - HEALTH_BIAS * healthinessBonus(sourcePer100g, candidatePer100g);
 }
 
+// Coarse food-family buckets, keyword-matched on the (accent-stripped, lowercased) name —
+// good enough to tell "another bread" from "a dairy product", not a full taxonomy.
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  pain:         ["pain", "baguette", "brioche", "biscotte", "krissprol", "wasa", "toast"],
+  cereales:     ["riz", "pate", "pates", "quinoa", "avoine", "boulgour", "semoule", "cereale", "muesli", "flocon", "polenta", "ble"],
+  legumineuses: ["lentille", "pois chiche", "haricot sec", "haricot blanc", "haricot rouge", "feve", "soja", "tofu", "tempeh", "edamame"],
+  viande:       ["poulet", "boeuf", "porc", "dinde", "veau", "agneau", "jambon", "steak", "viande", "lardon", "saucisse", "canard", "bacon"],
+  poisson:      ["poisson", "saumon", "thon", "cabillaud", "colin", "truite", "sardine", "crevette", "fruits de mer", "sushi", "sashimi", "maquereau", "merlu"],
+  oeuf:         ["oeuf", "œuf"],
+  laitage:      ["lait", "yaourt", "yogourt", "fromage", "petit-suisse", "petit suisse", "skyr", "faisselle"],
+  legume:       ["carotte", "brocoli", "courgette", "tomate", "epinard", "haricot vert", "salade", "poireau", "legume", "champignon", "aubergine", "poivron", "chou"],
+  fruit:        ["pomme", "banane", "fraise", "raisin", "orange", "poire", "peche", "abricot", "kiwi", "ananas", "fruit", "framboise", "myrtille", "cerise", "mangue", "pasteque", "melon"],
+  oleagineux:   ["amande", "noix", "noisette", "cacahuete", "pistache", "graine", "cajou"],
+  corpsgras:    ["huile", "beurre", "margarine", "creme fraiche"],
+  sucrerie:     ["chocolat", "gateau", "biscuit", "bonbon", "confiture", "miel", "patisserie", "glace", "sucre", "viennoiserie"],
+  boisson:      ["jus", "soda", "the ", "cafe", "boisson", "smoothie", "eau "],
+};
+
+function normalizeForCategory(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/** Coarse food-family guess from a name — used to rank same-family substitutes first. */
+export function inferFoodCategory(name: string): string {
+  const n = ` ${normalizeForCategory(name)} `;
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((k) => n.includes(k))) return category;
+  }
+  return "autre";
+}
+
 export function rankBySimilarity<T>(
-  sourcePer100g: FoodNutrition,
+  source: { name: string; per100g: FoodNutrition },
   candidates: T[],
   getPer100g: (c: T) => FoodNutrition,
+  getName:    (c: T) => string,
   limit = 5,
 ): T[] {
+  const sourceCategory = inferFoodCategory(source.name);
   return [...candidates]
-    .sort((a, b) => suggestionScore(sourcePer100g, getPer100g(a)) - suggestionScore(sourcePer100g, getPer100g(b)))
+    .sort((a, b) => {
+      const sameA = inferFoodCategory(getName(a)) === sourceCategory ? 0 : 1;
+      const sameB = inferFoodCategory(getName(b)) === sourceCategory ? 0 : 1;
+      if (sameA !== sameB) return sameA - sameB; // same food family first
+      return suggestionScore(source.per100g, getPer100g(a)) - suggestionScore(source.per100g, getPer100g(b));
+    })
     .slice(0, limit);
 }

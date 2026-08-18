@@ -9,7 +9,7 @@ import {
 import type { FoodNutrition, FoodSearchResult, Lang } from "@/app/lib/types";
 import { nutritionPer100gFromServing } from "@/app/lib/nutrition";
 import {
-  computeSubstitution, rankBySimilarity, profileDistance, quickMatchFromDistance,
+  computeSubstitution, rankBySimilarity, profileDistance, quickMatchFromDistance, inferFoodCategory,
   type SubstitutionResult, type MatchLevel,
 } from "@/app/lib/food-substitution";
 import type { RecentFood } from "@/app/api/food/recent/route";
@@ -211,29 +211,39 @@ function SuggestionsPanel({
           </div>
         ) : (
           <div className="max-h-[260px] overflow-y-auto">
-          {suggestions.map((s, i) => {
-            const match = quickMatchFromDistance(profileDistance(source.per100g, s.per100g));
-            const style = MATCH_STYLE[match];
-            return (
-              <button
-                key={`${s.name}-${i}`}
-                onClick={() => onPick(s)}
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-2 text-left transition-colors active:bg-white/5"
-                style={i > 0 ? { borderTop: "1px solid rgba(167,139,250,0.15)" } : undefined}
-              >
-                <span className="text-[12px] truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{s.name}</span>
-                <span className="text-[10px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
-                  {Math.round(s.per100g.calories)} kcal/100g
-                </span>
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                  style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}` }}
+          {(() => {
+            const sourceCategory = inferFoodCategory(source.name);
+            return suggestions.map((s, i) => {
+              const match = quickMatchFromDistance(profileDistance(source.per100g, s.per100g));
+              const style = MATCH_STYLE[match];
+              const sameFamily = sourceCategory !== "autre" && inferFoodCategory(s.name) === sourceCategory;
+              return (
+                <button
+                  key={`${s.name}-${i}`}
+                  onClick={() => onPick(s)}
+                  className="w-full flex items-center justify-between gap-2 px-2.5 py-2 text-left transition-colors active:bg-white/5"
+                  style={i > 0 ? { borderTop: "1px solid rgba(167,139,250,0.15)" } : undefined}
                 >
-                  {style.label}
-                </span>
-              </button>
-            );
-          })}
+                  <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                    {sameFamily && (
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--protein)" }}
+                        title="Même famille d'aliment" />
+                    )}
+                    <span className="text-[12px] truncate" style={{ color: "var(--text-primary)" }}>{s.name}</span>
+                  </span>
+                  <span className="text-[10px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                    {Math.round(s.per100g.calories)} kcal/100g
+                  </span>
+                  <span
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}` }}
+                  >
+                    {style.label}
+                  </span>
+                </button>
+              );
+            });
+          })()}
           </div>
         )}
       </div>
@@ -331,7 +341,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
         return true;
       });
 
-      setSuggestions(rankBySimilarity(source.per100g, candidates, (f) => f.per100g, 20));
+      setSuggestions(rankBySimilarity(source, candidates, (f) => f.per100g, (f) => f.name, 20));
       setLoadingSuggestions(false);
     });
 
@@ -429,17 +439,40 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                 className="rounded-xl p-3 mt-1"
                 style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}
               >
-                <div className="flex items-center justify-center gap-2 text-center mb-1">
-                  <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--protein)" }}>{grams} g</span>
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{source.name}</span>
+                <p className="text-[9px] uppercase tracking-wide text-center mb-2 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  Correspondance calorique
+                </p>
+                <div className="rounded-lg overflow-hidden mb-1" style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }}>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold truncate" style={{ color: "var(--protein)" }}>{grams} g · {source.name}</p>
+                      <p className="text-[9.5px]" style={{ color: "var(--text-muted)" }}>
+                        {Math.round(source.per100g.calories)} kcal/100g
+                      </p>
+                    </div>
+                    <span className="text-[14px] font-bold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
+                      {Math.round(result.sourceCalories)} kcal
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-1" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                    <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>≈</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold truncate" style={{ color: "#4ade80" }}>{result.targetGrams} g · {target.name}</p>
+                      <p className="text-[9.5px]" style={{ color: "var(--text-muted)" }}>
+                        {Math.round(target.per100g.calories)} kcal/100g
+                      </p>
+                    </div>
+                    <span className="text-[14px] font-bold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
+                      {Math.round(result.targetCalories)} kcal
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 mb-2">
-                  <span className="text-[16px]" style={{ color: "var(--text-muted)" }}>≈</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-center mb-3">
-                  <span className="text-[16px] font-bold tabular-nums" style={{ color: "#4ade80" }}>{result.targetGrams} g</span>
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{target.name}</span>
-                </div>
+                <p className="text-[9.5px] text-center mb-3" style={{ color: "var(--text-muted)" }}>
+                  écart de {Math.abs(Math.round(result.sourceCalories) - Math.round(result.targetCalories))} kcal
+                  {" · "}1 g de {source.name.toLowerCase()} ≈ {(target.per100g.calories > 0 ? source.per100g.calories / target.per100g.calories : 0).toFixed(2)} g de {target.name.toLowerCase()}
+                </p>
 
                 <div className="flex items-center justify-center mb-3">
                   <span
@@ -461,8 +494,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                 </div>
 
                 <p className="text-[9px] italic mt-2 px-0.5" style={{ color: "var(--text-muted)" }}>
-                  Calories quasi identiques par construction ({Math.round(result.sourceCalories)} vs {Math.round(result.targetCalories)} kcal) —
-                  comparaison indicative des autres macronutriments.
+                  Comparaison indicative des autres macronutriments à cette quantité équivalente.
                 </p>
               </motion.div>
             )}
