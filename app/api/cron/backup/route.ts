@@ -18,7 +18,7 @@ const COLLECTIONS = [
   "meditationSessions", "micronutrientLogs", "recipes", "reports", "supplementLogs", "supplements",
 ];
 
-const RETENTION_DAYS = 90;
+const RETENTION_DAYS = 365;
 
 function jsonReplacer(_key: string, value: unknown) {
   if (value && typeof value === "object" && typeof (value as { toDate?: unknown }).toDate === "function") {
