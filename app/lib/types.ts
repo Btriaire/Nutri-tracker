@@ -100,6 +100,7 @@ export interface FoodSearchResult {
 export interface CustomFood {
   id:           string;
   name:         string;
+  normalizedName?: string; // trim+lowercase(name) — used server-side to dedupe on save
   brand?:       string;
   category?:    string;
   servingSizeG: number;

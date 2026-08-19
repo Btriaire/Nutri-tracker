@@ -28,13 +28,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "name and nutrition required" }, { status: 400 });
   }
 
-  const db  = getAdminFirestore();
-  const id  = nanoid(12);
+  const db = getAdminFirestore();
+  const normalizedName = body.name.trim().toLowerCase();
   const now = FieldValue.serverTimestamp();
 
+  // Avoid creating a new entry for a food that's already saved (e.g. repeated
+  // Nutri-AI searches for a staple like "Café noir") — refresh the existing one instead.
+  const existing = await db.collection(`users/${session.userId}/customFoods`)
+    .where("normalizedName", "==", normalizedName)
+    .limit(1)
+    .get();
+
+  if (!existing.empty) {
+    const doc = existing.docs[0];
+    await doc.ref.set({ ...body, normalizedName, updatedAt: now }, { merge: true });
+    return NextResponse.json({ id: doc.id });
+  }
+
+  const id = nanoid(12);
   await db.doc(`users/${session.userId}/customFoods/${id}`).set({
     ...body,
     id,
+    normalizedName,
     createdAt: now,
     updatedAt: now,
   });
