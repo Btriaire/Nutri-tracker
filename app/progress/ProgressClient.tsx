@@ -926,6 +926,20 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           <AIInsightBox type="progress" data={progressInsightData} delay={1000} autoLoad />
         </motion.div>
 
+        {/* Répartition — macros, groupes alimentaires, micronutriments par période */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
+          className="mb-5">
+          <Link href="/repartition"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
+            style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.22)" }}>
+            <IconChartGridDots size={18} stroke={1.8} style={{ color: "#a78bfa" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Répartition</p>
+              <p className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Macros, groupes alimentaires, micronutriments par période</p>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* Range selector */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.04 }}
           className="flex gap-1.5 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
