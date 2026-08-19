@@ -558,11 +558,22 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   }, [date]);
 
   useEffect(() => {
-    if (open && tab === "repas")        loadMeals();
-    if (open && tab === "recettes")     loadRecipes();
-    if (open && tab === "hier")         loadPrevLogs();
-    if (open && tab === "mes-aliments") loadMyFoods();
-  }, [open, tab, loadMeals, loadRecipes, loadPrevLogs, loadMyFoods]);
+    if (open && tab === "repas")    loadMeals();
+    if (open && tab === "recettes") loadRecipes();
+    if (open && tab === "hier")     loadPrevLogs();
+  }, [open, tab, loadMeals, loadRecipes, loadPrevLogs]);
+
+  // Preloaded on open (not gated to the "mes-aliments" tab) so the main search
+  // can check it first — the user wants their personal list searched before
+  // external databases, not just reachable via a separate tab.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (open) loadMyFoods();
+  }, [open, loadMyFoods]);
+
+  const myFoodsMatching = query.trim()
+    ? myFoods.filter((f) => f.name.toLowerCase().includes(query.trim().toLowerCase()))
+    : [];
 
   // ── Aliments ──────────────────────────────────────────────────────────────
 
@@ -1104,7 +1115,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       </div>
                     </>
                   )}
-                  {query && !searching && results.length === 0 && aiResults.length === 0 && !aiSearching && (
+                  {query && !searching && results.length === 0 && aiResults.length === 0 && myFoodsMatching.length === 0 && !aiSearching && (
                     <div className="flex flex-col items-center gap-2 py-10">
                       <span className="text-3xl">🔍</span>
                       <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
@@ -1113,6 +1124,49 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
                         Essayez Nutri-IA via le bouton ci-dessus
                       </p>
+                    </div>
+                  )}
+                  {myFoodsMatching.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <IconStarFilled size={11} style={{ color: "#f59e0b" }} />
+                        <p className="label-xs" style={{ color: "#f59e0b" }}>Ma liste personnelle</p>
+                      </div>
+                      <div className="space-y-1">
+                        {myFoodsMatching.map((r) => {
+                          const isAdding = quickAddingId === r.id;
+                          return (
+                            <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                              className="flex items-center gap-2 rounded-xl overflow-hidden"
+                              style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.18)" }}>
+                              <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                                <FoodPictogram name={r.name} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                    <div className="text-right flex-shrink-0">
+                                      <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                    </div>
+                                  </div>
+                                  <MacroPills n={r.nutrition} />
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => handleQuickAdd(r)}
+                                disabled={isAdding}
+                                className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                                style={{ background: isAdding ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.10)", borderLeft: "1px solid rgba(245,158,11,0.18)" }}
+                              >
+                                {isAdding
+                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#f59e0b" }} />
+                                  : <IconPlus size={16} stroke={2} style={{ color: "#f59e0b" }} />
+                                }
+                              </button>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   {aiResults.length > 0 && (
