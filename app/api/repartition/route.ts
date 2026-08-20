@@ -3,6 +3,7 @@ import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
 import { checkDietCompliance, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
+import { recordReads } from "@/app/lib/quota-tracker";
 import { inferFoodCategory } from "@/app/lib/food-substitution";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 import { defaultGoals } from "@/app/lib/nutrition";
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
       .orderBy(FieldPath.documentId(), "asc").get(),
     db.doc(`users/${USER}`).get(),
   ]);
+  void recordReads(logSnap.size + microSnap.size + 1);
 
   const profile     = (profileSnap.exists ? profileSnap.data() : {}) as Partial<UserProfile>;
   const goals        = profile.goals ?? defaultGoals();

@@ -24,6 +24,7 @@ import BodyCompChart from "@/app/components/BodyCompChart";
 import AlbumModal from "@/app/components/AlbumModal";
 import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
 import SupplementsProgressSection from "@/app/components/SupplementsProgressSection";
+import QuotaWarningBanner from "@/app/components/QuotaWarningBanner";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -771,6 +772,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </div>
           </div>
         </motion.div>
+
+        <QuotaWarningBanner />
 
         {/* ── Mon plan card ── */}
         {plan && (() => {

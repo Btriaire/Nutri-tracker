@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { recordReads } from "@/app/lib/quota-tracker";
 import type { DayLog, FitnessDay, DayTrendPoint, HealthEntry } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
       .orderBy(FieldPath.documentId(), "asc")
       .get(),
   ]);
+  void recordReads(logSnap.size + fitnessSnap.size + healthSnap.size);
 
   const fitnessMap = new Map<string, FitnessDay>();
   for (const d of fitnessSnap.docs) fitnessMap.set(d.id, d.data() as FitnessDay);

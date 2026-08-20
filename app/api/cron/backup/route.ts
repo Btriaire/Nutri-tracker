@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put, list, del } from "@vercel/blob";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { recordReads } from "@/app/lib/quota-tracker";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -71,6 +72,7 @@ async function runBackup(req: NextRequest) {
       backup[col] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       totalDocs += snap.size;
     });
+    void recordReads(totalDocs + 1);
 
     const json = JSON.stringify(backup, jsonReplacer, 2);
     const dateStr = new Date().toISOString().slice(0, 10);

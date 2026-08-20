@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
   IconChartDonut, IconChevronLeft, IconAlertTriangle, IconCircleCheck, IconLoader2,
 } from "@tabler/icons-react";
+import QuotaWarningBanner from "@/app/components/QuotaWarningBanner";
 
 type Period = "semaine" | "mois" | "3mois";
 
@@ -150,6 +151,8 @@ export default function RepartitionClient() {
           <IconChartDonut size={18} stroke={1.8} style={{ color: "var(--protein)" }} />
           <h1 className="text-[16px] font-semibold" style={{ color: "var(--text-primary)" }}>Répartition</h1>
         </div>
+
+        <QuotaWarningBanner />
 
         <div className="flex gap-1.5 mb-5">
           {PERIODS.map((p) => (
