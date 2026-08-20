@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subDays } from "date-fns";
@@ -104,22 +104,24 @@ function InsightList({ title, items, tone }: { title: string; items: Insight[]; 
 }
 
 export default function RepartitionClient() {
-  const [period, setPeriod] = useState<Period>("semaine");
-  const [data, setData]     = useState<RepartitionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [period, setPeriod]   = useState<Period | null>(null);
+  const [pending, setPending] = useState<Period | null>(null);
+  const [data, setData]       = useState<RepartitionData | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const days = PERIODS.find((p) => p.key === period)!.days;
+  const loadPeriod = (p: Period) => {
+    const days = PERIODS.find((x) => x.key === p)!.days;
     const to   = format(new Date(), "yyyy-MM-dd");
     const from = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPeriod(p);
+    setPending(null);
     setLoading(true);
     fetch(`/api/repartition?from=${from}&to=${to}`)
       .then((r) => r.json())
       .then((d: RepartitionData) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [period]);
+  };
 
   const macroPieData = useMemo(() => {
     if (!data) return [];
@@ -151,7 +153,7 @@ export default function RepartitionClient() {
 
         <div className="flex gap-1.5 mb-5">
           {PERIODS.map((p) => (
-            <button key={p.key} onClick={() => setPeriod(p.key)}
+            <button key={p.key} onClick={() => setPending(p.key)}
               className="flex-1 px-3 py-2 rounded-xl text-[12.5px] font-medium transition-all"
               style={{
                 background: period === p.key ? "rgba(59,130,246,0.14)" : "rgba(255,255,255,0.04)",
@@ -163,9 +165,43 @@ export default function RepartitionClient() {
           ))}
         </div>
 
+        <AnimatePresence>
+          {pending && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] flex items-center justify-center px-6"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+              onClick={() => setPending(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full rounded-2xl p-5" style={{ maxWidth: 340, background: "var(--surface, #1a1a1f)", border: "1px solid var(--border)" }}
+              >
+                <p className="text-[13.5px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>Charger la répartition ?</p>
+                <p className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+                  Cette page scanne tout votre journal sur la période ({PERIODS.find((p) => p.key === pending)?.label.toLowerCase()}) —
+                  plusieurs centaines de lectures Firestore, sur un quota limité à 50 000/jour. Continuer ?
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setPending(null)} className="flex-1 btn btn-ghost">Annuler</button>
+                  <button onClick={() => loadPeriod(pending)} className="flex-1 btn btn-primary">Continuer</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {loading ? (
           <div className="flex justify-center py-16">
             <IconLoader2 size={22} className="animate-spin" style={{ color: "var(--text-muted)" }} />
+          </div>
+        ) : !period ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <IconChartDonut size={28} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              Choisissez une période ci-dessus pour charger la répartition.
+            </p>
           </div>
         ) : !data || data.loggedDays === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16">

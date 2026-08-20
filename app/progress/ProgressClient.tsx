@@ -51,6 +51,12 @@ const WEIGHT_RANGES: { key: WeightRange; label: string; days?: number }[] = [
 // Ranges that get weekly-averaged points for a smoother line instead of noisy daily raw data.
 const WEIGHT_AVERAGE_RANGES = new Set<WeightRange>(["3m", "6m"]);
 
+// Cap for "Tout"/"tout" instead of scanning the full history since 2020-01-01 —
+// a full unbounded scan on every "Tout" click gets more expensive as history grows
+// (~3 Firestore reads per day scanned) and was a real contributor to the daily
+// quota being exhausted. 3 years is effectively "everything" for a long while yet.
+const MAX_HISTORY_DAYS = 1095;
+
 function estimateTDEE(goals: NutritionGoals): number { return goals.dailyCalories; }
 
 function calcProjection(currentKg: number, targetKg: number, avgCalories: number, tdee: number) {
@@ -416,8 +422,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [loading,         setLoading]    = useState(true);
   const [weightRange,     setWeightRange] = useState<WeightRange>("6m");
   const [showAdequacyColoring, setShowAdequacyColoring] = useState(false);
-  const [weightPts,       setWeightPts]  = useState<DayTrendPoint[]>([]);
-  const [weightLoading,   setWeightLoading] = useState(false);
+  // weightPts was a second, independently-fetched /api/progress call — merged into
+  // the single `points` fetch below (each call scans 3 Firestore collections, and
+  // doubling that per page view was a real contributor to the daily read quota).
+  const weightPts     = points;
+  const weightLoading = loading;
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
   const [planOpen,        setPlanOpen]   = useState(false);
   const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
@@ -479,17 +488,26 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
       .catch(() => {});
   }, [goals.intermittentFasting?.enabled]);
 
-  const loadData = useCallback(async (r: Range) => {
+  // Single shared fetch for both the calorie/activity chart (`range`) and the weight
+  // chart (`weightRange`) — these used to be two independent /api/progress calls
+  // (each scanning 3 Firestore collections) on every page view. Now fetches once,
+  // covering whichever of the two selections needs more history, and each chart
+  // slices its own view back down client-side (see pointsForRange / weightPtsForChart).
+  const loadData = useCallback(async (r: Range, wr: WeightRange) => {
     setLoading(true);
     try {
       const today = format(new Date(), "yyyy-MM-dd");
+
       const rangeObj = RANGES.find((x) => x.key === r);
-      const from = r === "1j"
-        ? today
-        : r === "all" || !rangeObj?.days
-          ? "2020-01-01"
-          : format(subDays(new Date(), rangeObj.days), "yyyy-MM-dd");
-      const res = await fetch(`/api/progress?from=${from}&to=${today}`);
+      const rangeDays = r === "1j" ? 0 : (r === "all" || !rangeObj?.days) ? MAX_HISTORY_DAYS : rangeObj.days;
+
+      const weightObj = WEIGHT_RANGES.find((x) => x.key === wr);
+      // Weight always needs at least 35 days so the 7j/14j/30j plan-adequacy checks
+      // have enough history even when a shorter chart range (14j/30j) is selected.
+      const weightDays = (wr === "tout" || !weightObj?.days) ? MAX_HISTORY_DAYS : Math.max(weightObj.days, 35);
+
+      const from = format(subDays(new Date(), Math.max(rangeDays, weightDays)), "yyyy-MM-dd");
+      const res  = await fetch(`/api/progress?from=${from}&to=${today}`);
       if (res.ok) {
         const { points: p } = await res.json() as { points: DayTrendPoint[] };
         setPoints(p ?? []);
@@ -497,29 +515,17 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadData(range); }, [range, loadData]);
+  useEffect(() => { loadData(range, weightRange); }, [range, weightRange, loadData]);
 
-  const loadWeightData = useCallback(async (wr: WeightRange) => {
-    setWeightLoading(true);
-    try {
-      const today   = format(new Date(), "yyyy-MM-dd");
-      const obj     = WEIGHT_RANGES.find(x => x.key === wr);
-      // Always fetch at least 35 days so the 7j/14j/30j plan-adequacy checks always have
-      // enough history, even when a shorter chart range (14j/30j) is selected — the chart
-      // display itself is trimmed back down to the selected range client-side below.
-      const fetchDays = obj?.days ? Math.max(obj.days, 35) : undefined;
-      const from    = fetchDays ? format(subDays(new Date(), fetchDays), "yyyy-MM-dd") : "2020-01-01";
-      const res     = await fetch(`/api/progress?from=${from}&to=${today}`);
-      if (res.ok) {
-        const { points: p } = await res.json() as { points: DayTrendPoint[] };
-        setWeightPts(p ?? []);
-      }
-    } finally { setWeightLoading(false); }
-  }, []);
+  // Calorie/activity chart's own view of `points`, sliced back down to `range` —
+  // `points` itself may cover more history if the weight chart's range needs it.
+  const rangeObjForSlice = RANGES.find((x) => x.key === range);
+  const rangeCutoffDate  = range === "1j"
+    ? format(new Date(), "yyyy-MM-dd")
+    : (range === "all" || !rangeObjForSlice?.days) ? null : format(subDays(new Date(), rangeObjForSlice.days), "yyyy-MM-dd");
+  const pointsForRange = rangeCutoffDate ? points.filter((p) => p.date >= rangeCutoffDate) : points;
 
-  useEffect(() => { void loadWeightData(weightRange); }, [weightRange, loadWeightData]);
-
-  const chartData = points.map((p) => ({
+  const chartData = pointsForRange.map((p) => ({
     ...p,
     label: format(parseISO(p.date), range === "1j" ? "HH:mm" : "dd/MM"),
   }));
@@ -539,9 +545,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
         / activityPoints.filter((p) => (p.activeMinutes ?? 0) > 0).length) : 0;
 
   // ── Weight-specific data (independent range) ───────────────────────────
-  // weightPts always covers >=35 days (see loadWeightData); slice it back down to the
-  // selected range for display/period-scoped stats, while 7j/14j/30j lookback below keeps
-  // using the full fetched history regardless of what's currently displayed.
+  // weightPts (= points, the shared fetch) always covers >=35 days for this range; slice
+  // it back down to the selected range for display/period-scoped stats, while 7j/14j/30j
+  // lookback below keeps using the full fetched history regardless of what's displayed.
   const weightRangeDays  = WEIGHT_RANGES.find(x => x.key === weightRange)?.days;
   const chartCutoffDate  = weightRangeDays ? format(subDays(new Date(), weightRangeDays), "yyyy-MM-dd") : null;
   const weightPtsForChart = chartCutoffDate ? weightPts.filter(p => p.date >= chartCutoffDate) : weightPts;
@@ -568,11 +574,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const delta15d = (() => { const w = findWeightBefore(14); return (w && lastWeight) ? lastWeight - w : null; })();
   const delta30d = (() => { const w = findWeightBefore(30); return (w && lastWeight) ? lastWeight - w : null; })();
 
-  const avgSleepPts = points.filter((p) => (p.sleepMinutes ?? 0) > 0);
+  const avgSleepPts = pointsForRange.filter((p) => (p.sleepMinutes ?? 0) > 0);
   const avgSleepH   = avgSleepPts.length
     ? Math.round(avgSleepPts.reduce((s, p) => s + (p.sleepMinutes ?? 0), 0) / avgSleepPts.length / 6) / 10
     : 0;
-  const avgHRPts    = points.filter((p) => (p.heartRateAvg ?? 0) > 0);
+  const avgHRPts    = pointsForRange.filter((p) => (p.heartRateAvg ?? 0) > 0);
   const avgHR       = avgHRPts.length
     ? Math.round(avgHRPts.reduce((s, p) => s + (p.heartRateAvg ?? 0), 0) / avgHRPts.length)
     : null;
@@ -657,7 +663,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const weightChartDataColored = attachAdequacySegments(weightChartData, isLossOverall);
 
   const progressInsightData = {
-    days:           points.length,
+    days:           pointsForRange.length,
     avgCalories,
     avgSteps,
     avgSleepH,

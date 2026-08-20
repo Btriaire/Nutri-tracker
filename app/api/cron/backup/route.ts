@@ -30,8 +30,10 @@ function jsonReplacer(_key: string, value: unknown) {
 /**
  * Daily Firestore backup: dumps the user's profile doc + every subcollection to a
  * single JSON file in Vercel Blob (private access), then prunes backups older than
- * RETENTION_DAYS. Registered in vercel.json to run nightly on its own — Vercel Cron
- * Jobs call via GET with an automatic Authorization: Bearer $CRON_SECRET header.
+ * RETENTION_DAYS. Registered in vercel.json to run monthly (1st of the month, 04:00
+ * UTC) — this scans ~14 collections (~650 Firestore reads per run), too costly for
+ * a daily cadence on the free Firestore quota. Vercel Cron Jobs call via GET with an
+ * automatic Authorization: Bearer $CRON_SECRET header.
  * Manual usage: curl -H "X-Cron-Secret: $CRON_SECRET" https://nutri-tracker-mocha.vercel.app/api/cron/backup
  */
 export async function GET(req: NextRequest) {
