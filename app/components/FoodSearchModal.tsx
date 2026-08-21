@@ -1169,8 +1169,54 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       </div>
                     </div>
                   )}
+                  {!query && results.length > 0 && (
+                    <p className="label-xs mb-2">Aliments détectés</p>
+                  )}
+                  <div className="space-y-1 mt-3">
+                    {results.map((r) => {
+                      const badge = SOURCE_BADGE[r.source];
+                      const isAdding = quickAddingId === r.id;
+                      return (
+                        <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center gap-2 rounded-xl overflow-hidden"
+                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          {/* Tap to configure */}
+                          <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
+                            <FoodPictogram name={r.name} category={r.category} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
+                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
+                                {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
+                                {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
+                                <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                              </div>
+                              <MacroPills n={r.nutrition} />
+                            </div>
+                          </button>
+                          {/* Quick add */}
+                          <button
+                            onClick={() => handleQuickAdd(r)}
+                            disabled={isAdding}
+                            className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
+                            style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
+                          >
+                            {isAdding
+                              ? <IconLoader2 size={15} stroke={2} className="animate-spin" style={{ color: "var(--protein)" }} />
+                              : <IconPlus size={17} stroke={2} style={{ color: "var(--protein)" }} />
+                            }
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                   {aiResults.length > 0 && (
-                    <div className="mb-3">
+                    <div className="mb-3 mt-3">
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[11px]">✨</span>
                         <p className="label-xs" style={{ color: "#a855f7" }}>Résultats Nutri-AI</p>
@@ -1240,52 +1286,6 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       </div>
                     </div>
                   )}
-                  {!query && results.length > 0 && (
-                    <p className="label-xs mb-2">Aliments détectés</p>
-                  )}
-                  <div className="space-y-1 mt-3">
-                    {results.map((r) => {
-                      const badge = SOURCE_BADGE[r.source];
-                      const isAdding = quickAddingId === r.id;
-                      return (
-                        <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center gap-2 rounded-xl overflow-hidden"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                          {/* Tap to configure */}
-                          <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
-                            <FoodPictogram name={r.name} category={r.category} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
-                                <div className="text-right flex-shrink-0">
-                                  <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
-                                {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
-                                {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
-                              </div>
-                              <MacroPills n={r.nutrition} />
-                            </div>
-                          </button>
-                          {/* Quick add */}
-                          <button
-                            onClick={() => handleQuickAdd(r)}
-                            disabled={isAdding}
-                            className="shrink-0 flex items-center justify-center w-11 self-stretch transition-all"
-                            style={{ background: isAdding ? "rgba(139,92,246,0.15)" : "rgba(139,92,246,0.12)", borderLeft: "1px solid var(--border)" }}
-                          >
-                            {isAdding
-                              ? <IconLoader2 size={15} stroke={2} className="animate-spin" style={{ color: "var(--protein)" }} />
-                              : <IconPlus size={17} stroke={2} style={{ color: "var(--protein)" }} />
-                            }
-                          </button>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
                 </div>
               )}
 
