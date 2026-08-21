@@ -101,6 +101,8 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+const AUTO_SYNC_THROTTLE_MS = 5 * 60 * 1000;
+
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
@@ -149,15 +151,20 @@ export default function DashboardClient({
       });
   }, [date]);
 
-  // Auto-sync both services on every dashboard open, then refresh data
+  // Auto-sync both services, throttled to once per 5min — syncing (and the
+  // router.refresh() that follows) on every single dashboard visit caused a
+  // visible full re-render flash a moment after the page had already loaded.
   useEffect(() => {
     if (hasSynced.current) return;
     hasSynced.current = true;
+    const lastSync = Number(localStorage.getItem("nutri_last_autosync") ?? 0);
+    if (Date.now() - lastSync < AUTO_SYNC_THROTTLE_MS) return;
     const opts = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) };
     Promise.allSettled([
       fetch("/api/google-fit/sync", opts),
       fetch("/api/withings/sync", { ...opts, body: JSON.stringify({ date }) }),
     ]).then(() => {
+      localStorage.setItem("nutri_last_autosync", String(Date.now()));
       // Refresh server component data to show newly synced values
       router.refresh();
     }).catch(() => {});
@@ -177,6 +184,7 @@ export default function DashboardClient({
       // Show per-service indicator: ✓ = synced, · = not connected / no new data
       const label = `${fitJson.ok ? "✓" : "·"}F  ${wJson.ok ? "✓" : "·"}W`;
       setSyncMsg(label);
+      localStorage.setItem("nutri_last_autosync", String(Date.now()));
       setTimeout(() => { window.location.reload(); }, 900);
     } catch {
       setSyncMsg("!");

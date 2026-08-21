@@ -2,11 +2,16 @@
 
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2,
   IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles, IconBookmarkPlus, IconCheck } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
-import FoodSearchModal, { type AddedInfo } from "./FoodSearchModal";
+import type { AddedInfo } from "./FoodSearchModal";
+
+// Split out of the main bundle: it's a large modal (search, camera, barcode
+// scanning) only ever needed after the user taps "add food".
+const FoodSearchModal = dynamic(() => import("./FoodSearchModal"), { ssr: false });
 import MenuSuggestionModal from "./MenuSuggestionModal";
 import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
 import PhotoMealAnalyzer from "./PhotoMealAnalyzer";
