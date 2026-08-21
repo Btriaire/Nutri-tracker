@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { recordReads } from "@/app/lib/quota-tracker";
 import { format, subDays, parseISO, differenceInDays } from "date-fns";
 import type { DayLog } from "@/app/lib/types";
 
@@ -39,11 +40,14 @@ export async function GET() {
     .orderBy("date", "desc")
     .get();
 
-  // Also fetch goals for pct calculation
+  // Also fetch goals + cached streak stats
   const profileSnap = await db.doc(`users/${USER}`).get();
-  const goalCalories: number = profileSnap.exists
-    ? ((profileSnap.data() as { goals?: { dailyCalories?: number } })?.goals?.dailyCalories ?? 2000)
-    : 2000;
+  const profileData = profileSnap.exists ? profileSnap.data() as {
+    goals?: { dailyCalories?: number };
+    streakCache?: { longestStreak: number; totalLoggedDays: number; lastLoggedDate: string | null; computedDate: string };
+  } : undefined;
+  const goalCalories: number = profileData?.goals?.dailyCalories ?? 2000;
+  void recordReads(snap.size + 1);
 
   // Build map of date → calories
   const logMap = new Map<string, number>();
@@ -79,34 +83,57 @@ export async function GET() {
     }
   }
 
-  // Longest streak (over all fetched data + a wider query)
-  const allSnap = await db.collection(`users/${USER}/foodLog`)
-    .orderBy("date", "asc")
-    .get();
+  // Longest streak (over full history). A day only ever *adds* to this, so it's
+  // safe to cache on the profile doc and only re-scan the whole foodLog collection
+  // once per day instead of on every dashboard mount — this used to be an unbounded
+  // full-collection scan on every single request.
+  let longestStreak: number;
+  let totalLoggedDays: number;
+  let lastLoggedDate: string | null;
 
-  const allDates: string[] = [];
-  for (const doc of allSnap.docs) {
-    const log = doc.data() as DayLog;
-    const cal = log.totals?.calories ?? log.entries?.reduce((s, e) => s + (e.nutrition?.calories ?? 0), 0) ?? 0;
-    if (cal > 0) allDates.push(log.date);
-  }
+  if (profileData?.streakCache?.computedDate === today) {
+    ({ longestStreak, totalLoggedDays, lastLoggedDate } = profileData.streakCache);
+    // The cache may have been computed earlier today, before today's first entry —
+    // reconcile with the already-fetched (bounded, always-fresh) 112-day window
+    // instead of re-scanning the whole collection again.
+    if (logMap.has(today) && lastLoggedDate !== today) {
+      totalLoggedDays += 1;
+      lastLoggedDate = today;
+    }
+    longestStreak = Math.max(longestStreak, currentStreak);
+  } else {
+    const allSnap = await db.collection(`users/${USER}/foodLog`)
+      .orderBy("date", "asc")
+      .get();
+    void recordReads(allSnap.size);
 
-  let longestStreak = 0;
-  let streak = 0;
-  let prevDate: string | null = null;
-  for (const date of allDates) {
-    if (prevDate) {
-      const gap = differenceInDays(parseISO(date), parseISO(prevDate));
-      if (gap === 1) {
-        streak++;
+    const allDates: string[] = [];
+    for (const doc of allSnap.docs) {
+      const log = doc.data() as DayLog;
+      const cal = log.totals?.calories ?? log.entries?.reduce((s, e) => s + (e.nutrition?.calories ?? 0), 0) ?? 0;
+      if (cal > 0) allDates.push(log.date);
+    }
+
+    longestStreak = 0;
+    let streak = 0;
+    let prevDate: string | null = null;
+    for (const date of allDates) {
+      if (prevDate) {
+        const gap = differenceInDays(parseISO(date), parseISO(prevDate));
+        streak = gap === 1 ? streak + 1 : 1;
       } else {
         streak = 1;
       }
-    } else {
-      streak = 1;
+      if (streak > longestStreak) longestStreak = streak;
+      prevDate = date;
     }
-    if (streak > longestStreak) longestStreak = streak;
-    prevDate = date;
+
+    totalLoggedDays = allDates.length;
+    lastLoggedDate  = allDates.length > 0 ? allDates[allDates.length - 1] : null;
+
+    await db.doc(`users/${USER}`).set({
+      streakCache: { longestStreak, totalLoggedDays, lastLoggedDate, computedDate: today },
+    }, { merge: true });
   }
 
   // Weekly avg days (last 4 weeks = 28 days)
@@ -117,13 +144,10 @@ export async function GET() {
   }
   const weeklyAvgDays = Math.round((loggedLast28 / 4) * 10) / 10;
 
-  // Last logged date
-  const lastLoggedDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
-
   return NextResponse.json({
     currentStreak,
     longestStreak,
-    totalLoggedDays: allDates.length,
+    totalLoggedDays,
     lastLoggedDate,
     heatmap,
     weeklyAvgDays,

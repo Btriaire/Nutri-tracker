@@ -1,7 +1,7 @@
 import type { FoodNutrition, FoodSearchResult, Lang, ServingOption } from "./types";
-import { getAdminFirestore } from "./firebase-admin";
+import ciqualFoods from "./data/ciqual-foods.json";
 
-// ─── Ciqual document shape (Firestore) ────────────────────────────────────────
+// ─── Ciqual document shape (static reference table) ───────────────────────────
 
 interface CiqualDoc {
   id: string;
@@ -21,27 +21,15 @@ interface CiqualDoc {
   };
 }
 
-// ─── Module-level Ciqual cache (loaded once per server process) ───────────────
-
-let _ciqualCache: CiqualDoc[] | null = null;
-let _ciqualPromise: Promise<CiqualDoc[]> | null = null;
+// ─── Ciqual data ────────────────────────────────────────────────────────────
+// Bundled as a static asset instead of a Firestore collection: it's a fixed
+// reference table (ANSES CIQUAL) that never changes at runtime, so querying it
+// from Firestore only cost ~3200 reads on every cold serverless start for no
+// benefit. Regenerate via `npx tsx scripts/export-ciqual-static.ts` if the
+// source table is ever re-imported.
 
 async function getCiqualCache(): Promise<CiqualDoc[]> {
-  if (_ciqualCache) return _ciqualCache;
-  if (!_ciqualPromise) {
-    _ciqualPromise = (async () => {
-      try {
-        const db   = getAdminFirestore();
-        const snap = await db.collection("ciqual_foods").get();
-        _ciqualCache = snap.docs.map((d) => d.data() as CiqualDoc);
-        return _ciqualCache;
-      } catch {
-        _ciqualPromise = null;
-        return [];
-      }
-    })();
-  }
-  return _ciqualPromise;
+  return ciqualFoods as CiqualDoc[];
 }
 
 // ─── Text helpers ─────────────────────────────────────────────────────────────
