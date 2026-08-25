@@ -727,47 +727,47 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
         {/* ── Banner ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-5">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-2.5 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="label-xs mb-0.5">Analyse</p>
               <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Progrès</h1>
             </div>
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-1.5 md:mt-1">
               <Link
                 href="/report"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(248,113,113,0.1)",
                   border: "1px solid rgba(248,113,113,0.3)",
                   color: "#f87171",
                 }}
               >
-                <IconFileTypePdf size={14} />
+                <IconFileTypePdf size={13} />
                 Rapport
               </Link>
               <button
                 onClick={() => setShowAlbum(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(245,158,11,0.1)",
                   border: "1px solid rgba(245,158,11,0.3)",
                   color: "#f59e0b",
                 }}
               >
-                <IconPhoto size={14} />
+                <IconPhoto size={13} />
                 Album
               </button>
               <button
                 onClick={() => setShowAnalysis(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(139,92,246,0.1)",
                   border: "1px solid rgba(139,92,246,0.3)",
                   color: "#a78bfa",
                 }}
               >
-                <IconBrain size={14} />
-                Analyse IA
+                <IconBrain size={13} />
+                Analyse
               </button>
             </div>
           </div>
