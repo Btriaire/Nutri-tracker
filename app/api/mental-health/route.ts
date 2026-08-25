@@ -22,6 +22,8 @@ export interface MentalHealthEntry {
   stressLevel?:  number; // 1–5 (1=très calme, 5=très stressé)
   energy?:       number;
   mood:          number;
+  moodX?:        number; // position sur le cercle humeur (-1..1, valence) — modèle Halcyon-PaLaMa
+  moodY?:        number; // position sur le cercle humeur (-1..1, arousal)
   anxiety?:      number;
   focus?:        number;
   sleepQuality?: number;

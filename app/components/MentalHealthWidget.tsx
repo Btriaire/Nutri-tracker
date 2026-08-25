@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconX, IconCheck, IconLoader2 } from "@tabler/icons-react";
 import type { MentalHealthEntry } from "@/app/api/mental-health/route";
+import MoodCircle, { moodValueFromPosition } from "@/app/components/MoodCircle";
 
 interface Props { date: string }
 
@@ -162,6 +163,12 @@ export default function MentalHealthWidget({ date }: Props) {
   const [mounted, setMounted] = useState(false);
 
   const [mood,    setMood]    = useState(3);
+  // Position on the mood circle (Halcyon-PaLaMa's "Humeur du jour" model:
+  // valence × arousal). Defaults to a neutral-arousal point on the valence
+  // axis so entries saved before this field existed (or pushed by the
+  // Halcyon-PaLaMa automated path, which only ever sends {mood, tags}) still
+  // place the ball somewhere sensible when reopened.
+  const [moodPos, setMoodPos] = useState({ x: 0, y: 0 });
   const [sliders, setSliders] = useState<SliderValues>(DEFAULT_SLIDERS);
   const [tags,    setTags]    = useState<string[]>([]);
   const [note,    setNote]    = useState("");
@@ -181,7 +188,13 @@ export default function MentalHealthWidget({ date }: Props) {
         if (d.entry) {
           const e = d.entry as unknown as Record<string, number>;
           setEntry(d.entry);
-          setMood(e.mood ?? 3);
+          const loadedMood = e.mood ?? 3;
+          setMood(loadedMood);
+          setMoodPos(
+            typeof e.moodX === "number" && typeof e.moodY === "number"
+              ? { x: e.moodX, y: e.moodY }
+              : { x: ((loadedMood - 1) / 4) * 2 - 1, y: 0 }
+          );
           setSliders({
             stressLevel:  e.stressLevel  ?? 5,
             anxiety:      e.anxiety      ?? 5,
@@ -195,6 +208,7 @@ export default function MentalHealthWidget({ date }: Props) {
         } else {
           setEntry(null);
           setMood(3);
+          setMoodPos({ x: 0, y: 0 });
           setSliders(DEFAULT_SLIDERS);
           setTags([]);
           setNote("");
@@ -211,6 +225,8 @@ export default function MentalHealthWidget({ date }: Props) {
       const body = {
         date,
         mood,
+        moodX: moodPos.x,
+        moodY: moodPos.y,
         ...sliders,
         notes: noteParts.join(" ") || undefined,
       };
@@ -226,12 +242,18 @@ export default function MentalHealthWidget({ date }: Props) {
         setTimeout(() => { setSaved(false); setOpen(false); }, 700);
       }
     } finally { setSaving(false); }
-  }, [date, mood, sliders, note, tags]);
+  }, [date, mood, moodPos, sliders, note, tags]);
 
   const handleClose = useCallback(() => {
     if (dirtyRef.current) handleSave();
     else setOpen(false);
   }, [handleSave]);
+
+  function handleMoodCircleChange(x: number, y: number) {
+    dirtyRef.current = true;
+    setMoodPos({ x, y });
+    setMood(moodValueFromPosition(x));
+  }
 
   function setSlider(key: SliderKey, val: number) {
     dirtyRef.current = true;
@@ -292,32 +314,11 @@ export default function MentalHealthWidget({ date }: Props) {
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
 
-            {/* ── Humeur: SVG faces ── */}
+            {/* ── Humeur: cercle valence × arousal (modèle Halcyon-PaLaMa) ── */}
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
-              <div className="flex justify-between gap-2">
-                {MOODS.map(({ val, label }) => (
-                  <motion.button
-                    key={val}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => { dirtyRef.current = true; setMood(val); }}
-                    className="flex-1 flex flex-col items-center gap-1.5 pt-3 pb-2.5 rounded-2xl transition-all"
-                    style={{
-                      background: mood === val ? `${moodColor(val)}1a` : "rgba(255,255,255,0.03)",
-                      border:     `1.5px solid ${mood === val ? moodColor(val) : "rgba(255,255,255,0.07)"}`,
-                      boxShadow:  mood === val ? `0 0 14px ${moodColor(val)}28` : "none",
-                    }}
-                  >
-                    <MoodFace val={val} size={40} active={mood === val} />
-                    <span style={{
-                      fontSize: 9, fontWeight: 700,
-                      color: mood === val ? moodColor(val) : "var(--text-muted)",
-                      letterSpacing: "0.02em",
-                    }}>
-                      {label}
-                    </span>
-                  </motion.button>
-                ))}
+              <div className="flex justify-center py-1">
+                <MoodCircle initialX={moodPos.x} initialY={moodPos.y} onChange={handleMoodCircleChange} />
               </div>
             </div>
 
