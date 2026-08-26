@@ -342,7 +342,10 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const [activityRes, sleepRes, sessionsRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
-      headers: { Authorization: auth, "Content-Type": "application/json" },
+      // no-cache: Google's frontend (ESF) has been observed serving a stale,
+      // much lower step total to repeated identical requests from the same
+      // caller — this instructs it to bypass any cached response.
+      headers: { Authorization: auth, "Content-Type": "application/json", "Cache-Control": "no-cache" },
       body: JSON.stringify({
         aggregateBy: [
           // Pinned to the same merged/estimated stream the Google Fit app itself
@@ -569,13 +572,26 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
   const data = await fetchDayData(userId, date);
   if (!data) return false;
 
-  const db = getAdminFirestore();
-  await db.doc(`users/${userId}/fitnessData/${date}`).set({
+  const db     = getAdminFirestore();
+  const docRef = db.doc(`users/${userId}/fitnessData/${date}`);
+
+  // Google's step aggregate has been observed occasionally returning a stale,
+  // much lower total on a re-sync of the same day (a Google-side caching
+  // quirk, not a real drop — steps/calories/active minutes only ever climb
+  // within a day). Never let a re-sync regress what's already stored.
+  const existing = (await docRef.get()).data()?.googleFit as
+    | { steps?: number; activeCaloriesBurned?: number; activeMinutes?: number }
+    | undefined;
+  const steps               = Math.max(data.steps, existing?.steps ?? 0);
+  const activeCaloriesBurned = Math.max(data.activeCaloriesBurned, existing?.activeCaloriesBurned ?? 0);
+  const activeMinutes       = Math.max(data.activeMinutes, existing?.activeMinutes ?? 0);
+
+  await docRef.set({
     date,
     googleFit: {
-      steps:               data.steps,
-      activeCaloriesBurned: data.activeCaloriesBurned,
-      activeMinutes:       data.activeMinutes,
+      steps,
+      activeCaloriesBurned,
+      activeMinutes,
       heartRateAvg:        data.heartRateAvg,
       weightKg:            data.weightKg,
       sleepMinutes:        data.sleepMinutes,
