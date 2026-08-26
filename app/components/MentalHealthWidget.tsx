@@ -116,46 +116,12 @@ const MOODS = [
   { val: 5, label: "Super" },
 ];
 
-// ── Sliders ───────────────────────────────────────────────────────────────────
-const SLIDERS = [
-  { key: "stressLevel",  label: "Stress",         emoji: "😤", color: "#a855f7", lowLabel: "Calme",    highLabel: "Stressé"   },
-  { key: "anxiety",      label: "Anxiété",         emoji: "😰", color: "#818cf8", lowLabel: "Serein",   highLabel: "Anxieux"   },
-  { key: "energy",       label: "Énergie",         emoji: "⚡", color: "#fbbf24", lowLabel: "À plat",  highLabel: "Chargé"    },
-  { key: "focus",        label: "Concentration",   emoji: "🎯", color: "#06b6d4", lowLabel: "Dispersé", highLabel: "Focalisé" },
-  { key: "social",       label: "Social",          emoji: "👥", color: "#22c55e", lowLabel: "Isolé",    highLabel: "Connecté"  },
-  { key: "sleepQuality", label: "Sommeil",         emoji: "🌙", color: "#60a5fa", lowLabel: "Mauvais",  highLabel: "Reposant"  },
-] as const;
-
-type SliderKey = typeof SLIDERS[number]["key"];
-type SliderValues = Record<SliderKey, number>;
-
 // ── Emotion tags ──────────────────────────────────────────────────────────────
 const EMOTION_TAGS = [
   "Calme",      "Heureux",      "Motivé",     "Reconnaissant",
   "Confiant",   "Serein",       "Anxieux",    "Stressé",
   "Fatigué",    "Irrité",       "Triste",     "Dépassé",
 ];
-
-const DEFAULT_SLIDERS: SliderValues = {
-  stressLevel: 5, anxiety: 5, energy: 5, focus: 5, social: 5, sleepQuality: 5,
-};
-
-// ── Mini score sparkline for summary card ─────────────────────────────────────
-function ScoreSparkline({ entry }: { entry: Partial<MentalHealthEntry> }) {
-  const e = entry as unknown as Record<string, number>;
-  return (
-    <div className="flex items-end gap-[3px]" style={{ height: 22 }}>
-      {SLIDERS.map((s) => {
-        const v = e[s.key] ?? 5;
-        const pct = Math.max(15, (v / 10) * 100);
-        return (
-          <div key={s.key} className="w-[5px] rounded-sm flex-shrink-0"
-            style={{ height: `${pct}%`, background: s.color, opacity: 0.75 }} />
-        );
-      })}
-    </div>
-  );
-}
 
 export default function MentalHealthWidget({ date }: Props) {
   const [entry,   setEntry]   = useState<Partial<MentalHealthEntry> | null>(null);
@@ -169,7 +135,6 @@ export default function MentalHealthWidget({ date }: Props) {
   // Halcyon-PaLaMa automated path, which only ever sends {mood, tags}) still
   // place the ball somewhere sensible when reopened.
   const [moodPos, setMoodPos] = useState({ x: 0, y: 0 });
-  const [sliders, setSliders] = useState<SliderValues>(DEFAULT_SLIDERS);
   const [tags,    setTags]    = useState<string[]>([]);
   const [note,    setNote]    = useState("");
 
@@ -195,21 +160,12 @@ export default function MentalHealthWidget({ date }: Props) {
               ? { x: e.moodX, y: e.moodY }
               : { x: ((loadedMood - 1) / 4) * 2 - 1, y: 0 }
           );
-          setSliders({
-            stressLevel:  e.stressLevel  ?? 5,
-            anxiety:      e.anxiety      ?? 5,
-            energy:       e.energy       ?? 5,
-            focus:        e.focus        ?? 5,
-            social:       e.social       ?? 5,
-            sleepQuality: e.sleepQuality ?? 5,
-          });
           setNote(d.entry.notes ?? "");
           setTags([]);
         } else {
           setEntry(null);
           setMood(3);
           setMoodPos({ x: 0, y: 0 });
-          setSliders(DEFAULT_SLIDERS);
           setTags([]);
           setNote("");
         }
@@ -227,7 +183,6 @@ export default function MentalHealthWidget({ date }: Props) {
         mood,
         moodX: moodPos.x,
         moodY: moodPos.y,
-        ...sliders,
         notes: noteParts.join(" ") || undefined,
       };
       const res = await fetch("/api/mental-health", {
@@ -242,7 +197,7 @@ export default function MentalHealthWidget({ date }: Props) {
         setTimeout(() => { setSaved(false); setOpen(false); }, 700);
       }
     } finally { setSaving(false); }
-  }, [date, mood, moodPos, sliders, note, tags]);
+  }, [date, mood, moodPos, note, tags]);
 
   const handleClose = useCallback(() => {
     if (dirtyRef.current) handleSave();
@@ -253,11 +208,6 @@ export default function MentalHealthWidget({ date }: Props) {
     dirtyRef.current = true;
     setMoodPos({ x, y });
     setMood(moodValueFromPosition(x));
-  }
-
-  function setSlider(key: SliderKey, val: number) {
-    dirtyRef.current = true;
-    setSliders(prev => ({ ...prev, [key]: val }));
   }
 
   function toggleTag(tag: string) {
@@ -319,72 +269,6 @@ export default function MentalHealthWidget({ date }: Props) {
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
               <div className="flex justify-center py-1">
                 <MoodCircle initialX={moodPos.x} initialY={moodPos.y} onChange={handleMoodCircleChange} />
-              </div>
-            </div>
-
-            {/* ── Sliders ── */}
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>Indicateurs (1 → 10)</p>
-              <div className="space-y-5">
-                {SLIDERS.map((sl) => {
-                  const val = sliders[sl.key];
-                  const pct = (val - 1) / 9 * 100;
-                  return (
-                    <div key={sl.key}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span style={{ fontSize: 14, lineHeight: 1 }}>{sl.emoji}</span>
-                          <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
-                            {sl.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                            {val <= 3 ? sl.lowLabel : val >= 8 ? sl.highLabel : ""}
-                          </span>
-                          <span
-                            className="text-[13px] font-bold tabular-nums w-5 text-right"
-                            style={{ color: sl.color }}
-                          >
-                            {val}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Track + thumb */}
-                      <div className="relative h-7 flex items-center">
-                        {/* Background track */}
-                        <div className="absolute inset-x-0 h-[5px] rounded-full overflow-hidden"
-                          style={{ background: "rgba(255,255,255,0.07)" }}>
-                          <motion.div
-                            className="h-full rounded-full"
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.08 }}
-                            style={{ background: `linear-gradient(to right, ${sl.color}55, ${sl.color})` }}
-                          />
-                        </div>
-                        {/* Range input overlay */}
-                        <input
-                          type="range"
-                          min={1} max={10} step={1}
-                          value={val}
-                          onChange={(e) => setSlider(sl.key, Number(e.target.value))}
-                          className="mh-slider"
-                          style={{ "--thumb-color": sl.color } as React.CSSProperties}
-                        />
-                      </div>
-
-                      <div className="flex justify-between mt-0.5">
-                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                          <span key={n} className="text-[8px] tabular-nums"
-                            style={{ color: n === val ? sl.color : "rgba(255,255,255,0.12)", fontWeight: n === val ? 700 : 400 }}>
-                            {n}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
 
@@ -498,9 +382,6 @@ export default function MentalHealthWidget({ date }: Props) {
             : <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Comment tu te sens ?</p>
           }
         </div>
-
-        {/* Mini sparkline bars when entry exists */}
-        {entry && <ScoreSparkline entry={entry} />}
       </button>
     </>
   );
