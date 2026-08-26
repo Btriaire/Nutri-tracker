@@ -118,7 +118,14 @@ export async function POST(req: NextRequest) {
       : [];
 
     const db = getAdminFirestore();
-    const date = format(new Date(), "yyyy-MM-dd");
+    // Prefer the caller's own local calendar date over this server's UTC
+    // clock — this route runs in UTC, which lands a push made near local
+    // midnight (west of Greenwich) under the wrong day otherwise. Falls
+    // back to server-UTC "today" only for older callers that don't send one.
+    const date =
+      typeof body.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date)
+        ? body.date
+        : format(new Date(), "yyyy-MM-dd");
     // {merge: true} is what keeps this quick push from wiping out a
     // same-day detailed entry (stress/anxiety/focus/sleep/social) made via
     // the manual widget, and vice versa — see measurements/route.ts for the
