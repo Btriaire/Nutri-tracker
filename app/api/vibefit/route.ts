@@ -170,14 +170,19 @@ async function getNutritionForDay(req: NextRequest) {
   }
   const data = snap.data()!;
   const entries = ((data.entries ?? []) as Array<Record<string, unknown>>).filter((e) => e.source !== "vibefit");
+  // Entries logged in NutriTracker's own UI carry a nested `nutrition` object
+  // (FoodEntry shape); only vibefit-pushed entries (excluded above) are flat.
   const totals = entries.reduce(
-    (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number }, e) => ({
-      calories: acc.calories + (Number(e.calories) || 0),
-      proteinG: acc.proteinG + (Number(e.proteinG) || 0),
-      carbsG: acc.carbsG + (Number(e.carbsG) || 0),
-      fatG: acc.fatG + (Number(e.fatG) || 0),
-      sugarG: acc.sugarG + (Number(e.sugarG) || 0),
-    }),
+    (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number }, e) => {
+      const n = (e.nutrition as Record<string, unknown> | undefined) ?? e;
+      return {
+        calories: acc.calories + (Number(n.calories) || 0),
+        proteinG: acc.proteinG + (Number(n.proteinG) || 0),
+        carbsG: acc.carbsG + (Number(n.carbsG) || 0),
+        fatG: acc.fatG + (Number(n.fatG) || 0),
+        sugarG: acc.sugarG + (Number(n.sugarG) || 0),
+      };
+    },
     { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
   );
   return NextResponse.json({ date, ...totals, entryCount: entries.length });
