@@ -10,6 +10,7 @@ import {
   IconLayoutDashboard, IconNotebook, IconHeartbeat,
   IconFlame, IconTrendingUp, IconSettings2, IconLogout,
 } from "@tabler/icons-react";
+import { playNavSound } from "@/app/lib/sounds";
 
 const TABS = [
   { href: "/hub",       Icon: IconLayoutDashboard, label: "Accueil",  color: "#f97316", bg: "rgba(249,115,22,0.14)" },
@@ -75,6 +76,7 @@ export default function Nav() {
             <Link
               key={href}
               href={href}
+              onClick={() => { if (!active) playNavSound(); }}
               className="flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-all"
             >
               <div
@@ -114,6 +116,7 @@ export default function Nav() {
           const active = path.startsWith(href);
           return (
             <Link key={href} href={href}
+              onClick={() => { if (!active) playNavSound(); }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all"
               style={{ background: active ? bg : "transparent", color: active ? color : "var(--text-secondary)" }}
             >
