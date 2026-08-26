@@ -42,10 +42,43 @@ interface ActivityPush {
   caloriesBurned?: number;
 }
 
+// GET ?type=googlefit&days=N — last N days of Google Fit summaries already
+// synced into fitnessData/{date}.googleFit (steps, sleep, active calories,
+// heart rate, workout sessions). VibeFit has no Google OAuth of its own —
+// it reads whatever nutri-tracker already pulled, same source-of-truth idea
+// as the weight lookup below.
+async function getGoogleFitRange(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const days = Math.min(30, Math.max(1, Number(searchParams.get("days")) || 7));
+  const db = getAdminFirestore();
+  const today = new Date();
+
+  const out: Array<{ date: string } & Record<string, unknown>> = [];
+  for (let i = 0; i < days; i++) {
+    const date = format(subDays(today, i), "yyyy-MM-dd");
+    const snap = await db.doc(`users/${USER}/fitnessData/${date}`).get();
+    const gf = snap.exists ? snap.data()!.googleFit : null;
+    if (!gf) continue;
+    out.push({
+      date,
+      steps: gf.steps ?? 0,
+      activeCaloriesBurned: gf.activeCaloriesBurned ?? 0,
+      activeMinutes: gf.activeMinutes ?? 0,
+      heartRateAvg: gf.heartRateAvg ?? null,
+      sleepMinutes: gf.sleepMinutes ?? null,
+      sessions: gf.sessions ?? [],
+    });
+  }
+  return NextResponse.json({ days: out });
+}
+
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  if (searchParams.get("type") === "googlefit") return getGoogleFitRange(req);
 
   const db = getAdminFirestore();
   const today = new Date();
