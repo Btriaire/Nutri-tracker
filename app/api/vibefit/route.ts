@@ -30,6 +30,16 @@ interface FoodPush {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
+  sugarG?: number;
+}
+
+interface ActivityPush {
+  type: "activity";
+  date?: string;
+  name: string;
+  activityType: number; // Google Fit activity code, same convention as /api/activity
+  durationMin: number;
+  caloriesBurned?: number;
 }
 
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
@@ -65,7 +75,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as WeightPush | FoodPush;
+  const body = (await req.json()) as WeightPush | FoodPush | ActivityPush;
   const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : format(new Date(), "yyyy-MM-dd");
   const db = getAdminFirestore();
 
@@ -97,6 +107,7 @@ export async function POST(req: NextRequest) {
       carbsG: body.carbsG ?? 0,
       fatG: body.fatG ?? 0,
       fiberG: 0,
+      sugarG: body.sugarG ?? 0,
       source: "vibefit",
       loggedAt: Timestamp.now(),
     };
@@ -105,24 +116,45 @@ export async function POST(req: NextRequest) {
       const snap = await tx.get(ref);
       const existing = snap.exists
         ? snap.data()!
-        : { date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 } };
+        : { date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sugarG: 0 } };
 
       const entries = [...(existing.entries ?? []), entry];
       const totals = entries.reduce(
-        (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number }, e: typeof entry) => ({
+        (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; sugarG: number }, e: typeof entry) => ({
           calories: acc.calories + (e.calories ?? 0),
           proteinG: acc.proteinG + (e.proteinG ?? 0),
           carbsG: acc.carbsG + (e.carbsG ?? 0),
           fatG: acc.fatG + (e.fatG ?? 0),
           fiberG: acc.fiberG + (e.fiberG ?? 0),
+          sugarG: acc.sugarG + (e.sugarG ?? 0),
         }),
-        { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 },
+        { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sugarG: 0 },
       );
 
       tx.set(ref, { ...existing, date, entries, totals, updatedAt: Timestamp.now() });
     });
 
     return NextResponse.json({ ok: true, entry });
+  }
+
+  if (body.type === "activity") {
+    const durationMin = Math.max(1, Number(body.durationMin) || 1);
+    if (!body.name) {
+      return NextResponse.json({ error: "Invalid activity" }, { status: 400 });
+    }
+    const id = crypto.randomUUID();
+    const activity = {
+      id,
+      date,
+      name: body.name,
+      activityType: Number(body.activityType) || 0,
+      durationMin,
+      caloriesBurned: body.caloriesBurned != null ? Number(body.caloriesBurned) : null,
+      source: "vibefit",
+      loggedAt: Timestamp.now(),
+    };
+    await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
+    return NextResponse.json({ ok: true, activity });
   }
 
   return NextResponse.json({ error: "Unknown type" }, { status: 400 });
