@@ -152,6 +152,37 @@ async function getActivitiesRange(req: NextRequest) {
   return NextResponse.json({ activities });
 }
 
+// GET ?type=nutrition&date=YYYY-MM-DD — food logged directly in NutriTracker
+// for that day (calories/glucides+sucres/protéines/lipides), excluding
+// entries VibeFit itself pushed (source==="vibefit") — those already exist
+// in VibeFit's own local nutrition store, so counting them again here would
+// double them when VibeFit adds this to its own day total.
+async function getNutritionForDay(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const date = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
+  const db = getAdminFirestore();
+  const snap = await db.doc(`users/${USER}/foodLog/${date}`).get();
+  if (!snap.exists) {
+    return NextResponse.json({ date, calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0, entryCount: 0 });
+  }
+  const data = snap.data()!;
+  const entries = ((data.entries ?? []) as Array<Record<string, unknown>>).filter((e) => e.source !== "vibefit");
+  const totals = entries.reduce(
+    (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number }, e) => ({
+      calories: acc.calories + (Number(e.calories) || 0),
+      proteinG: acc.proteinG + (Number(e.proteinG) || 0),
+      carbsG: acc.carbsG + (Number(e.carbsG) || 0),
+      fatG: acc.fatG + (Number(e.fatG) || 0),
+      sugarG: acc.sugarG + (Number(e.sugarG) || 0),
+    }),
+    { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
+  );
+  return NextResponse.json({ date, ...totals, entryCount: entries.length });
+}
+
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
@@ -160,6 +191,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   if (searchParams.get("type") === "googlefit") return getGoogleFitRange(req);
   if (searchParams.get("type") === "activities") return getActivitiesRange(req);
+  if (searchParams.get("type") === "nutrition") return getNutritionForDay(req);
 
   const db = getAdminFirestore();
   const today = new Date();
