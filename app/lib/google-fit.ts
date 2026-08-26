@@ -342,12 +342,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const [activityRes, sleepRes, sessionsRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
-      // "Connection: close" forces a fresh TCP connection instead of reusing a
-      // pooled keep-alive one — Vercel's warm serverless instances were
-      // observed staying pinned to a single Google frontend replica that
-      // served a stale "estimated_steps" merge (undercounting by 5000+ steps)
-      // while unpinned clients got the current value from the same account.
-      headers: { Authorization: auth, "Content-Type": "application/json", Connection: "close" },
+      headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
         aggregateBy: [
           // Pinned to the same merged/estimated stream the Google Fit app itself
