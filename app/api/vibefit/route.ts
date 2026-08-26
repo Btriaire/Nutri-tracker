@@ -72,25 +72,41 @@ async function getGoogleFitRange(req: NextRequest) {
   return NextResponse.json({ days: out });
 }
 
-// GET ?type=activities&days=N — manualActivities in range, excluding ones
-// VibeFit itself pushed (source==="vibefit") so a pull never re-imports what
-// VibeFit already has locally. Picks up activities logged directly in
-// NutriTracker's own UI (app/api/activity, app/api/gym) that VibeFit has no
-// other way to see.
+interface RemoteActivity {
+  id: string;
+  date: string;
+  name: string;
+  activityType: number;
+  durationMin: number;
+  caloriesBurned: number | null;
+  source: string;
+  startMs: number | null;
+  distanceM: number | null;
+  avgSpeedKmh: number | null;
+  heartRateAvg: number | null;
+  elevationGainM: number | null;
+}
+
+// GET ?type=activities&days=N — the real activity history VibeFit should
+// import: mostly Google Fit/HealthKit workout sessions synced into
+// fitnessData/{date}.googleFit.sessions (real distance/speed/HR, not just a
+// name+duration), plus any manualActivities entries typed directly into
+// NutriTracker's own UI. Both exclude source==="vibefit" so a pull never
+// re-imports what VibeFit pushed here itself.
 async function getActivitiesRange(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(90, Math.max(1, Number(searchParams.get("days")) || 30));
   const db = getAdminFirestore();
-  const fromDate = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
+  const today = new Date();
+  const fromDate = format(subDays(today, days - 1), "yyyy-MM-dd");
 
   // No orderBy, same defensive pattern as app/api/activity/route.ts — avoids
   // a composite index requirement; sorted in JS instead.
-  const snap = await db
+  const manualSnap = await db
     .collection(`users/${USER}/manualActivities`)
     .where("date", ">=", fromDate)
     .get();
-
-  const activities = snap.docs
+  const manual: RemoteActivity[] = manualSnap.docs
     .map((d) => d.data())
     .filter((a) => a.source !== "vibefit")
     .map((a) => ({
@@ -101,9 +117,38 @@ async function getActivitiesRange(req: NextRequest) {
       durationMin: a.durationMin as number,
       caloriesBurned: (a.caloriesBurned as number | null) ?? null,
       source: (a.source as string | undefined) ?? "nutritracker",
-    }))
-    .sort((a, b) => b.date.localeCompare(a.date));
+      startMs: null,
+      distanceM: null,
+      avgSpeedKmh: null,
+      heartRateAvg: null,
+      elevationGainM: null,
+    }));
 
+  const googleFit: RemoteActivity[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = format(subDays(today, i), "yyyy-MM-dd");
+    const snap = await db.doc(`users/${USER}/fitnessData/${date}`).get();
+    const sessions = snap.exists ? (snap.data()?.googleFit?.sessions as Array<Record<string, unknown>> | undefined) : undefined;
+    if (!Array.isArray(sessions)) continue;
+    for (const s of sessions) {
+      googleFit.push({
+        id: String(s.id),
+        date,
+        name: (s.name as string) || "Activité",
+        activityType: Number(s.activityType) || 0,
+        durationMin: Math.max(1, Math.round(Number(s.durationMin) || 0)),
+        caloriesBurned: (s.calories as number | null) ?? null,
+        source: "googlefit",
+        startMs: (s.startMs as number | null) ?? null,
+        distanceM: (s.distanceM as number | null) ?? null,
+        avgSpeedKmh: (s.avgSpeedKmh as number | null) ?? null,
+        heartRateAvg: (s.heartRateAvg as number | null) ?? null,
+        elevationGainM: (s.elevationGainM as number | null) ?? null,
+      });
+    }
+  }
+
+  const activities = [...manual, ...googleFit].sort((a, b) => b.date.localeCompare(a.date));
   return NextResponse.json({ activities });
 }
 
