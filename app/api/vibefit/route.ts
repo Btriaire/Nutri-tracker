@@ -72,6 +72,41 @@ async function getGoogleFitRange(req: NextRequest) {
   return NextResponse.json({ days: out });
 }
 
+// GET ?type=activities&days=N — manualActivities in range, excluding ones
+// VibeFit itself pushed (source==="vibefit") so a pull never re-imports what
+// VibeFit already has locally. Picks up activities logged directly in
+// NutriTracker's own UI (app/api/activity, app/api/gym) that VibeFit has no
+// other way to see.
+async function getActivitiesRange(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const days = Math.min(90, Math.max(1, Number(searchParams.get("days")) || 30));
+  const db = getAdminFirestore();
+  const fromDate = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
+
+  // No orderBy, same defensive pattern as app/api/activity/route.ts — avoids
+  // a composite index requirement; sorted in JS instead.
+  const snap = await db
+    .collection(`users/${USER}/manualActivities`)
+    .where("date", ">=", fromDate)
+    .get();
+
+  const activities = snap.docs
+    .map((d) => d.data())
+    .filter((a) => a.source !== "vibefit")
+    .map((a) => ({
+      id: a.id as string,
+      date: a.date as string,
+      name: a.name as string,
+      activityType: a.activityType as number,
+      durationMin: a.durationMin as number,
+      caloriesBurned: (a.caloriesBurned as number | null) ?? null,
+      source: (a.source as string | undefined) ?? "nutritracker",
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  return NextResponse.json({ activities });
+}
+
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
@@ -79,6 +114,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   if (searchParams.get("type") === "googlefit") return getGoogleFitRange(req);
+  if (searchParams.get("type") === "activities") return getActivitiesRange(req);
 
   const db = getAdminFirestore();
   const today = new Date();
