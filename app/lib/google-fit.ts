@@ -345,7 +345,11 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
         aggregateBy: [
-          { dataTypeName: "com.google.step_count.delta" },    // 0
+          // Pinned to the same merged/estimated stream the Google Fit app itself
+          // reads for the step count it displays — without a dataSourceId, the
+          // API aggregates raw per-source deltas instead, which under-counts
+          // whenever more than one source (phone + watch, etc.) contributes.
+          { dataTypeName: "com.google.step_count.delta", dataSourceId: "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps" }, // 0
           { dataTypeName: "com.google.calories.expended" },   // 1
           { dataTypeName: "com.google.heart_rate.bpm" },      // 2
           { dataTypeName: "com.google.weight" },              // 3
