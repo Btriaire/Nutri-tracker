@@ -188,12 +188,15 @@ async function getNutritionForDay(req: NextRequest) {
   // Répartition par repas (breakfast/lunch/dinner/snacks) — VibeFit n'avait
   // que le total brut jusqu'ici, pas de quoi afficher "au moins les
   // catégories" côté Diet Deficit.
-  const byMeal: Record<string, { calories: number; items: string[] }> = {};
+  const byMeal: Record<string, { calories: number; proteinG: number; carbsG: number; fatG: number; items: string[] }> = {};
   for (const e of entries) {
     const meal = typeof e.meal === "string" ? e.meal : "snacks";
     const n = (e.nutrition as Record<string, unknown> | undefined) ?? e;
-    const entry = byMeal[meal] ?? { calories: 0, items: [] };
+    const entry = byMeal[meal] ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, items: [] };
     entry.calories += Number(n.calories) || 0;
+    entry.proteinG += Number(n.proteinG) || 0;
+    entry.carbsG += Number(n.carbsG) || 0;
+    entry.fatG += Number(n.fatG) || 0;
     if (typeof e.name === "string") entry.items.push(e.name);
     byMeal[meal] = entry;
   }
