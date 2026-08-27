@@ -185,7 +185,19 @@ async function getNutritionForDay(req: NextRequest) {
     },
     { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
   );
-  return NextResponse.json({ date, ...totals, entryCount: entries.length });
+  // Répartition par repas (breakfast/lunch/dinner/snacks) — VibeFit n'avait
+  // que le total brut jusqu'ici, pas de quoi afficher "au moins les
+  // catégories" côté Diet Deficit.
+  const byMeal: Record<string, { calories: number; items: string[] }> = {};
+  for (const e of entries) {
+    const meal = typeof e.meal === "string" ? e.meal : "snacks";
+    const n = (e.nutrition as Record<string, unknown> | undefined) ?? e;
+    const entry = byMeal[meal] ?? { calories: 0, items: [] };
+    entry.calories += Number(n.calories) || 0;
+    if (typeof e.name === "string") entry.items.push(e.name);
+    byMeal[meal] = entry;
+  }
+  return NextResponse.json({ date, ...totals, entryCount: entries.length, byMeal });
 }
 
 // GET ?type=nutrition-range&days=N — same totals as getNutritionForDay, but
@@ -219,6 +231,42 @@ async function getNutritionRange(req: NextRequest) {
       { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
     );
     out.push({ date, ...totals, entryCount: entries.length });
+  }
+  return NextResponse.json({ days: out });
+}
+
+// GET ?type=cardiac&days=N — FC repos/moyenne (Apple Health en priorité,
+// sinon Withings) et tension artérielle (Withings) des N derniers jours où
+// au moins une de ces valeurs est connue. VibeFit n'a ni capteur cardiaque
+// continu ni tensiomètre connecté ; tout vient d'intégrations déjà actives
+// côté NutriTracker.
+async function getCardiacRange(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const days = Math.min(60, Math.max(1, Number(searchParams.get("days")) || 14));
+  const db = getAdminFirestore();
+  const today = new Date();
+
+  const out: Array<{
+    date: string;
+    heartRateAvg: number | null;
+    heartRateResting: number | null;
+    systolicBP: number | null;
+    diastolicBP: number | null;
+    source: string;
+  }> = [];
+  for (let i = 0; i < days; i++) {
+    const date = format(subDays(today, i), "yyyy-MM-dd");
+    const snap = await db.doc(`users/${USER}/fitnessData/${date}`).get();
+    if (!snap.exists) continue;
+    const data = snap.data()!;
+    const ah = data.appleHealth;
+    const wi = data.withings;
+    const heartRateAvg = ah?.heartRateAvg ?? null;
+    const heartRateResting = ah?.heartRateResting ?? wi?.restingHR ?? null;
+    const systolicBP = wi?.systolicBP ?? null;
+    const diastolicBP = wi?.diastolicBP ?? null;
+    if (heartRateAvg == null && heartRateResting == null && systolicBP == null && diastolicBP == null) continue;
+    out.push({ date, heartRateAvg, heartRateResting, systolicBP, diastolicBP, source: ah ? "apple-health" : "withings" });
   }
   return NextResponse.json({ days: out });
 }
@@ -257,6 +305,7 @@ export async function GET(req: NextRequest) {
   if (searchParams.get("type") === "nutrition") return getNutritionForDay(req);
   if (searchParams.get("type") === "nutrition-range") return getNutritionRange(req);
   if (searchParams.get("type") === "mood") return getMoodForDay(req);
+  if (searchParams.get("type") === "cardiac") return getCardiacRange(req);
 
   const db = getAdminFirestore();
   const today = new Date();

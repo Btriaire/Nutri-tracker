@@ -15,10 +15,23 @@ function getBaseUrl() {
   return "http://localhost:3000";
 }
 
-function computeRange(period: "7d" | "30d") {
-  const to   = format(new Date(), "yyyy-MM-dd");
-  const from = format(subDays(new Date(), period === "7d" ? 6 : 29), "yyyy-MM-dd");
-  return { from, to };
+type Period = "7d" | "30d" | "90d" | "all";
+const PERIOD_DAYS: Record<Exclude<Period, "all">, number> = { "7d": 6, "30d": 29, "90d": 89 };
+
+async function computeRange(period: Period): Promise<{ from: string; to: string }> {
+  const to = format(new Date(), "yyyy-MM-dd");
+
+  if (period === "all") {
+    const earliest = await getAdminFirestore()
+      .collection(`users/${USER_ID}/foodLog`)
+      .orderBy("date", "asc")
+      .limit(1)
+      .get();
+    const from = earliest.empty ? format(subDays(new Date(), 364), "yyyy-MM-dd") : earliest.docs[0].data().date as string;
+    return { from, to };
+  }
+
+  return { from: format(subDays(new Date(), PERIOD_DAYS[period]), "yyyy-MM-dd"), to };
 }
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
@@ -36,8 +49,11 @@ export async function POST(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const period = (searchParams.get("period") === "30d" ? "30d" : "7d") as "7d" | "30d";
-  const { from, to } = computeRange(period);
+  const periodParam = searchParams.get("period");
+  const period: Period = (["7d", "30d", "90d", "all"] as const).includes(periodParam as Period)
+    ? (periodParam as Period)
+    : "7d";
+  const { from, to } = await computeRange(period);
 
   const secret = process.env.REPORT_CRON_SECRET;
   if (!secret) {

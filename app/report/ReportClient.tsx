@@ -8,6 +8,7 @@ import {
 } from "@tabler/icons-react";
 import type { ReportData } from "@/app/lib/report-builder";
 import ReportDocument from "./ReportDocument";
+import PodcastButton from "./PodcastButton";
 
 // ─── Period presets ───────────────────────────────────────────────────────────
 
@@ -149,6 +150,8 @@ export default function ReportClient() {
               <IconAlertCircle size={13} /> Erreur de génération. Vérifiez la connexion et réessayez.
             </div>
           )}
+
+          <PodcastButton />
 
           <a href="/report/history"
             className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-medium mb-4"
