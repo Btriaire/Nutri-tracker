@@ -188,6 +188,41 @@ async function getNutritionForDay(req: NextRequest) {
   return NextResponse.json({ date, ...totals, entryCount: entries.length });
 }
 
+// GET ?type=nutrition-range&days=N — same totals as getNutritionForDay, but
+// for each of the last N days in one call, so VibeFit's Progression overview
+// doesn't have to make N separate requests just to plot a trend.
+async function getNutritionRange(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const days = Math.min(30, Math.max(1, Number(searchParams.get("days")) || 14));
+  const db = getAdminFirestore();
+  const today = new Date();
+
+  const out: Array<{ date: string; calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number; entryCount: number }> = [];
+  for (let i = 0; i < days; i++) {
+    const date = format(subDays(today, i), "yyyy-MM-dd");
+    const snap = await db.doc(`users/${USER}/foodLog/${date}`).get();
+    if (!snap.exists) continue;
+    const data = snap.data()!;
+    const entries = ((data.entries ?? []) as Array<Record<string, unknown>>).filter((e) => e.source !== "vibefit");
+    if (entries.length === 0) continue;
+    const totals = entries.reduce(
+      (acc: { calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number }, e) => {
+        const n = (e.nutrition as Record<string, unknown> | undefined) ?? e;
+        return {
+          calories: acc.calories + (Number(n.calories) || 0),
+          proteinG: acc.proteinG + (Number(n.proteinG) || 0),
+          carbsG: acc.carbsG + (Number(n.carbsG) || 0),
+          fatG: acc.fatG + (Number(n.fatG) || 0),
+          sugarG: acc.sugarG + (Number(n.sugarG) || 0),
+        };
+      },
+      { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
+    );
+    out.push({ date, ...totals, entryCount: entries.length });
+  }
+  return NextResponse.json({ days: out });
+}
+
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
@@ -197,6 +232,7 @@ export async function GET(req: NextRequest) {
   if (searchParams.get("type") === "googlefit") return getGoogleFitRange(req);
   if (searchParams.get("type") === "activities") return getActivitiesRange(req);
   if (searchParams.get("type") === "nutrition") return getNutritionForDay(req);
+  if (searchParams.get("type") === "nutrition-range") return getNutritionRange(req);
 
   const db = getAdminFirestore();
   const today = new Date();
