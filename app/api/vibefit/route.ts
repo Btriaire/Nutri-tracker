@@ -223,6 +223,29 @@ async function getNutritionRange(req: NextRequest) {
   return NextResponse.json({ days: out });
 }
 
+// GET ?type=mood&date=YYYY-MM-DD — today's mood entry from NutriTracker's
+// "Humeur du jour" widget (users/owner/mentalHealth/{date}), read directly
+// via admin Firestore since app/api/mental-health/route.ts is session-gated
+// and has no server-to-server path — same rationale as every other read here.
+async function getMoodForDay(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const date = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
+  const db = getAdminFirestore();
+  const snap = await db.doc(`users/${USER}/mentalHealth/${date}`).get();
+  if (!snap.exists) return NextResponse.json({ date, mood: null, stressLevel: null, energy: null, tags: [] });
+  const data = snap.data()!;
+  return NextResponse.json({
+    date,
+    mood: data.mood ?? null,
+    stressLevel: data.stressLevel ?? null,
+    energy: data.energy ?? null,
+    tags: Array.isArray(data.tags) ? data.tags : [],
+  });
+}
+
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
@@ -233,6 +256,7 @@ export async function GET(req: NextRequest) {
   if (searchParams.get("type") === "activities") return getActivitiesRange(req);
   if (searchParams.get("type") === "nutrition") return getNutritionForDay(req);
   if (searchParams.get("type") === "nutrition-range") return getNutritionRange(req);
+  if (searchParams.get("type") === "mood") return getMoodForDay(req);
 
   const db = getAdminFirestore();
   const today = new Date();
