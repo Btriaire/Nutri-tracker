@@ -6,7 +6,7 @@ import { MOOD_WORDS, MOOD_CENTER_LABEL, nearestMoodWord } from "@/app/lib/moodWo
 const SIZE = 210;
 const RADIUS = SIZE / 2;
 const BALL_SIZE = 24;
-const DOT_SIZE = 4;
+const DOT_SIZE = 3;
 
 // Collapses the 2D position back down to the app's existing 1–5 mood scale
 // (dashboard indicator, trend chart, Halcyon-PaLaMa auto-push all expect
@@ -106,10 +106,10 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
             >
               <div
                 style={{
-                  width: active ? DOT_SIZE + 2 : DOT_SIZE,
-                  height: active ? DOT_SIZE + 2 : DOT_SIZE,
+                  width: active ? DOT_SIZE + 2.5 : DOT_SIZE,
+                  height: active ? DOT_SIZE + 2.5 : DOT_SIZE,
                   background: active ? ballColor : "var(--text-muted)",
-                  opacity: active ? 1 : 0.4,
+                  opacity: active ? 1 : 0.35,
                   transition: "all 0.2s ease",
                 }}
                 className="rounded-full"

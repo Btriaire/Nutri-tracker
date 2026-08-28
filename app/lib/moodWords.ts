@@ -15,9 +15,17 @@ export const MOOD_WORDS: MoodWord[] = [
   { x: 0.55, y: -0.5, label: "Joyeux" },
   { x: 0.6, y: -0.65, label: "Fier" },
   { x: 0.45, y: -0.75, label: "Enthousiaste" },
-  { x: 0.8, y: -0.55, label: "Ravi" },
+  { x: 0.75, y: -0.52, label: "Ravi" },
   { x: 0.35, y: -0.85, label: "Excité" },
   { x: 0.47, y: -0.8, label: "Euphorique" },
+  { x: 0.418, y: -0.037, label: "Épanoui" },
+  { x: 0.847, y: -0.074, label: "Radieux" },
+  { x: 0.406, y: -0.109, label: "Vivant" },
+  { x: 0.821, y: -0.22, label: "Passionné" },
+  { x: 0.109, y: -0.406, label: "Stimulé" },
+  { x: 0.22, y: -0.821, label: "Débordant" },
+  { x: 0.037, y: -0.418, label: "Emballé" },
+  { x: 0.074, y: -0.847, label: "Extatique" },
 
   // Désagréable + énergique (haut-gauche)
   { x: -0.35, y: -0.25, label: "Agacé" },
@@ -28,6 +36,14 @@ export const MOOD_WORDS: MoodWord[] = [
   { x: -0.8, y: -0.5, label: "En colère" },
   { x: -0.35, y: -0.85, label: "Stressé" },
   { x: -0.47, y: -0.8, label: "Paniqué" },
+  { x: -0.418, y: -0.037, label: "Contrarié" },
+  { x: -0.847, y: -0.074, label: "Furieux" },
+  { x: -0.406, y: -0.109, label: "Inquiet" },
+  { x: -0.821, y: -0.22, label: "Bouleversé" },
+  { x: -0.109, y: -0.406, label: "Sous pression" },
+  { x: -0.22, y: -0.821, label: "Débordé" },
+  { x: -0.037, y: -0.418, label: "Agité" },
+  { x: -0.074, y: -0.847, label: "Effrayé" },
 
   // Désagréable + calme (bas-gauche)
   { x: -0.35, y: 0.25, label: "Déçu" },
@@ -38,6 +54,14 @@ export const MOOD_WORDS: MoodWord[] = [
   { x: -0.8, y: 0.5, label: "Seul" },
   { x: -0.35, y: 0.85, label: "Mélancolique" },
   { x: -0.47, y: 0.8, label: "Abattu" },
+  { x: -0.418, y: 0.037, label: "Morose" },
+  { x: -0.847, y: 0.074, label: "Accablé" },
+  { x: -0.406, y: 0.109, label: "Vide" },
+  { x: -0.821, y: 0.22, label: "Désespéré" },
+  { x: -0.109, y: 0.406, label: "Amorphe" },
+  { x: -0.22, y: 0.821, label: "Éteint" },
+  { x: -0.037, y: 0.418, label: "Épuisé" },
+  { x: -0.074, y: 0.847, label: "Anéanti" },
 
   // Agréable + calme (bas-droit)
   { x: 0.35, y: 0.25, label: "Détendu" },
@@ -48,6 +72,14 @@ export const MOOD_WORDS: MoodWord[] = [
   { x: 0.8, y: 0.5, label: "Serein" },
   { x: 0.35, y: 0.85, label: "Paisible" },
   { x: 0.47, y: 0.8, label: "Comblé" },
+  { x: 0.418, y: 0.037, label: "Tranquille" },
+  { x: 0.847, y: 0.074, label: "Rassuré" },
+  { x: 0.406, y: 0.109, label: "Confiant" },
+  { x: 0.821, y: 0.22, label: "Harmonieux" },
+  { x: 0.109, y: 0.406, label: "Choyé" },
+  { x: 0.22, y: 0.821, label: "Béat" },
+  { x: 0.037, y: 0.418, label: "Léger" },
+  { x: 0.074, y: 0.847, label: "Rayonnant" },
 ];
 
 export const MOOD_CENTER_LABEL = "Normal";
