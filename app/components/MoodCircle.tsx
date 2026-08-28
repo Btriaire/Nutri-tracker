@@ -114,12 +114,18 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
                 }}
                 className="rounded-full"
               />
+              {/* Cleared by BALL_SIZE/2 plus a margin, not a fixed Tailwind
+                  gap — the ball is centered on this exact point when
+                  active, so anything smaller gets clipped under it. */}
               {active && (
                 <span
-                  className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm ${
-                    word.y > 0 ? "bottom-full mb-1" : "top-full mt-1"
-                  }`}
-                  style={{ background: "var(--surface)", color: ballColor }}
+                  className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-md"
+                  style={{
+                    background: "var(--surface)",
+                    color: ballColor,
+                    zIndex: 20,
+                    [word.y > 0 ? "bottom" : "top"]: BALL_SIZE / 2 + 6,
+                  }}
                 >
                   {word.label}
                 </span>
