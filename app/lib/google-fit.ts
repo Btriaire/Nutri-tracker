@@ -170,6 +170,31 @@ async function refreshWithRetry(refreshToken: string): Promise<RawTokens> {
   }
 }
 
+// ─── Resilient fetch for the Fitness API ──────────────────────────────────────
+// Wraps every call to googleapis.com/fitness with: a hard timeout (a hung
+// request used to be able to run until Vercel's function timeout killed it),
+// a single retry on network errors/timeouts/5xx (a transient hiccup used to
+// silently fail the whole day's sync with nothing to retry it until the next
+// scheduled run), and Cache-Control: no-cache (Google's frontend has been
+// observed serving a stale response to a repeated identical request).
+async function fetchFit(url: string, init: RequestInit): Promise<Response> {
+  const attempt = async () => fetch(url, {
+    ...init,
+    headers: { ...init.headers, "Cache-Control": "no-cache" },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  try {
+    const res = await attempt();
+    if (res.status >= 500) throw new Error(`Fitness API ${res.status}`);
+    return res;
+  } catch (err) {
+    console.warn("Google Fit request failed, retrying once:", err);
+    await new Promise((r) => setTimeout(r, 1500));
+    return attempt();
+  }
+}
+
 // ─── Activity type labels ─────────────────────────────────────────────────────
 
 const ACTIVITY_LABELS: Record<number, string> = {
@@ -249,7 +274,7 @@ async function fetchSessionDetails(auth: string, s: WorkoutSession): Promise<Ses
   const durMs = Math.max(1, s.endMs - s.startMs);
 
   try {
-    const res = await fetch(
+    const res = await fetchFit(
       "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
       {
         method:  "POST",
@@ -340,12 +365,9 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const auth = `Bearer ${tokens.accessToken}`;
 
   const [activityRes, sleepRes, sessionsRes] = await Promise.all([
-    fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
+    fetchFit("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
-      // no-cache: Google's frontend (ESF) has been observed serving a stale,
-      // much lower step total to repeated identical requests from the same
-      // caller — this instructs it to bypass any cached response.
-      headers: { Authorization: auth, "Content-Type": "application/json", "Cache-Control": "no-cache" },
+      headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
         aggregateBy: [
           // Pinned to the same merged/estimated stream the Google Fit app itself
@@ -363,7 +385,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         endTimeMillis:   endMs,
       }),
     }),
-    fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
+    fetchFit("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -375,7 +397,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         endTimeMillis:   noonMs,
       }),
     }),
-    fetch(
+    fetchFit(
       `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${startIso}&endTime=${endIso}`,
       { headers: { Authorization: auth } },
     ),
