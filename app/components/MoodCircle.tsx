@@ -1,51 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MOOD_WORDS, MOOD_CENTER_LABEL, nearestMoodWord } from "@/app/lib/moodWords";
 
 const SIZE = 210;
 const RADIUS = SIZE / 2;
 const BALL_SIZE = 24;
-
-// Two-axis mood model (Yale Mood Meter), adapted from Halcyon-PaLaMa's
-// "Humeur du jour": x is valence (-1 désagréable .. +1 agréable), y is
-// arousal (-1 calme/basse énergie .. +1 énergisé) — screen y grows downward,
-// so arousal is the negative of the pixel-space y.
-const LABELS: { angleDeg: number; label: string }[] = [
-  { angleDeg: 0,   label: "content" },
-  { angleDeg: 45,  label: "joyeux" },
-  { angleDeg: 90,  label: "énergique" },
-  { angleDeg: 135, label: "anxieux" },
-  { angleDeg: 180, label: "triste" },
-  { angleDeg: 225, label: "abattu" },
-  { angleDeg: 270, label: "calme" },
-  { angleDeg: 315, label: "serein" },
-];
-
-function intensityPrefix(distance: number): string {
-  if (distance < 0.4) return "légèrement ";
-  if (distance > 0.75) return "très ";
-  return "";
-}
-
-export function moodLabelFromPosition(x: number, y: number): string {
-  const distance = Math.hypot(x, y);
-  if (distance < 0.12) return "Normal";
-  const angleDeg = ((Math.atan2(-y, x) * 180) / Math.PI + 360) % 360;
-  let closest = LABELS[0];
-  let smallestDelta = 360;
-  for (const entry of LABELS) {
-    const delta = Math.min(
-      Math.abs(entry.angleDeg - angleDeg),
-      360 - Math.abs(entry.angleDeg - angleDeg)
-    );
-    if (delta < smallestDelta) {
-      smallestDelta = delta;
-      closest = entry;
-    }
-  }
-  const combined = intensityPrefix(distance) + closest.label;
-  return combined.charAt(0).toUpperCase() + combined.slice(1);
-}
+const DOT_SIZE = 4;
 
 // Collapses the 2D position back down to the app's existing 1–5 mood scale
 // (dashboard indicator, trend chart, Halcyon-PaLaMa auto-push all expect
@@ -94,7 +55,8 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
   }
   function handlePointerUp() { setDragging(false); }
 
-  const label = moodLabelFromPosition(pos.x, pos.y);
+  const nearest = nearestMoodWord(pos.x, pos.y);
+  const label = nearest?.label ?? MOOD_CENTER_LABEL;
   const moodVal = moodValueFromPosition(pos.x);
   const ballColor = moodVal >= 5 ? "#34d399" : moodVal >= 4 ? "#86efac" : moodVal >= 3 ? "#fbbf24" : moodVal >= 2 ? "#f97316" : "#f87171";
 
@@ -131,6 +93,41 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
         {/* Center mark ("normal") */}
         <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: "var(--text-muted)" }} />
 
+        {/* The constellation of feelings — always visible as small, quiet
+            points, the nearest one to the ball brightens (in the same
+            green/amber/red as the ball) and names itself. */}
+        {MOOD_WORDS.map((word) => {
+          const active = nearest === word;
+          return (
+            <div
+              key={word.label}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: RADIUS + word.x * RADIUS, top: RADIUS + word.y * RADIUS }}
+            >
+              <div
+                style={{
+                  width: active ? DOT_SIZE + 2 : DOT_SIZE,
+                  height: active ? DOT_SIZE + 2 : DOT_SIZE,
+                  background: active ? ballColor : "var(--text-muted)",
+                  opacity: active ? 1 : 0.4,
+                  transition: "all 0.2s ease",
+                }}
+                className="rounded-full"
+              />
+              {active && (
+                <span
+                  className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm ${
+                    word.y > 0 ? "bottom-full mb-1" : "top-full mt-1"
+                  }`}
+                  style={{ background: "var(--surface)", color: ballColor }}
+                >
+                  {word.label}
+                </span>
+              )}
+            </div>
+          );
+        })}
+
         {/* Draggable ball */}
         <div
           style={{
@@ -148,7 +145,7 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
 
       <p className="text-[13px] font-semibold" style={{ color: ballColor }}>{label}</p>
       <p className="text-center text-[10px]" style={{ color: "var(--text-muted)" }}>
-        Déplace la bille où tu te sens — le centre, c&apos;est ton état normal.
+        Déplace la bille vers un point — le centre, c&apos;est ton état normal.
       </p>
     </div>
   );
