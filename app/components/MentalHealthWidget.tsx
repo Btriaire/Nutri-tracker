@@ -161,7 +161,7 @@ export default function MentalHealthWidget({ date }: Props) {
               : { x: ((loadedMood - 1) / 4) * 2 - 1, y: 0 }
           );
           setNote(d.entry.notes ?? "");
-          setTags([]);
+          setTags(Array.isArray(d.entry.tags) ? d.entry.tags : []);
         } else {
           setEntry(null);
           setMood(3);
@@ -177,13 +177,13 @@ export default function MentalHealthWidget({ date }: Props) {
     if (!dirtyRef.current) { setOpen(false); return; }
     setSaving(true);
     try {
-      const noteParts = [note.trim(), tags.length > 0 ? `[${tags.join(", ")}]` : ""].filter(Boolean);
       const body = {
         date,
         mood,
         moodX: moodPos.x,
         moodY: moodPos.y,
-        notes: noteParts.join(" ") || undefined,
+        tags,
+        notes: note.trim() || undefined,
       };
       const res = await fetch("/api/mental-health", {
         method: "POST",
