@@ -239,10 +239,10 @@ async function getNutritionRange(req: NextRequest) {
 }
 
 // GET ?type=cardiac&days=N — FC repos/moyenne (Apple Health en priorité,
-// sinon Withings) et tension artérielle (Withings) des N derniers jours où
-// au moins une de ces valeurs est connue. VibeFit n'a ni capteur cardiaque
-// continu ni tensiomètre connecté ; tout vient d'intégrations déjà actives
-// côté NutriTracker.
+// sinon Withings) et tension artérielle des N derniers jours où au moins une
+// de ces valeurs est connue. VibeFit n'a ni capteur cardiaque continu ni
+// tensiomètre connecté ; tout vient d'intégrations/saisies déjà actives côté
+// NutriTracker.
 async function getCardiacRange(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(60, Math.max(1, Number(searchParams.get("days")) || 14));
@@ -259,17 +259,40 @@ async function getCardiacRange(req: NextRequest) {
   }> = [];
   for (let i = 0; i < days; i++) {
     const date = format(subDays(today, i), "yyyy-MM-dd");
-    const snap = await db.doc(`users/${USER}/fitnessData/${date}`).get();
-    if (!snap.exists) continue;
-    const data = snap.data()!;
-    const ah = data.appleHealth;
-    const wi = data.withings;
+    const [fitnessSnap, healthSnap] = await Promise.all([
+      db.doc(`users/${USER}/fitnessData/${date}`).get(),
+      db.doc(`users/${USER}/healthLog/${date}`).get(),
+    ]);
+    const data = fitnessSnap.exists ? fitnessSnap.data()! : undefined;
+    const ah = data?.appleHealth;
+    const wi = data?.withings;
     const heartRateAvg = ah?.heartRateAvg ?? null;
     const heartRateResting = ah?.heartRateResting ?? wi?.restingHR ?? null;
-    const systolicBP = wi?.systolicBP ?? null;
-    const diastolicBP = wi?.diastolicBP ?? null;
+    let systolicBP: number | null = wi?.systolicBP ?? null;
+    let diastolicBP: number | null = wi?.diastolicBP ?? null;
+    let bpFromLog = false;
+    // Withings ne mesure la tension que via un tensiomètre connecté (le
+    // pèse-personne ne la mesure pas) — sans ce device, la seule source
+    // réelle est la saisie manuelle du Journal santé (healthLog), qui vivait
+    // dans une collection distincte jamais lue ici jusqu'à ce correctif.
+    if ((systolicBP == null || diastolicBP == null) && healthSnap.exists) {
+      const readings = (healthSnap.data()?.bloodPressure ?? []) as Array<{ systolic: number; diastolic: number }>;
+      const last = readings[readings.length - 1];
+      if (last) {
+        systolicBP = last.systolic;
+        diastolicBP = last.diastolic;
+        bpFromLog = true;
+      }
+    }
     if (heartRateAvg == null && heartRateResting == null && systolicBP == null && diastolicBP == null) continue;
-    out.push({ date, heartRateAvg, heartRateResting, systolicBP, diastolicBP, source: ah ? "apple-health" : "withings" });
+    out.push({
+      date,
+      heartRateAvg,
+      heartRateResting,
+      systolicBP,
+      diastolicBP,
+      source: ah ? "apple-health" : wi ? "withings" : bpFromLog ? "manual" : "withings",
+    });
   }
   return NextResponse.json({ days: out });
 }
