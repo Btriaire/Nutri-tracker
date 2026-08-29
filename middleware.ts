@@ -6,6 +6,7 @@ const PUBLIC_PREFIXES = [
   "/api/withings/auth",
   "/api/withings/callback",
   "/api/apple-health/ingest",
+  "/api/apple-health/hae",
   "/api/google-fit/test-sleep",
   "/report/print",
   "/api/report/generate",
