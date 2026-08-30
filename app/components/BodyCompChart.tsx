@@ -11,6 +11,8 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { BodyCompPoint } from "@/app/api/withings-body/route";
 import type { Gender } from "@/app/lib/types";
+import type { MeasurementEntry } from "@/app/api/measurements/route";
+import type { LipidReading } from "@/app/lib/blood-doctor-source";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,37 @@ interface VisceralsEstimate {
   tg: number | null;
   hdl: number | null;
   imc: number | null;
+  wcMeasured: boolean;
+  tgMeasured: boolean;
+  hdlMeasured: boolean;
+}
+
+interface RealVisceralInputs {
+  wc?:  number | null; // tour de taille reel (mensurations), en cm
+  tg?:  number | null; // triglycerides reels (Blood Doctor), en mg/dL
+  hdl?: number | null; // HDL reel (Blood Doctor), en mg/dL
+}
+
+/** Dernier tour de taille connu (mensurations) a une date donnee ou avant — les mensurations
+ *  sont saisies au mois, donc on prend la plus recente entree <= au mois du point. */
+function waistCmForDate(date: string, history: { month: string; waistCm: number | null }[]): number | null {
+  const month = date.slice(0, 7);
+  let best: number | null = null;
+  for (const h of history) {
+    if (h.waistCm != null && h.month <= month) best = h.waistCm;
+  }
+  return best;
+}
+
+/** Derniers TG/HDL connus (Blood Doctor) a une date donnee ou avant — `history` doit etre trie par date croissante. */
+function lipidsForDate(date: string, history: LipidReading[]): { tg: number | null; hdl: number | null } {
+  let tg: number | null = null, hdl: number | null = null;
+  for (const r of history) {
+    if (r.date > date) break;
+    if (r.tgMgDl != null)  tg  = r.tgMgDl;
+    if (r.hdlMgDl != null) hdl = r.hdlMgDl;
+  }
+  return { tg, hdl };
 }
 
 function estimateWaistCircumference(
@@ -90,20 +123,26 @@ function calculateVisceralsForPoint(
   userAge: number | undefined,
   userGender: Gender | undefined,
   userHeightCm: number | undefined,
-  userCurrentWeightKg: number | undefined
+  userCurrentWeightKg: number | undefined,
+  real?: RealVisceralInputs
 ): VisceralsEstimate {
   if (!point.bodyFatPct || !userHeightCm || !userCurrentWeightKg || !userGender) {
-    return { vai: null, wc: null, tg: null, hdl: null, imc: null };
+    return { vai: null, wc: null, tg: null, hdl: null, imc: null, wcMeasured: false, tgMeasured: false, hdlMeasured: false };
   }
 
   const heightM = userHeightCm / 100;
   const imc = Math.round((userCurrentWeightKg / (heightM * heightM)) * 10) / 10;
-  const wc = estimateWaistCircumference(imc, point.bodyFatPct, userAge ?? 40, userGender);
-  const tg = estimateTriglycerides(point.bodyFatPct, userAge ?? 40, userGender);
-  const hdl = estimateHDL(point.bodyFatPct, userGender);
+
+  const wcMeasured  = real?.wc  != null;
+  const tgMeasured  = real?.tg  != null;
+  const hdlMeasured = real?.hdl != null;
+
+  const wc  = real?.wc  ?? estimateWaistCircumference(imc, point.bodyFatPct, userAge ?? 40, userGender);
+  const tg  = real?.tg  ?? estimateTriglycerides(point.bodyFatPct, userAge ?? 40, userGender);
+  const hdl = real?.hdl ?? estimateHDL(point.bodyFatPct, userGender);
   const vai = calculateVAI(wc, imc, tg, hdl, userGender);
 
-  return { vai, wc, tg, hdl, imc };
+  return { vai, wc, tg, hdl, imc, wcMeasured, tgMeasured, hdlMeasured };
 }
 
 const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] = [
@@ -152,6 +191,21 @@ const RANGES = [
   { label: "180j", days: 180 },
 ];
 
+// ─── Moving average (trend curve) ──────────────────────────────────────────
+// Composition/vitaux measurements are noisy day-to-day (hydration, time of
+// day, device). Raw points stay visible as dots but the eye should follow
+// the smoothed trend, not the jitter — same idea as METRIC_MIN_SPAN above.
+
+function movingAverage(data: BodyCompPoint[], key: keyof BodyCompPoint, window: number): (number | null)[] {
+  const values = data.map(p => (p[key] as number | null | undefined) ?? null);
+  return values.map((_, i) => {
+    const lo = Math.max(0, i - Math.floor(window / 2));
+    const hi = Math.min(values.length - 1, i + Math.floor(window / 2));
+    const slice = values.slice(lo, hi + 1).filter((v): v is number => v != null);
+    return slice.length ? Math.round((slice.reduce((a, b) => a + b, 0) / slice.length) * 100) / 100 : null;
+  });
+}
+
 // ─── BP classification ─────────────────────────────────────────────────────────
 
 function bpClass(sys: number, dia: number): { label: string; color: string; bg: string } {
@@ -178,7 +232,7 @@ function CustomTooltip({ active, payload, label, metrics }: {
       style={{ background: "rgba(15,15,22,0.97)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
       <p className="font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>{date}</p>
       {payload.map((p) => {
-        const def = metrics.find(m => m.label === p.name);
+        const def = metrics.find(m => m.label === p.name.replace(/ \(moy\.\)$/, ""));
         return (
           <div key={p.name} className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
@@ -241,6 +295,8 @@ export default function BodyCompChart({
   const [loading,    setLoading]   = useState(false);
   const [hidden,     setHidden]    = useState<Set<string>>(new Set());
   const [bpListOpen, setBpListOpen] = useState(false);
+  const [waistHistory, setWaistHistory] = useState<{ month: string; waistCm: number | null }[]>([]);
+  const [lipidHistory, setLipidHistory] = useState<LipidReading[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -250,6 +306,22 @@ export default function BodyCompChart({
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [days]);
+
+  // Valeurs reelles pour le VAI — independantes de `days` (mesures ponctuelles, pas
+  // des donnees quotidiennes) : chargees une seule fois, appliquees a chaque point
+  // via waistCmForDate/lipidsForDate ("derniere valeur connue a cette date ou avant").
+  useEffect(() => {
+    fetch("/api/measurements?months=24")
+      .then(r => r.json())
+      .then((d: { entries?: MeasurementEntry[] }) => {
+        setWaistHistory((d.entries ?? []).map(e => ({ month: e.month, waistCm: e.waistCm })));
+      })
+      .catch(() => {});
+    fetch("/api/blood-doctor/lipids")
+      .then(r => r.json())
+      .then((d: { readings?: LipidReading[] }) => setLipidHistory(d.readings ?? []))
+      .catch(() => {});
+  }, []);
 
   const currentTab = TABS.find(t => t.id === tab)!;
   const metrics    = currentTab.metrics ?? [];
@@ -264,6 +336,22 @@ export default function BodyCompChart({
   const chartData = tab === "visceral"
     ? points.filter(p => p.bodyFatPct != null && (p.systolicBP != null || p.diastolicBP != null))
     : points.filter(p => metrics.some(m => p[m.key] != null));
+
+  // Trend curve (moving average) — Composition/Vitaux only, per explicit request:
+  // the smoothed curve should read as the primary trend, raw points stay visible
+  // but muted (see the Line pairs rendered per metric below).
+  const showAverage = tab === "composition" || tab === "vitaux";
+  const avgWindow = chartData.length >= 20 ? 7 : chartData.length >= 10 ? 5 : 3;
+  const chartDataWithAvg = showAverage
+    ? (() => {
+        const avgByKey = new Map(metrics.map(m => [m.key as string, movingAverage(chartData, m.key, avgWindow)]));
+        return chartData.map((p, i) => {
+          const out: Record<string, unknown> = { ...p };
+          metrics.forEach(m => { out[`${String(m.key)}Avg`] = avgByKey.get(m.key as string)![i]; });
+          return out;
+        });
+      })()
+    : chartData;
 
   // Y domain per-tab
   const allValues = chartData.flatMap(p => metrics.map(m => p[m.key] as number | null).filter((v): v is number => v != null));
@@ -393,9 +481,12 @@ export default function BodyCompChart({
               );
             }
 
-            // Enrich all points with VAI estimation
+            // Enrich all points with VAI — WC/TG/HDL reels (mensurations + Blood Doctor)
+            // quand disponibles a la date du point, sinon estimation a partir du % de graisse.
             const visceralsData = chartData.map(p => {
-              const v = calculateVisceralsForPoint(p, userAge, userGender, userHeightCm, userCurrentWeightKg);
+              const wc = waistCmForDate(p.date, waistHistory);
+              const { tg, hdl } = lipidsForDate(p.date, lipidHistory);
+              const v = calculateVisceralsForPoint(p, userAge, userGender, userHeightCm, userCurrentWeightKg, { wc, tg, hdl });
               return { ...p, estimatedVAI: v.vai };
             }).filter(p => p.estimatedVAI != null);
 
@@ -424,7 +515,14 @@ export default function BodyCompChart({
               :             { label: "Risque très élevé", color: "#ef4444", bg: "rgba(239,68,68,0.1)" }
               : null;
 
-            const latestCalc = calculateVisceralsForPoint(latestV, userAge, userGender, userHeightCm, userCurrentWeightKg);
+            const latestWc = waistCmForDate(latestV.date, waistHistory);
+            const latestLipids = lipidsForDate(latestV.date, lipidHistory);
+            const latestCalc = calculateVisceralsForPoint(
+              latestV, userAge, userGender, userHeightCm, userCurrentWeightKg,
+              { wc: latestWc, tg: latestLipids.tg, hdl: latestLipids.hdl }
+            );
+            const allMeasured = latestCalc.wcMeasured && latestCalc.tgMeasured && latestCalc.hdlMeasured;
+            const someMeasured = latestCalc.wcMeasured || latestCalc.tgMeasured || latestCalc.hdlMeasured;
 
             return (
               <>
@@ -448,21 +546,27 @@ export default function BodyCompChart({
 
                   {/* Detail metrics */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>WC (cm)</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      WC (cm) {latestCalc.wcMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                    </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.wc?.toFixed(1)}
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>TG (mg/dL)</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      TG (mg/dL) {latestCalc.tgMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                    </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.tg}
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>HDL (mg/dL)</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      HDL (mg/dL) {latestCalc.hdlMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                    </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.hdl}
                     </span>
@@ -473,7 +577,11 @@ export default function BodyCompChart({
                 <div className="px-4 pb-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                      ⚠️ ESTIMATION · Normal VAI &lt; 1.0 · Risque &gt; 1.5
+                      {allMeasured
+                        ? "✅ Basé sur vos mesures réelles"
+                        : someMeasured
+                          ? "⚠️ PARTIELLEMENT ESTIMÉ — certaines valeurs mesurées, d'autres estimées"
+                          : "⚠️ ESTIMATION"} · Normal VAI &lt; 1.0 · Risque &gt; 1.5
                     </span>
                   </div>
                 </div>
@@ -531,7 +639,8 @@ export default function BodyCompChart({
                         <strong>Formule VAI :</strong> [WC/(39.68+1.88×IMC)] × (TG/1.03) × (1.31/HDL)
                       </p>
                       <p style={{ color: "var(--text-muted)", fontSize: "10px" }}>
-                        WC = tour de taille (estimé) · TG/HDL = estimés à partir de % graisse
+                        WC = tour de taille (mesuré via Mensurations si disponible, sinon estimé) ·
+                        TG/HDL = mesurés via Blood Doctor si une analyse existe, sinon estimés à partir du % de graisse
                       </p>
                     </div>
                   </div>
@@ -605,7 +714,7 @@ export default function BodyCompChart({
             style={{ height: 220 }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: tab === "vitaux" ? 36 : 12, left: -18, bottom: 0 }}>
+              <LineChart data={chartDataWithAvg as BodyCompPoint[]} margin={{ top: 8, right: tab === "vitaux" ? 36 : 12, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis
                   dataKey="date"
@@ -659,23 +768,43 @@ export default function BodyCompChart({
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={120} stroke="rgba(244,63,94,0.2)"   strokeDasharray="4 4" />}
                 {tab === "vitaux"  && <ReferenceLine yAxisId="bp"   y={80}  stroke="rgba(251,113,133,0.2)" strokeDasharray="4 4" />}
 
-                {metrics.map(m => {
+                {metrics.flatMap(m => {
                   const isBP = m.key === "systolicBP" || m.key === "diastolicBP";
-                  return (
+                  const yAxisId = isBP ? "bp" : (tab === "composition" ? (m.key as string) : "left");
+                  const lines = [
+                    // Raw readings — muted, points only once a trend curve carries the eye.
                     <Line
-                      key={m.key}
+                      key={`${m.key}-raw`}
                       type={isBP ? "linear" : "monotone"}
-                      yAxisId={isBP ? "bp" : (tab === "composition" ? (m.key as string) : "left")}
+                      yAxisId={yAxisId}
                       dataKey={m.key as string}
                       name={m.label}
-                      stroke={m.color}
+                      stroke={showAverage ? "none" : m.color}
                       strokeWidth={2}
-                      dot={isBP ? { r: 3, fill: m.color, stroke: "var(--bg)", strokeWidth: 1.5 } : false}
+                      dot={{ r: isBP ? 3 : 2.5, fill: m.color, stroke: "var(--bg)", strokeWidth: 1, fillOpacity: showAverage ? 0.5 : 1 }}
                       activeDot={{ r: 4.5, strokeWidth: 0 }}
                       connectNulls
                       hide={hidden.has(m.label)}
-                    />
-                  );
+                    />,
+                  ];
+                  if (showAverage) {
+                    lines.push(
+                      <Line
+                        key={`${m.key}-avg`}
+                        type="monotone"
+                        yAxisId={yAxisId}
+                        dataKey={`${String(m.key)}Avg`}
+                        name={`${m.label} (moy.)`}
+                        stroke={m.color}
+                        strokeWidth={2.75}
+                        dot={false}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        connectNulls
+                        hide={hidden.has(m.label)}
+                      />
+                    );
+                  }
+                  return lines;
                 })}
               </LineChart>
             </ResponsiveContainer>
