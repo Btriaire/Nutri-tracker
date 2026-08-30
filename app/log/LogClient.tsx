@@ -29,6 +29,7 @@ import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, I
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
+import MeasurementReminderBanner from "@/app/components/MeasurementReminderBanner";
 import type { DayPhoto } from "@/app/api/photos/route";
 import { levelBarStyle, levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
 
@@ -506,6 +507,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <IconArrowsExchange size={17} stroke={1.8} />
           </button>
         </motion.div>
+
+        <MeasurementReminderBanner />
 
         {/* ── Fasting Timer ── */}
         {goals.intermittentFasting?.enabled && (
