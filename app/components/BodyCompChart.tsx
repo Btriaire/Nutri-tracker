@@ -781,7 +781,7 @@ export default function BodyCompChart({
                       name={m.label}
                       stroke={showAverage ? "none" : m.color}
                       strokeWidth={2}
-                      dot={{ r: isBP ? 3 : 2.5, fill: m.color, stroke: "var(--bg)", strokeWidth: 1, fillOpacity: showAverage ? 0.5 : 1 }}
+                      dot={{ r: isBP ? 3 : 2.5, fill: m.color, stroke: "var(--bg)", strokeWidth: 1, fillOpacity: showAverage ? 0.22 : 1, strokeOpacity: showAverage ? 0.22 : 1 }}
                       activeDot={{ r: 4.5, strokeWidth: 0 }}
                       connectNulls
                       hide={hidden.has(m.label)}
