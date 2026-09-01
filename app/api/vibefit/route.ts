@@ -453,20 +453,22 @@ export async function POST(req: NextRequest) {
     if (!body.dataUrl || !body.dataUrl.startsWith("data:image/") || body.dataUrl.length > 500_000) {
       return NextResponse.json({ error: "Invalid dataUrl" }, { status: 400 });
     }
-    const ref = db.doc(`users/${USER}/foodLog/${date}`);
-
+    // Même album que le Journal (app/api/photos/route.ts, users/owner/dayPhotos/{date}),
+    // déjà affiché sur la page du jour via <DayPhotos> — pas un champ à part.
     // Ne remplace jamais une capture déjà présente pour ce jour-là (prise
     // manuellement dans NutriTracker, ou déjà poussée par VibeFit plus tôt) —
     // "s'il n'y en a pas" est une condition, pas un remplacement forcé.
+    const ref = db.doc(`users/${USER}/dayPhotos/${date}`);
     const skipped = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
-      const existing = snap.exists
-        ? snap.data()!
-        : { date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sugarG: 0 } };
+      const existing: Array<{ id: string; dataUrl: string; addedAt: string; label?: string }> = snap.exists
+        ? snap.data()!.photos ?? []
+        : [];
 
-      if (existing.dailyPhotoUrl) return true;
+      if (existing.length > 0) return true;
 
-      tx.set(ref, { ...existing, date, dailyPhotoUrl: body.dataUrl, updatedAt: Timestamp.now() }, { merge: true });
+      const photo = { id: `photo_${Date.now()}`, dataUrl: body.dataUrl, addedAt: new Date().toISOString(), label: "VibeFit" };
+      tx.set(ref, { date, photos: [...existing, photo] }, { merge: true });
       return false;
     });
 

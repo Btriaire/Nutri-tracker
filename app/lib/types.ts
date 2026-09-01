@@ -202,10 +202,6 @@ export interface DayLog {
   dayType?:      DayType;
   jetlag?:       boolean;
   dietPaused?:   boolean; // écarts non comptabilisés ce jour-là (jour "libre")
-  /** Capture du jour poussée par VibeFit (photo de suivi, pas un plat) — voir
-   *  app/api/vibefit/route.ts, type "daily-photo". N'écrase jamais une
-   *  capture déjà présente pour ce jour-là. */
-  dailyPhotoUrl?: string;
   updatedAt:     Timestamp;
 }
 
