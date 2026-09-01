@@ -10,6 +10,7 @@ import AlcoolTracker from "@/app/components/AlcoolTracker";
 import DayPhotos     from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
 import MeasurementReminderBanner from "@/app/components/MeasurementReminderBanner";
+import FaceScanReminderBanner from "@/app/components/FaceScanReminderBanner";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink } from "@/app/lib/types";
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import type { DayPhoto } from "@/app/api/photos/route";
@@ -131,6 +132,7 @@ export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" 
           <DateNav date={date} basePath="/desktop/log" />
 
           <MeasurementReminderBanner />
+          <FaceScanReminderBanner />
 
           <div className="flex items-center gap-2">
             <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>Journée</span>

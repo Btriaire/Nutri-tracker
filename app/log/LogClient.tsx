@@ -30,6 +30,7 @@ import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
 import MeasurementReminderBanner from "@/app/components/MeasurementReminderBanner";
+import FaceScanReminderBanner from "@/app/components/FaceScanReminderBanner";
 import type { DayPhoto } from "@/app/api/photos/route";
 import { levelBarStyle, levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
 
@@ -509,6 +510,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         </motion.div>
 
         <MeasurementReminderBanner />
+        <FaceScanReminderBanner />
 
         {/* ── Fasting Timer ── */}
         {goals.intermittentFasting?.enabled && (
