@@ -93,6 +93,9 @@ export interface FoodSearchResult {
   servingLabel: string;
   servingOptions?: ServingOption[];
   nutrition:    FoodNutrition;
+  /** Poids moyen vérifié (table curatée ou correction utilisateur) plutôt que la
+   *  portion par défaut brute d'une API externe — voir lib/verified-weights.ts. */
+  weightVerified?: boolean;
 }
 
 // ─── Custom Foods ─────────────────────────────────────────────────────────────
@@ -152,6 +155,8 @@ export interface FoodEntry {
   servingGrams: number;   // actual grams consumed
   servingQty:   number;   // quantity (e.g. 2 if "2 tranches")
   servingUnit:  string;   // unit label (e.g. "tranche")
+  /** Poids vérifié (table curatée ou correction utilisateur), voir FoodSearchResult. */
+  weightVerified?: boolean;
 
   // Full nutrition (already scaled to servingGrams)
   nutrition:    FoodNutrition;

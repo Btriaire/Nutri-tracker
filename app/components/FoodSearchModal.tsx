@@ -7,6 +7,7 @@ import {
   IconX, IconSearch, IconPlus, IconChevronLeft, IconLoader2, IconChevronDown,
   IconToolsKitchen2, IconBookmark, IconToolsKitchen, IconTrash, IconCheck,
   IconBarcode, IconCamera, IconStar, IconStarFilled, IconHistory,
+  IconRosetteDiscountCheckFilled,
 } from "@tabler/icons-react";
 import MealBuilderModal from "./MealBuilderModal";
 import FoodPictogram from "./FoodPictogram";
@@ -736,6 +737,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             servingLabel, servingGrams: grams,
             servingQty:  useCustomG ? grams : parseFloat(customQty) || 1,
             servingUnit: useCustomG ? "g" : (selectedUnit?.label ?? "g"),
+            weightVerified: selected.weightVerified === true && !useCustomG,
             nutrition, notes: notes || undefined,
           },
         }),
@@ -786,6 +788,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             servingGrams: grams,
             servingQty: 1,
             servingUnit: unit?.label ?? "g",
+            weightVerified: food.weightVerified === true,
             nutrition,
           },
         }),
@@ -1684,7 +1687,15 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
                         {/* Serving */}
                         <div>
-                          <p className="label-xs mb-2">Portion</p>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <p className="label-xs">Portion</p>
+                            {selected.weightVerified && (
+                              <span className="flex items-center gap-0.5" title="Poids moyen vérifié">
+                                <IconRosetteDiscountCheckFilled size={13} style={{ color: "#34d399" }} />
+                                <span className="text-[10px] font-medium" style={{ color: "#34d399" }}>vérifié</span>
+                              </span>
+                            )}
+                          </div>
                           {!useCustomG ? (
                             <>
                               <div className="flex gap-2 overflow-x-auto pb-2 mb-1"

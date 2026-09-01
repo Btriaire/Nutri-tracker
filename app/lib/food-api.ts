@@ -1,5 +1,7 @@
 import type { FoodNutrition, FoodSearchResult, Lang, ServingOption } from "./types";
 import ciqualFoods from "./data/ciqual-foods.json";
+import { getAdminFirestore } from "./firebase-admin";
+import { lookupVerifiedWeight } from "./verified-weights";
 
 // ─── Ciqual document shape (static reference table) ───────────────────────────
 
@@ -34,7 +36,7 @@ async function getCiqualCache(): Promise<CiqualDoc[]> {
 
 // ─── Text helpers ─────────────────────────────────────────────────────────────
 
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
@@ -542,6 +544,47 @@ function rescoreResult(r: FoodSearchResult, words: string[]): number {
   return textScore + (SOURCE_PRIORITY[r.source] ?? 0);
 }
 
+// ─── Verified weights (curated table + user corrections) ────────────────────
+// L'API externe renvoie souvent une portion generique (100g) ou peu fiable —
+// pour les aliments courants ou l'utilisateur a corrige/ou on a une valeur
+// curatee, on remplace la portion par defaut par un poids realiste. Reserve
+// aux noms sans marque et courts (<=4 mots) pour eviter qu'un mot comme
+// "banane" matche a tort un produit compose ("Chips banane plantain").
+
+async function getWeightCorrections(): Promise<Map<string, { grams: number; label: string }>> {
+  try {
+    const snap = await getAdminFirestore().collection("users/owner/weightCorrections").get();
+    const map = new Map<string, { grams: number; label: string }>();
+    snap.docs.forEach((d) => {
+      const data = d.data() as { normalizedName: string; grams: number; label: string };
+      map.set(data.normalizedName, { grams: data.grams, label: data.label });
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+function applyVerifiedWeight(
+  r: FoodSearchResult,
+  corrections: Map<string, { grams: number; label: string }>
+): FoodSearchResult {
+  if (r.brand) return r; // produit de marque : sa portion est deja specifique
+
+  const key   = normalize(r.name);
+  const words = key.split(" ").filter(Boolean);
+
+  const userFix = corrections.get(key);
+  if (userFix) return { ...r, servingSizeG: userFix.grams, servingLabel: userFix.label, weightVerified: true };
+
+  if (words.length <= 4) {
+    const curated = lookupVerifiedWeight(key);
+    if (curated) return { ...r, servingSizeG: curated.grams, servingLabel: curated.label, weightVerified: true };
+  }
+
+  return r;
+}
+
 // ─── Main search ──────────────────────────────────────────────────────────────
 
 export async function searchFoods(query: string, lang: Lang = "fr"): Promise<FoodSearchResult[]> {
@@ -564,11 +607,14 @@ export async function searchFoods(query: string, lang: Lang = "fr"): Promise<Foo
 
   // Merge all sources, re-score for relevance, deduplicate
   const all = [...ciqual, ...nutritionix, ...fatsecret, ...edamam, ...off, ...usda];
-  return dedup(
+  const results = dedup(
     all
       .map((r) => ({ r, score: rescoreResult(r, words) }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.r),
   ).slice(0, 35);
+
+  const corrections = await getWeightCorrections();
+  return results.map((r) => applyVerifiedWeight(r, corrections));
 }

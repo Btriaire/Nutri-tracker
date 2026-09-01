@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask, IconExclamationCircle } from "@tabler/icons-react";
+import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask, IconExclamationCircle, IconRosetteDiscountCheckFilled } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
 import type { DietViolation } from "@/app/lib/diet-program";
@@ -183,10 +183,21 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
       await fetch(`/api/log/${entry.id}?date=${date}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ servingGrams: grams, nutrition, servingLabel }),
+        body: JSON.stringify({ servingGrams: grams, nutrition, servingLabel, weightVerified: true }),
       });
-      onUpdate?.(entry.id, { ...entry, servingGrams: grams, nutrition, servingLabel });
+      onUpdate?.(entry.id, { ...entry, servingGrams: grams, nutrition, servingLabel, weightVerified: true });
       setEditing(false);
+
+      // L'utilisateur vient de corriger le poids : on le retient comme nouveau
+      // defaut permanent pour cet aliment (voir food-api.ts/applyVerifiedWeight),
+      // pas seulement pour cette entree du jour. Best-effort, jamais bloquant.
+      if (!entry.brand) {
+        fetch("/api/weight-corrections", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: entry.name, grams, label: servingLabel }),
+        }).catch(() => {});
+      }
     } finally { setEditSaving(false); }
   };
 
@@ -306,8 +317,11 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   </span>
                 )}
               </div>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                 {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`}
+                {entry.weightVerified && (
+                  <IconRosetteDiscountCheckFilled size={12} style={{ color: "#34d399", flexShrink: 0 }} title="Poids moyen vérifié" />
+                )}
               </p>
             </button>
 
