@@ -117,10 +117,14 @@ const MOODS = [
 ];
 
 // ── Emotion tags ──────────────────────────────────────────────────────────────
+// Liste identique à Halcyon-PaLaMa (components/journal/MoodKeywordPicker.tsx)
+// — Halcyon pousse ces tags tels quels vers /api/mental-health (voir
+// isAutomatedRequest ci-dessus) ; une liste différente ici ferait qu'un tag
+// poussé par Halcyon (ex. "Dispersé") n'aurait aucun bouton correspondant
+// et resterait invisible/impossible à désélectionner dans cette UI.
 const EMOTION_TAGS = [
-  "Calme",      "Heureux",      "Motivé",     "Reconnaissant",
-  "Confiant",   "Serein",       "Anxieux",    "Stressé",
-  "Fatigué",    "Irrité",       "Triste",     "Dépassé",
+  "Apaisé",      "Reconnaissant", "Fatigué",  "Anxieux",
+  "Motivé",      "Triste",        "Dispersé", "Serein",
 ];
 
 export default function MentalHealthWidget({ date }: Props) {

@@ -3,10 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { MOOD_WORDS, MOOD_CENTER_LABEL, nearestMoodWord } from "@/app/lib/moodWords";
 
-const SIZE = 210;
+// Mêmes dimensions que le cercle d'humeur de Halcyon-PaLaMa (son
+// components/humeur/MoodCircle.tsx) — la constellation (moodWords.ts) est
+// déjà identique aux positions près, mais un cercle à une autre échelle
+// change la distance perçue entre les points, donc "la même humeur" ne se
+// place plus au même endroit visuellement d'une app à l'autre.
+const SIZE = 260;
 const RADIUS = SIZE / 2;
-const BALL_SIZE = 24;
-const DOT_SIZE = 3;
+const BALL_SIZE = 28;
+const DOT_SIZE = 3.5;
 
 // Collapses the 2D position back down to the app's existing 1–5 mood scale
 // (dashboard indicator, trend chart, Halcyon-PaLaMa auto-push all expect
