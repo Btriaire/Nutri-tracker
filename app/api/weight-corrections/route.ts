@@ -9,6 +9,7 @@ interface WeightCorrectionDoc {
   normalizedName: string;
   grams:          number;
   label:          string;
+  unitLabel:      string;
   updatedAt:      Timestamp;
 }
 
@@ -17,17 +18,19 @@ export async function GET() {
   const snap = await db.collection("users/owner/weightCorrections").get();
   const corrections = snap.docs.map((d) => {
     const data = d.data() as WeightCorrectionDoc;
-    return { normalizedName: data.normalizedName, grams: data.grams, label: data.label };
+    return { normalizedName: data.normalizedName, grams: data.grams, label: data.label, unitLabel: data.unitLabel };
   });
   return NextResponse.json({ corrections });
 }
 
-/** Enregistre le poids reel comme nouveau defaut permanent pour cet aliment —
- *  appele quand l'utilisateur corrige le poids d'une entree deja loguee (voir
- *  FoodItem.tsx). Idempotent : un doc par nom normalise, ecrase la precedente
- *  correction si l'utilisateur corrige a nouveau. */
+/** Enregistre le poids reel (par unite) comme nouveau defaut permanent pour cet
+ *  aliment — appele quand l'utilisateur corrige le poids d'une entree deja
+ *  loguee (voir FoodItem.tsx). `grams` doit deja etre le poids d'UNE unite
+ *  (pas le total de l'entree) : voir le calcul cote client. Idempotent : un
+ *  doc par nom normalise, ecrase la precedente correction si l'utilisateur
+ *  corrige a nouveau. */
 export async function POST(req: NextRequest) {
-  const body = await req.json() as { name?: string; grams?: number; label?: string };
+  const body = await req.json() as { name?: string; grams?: number; label?: string; unitLabel?: string };
   if (!body.name || !body.grams || body.grams <= 0) {
     return NextResponse.json({ error: "Invalid" }, { status: 400 });
   }
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest) {
     normalizedName,
     grams:     body.grams,
     label:     body.label ?? `${Math.round(body.grams)}g`,
+    unitLabel: body.unitLabel ?? `1 ${body.name.split(" ")[0].toLowerCase()}`,
     updatedAt: Timestamp.now(),
   });
 

@@ -189,13 +189,24 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
       setEditing(false);
 
       // L'utilisateur vient de corriger le poids : on le retient comme nouveau
-      // defaut permanent pour cet aliment (voir food-api.ts/applyVerifiedWeight),
-      // pas seulement pour cette entree du jour. Best-effort, jamais bloquant.
+      // defaut PAR UNITE pour cet aliment (voir food-api.ts/applyVerifiedWeight),
+      // pas seulement pour cette entree du jour — divise par servingQty pour
+      // repartir un total corrige (ex. "2 oeufs = 116g") en poids d'1 unite
+      // (58g), jamais l'inverse. Best-effort, jamais bloquant.
       if (!entry.brand) {
+        const perUnitGrams = grams / Math.max(1, entry.servingQty || 1);
+        const unitLabel = entry.servingUnit && entry.servingUnit !== "g" && !/^\d/.test(entry.servingUnit)
+          ? (entry.servingUnit.startsWith("1 ") ? entry.servingUnit : `1 ${entry.servingUnit}`)
+          : `1 ${entry.name.split(" ")[0].toLowerCase()}`;
         fetch("/api/weight-corrections", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: entry.name, grams, label: servingLabel }),
+          body: JSON.stringify({
+            name: entry.name,
+            grams: perUnitGrams,
+            label: `${unitLabel} (${Math.round(perUnitGrams)}g)`,
+            unitLabel,
+          }),
         }).catch(() => {});
       }
     } finally { setEditSaving(false); }

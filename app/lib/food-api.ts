@@ -551,13 +551,15 @@ function rescoreResult(r: FoodSearchResult, words: string[]): number {
 // aux noms sans marque et courts (<=4 mots) pour eviter qu'un mot comme
 // "banane" matche a tort un produit compose ("Chips banane plantain").
 
-async function getWeightCorrections(): Promise<Map<string, { grams: number; label: string }>> {
+interface WeightFix { grams: number; label: string; unitLabel: string }
+
+async function getWeightCorrections(): Promise<Map<string, WeightFix>> {
   try {
     const snap = await getAdminFirestore().collection("users/owner/weightCorrections").get();
-    const map = new Map<string, { grams: number; label: string }>();
+    const map = new Map<string, WeightFix>();
     snap.docs.forEach((d) => {
-      const data = d.data() as { normalizedName: string; grams: number; label: string };
-      map.set(data.normalizedName, { grams: data.grams, label: data.label });
+      const data = d.data() as { normalizedName: string; grams: number; label: string; unitLabel: string };
+      map.set(data.normalizedName, { grams: data.grams, label: data.label, unitLabel: data.unitLabel });
     });
     return map;
   } catch {
@@ -565,9 +567,21 @@ async function getWeightCorrections(): Promise<Map<string, { grams: number; labe
   }
 }
 
+// Une fois un poids verifie (curate ou corrige), on propose un compteur "par
+// unite" (ex. "1 oeuf" / "2 oeufs") plutot que de forcer une saisie en
+// grammes — mais le calcul nutritionnel reste TOUJOURS base sur les grammes :
+// effectiveGrams() dans FoodSearchModal.tsx fait customQty * selectedUnit.grams,
+// jamais un raccourci "par portion" independant du poids.
+function unitServingOptions(fix: WeightFix): ServingOption[] {
+  return [
+    { label: fix.unitLabel, grams: fix.grams, isDefault: true },
+    { label: "100g", grams: 100 },
+  ];
+}
+
 function applyVerifiedWeight(
   r: FoodSearchResult,
-  corrections: Map<string, { grams: number; label: string }>
+  corrections: Map<string, WeightFix>
 ): FoodSearchResult {
   if (r.brand) return r; // produit de marque : sa portion est deja specifique
 
@@ -575,11 +589,21 @@ function applyVerifiedWeight(
   const words = key.split(" ").filter(Boolean);
 
   const userFix = corrections.get(key);
-  if (userFix) return { ...r, servingSizeG: userFix.grams, servingLabel: userFix.label, weightVerified: true };
+  if (userFix) {
+    return {
+      ...r, servingSizeG: userFix.grams, servingLabel: userFix.label,
+      servingOptions: unitServingOptions(userFix), weightVerified: true,
+    };
+  }
 
   if (words.length <= 4) {
     const curated = lookupVerifiedWeight(key);
-    if (curated) return { ...r, servingSizeG: curated.grams, servingLabel: curated.label, weightVerified: true };
+    if (curated) {
+      return {
+        ...r, servingSizeG: curated.grams, servingLabel: curated.label,
+        servingOptions: unitServingOptions(curated), weightVerified: true,
+      };
+    }
   }
 
   return r;
