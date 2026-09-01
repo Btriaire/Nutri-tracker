@@ -42,6 +42,12 @@ interface ActivityPush {
   caloriesBurned?: number;
 }
 
+interface DailyPhotoPush {
+  type: "daily-photo";
+  date?: string;
+  dataUrl: string; // small base64 JPEG data URL — VibeFit already compresses to ~320px before sending
+}
+
 // GET ?type=googlefit&days=N — last N days of Google Fit summaries already
 // synced into fitnessData/{date}.googleFit (steps, sleep, active calories,
 // heart rate, workout sessions). VibeFit has no Google OAuth of its own —
@@ -361,7 +367,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as WeightPush | FoodPush | ActivityPush;
+  const body = (await req.json()) as WeightPush | FoodPush | ActivityPush | DailyPhotoPush;
   const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : format(new Date(), "yyyy-MM-dd");
   const db = getAdminFirestore();
 
@@ -441,6 +447,30 @@ export async function POST(req: NextRequest) {
     };
     await db.doc(`users/${USER}/manualActivities/${id}`).set(activity);
     return NextResponse.json({ ok: true, activity });
+  }
+
+  if (body.type === "daily-photo") {
+    if (!body.dataUrl || !body.dataUrl.startsWith("data:image/") || body.dataUrl.length > 500_000) {
+      return NextResponse.json({ error: "Invalid dataUrl" }, { status: 400 });
+    }
+    const ref = db.doc(`users/${USER}/foodLog/${date}`);
+
+    // Ne remplace jamais une capture déjà présente pour ce jour-là (prise
+    // manuellement dans NutriTracker, ou déjà poussée par VibeFit plus tôt) —
+    // "s'il n'y en a pas" est une condition, pas un remplacement forcé.
+    const skipped = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const existing = snap.exists
+        ? snap.data()!
+        : { date, entries: [], totals: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sugarG: 0 } };
+
+      if (existing.dailyPhotoUrl) return true;
+
+      tx.set(ref, { ...existing, date, dailyPhotoUrl: body.dataUrl, updatedAt: Timestamp.now() }, { merge: true });
+      return false;
+    });
+
+    return NextResponse.json({ ok: true, skipped });
   }
 
   return NextResponse.json({ error: "Unknown type" }, { status: 400 });
