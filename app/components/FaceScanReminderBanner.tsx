@@ -6,13 +6,14 @@ import { IconFaceId, IconX } from "@tabler/icons-react";
 import type { FaceScanEntry } from "@/app/lib/types";
 
 const SNOOZE_KEY = "faceScanReminderSnoozeUntil";
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const REMINDER_AFTER_DAYS = 3;
+const SNOOZE_MS = REMINDER_AFTER_DAYS * 24 * 60 * 60 * 1000;
 
 /**
- * Même logique que MeasurementReminderBanner — nudge vers le scan visage
- * hebdomadaire, affiché dans le Journal (page ouverte le plus souvent)
- * plutôt qu'enfoui dans Santé. Dismiss = snooze 1 semaine, pas pour
- * toujours, donc ça revient si toujours pas fait d'ici là.
+ * Même logique que MeasurementReminderBanner — nudge vers le scan visage,
+ * affiché dans le Journal (page ouverte le plus souvent) plutôt qu'enfoui
+ * dans Santé. Dismiss = snooze pour la même durée que le seuil (3 jours),
+ * pas pour toujours, donc ça revient si toujours pas fait d'ici là.
  */
 export default function FaceScanReminderBanner() {
   const [daysSince, setDaysSince] = useState<number | null>(null);
@@ -35,11 +36,11 @@ export default function FaceScanReminderBanner() {
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem(SNOOZE_KEY, String(Date.now() + WEEK_MS));
+    localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
     setDismissed(true);
   };
 
-  if (dismissed || daysSince === null || daysSince < 7) return null;
+  if (dismissed || daysSince === null || daysSince < REMINDER_AFTER_DAYS) return null;
 
   const label = daysSince === Infinity
     ? "Tu n'as jamais fait de scan visage"
@@ -51,7 +52,7 @@ export default function FaceScanReminderBanner() {
       <IconFaceId size={16} stroke={1.8} style={{ color: "#60a5fa", flexShrink: 0 }} />
       <p className="text-[11.5px] leading-snug flex-1" style={{ color: "var(--text-primary)" }}>
         <span style={{ color: "#60a5fa", fontWeight: 500 }}>{label}</span>
-        {" "}— objectif : au moins 1× par semaine.{" "}
+        {" "}— objectif : au moins 1× tous les 3 jours.{" "}
         <Link href="/health/face-scan" className="underline underline-offset-2" style={{ color: "#60a5fa" }}>
           Scanner maintenant
         </Link>
