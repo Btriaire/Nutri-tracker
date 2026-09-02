@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
           { dataTypeName: "com.google.heart_rate.bpm" },      // 2
           { dataTypeName: "com.google.weight" },              // 3
           { dataTypeName: "com.google.active_minutes" },      // 4
+          { dataTypeName: "com.google.blood_pressure" },      // 5
         ],
         bucketByTime:    { durationMillis: 86_400_000 },
         startTimeMillis: startMs,
@@ -136,11 +137,42 @@ export async function POST(req: NextRequest) {
         syncedAt:            FieldValue.serverTimestamp(),
       },
     }, { merge: true });
-
     opCount++;
+
+    // Blood pressure lives in healthLog, not fitnessData — same collection the
+    // manual Tension widget and Blood Doctor's push both write to. arrayUnion
+    // dedups exact-match objects, so re-syncing never adds the same reading twice.
+    const bpPoints = b.dataset?.[5]?.point ?? [];
+    const bpReadings = bpPoints
+      .map((p) => {
+        const systolic  = p.value?.[0]?.fpVal;
+        const diastolic = p.value?.[1]?.fpVal;
+        if (systolic == null || diastolic == null) return null;
+        const d    = new Date(Number(p.startTimeNanos ?? 0) / 1_000_000);
+        const hh   = String(d.getHours()).padStart(2, "0");
+        const mm   = String(d.getMinutes()).padStart(2, "0");
+        const hour = d.getHours();
+        return {
+          systolic:  Math.round(systolic),
+          diastolic: Math.round(diastolic),
+          time:      `${hh}:${mm}`,
+          moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
+          source:    "google_fit",
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    if (bpReadings.length > 0) {
+      batch.set(
+        db.doc(`users/owner/healthLog/${date}`),
+        { date, bloodPressure: FieldValue.arrayUnion(...bpReadings), updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+      opCount++;
+    }
+
     written++;
 
-    if (opCount === 490) {
+    if (opCount >= 490) {
       await batch.commit();
       batch   = db.batch();
       opCount = 0;
