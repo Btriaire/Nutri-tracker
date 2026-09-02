@@ -371,7 +371,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const endIso   = new Date(endMs).toISOString();
   const auth = `Bearer ${tokens.accessToken}`;
 
-  const [activityRes, sleepRes, sessionsRes] = await Promise.all([
+  const [activityRes, sleepRes, sessionsRes, bpRes] = await Promise.all([
     fetchFit("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -386,7 +386,6 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
           { dataTypeName: "com.google.heart_rate.bpm" },      // 2
           { dataTypeName: "com.google.weight" },              // 3
           { dataTypeName: "com.google.active_minutes" },      // 4
-          { dataTypeName: "com.google.blood_pressure" },      // 5
         ],
         bucketByTime:    { durationMillis: 86_400_000 },
         startTimeMillis: startMs,
@@ -407,6 +406,15 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     }),
     fetchFit(
       `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${startIso}&endTime=${endIso}`,
+      { headers: { Authorization: auth } },
+    ),
+    // Blood pressure via the RAW dataset read, not dataset:aggregate — the
+    // aggregate endpoint collapses this multi-field data type incorrectly
+    // (observed returning the same value for systolic AND diastolic, e.g.
+    // 151/151 instead of 151/81). The raw per-source dataset preserves each
+    // point's full value[] array (value[0]=systolic, value[1]=diastolic) untouched.
+    fetchFit(
+      `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_pressure:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
       { headers: { Authorization: auth } },
     ),
   ]);
@@ -580,19 +588,24 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     }
   }
 
-  // Blood pressure: each point carries systolic (value[0]) + diastolic (value[1]) —
-  // unlike weight, keep every reading of the day (not just the last), same as a
-  // manual multi-measurement day in the app's own healthLog.bloodPressure array.
-  const bpPoints = bucket.dataset?.[5]?.point ?? [];
-  const bloodPressure: GoogleFitBpReading[] = bpPoints
-    .map((p) => {
-      const systolic  = p.value?.[0]?.fpVal;
-      const diastolic = p.value?.[1]?.fpVal;
-      const timeMs    = Number(p.startTimeNanos ?? 0) / 1_000_000;
-      if (!systolic || !diastolic) return null;
-      return { systolic: Math.round(systolic), diastolic: Math.round(diastolic), timeMs };
-    })
-    .filter((r): r is GoogleFitBpReading => r !== null);
+  // Blood pressure: each raw point carries systolic (value[0]) + diastolic
+  // (value[1]) — keep every reading of the day (not just the last), same as
+  // a manual multi-measurement day in the app's own healthLog.bloodPressure
+  // array. A 404 here just means "no blood pressure source ever synced" —
+  // never fatal to the rest of the day's sync.
+  let bloodPressure: GoogleFitBpReading[] = [];
+  if (bpRes.ok) {
+    const bpJson = await bpRes.json() as { point?: GoogleFitSleepPoint[] };
+    bloodPressure = (bpJson.point ?? [])
+      .map((p) => {
+        const systolic  = p.value?.[0]?.fpVal;
+        const diastolic = p.value?.[1]?.fpVal;
+        const timeMs    = Number(p.startTimeNanos ?? 0) / 1_000_000;
+        if (!systolic || !diastolic) return null;
+        return { systolic: Math.round(systolic), diastolic: Math.round(diastolic), timeMs };
+      })
+      .filter((r): r is GoogleFitBpReading => r !== null);
+  }
 
   return {
     steps:               getInt(0),
