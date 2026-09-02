@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
   const endIso    = new Date(endMs).toISOString();
   const auth      = `Bearer ${tokens.accessToken}`;
 
-  // Three parallel API calls covering the full date range
-  const [activityRes, sleepRes, sessionsRes] = await Promise.all([
+  // Parallel API calls covering the full date range
+  const [activityRes, sleepRes, sessionsRes, bpRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
           { dataTypeName: "com.google.heart_rate.bpm" },      // 2
           { dataTypeName: "com.google.weight" },              // 3
           { dataTypeName: "com.google.active_minutes" },      // 4
-          { dataTypeName: "com.google.blood_pressure" },      // 5
         ],
         bucketByTime:    { durationMillis: 86_400_000 },
         startTimeMillis: startMs,
@@ -52,6 +51,16 @@ export async function POST(req: NextRequest) {
     }),
     fetch(
       `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${startIso}&endTime=${endIso}`,
+      { headers: { Authorization: auth } },
+    ),
+    // Blood pressure via the RAW dataset read, not dataset:aggregate — the
+    // aggregate endpoint silently returns com.google.blood_pressure.summary
+    // instead, whose value array is [sysAvg, sysMin, sysMax, diaAvg, diaMin,
+    // diaMax, ...] rather than [systolic, diastolic] (observed producing
+    // 151/151 instead of the real 151/83). The raw merged-source dataset
+    // preserves each point's value[0]=systolic/value[1]=diastolic untouched.
+    fetch(
+      `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_pressure:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
       { headers: { Authorization: auth } },
     ),
   ]);
@@ -81,6 +90,29 @@ export async function POST(req: NextRequest) {
       } else {
         (sessionsByDate[d] ??= []).push(s);
       }
+    }
+  }
+
+  // Group raw blood-pressure points by date (yyyy-MM-dd of each point's own timestamp).
+  const bpByDate: Record<string, { systolic: number; diastolic: number; time: string; moment: string; source: string }[]> = {};
+  if (bpRes.ok) {
+    const bpJson = await bpRes.json() as { point?: (Point & SleepPoint)[] };
+    for (const p of bpJson.point ?? []) {
+      const systolic  = p.value?.[0]?.fpVal;
+      const diastolic = p.value?.[1]?.fpVal;
+      if (systolic == null || diastolic == null) continue;
+      const d    = new Date(Number(p.startTimeNanos ?? 0) / 1_000_000);
+      const date = format(d, "yyyy-MM-dd");
+      const hh   = String(d.getHours()).padStart(2, "0");
+      const mm   = String(d.getMinutes()).padStart(2, "0");
+      const hour = d.getHours();
+      (bpByDate[date] ??= []).push({
+        systolic:  Math.round(systolic),
+        diastolic: Math.round(diastolic),
+        time:      `${hh}:${mm}`,
+        moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
+        source:    "google_fit",
+      });
     }
   }
 
@@ -142,25 +174,7 @@ export async function POST(req: NextRequest) {
     // Blood pressure lives in healthLog, not fitnessData — same collection the
     // manual Tension widget and Blood Doctor's push both write to. arrayUnion
     // dedups exact-match objects, so re-syncing never adds the same reading twice.
-    const bpPoints = b.dataset?.[5]?.point ?? [];
-    const bpReadings = bpPoints
-      .map((p) => {
-        const systolic  = p.value?.[0]?.fpVal;
-        const diastolic = p.value?.[1]?.fpVal;
-        if (systolic == null || diastolic == null) return null;
-        const d    = new Date(Number(p.startTimeNanos ?? 0) / 1_000_000);
-        const hh   = String(d.getHours()).padStart(2, "0");
-        const mm   = String(d.getMinutes()).padStart(2, "0");
-        const hour = d.getHours();
-        return {
-          systolic:  Math.round(systolic),
-          diastolic: Math.round(diastolic),
-          time:      `${hh}:${mm}`,
-          moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
-          source:    "google_fit",
-        };
-      })
-      .filter((r): r is NonNullable<typeof r> => r !== null);
+    const bpReadings = bpByDate[date] ?? [];
     if (bpReadings.length > 0) {
       batch.set(
         db.doc(`users/owner/healthLog/${date}`),
