@@ -333,6 +333,12 @@ async function fetchSessionDetails(auth: string, s: WorkoutSession): Promise<Ses
   }
 }
 
+export interface GoogleFitBpReading {
+  systolic:  number;
+  diastolic: number;
+  timeMs:    number;
+}
+
 interface DayFitnessData {
   steps:               number;
   activeCaloriesBurned: number;
@@ -345,6 +351,7 @@ interface DayFitnessData {
   deepSleepMin:        number | null;
   remSleepMin:         number | null;
   sleepSyncedAt:       string | null;      // ISO date of sleep session start
+  bloodPressure:       GoogleFitBpReading[];
   sessions:            WorkoutSession[];
 }
 
@@ -379,6 +386,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
           { dataTypeName: "com.google.heart_rate.bpm" },      // 2
           { dataTypeName: "com.google.weight" },              // 3
           { dataTypeName: "com.google.active_minutes" },      // 4
+          { dataTypeName: "com.google.blood_pressure" },      // 5
         ],
         bucketByTime:    { durationMillis: 86_400_000 },
         startTimeMillis: startMs,
@@ -572,6 +580,20 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     }
   }
 
+  // Blood pressure: each point carries systolic (value[0]) + diastolic (value[1]) —
+  // unlike weight, keep every reading of the day (not just the last), same as a
+  // manual multi-measurement day in the app's own healthLog.bloodPressure array.
+  const bpPoints = bucket.dataset?.[5]?.point ?? [];
+  const bloodPressure: GoogleFitBpReading[] = bpPoints
+    .map((p) => {
+      const systolic  = p.value?.[0]?.fpVal;
+      const diastolic = p.value?.[1]?.fpVal;
+      const timeMs    = Number(p.startTimeNanos ?? 0) / 1_000_000;
+      if (!systolic || !diastolic) return null;
+      return { systolic: Math.round(systolic), diastolic: Math.round(diastolic), timeMs };
+    })
+    .filter((r): r is GoogleFitBpReading => r !== null);
+
   return {
     steps:               getInt(0),
     activeCaloriesBurned: Math.round(getFp(1)),
@@ -584,6 +606,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     deepSleepMin,
     remSleepMin,
     sleepSyncedAt,
+    bloodPressure,
     sessions,
   };
 }
@@ -626,6 +649,32 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
       syncedAt:            FieldValue.serverTimestamp(),
     },
   }, { merge: true });
+
+  // Blood pressure lives in healthLog, not fitnessData — same collection the
+  // manual Tension widget and Blood Doctor's push both write to (see
+  // BloodPressureReading in lib/types.ts). arrayUnion dedups exact-match
+  // objects, so re-syncing the same day never adds the same reading twice
+  // as long as the object is built the same way each time.
+  if (data.bloodPressure.length > 0) {
+    const healthRef = db.doc(`users/${userId}/healthLog/${date}`);
+    const readings = data.bloodPressure.map((r) => {
+      const d = new Date(r.timeMs);
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const hour = d.getHours();
+      return {
+        systolic:  r.systolic,
+        diastolic: r.diastolic,
+        time:      `${hh}:${mm}`,
+        moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
+        source:    "google_fit",
+      };
+    });
+    await healthRef.set(
+      { date, bloodPressure: FieldValue.arrayUnion(...readings), updatedAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
+  }
 
   return true;
 }

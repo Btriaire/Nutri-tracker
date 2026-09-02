@@ -581,6 +581,8 @@ export interface BloodPressureReading {
   pulse?:     number;   // bpm
   time:       string;   // "HH:MM"
   moment?:    BPMoment;
+  /** D'où vient la mesure — ex. "google_fit", "blood-doctor". Absent = saisie manuelle. */
+  source?:    string;
 }
 
 export interface MedicationEntry {
