@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconX, IconSparkles, IconCheck, IconPlus, IconMinus, IconCamera } from "@tabler/icons-react";
 import type { FoodSearchResult, MealType } from "@/app/lib/types";
@@ -148,8 +149,12 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
   const [error,   setError]   = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [mounted, setMounted] = useState(false);
   const fileRef    = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true); }, []);
 
   // ── Scale nutrition from per-100g to current grams ────────────────────────
   const scale = (item: DetectedItem) => {
@@ -283,7 +288,12 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-  return (
+  // Portaled to document.body — rendered inline (as it was before), this sheet
+  // sits inside MealSection's own ancestor stacking context (a `relative z-10`
+  // page wrapper), which caps z-50 here below Nav.tsx's z-50 bottom nav and
+  // makes the "Ajouter" button unreachable. Same fix as BodyMeasurementsTab.
+  if (!mounted) return null;
+  return createPortal(
     <>
       {/* Backdrop */}
       <motion.div
@@ -704,6 +714,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
           <div className="flex-shrink-0" style={{ height: 24 }} />
         )}
       </motion.div>
-    </>
+    </>,
+    document.body,
   );
 }
