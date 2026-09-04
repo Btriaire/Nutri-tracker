@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
 
 interface Props {
@@ -18,6 +19,10 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +78,15 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
     }, "image/jpeg", 0.9);
   };
 
-  return (
+  // Portaled to document.body — rendered inline (as it was before), this
+  // fullscreen overlay sits inside FaceScanClient's own ancestor stacking
+  // context (a `relative z-10` page wrapper), which caps its z-[200] below
+  // Nav.tsx's z-50 bottom nav (rendered at the root layout, outside that
+  // wrapper) — the shutter button sits right where the nav bar is, so taps
+  // on it were silently swallowed by the nav instead. Same fix as
+  // BodyMeasurementsTab/PhotoMealAnalyzer earlier this session.
+  if (!mounted) return null;
+  return createPortal(
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
       <video
         ref={videoRef}
@@ -113,6 +126,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
           <div className="w-12 h-12 rounded-full bg-white" />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
