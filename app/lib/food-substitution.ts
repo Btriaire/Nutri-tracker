@@ -150,6 +150,25 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   boisson:      ["jus", "soda", "the ", "cafe", "boisson", "smoothie", "eau "],
 };
 
+/** Display metadata for CATEGORY_KEYWORDS' keys — single source of truth so
+ *  every screen that groups foods by inferFoodCategory() (meal habits, the
+ *  food bank, future ones) shows the same label/emoji for the same category. */
+export const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
+  feculents:    { label: "Féculents",       emoji: "🌾" },
+  legumineuses: { label: "Légumineuses",    emoji: "🫘" },
+  viande:       { label: "Viandes",         emoji: "🥩" },
+  poisson:      { label: "Poissons",        emoji: "🐟" },
+  oeuf:         { label: "Œufs",            emoji: "🥚" },
+  laitage:      { label: "Laitages",        emoji: "🧀" },
+  legume:       { label: "Légumes",         emoji: "🥦" },
+  fruit:        { label: "Fruits",          emoji: "🍎" },
+  oleagineux:   { label: "Oléagineux",      emoji: "🥜" },
+  corpsgras:    { label: "Corps gras",      emoji: "🧈" },
+  sucrerie:     { label: "Sucré",           emoji: "🍫" },
+  boisson:      { label: "Boissons",        emoji: "🥤" },
+  autre:        { label: "Autre",           emoji: "🍽️" },
+};
+
 function normalizeForCategory(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconTrash, IconAlertCircle, IconSun, IconMoon, IconRuler, IconUser, IconHeartbeat, IconShoe, IconCalculator, IconDeviceFloppy, IconLogout, IconFileTypePdf, IconPill } from "@tabler/icons-react";
+import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconTrash, IconAlertCircle, IconSun, IconMoon, IconRuler, IconUser, IconHeartbeat, IconShoe, IconCalculator, IconDeviceFloppy, IconLogout, IconFileTypePdf, IconPill, IconApple, IconChevronRight } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
@@ -221,6 +221,26 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Alcool */}
         <AlcoolPanel initialGoals={initialGoals} />
+
+        {/* Ma banque d'aliments */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.04 }}
+          className="glass p-5 mb-4"
+        >
+          <Link href="/food-bank" className="w-full flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, rgba(167,139,250,0.9), rgba(129,140,248,0.9))" }}>
+              <IconApple size={18} color="white" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Ma banque d&apos;aliments</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Tout ce que tu manges, classé par catégorie</p>
+            </div>
+            <IconChevronRight size={16} style={{ color: "var(--text-muted)" }} />
+          </Link>
+        </motion.div>
 
         {/* Suppléments & Compléments */}
         <motion.div
