@@ -255,14 +255,19 @@ interface Props {
   date?:       string;
   goals:       NutritionGoals;
   alreadyKcal: number;
+  /** Noms déjà logués aujourd'hui pour ce repas — passés au générateur pour
+   *  qu'il évite de reproposer exactement la même chose (vraie alternative,
+   *  pas un doublon). */
+  excludeFoods?: string[];
   onClose:     () => void;
   onAdded?:    (info: { name: string; calories: number }) => void;
 }
 
-export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKcal, onClose, onAdded }: Props) {
+export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKcal, excludeFoods = [], onClose, onAdded }: Props) {
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(false);
+  const [learned,     setLearned]     = useState(false); // true once likedFoods came back non-empty
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Add all ingredients of a suggestion to the log
@@ -305,10 +310,21 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
     setError(false);
     setSuggestions([]);
     try {
+      // Aliments que l'utilisateur mange le plus souvent POUR CE REPAS (appris de
+      // son historique, voir /api/food/recent?meal=) — best-effort, jamais
+      // bloquant : sans ça le générateur retombe juste sur son comportement
+      // générique habituel.
+      const likedFoods = await fetch(`/api/food/recent?meal=${meal}`)
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((d: { results?: { name: string; timesLogged: number }[] }) =>
+          (d.results ?? []).filter((f) => f.timesLogged >= 2).slice(0, 8).map((f) => f.name))
+        .catch(() => [] as string[]);
+      setLearned(likedFoods.length > 0);
+
       const res = await fetch("/api/menu-suggestions", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ meal, goals, alreadyKcal }),
+        body:    JSON.stringify({ meal, goals, alreadyKcal, likedFoods, excludeFoods }),
       });
       if (!res.ok) throw new Error("API error");
       const data = await res.json() as { suggestions: MealSuggestion[] };
@@ -382,6 +398,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
                 </h2>
                 <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                   {MEAL_LABELS[meal]} · {Math.round(goals.dailyCalories * (meal === "breakfast" ? 0.25 : meal === "lunch" ? 0.35 : meal === "dinner" ? 0.30 : 0.10))} kcal budget
+                  {learned && !loading && " · basé sur tes habitudes"}
                 </p>
               </div>
               <div className="flex items-center gap-2">

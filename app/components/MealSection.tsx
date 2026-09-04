@@ -431,6 +431,7 @@ export default function MealSection({
           date={date}
           goals={goals}
           alreadyKcal={alreadyKcal}
+          excludeFoods={entries.map((e) => e.name)}
           onClose={() => setMenuModal(false)}
           onAdded={async (info) => { setMenuModal(false); await handleAdded(info); }}
         />

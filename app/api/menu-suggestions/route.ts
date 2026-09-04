@@ -55,14 +55,14 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY not set" }, { status: 500 });
 
-  let body: { meal: MealType; goals: NutritionGoals; alreadyKcal?: number };
+  let body: { meal: MealType; goals: NutritionGoals; alreadyKcal?: number; likedFoods?: string[]; excludeFoods?: string[] };
   try {
-    body = await req.json() as { meal: MealType; goals: NutritionGoals; alreadyKcal?: number };
+    body = await req.json() as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { meal, goals, alreadyKcal = 0 } = body;
+  const { meal, goals, alreadyKcal = 0, likedFoods = [], excludeFoods = [] } = body;
   if (!["breakfast", "lunch", "dinner", "snacks"].includes(meal)) {
     return NextResponse.json({ error: "Invalid meal" }, { status: 400 });
   }
@@ -84,6 +84,11 @@ Profil nutritionnel :
 - Budget calorique ce repas : ~${adjustedBudget} kcal (objectif journalier : ${goals.dailyCalories} kcal)
 - Protéines cibles ce repas : ~${proteinTarget}g
 - Objectif hebdomadaire : ${goals.weeklyGoal === "lose" ? "perte de poids" : goals.weeklyGoal === "gain" ? "prise de masse" : "maintien"}
+${likedFoods.length > 0 ? `
+Aliments que l'utilisateur mange souvent et aime pour ce repas (appris de son historique) : ${likedFoods.join(", ")}.
+Utilise en priorité ces ingrédients, ou des ingrédients très proches en goût/texture — le but est de rester dans ce qu'il aime, pas de le dépayser.` : ""}
+${excludeFoods.length > 0 ? `
+Déjà mangé aujourd'hui à ce repas : ${excludeFoods.join(", ")}. Ne propose pas les mêmes aliments — le but est une vraie alternative, mêmes calories mais des ingrédients différents.` : ""}
 
 Propose 3 repas variés : 1 léger, 1 équilibré, 1 rassasiant.
 Les recettes doivent être réalisables en moins de 20 min, sans matériel spécial.
