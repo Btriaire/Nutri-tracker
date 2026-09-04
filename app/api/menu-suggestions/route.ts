@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
+import { getMealHabitProfile, getRecentlySuggested, recordSuggested } from "@/app/lib/meal-habits";
 import type { MealType, NutritionGoals } from "@/app/lib/types";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -18,6 +19,22 @@ const MEAL_NAMES_FR: Record<MealType, string> = {
   lunch:     "Déjeuner",
   dinner:    "Dîner",
   snacks:    "Collation",
+};
+
+const CATEGORY_LABEL_FR: Record<string, string> = {
+  feculents:    "féculents",
+  legumineuses: "légumineuses",
+  viande:       "viande",
+  poisson:      "poisson",
+  oeuf:         "œufs",
+  laitage:      "laitages",
+  legume:       "légumes",
+  fruit:        "fruits",
+  oleagineux:   "oléagineux",
+  corpsgras:    "corps gras",
+  sucrerie:     "sucré",
+  boisson:      "boissons",
+  autre:        "autre",
 };
 
 export interface SuggestionIngredient {
@@ -55,14 +72,14 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY not set" }, { status: 500 });
 
-  let body: { meal: MealType; goals: NutritionGoals; alreadyKcal?: number; likedFoods?: string[]; excludeFoods?: string[] };
+  let body: { meal: MealType; goals: NutritionGoals; alreadyKcal?: number; excludeFoods?: string[] };
   try {
     body = await req.json() as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { meal, goals, alreadyKcal = 0, likedFoods = [], excludeFoods = [] } = body;
+  const { meal, goals, alreadyKcal = 0, excludeFoods = [] } = body;
   if (!["breakfast", "lunch", "dinner", "snacks"].includes(meal)) {
     return NextResponse.json({ error: "Invalid meal" }, { status: 400 });
   }
@@ -72,6 +89,17 @@ export async function POST(req: NextRequest) {
   const adjustedBudget = Math.min(budget, remaining);
   const program        = (goals.plan as { programLabel?: string } | undefined)?.programLabel ?? "équilibré";
   const proteinTarget  = Math.round(goals.proteinGrams * MEAL_CALORIE_PCT[meal]);
+
+  // Learned from the user's own history for THIS meal slot — see meal-habits.ts.
+  const [habits, recentlySuggested] = await Promise.all([
+    getMealHabitProfile(session.userId, meal),
+    getRecentlySuggested(session.userId, meal),
+  ]);
+  const personalized = Object.keys(habits.categoryPalette).length > 0;
+
+  const paletteLines = Object.entries(habits.categoryPalette)
+    .map(([cat, names]) => `- ${CATEGORY_LABEL_FR[cat] ?? cat} : ${names.join(", ")}`)
+    .join("\n");
 
   const systemPrompt = `Tu es un nutritionniste expert inspiré de Jean-Michel Cohen.
 Tu proposes des repas simples, pratiques, typiques de la cuisine française du quotidien, avec des valeurs nutritionnelles précises et réalistes.
@@ -84,11 +112,15 @@ Profil nutritionnel :
 - Budget calorique ce repas : ~${adjustedBudget} kcal (objectif journalier : ${goals.dailyCalories} kcal)
 - Protéines cibles ce repas : ~${proteinTarget}g
 - Objectif hebdomadaire : ${goals.weeklyGoal === "lose" ? "perte de poids" : goals.weeklyGoal === "gain" ? "prise de masse" : "maintien"}
-${likedFoods.length > 0 ? `
-Aliments que l'utilisateur mange souvent et aime pour ce repas (appris de son historique) : ${likedFoods.join(", ")}.
-Utilise en priorité ces ingrédients, ou des ingrédients très proches en goût/texture — le but est de rester dans ce qu'il aime, pas de le dépayser.` : ""}
+${habits.macroSplit ? `- Répartition macro habituelle de l'utilisateur pour ce repas : ${habits.macroSplit.proteinPct}% protéines / ${habits.macroSplit.carbsPct}% glucides / ${habits.macroSplit.fatPct}% lipides — vise une répartition proche, pas juste le même total de calories.` : ""}
+${personalized ? `
+Palette de goûts de l'utilisateur pour ce repas, appris de son historique, par catégorie :
+${paletteLines}
+Varie l'aliment PRÉCIS choisi dans chaque catégorie plutôt que de toujours reprendre le même (ex. si "poisson" contient "saumon", tu peux proposer "cabillaud" ou "thon" — même catégorie appréciée, ingrédient différent). Ne sors pas de ces catégories sauf si nécessaire pour l'équilibre du repas.` : ""}
 ${excludeFoods.length > 0 ? `
 Déjà mangé aujourd'hui à ce repas : ${excludeFoods.join(", ")}. Ne propose pas les mêmes aliments — le but est une vraie alternative, mêmes calories mais des ingrédients différents.` : ""}
+${recentlySuggested.length > 0 ? `
+Repas déjà suggérés récemment pour ce créneau (ne pas répéter à l'identique) : ${recentlySuggested.join(", ")}.` : ""}
 
 Propose 3 repas variés : 1 léger, 1 équilibré, 1 rassasiant.
 Les recettes doivent être réalisables en moins de 20 min, sans matériel spécial.
@@ -147,7 +179,13 @@ Format JSON exact :
       return NextResponse.json({ error: "Invalid JSON from model" }, { status: 502 });
     }
 
-    return NextResponse.json({ suggestions: parsed.suggestions ?? [] });
+    const suggestions = parsed.suggestions ?? [];
+    if (suggestions.length > 0) {
+      // Best-effort, never blocks the response — feeds the anti-repetition memory for next time.
+      recordSuggested(session.userId, meal, suggestions.map((s) => s.name)).catch(() => {});
+    }
+
+    return NextResponse.json({ suggestions, personalized });
   } catch (e) {
     console.error("Menu suggestions error:", e);
     return NextResponse.json({ error: "Suggestion failed" }, { status: 500 });

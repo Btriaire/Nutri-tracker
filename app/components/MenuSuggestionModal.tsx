@@ -310,25 +310,19 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
     setError(false);
     setSuggestions([]);
     try {
-      // Aliments que l'utilisateur mange le plus souvent POUR CE REPAS (appris de
-      // son historique, voir /api/food/recent?meal=) — best-effort, jamais
-      // bloquant : sans ça le générateur retombe juste sur son comportement
-      // générique habituel.
-      const likedFoods = await fetch(`/api/food/recent?meal=${meal}`)
-        .then((r) => (r.ok ? r.json() : { results: [] }))
-        .then((d: { results?: { name: string; timesLogged: number }[] }) =>
-          (d.results ?? []).filter((f) => f.timesLogged >= 2).slice(0, 8).map((f) => f.name))
-        .catch(() => [] as string[]);
-      setLearned(likedFoods.length > 0);
-
+      // Habit learning (liked foods by category + usual macro split for this
+      // meal) and anti-repetition memory now live entirely server-side —
+      // see app/lib/meal-habits.ts — the client just relays what's already
+      // logged today (excludeFoods) for the "don't repeat today's meal" signal.
       const res = await fetch("/api/menu-suggestions", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ meal, goals, alreadyKcal, likedFoods, excludeFoods }),
+        body:    JSON.stringify({ meal, goals, alreadyKcal, excludeFoods }),
       });
       if (!res.ok) throw new Error("API error");
-      const data = await res.json() as { suggestions: MealSuggestion[] };
+      const data = await res.json() as { suggestions: MealSuggestion[]; personalized?: boolean };
       setSuggestions(data.suggestions ?? []);
+      setLearned(data.personalized === true);
     } catch {
       setError(true);
     } finally {
