@@ -7,11 +7,16 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   IconArrowLeft, IconSearch, IconLoader2, IconChevronDown, IconScale,
-  IconCalendar, IconFlame,
+  IconCalendar, IconFlame, IconLeaf, IconFlask2,
 } from "@tabler/icons-react";
 import { CATEGORY_META } from "@/app/lib/food-substitution";
+import BankDashboard from "./BankDashboard";
 import type { BankFood } from "@/app/api/food/bank/route";
 import type { MealType } from "@/app/lib/types";
+
+const NUTRISCORE_COLOR: Record<string, string> = {
+  a: "#1e8f4e", b: "#85bb2f", c: "#f9c700", d: "#ee8100", e: "#e63e11",
+};
 
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: "Petit-déj",
@@ -38,6 +43,55 @@ function formatDate(d: string): string {
 
 // ─── Expanded detail ──────────────────────────────────────────────────────────
 
+interface QualityInfo { found: boolean; nutriScore: string | null; novaGroup: number | null; additivesCount: number | null }
+
+function QualityBadges({ food }: { food: BankFood }) {
+  const [quality, setQuality] = useState<QualityInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (food.source !== "off") return;
+    const code = food.foodId?.replace(/^off:/, "");
+    if (!code) return;
+    setLoading(true);
+    fetch(`/api/food/bank/quality?code=${encodeURIComponent(code)}`)
+      .then((r) => r.json())
+      .then((d: QualityInfo) => setQuality(d))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [food.foodId]);
+
+  if (food.source !== "off") return null;
+  if (loading) return <IconLoader2 size={12} className="animate-spin" style={{ color: "var(--text-muted)" }} />;
+  if (!quality?.found || (!quality.nutriScore && !quality.novaGroup)) return null;
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      {quality.nutriScore && (
+        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: `${NUTRISCORE_COLOR[quality.nutriScore]}22`, color: NUTRISCORE_COLOR[quality.nutriScore] }}>
+          <IconLeaf size={11} /> Nutri-Score {quality.nutriScore.toUpperCase()}
+        </span>
+      )}
+      {quality.novaGroup && (
+        <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+          style={{
+            background: quality.novaGroup >= 4 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.05)",
+            color: quality.novaGroup >= 4 ? "#f87171" : "var(--text-muted)",
+          }}>
+          NOVA {quality.novaGroup}{quality.novaGroup >= 4 ? " · ultra-transformé" : ""}
+        </span>
+      )}
+      {quality.additivesCount != null && quality.additivesCount > 0 && (
+        <span className="flex items-center gap-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <IconFlask2 size={11} /> {quality.additivesCount} additif{quality.additivesCount > 1 ? "s" : ""}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function FoodDetail({ food }: { food: BankFood }) {
   const n = food.nutritionPer100g;
   const meals = Object.entries(food.mealCounts) as [MealType, number][];
@@ -59,6 +113,8 @@ function FoodDetail({ food }: { food: BankFood }) {
           <span className="text-[10.5px]" style={{ color: "var(--fat)" }}>{n.fatG.toFixed(1)}g L</span>
           <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ 100g</span>
         </div>
+
+        <QualityBadges food={food} />
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
@@ -208,6 +264,8 @@ export default function FoodBankClient() {
         <p className="text-[12px] mb-5" style={{ color: "var(--text-muted)" }}>
           {loading ? "Chargement…" : `${foods.length} aliments distincts · ${daysScanned} jours d'historique`}
         </p>
+
+        {!loading && <BankDashboard foods={foods} />}
 
         {/* Search */}
         <div className="relative mb-3">

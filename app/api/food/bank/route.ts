@@ -11,6 +11,9 @@ export interface BankFood {
   name:             string;
   brand?:           string;
   source:           FoodSource;
+  /** "off:3017624010701" etc — for OFF items, the barcode after "off:" can be
+   *  used to fetch Nutri-Score/NOVA/additives on demand (see /api/food/bank/quality). */
+  foodId:           string;
   category:         string;
   timesLogged:      number;
   totalGrams:       number;
@@ -45,6 +48,7 @@ export async function GET() {
         existing.totalGrams  += entry.servingGrams;
         existing.lastLoggedDate = doc.id;
         existing.nutritionPer100g = nutritionPer100gFromServing(entry.nutrition, entry.servingGrams);
+        existing.foodId = entry.foodId;
         existing.mealCounts[entry.meal] = (existing.mealCounts[entry.meal] ?? 0) + 1;
         continue;
       }
@@ -53,6 +57,7 @@ export async function GET() {
         name:             entry.name,
         brand:            entry.brand,
         source:           entry.source,
+        foodId:           entry.foodId,
         category:         inferFoodCategory(entry.name),
         timesLogged:      1,
         totalGrams:       entry.servingGrams,

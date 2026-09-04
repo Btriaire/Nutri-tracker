@@ -156,6 +156,9 @@ function offToResult(product: Record<string, unknown>): FoodSearchResult | null 
   servingOptions.push({ label: "100g", grams: 100, isDefault: servingG === 100 });
 
   const rawImage = product.image_front_thumb_url as string | undefined;
+  const nutriScoreRaw = product.nutriscore_grade as string | undefined;
+  const novaGroupRaw  = product.nova_group as number | undefined;
+  const additivesTags = product.additives_tags as string[] | undefined;
   return {
     id:           `off:${product.code ?? product._id}`,
     source:       "off",
@@ -168,6 +171,9 @@ function offToResult(product: Record<string, unknown>): FoodSearchResult | null 
     servingLabel: servingSize ?? "100g",
     servingOptions: servingOptions.length > 1 ? servingOptions : undefined,
     nutrition,
+    ...(nutriScoreRaw && /^[a-e]$/i.test(nutriScoreRaw) ? { nutriScore: nutriScoreRaw.toLowerCase() } : {}),
+    ...(novaGroupRaw ? { novaGroup: novaGroupRaw } : {}),
+    ...(additivesTags ? { additivesCount: additivesTags.length } : {}),
   };
 }
 
@@ -413,7 +419,7 @@ async function searchCiqual(query: string, limit = 20): Promise<FoodSearchResult
 
 async function searchOpenFoodFacts(query: string, lang: "fr" | "en", limit = 25): Promise<FoodSearchResult[]> {
   const lc     = lang === "fr" ? "fr" : "en";
-  const fields = "code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size,image_front_thumb_url";
+  const fields = "code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size,image_front_thumb_url,nutriscore_grade,nova_group,additives_tags";
 
   // Primary: Elasticsearch endpoint (best relevance + popularity sort)
   const p1 = fetch(
@@ -501,7 +507,7 @@ async function searchNutritionix(query: string): Promise<FoodSearchResult[]> {
 
 export async function lookupBarcode(barcode: string): Promise<FoodSearchResult | null> {
   try {
-    const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size`;
+    const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json?fields=code,product_name,product_name_fr,brands,categories_tags,nutriments,serving_size,nutriscore_grade,nova_group,additives_tags`;
     const res = await fetch(url, {
       headers: { "User-Agent": "NutriTracker/1.0" },
       signal: AbortSignal.timeout(6000),

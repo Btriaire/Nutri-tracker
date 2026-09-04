@@ -96,6 +96,12 @@ export interface FoodSearchResult {
   /** Poids moyen vérifié (table curatée ou correction utilisateur) plutôt que la
    *  portion par défaut brute d'une API externe — voir lib/verified-weights.ts. */
   weightVerified?: boolean;
+  /** Open Food Facts uniquement — score qualité "a" à "e". */
+  nutriScore?:     string;
+  /** Open Food Facts uniquement — groupe NOVA de transformation, 1 (brut) à 4 (ultra-transformé). */
+  novaGroup?:      number;
+  /** Open Food Facts uniquement — nombre d'additifs détectés. */
+  additivesCount?: number;
 }
 
 // ─── Custom Foods ─────────────────────────────────────────────────────────────
