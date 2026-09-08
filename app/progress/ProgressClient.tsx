@@ -13,7 +13,7 @@ import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
   IconCalendar, IconShoe, IconFlame, IconHeart, IconMoon, IconDroplet, IconRun, IconLoader2,
   IconPhoto, IconBrain, IconEggFried, IconSalad, IconMeat, IconApple, IconChartGridDots,
-  IconChevronDown, IconChevronUp, IconFileTypePdf,
+  IconChevronDown, IconChevronUp, IconFileTypePdf, IconPalette,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients, IntermittentFasting } from "@/app/lib/types";
@@ -774,6 +774,18 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <IconBrain size={13} />
                 Analyse
               </button>
+              <Link
+                href="/repartition"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                style={{
+                  background: "rgba(96,165,250,0.1)",
+                  border: "1px solid rgba(96,165,250,0.3)",
+                  color: "#60a5fa",
+                }}
+              >
+                <IconChartGridDots size={13} />
+                Répartition
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -911,21 +923,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
         {/* ── AI Insight ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }}
           className="mb-5">
-          <AIInsightBox type="progress" data={progressInsightData} delay={1000} autoLoad />
-        </motion.div>
-
-        {/* Répartition — macros, groupes alimentaires, micronutriments par période */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
-          className="mb-5">
-          <Link href="/repartition"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-[0.98]"
-            style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.22)" }}>
-            <IconChartGridDots size={18} stroke={1.8} style={{ color: "#a78bfa" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Répartition</p>
-              <p className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Macros, groupes alimentaires, micronutriments par période</p>
-            </div>
-          </Link>
+          <AIInsightBox type="progress" data={progressInsightData} />
         </motion.div>
 
         {/* Range selector */}
@@ -950,15 +948,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
             className="flex gap-1.5 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {[
-              { id: "poids",     label: "⚖️ Poids" },
-              { id: "nutrition", label: "🔥 Nutrition" },
-              { id: "corps",     label: "📊 Corps" },
-              { id: "bienetre",  label: "🌙 Bien-être" },
+              { id: "poids",     label: "Poids",     Icon: IconScale },
+              { id: "nutrition", label: "Nutrition", Icon: IconFlame },
+              { id: "corps",     label: "Corps",     Icon: IconChartBar },
+              { id: "bienetre",  label: "Bien-être", Icon: IconMoon },
             ].map((s) => (
               <button key={s.id}
                 onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                <s.Icon size={13} stroke={1.8} />
                 {s.label}
               </button>
             ))}
@@ -1136,7 +1135,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
             {/* Calories & Activité — fused card */}
             <motion.div id="nutrition" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
-              className="glass p-5 mb-4">
+              className="glass-strong p-5 mb-4">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1250,7 +1249,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             {/* ── Dual-axis weight + simulation chart ── */}
             {(weightPtsFiltered.length > 0 || effectiveCurrentWeight) && (
               <motion.div id="poids" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
+                transition={{ duration: 0.3, delay: 0.1 }} className="glass-strong p-5 mb-4">
 
                 {/* Header */}
                 <div className="mb-3">
@@ -1301,7 +1300,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         border:     `1px solid ${showAdequacyColoring ? "rgba(96,165,250,0.4)" : "var(--border)"}`,
                       }}
                     >
-                      <span>🎨</span>
+                      <IconPalette size={12} stroke={1.8} />
                       {showAdequacyColoring ? "Adéquation au plan : activée" : "Voir l'adéquation au plan"}
                     </button>
                   )}
@@ -1814,7 +1813,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               className="glass p-4 mb-4">
               <button className="w-full flex items-center justify-between" onClick={() => setWellnessOpen(v => !v)}>
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px]">🌙</span>
+                  <IconMoon size={16} stroke={1.6} style={{ color: "var(--fit-indigo)" }} />
                   <div className="text-left">
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Bien-être &amp; rythme</p>
                     <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
