@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { IconLayoutDashboard } from "@tabler/icons-react";
 
 // ─── Animated SVG : Journal ───────────────────────────────────────────────────
 function JournalSVG() {
@@ -335,31 +336,47 @@ export default function HubClient() {
     >
       {/* Header */}
       <motion.div
-        className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0"
+        className="flex items-center px-5 pt-4 pb-2 flex-shrink-0"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         <Image src="/logo.png" alt="NutriTracker" width={160} height={42} className="h-8 w-auto" priority />
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="text-[11px] font-medium px-3 py-1.5 rounded-xl transition-all"
-          style={{
-            background: "rgba(255,255,255,0.06)",
-            border:     "1px solid rgba(255,255,255,0.1)",
-            color:      "var(--text-muted)",
-          }}
-        >
-          Dashboard →
-        </button>
       </motion.div>
 
       {/* 2×2 Grid */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-3 p-4 min-h-0">
+      <div className="relative flex-1 grid grid-cols-2 grid-rows-2 gap-3 p-4 min-h-0">
         {CARDS.map((card, i) => (
           <HubCard key={card.href} card={card} index={i} />
         ))}
+
+        {/* Dashboard — round button floating at the crossing point of the 4 cards */}
+        <motion.button
+          onClick={() => router.push("/dashboard")}
+          aria-label="Dashboard"
+          className="absolute z-20 flex flex-col items-center justify-center gap-0.5 rounded-full transition-all active:scale-90"
+          style={{
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 68,
+            height: 68,
+            background: "linear-gradient(135deg, rgba(30,32,44,0.96), rgba(15,16,24,0.96))",
+            border: "1.5px solid rgba(255,255,255,0.16)",
+            boxShadow: "0 10px 34px rgba(0,0,0,0.5)",
+          }}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ scale: 1.06, borderColor: "rgba(255,255,255,0.32)" }}
+          whileTap={{ scale: 0.92 }}
+        >
+          <IconLayoutDashboard size={22} stroke={1.7} style={{ color: "var(--text-primary)" }} />
+          <span className="text-[8px] font-semibold tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
+            DASH
+          </span>
+        </motion.button>
       </div>
     </div>
   );
