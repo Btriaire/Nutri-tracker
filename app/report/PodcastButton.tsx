@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconMicrophone, IconLoader2, IconDownload, IconAlertCircle } from "@tabler/icons-react";
+import { IconMicrophone, IconLoader2, IconDownload, IconAlertCircle, IconChevronDown } from "@tabler/icons-react";
 
 type PodcastFile = { name: string; mtime: string; sizeKb: number };
 type Status = { success: boolean; running: boolean; files: PodcastFile[] };
@@ -17,7 +17,8 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
 export default function PodcastButton() {
   const [period, setPeriod] = useState<PeriodKey>("7d");
   const [running, setRunning] = useState(false);
-  const [latest, setLatest] = useState<PodcastFile | null>(null);
+  const [files, setFiles] = useState<PodcastFile[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -27,10 +28,13 @@ export default function PodcastButton() {
       const data = await res.json() as Status;
       if (data.success) {
         setRunning(data.running);
-        setLatest(data.files?.[0] ?? null);
+        setFiles(data.files || []);
       }
     } catch { /* silencieux — VPS injoignable temporairement */ }
   };
+
+  const latest = files[0] ?? null;
+  const history = files.slice(1);
 
   useEffect(() => {
     fetchStatus();
@@ -121,6 +125,38 @@ export default function PodcastButton() {
           <audio controls preload="none" className="w-full" style={{ height: 32 }}
             src={`/api/podcast/download/${latest.name}?inline=1`}>
           </audio>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="mt-2">
+          <button onClick={() => setShowHistory((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 py-2 text-[11px]"
+            style={{ color: "var(--text-muted)" }}>
+            <span>📁 Historique ({history.length})</span>
+            <IconChevronDown size={13} style={{ transform: showHistory ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+          </button>
+          {showHistory && (
+            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+              {history.map((f) => (
+                <div key={f.name} className="px-3 py-2 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko
+                    </span>
+                    <a href={`/api/podcast/download/${f.name}`} title="Télécharger"
+                      style={{ color: "var(--text-muted)" }}>
+                      <IconDownload size={12} />
+                    </a>
+                  </div>
+                  <audio controls preload="none" className="w-full" style={{ height: 28 }}
+                    src={`/api/podcast/download/${f.name}?inline=1`}>
+                  </audio>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
