@@ -25,7 +25,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2 } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -231,33 +231,29 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [showDietInfo, setShowDietInfo] = useState(false);
   const [dietExceptions, setDietExceptions] = useState<string[]>(dietProgram?.exceptions ?? []);
   const [dietPaused, setDietPaused] = useState(initialLog?.dietPaused ?? false);
+  const [trackersOpen, setTrackersOpen] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Unlock mechanic: tap ✕ 3× in ≤2 s to unlock a validated day ──────────
-  const UNLOCK_TAPS = 3;
-  const [unlockTaps,    setUnlockTaps]    = useState(0);
-  const [unlockFlash,   setUnlockFlash]   = useState(false); // brief visual feedback
+  // ── Unlock mechanic: explicit "Modifier" button, 2nd tap confirms ────────
+  const [unlockConfirming, setUnlockConfirming] = useState(false);
   const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUnlockTap = useCallback(async () => {
-    const next = unlockTaps + 1;
-    setUnlockTaps(next);
-    setUnlockFlash(true);
-    setTimeout(() => setUnlockFlash(false), 150);
-    // Reset counter after 2 s of inactivity
-    if (unlockTimer.current) clearTimeout(unlockTimer.current);
-    unlockTimer.current = setTimeout(() => setUnlockTaps(0), 2000);
-    if (next >= UNLOCK_TAPS) {
-      setUnlockTaps(0);
+    if (!unlockConfirming) {
+      setUnlockConfirming(true);
       if (unlockTimer.current) clearTimeout(unlockTimer.current);
-      setValidated(false);
-      await fetch("/api/log", {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ date, validated: false }),
-      });
+      unlockTimer.current = setTimeout(() => setUnlockConfirming(false), 3000);
+      return;
     }
-  }, [unlockTaps, date]);
+    if (unlockTimer.current) clearTimeout(unlockTimer.current);
+    setUnlockConfirming(false);
+    setValidated(false);
+    await fetch("/api/log", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ date, validated: false }),
+    });
+  }, [unlockConfirming, date]);
 
   const fetchMicronutrients = useCallback(() => {
     fetch(`/api/micronutrient-intakes?date=${date}`, { cache: "no-store" })
@@ -545,8 +541,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           transition={{ duration: 0.35, delay: 0.05 }}
           className="mb-5 rounded-2xl p-5"
           style={{
-            background: "linear-gradient(140deg, rgba(249,115,22,0.11) 0%, rgba(251,191,36,0.05) 100%)",
-            border: "1px solid rgba(249,115,22,0.18)",
+            background: "linear-gradient(140deg, rgba(249,115,22,0.14) 0%, rgba(251,191,36,0.06) 100%)",
+            border: "1px solid rgba(249,115,22,0.3)",
+            boxShadow: "0 10px 30px -14px rgba(249,115,22,0.4)",
           }}
         >
           {/* ── Calorie arc + stats row ── */}
@@ -587,26 +584,19 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <IconLock size={13} style={{ color: "#22c55e" }} />
                 <span className="text-[12px] font-medium" style={{ color: "#22c55e" }}>Journée validée</span>
               </div>
-              {/* Unlock tap button — shows progress pips */}
+              {/* Unlock button — explicit label, 2nd tap confirms (auto-cancels after 3s) */}
               <button
                 onClick={handleUnlockTap}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all active:scale-90"
                 style={{
-                  background: unlockFlash ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${unlockFlash ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}`,
-                  color: unlockFlash ? "#f87171" : "var(--text-muted)",
+                  background: unlockConfirming ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${unlockConfirming ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}`,
+                  color: unlockConfirming ? "#f87171" : "var(--text-muted)",
                 }}
-                title="Taper 3× pour déverrouiller"
+                title="Déverrouiller pour modifier la journée"
               >
-                <IconX size={11} />
-                <span className="text-[10px]">déverrouiller</span>
-                {/* tap pips */}
-                <div className="flex gap-0.5 ml-0.5">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="w-1 h-1 rounded-full transition-all"
-                      style={{ background: i <= unlockTaps ? "#f87171" : "rgba(255,255,255,0.15)" }} />
-                  ))}
-                </div>
+                <IconLockOpen size={11} />
+                <span className="text-[10px] font-medium">{unlockConfirming ? "Confirmer ?" : "Modifier"}</span>
               </button>
             </div>
           ) : (
@@ -748,7 +738,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   Journée verrouillée
                 </span>
                 <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  Tapez ✕ 3× pour modifier
+                  Bouton Modifier ci-dessus
                 </span>
               </motion.div>
             )}
@@ -759,74 +749,15 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <div className="absolute inset-0 z-10" style={{ pointerEvents: "auto", cursor: "default" }} />
           )}
 
-          {/* Water tracker */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.08 }}
-            className="mb-5"
-          >
-            <WaterTracker
-              date={date}
-              waterMl={waterMl}
-              goalMl={goals.waterMl ?? 2000}
-              onUpdate={setWaterMl}
-            />
-          </motion.div>
-
-          {/* Supplements tracker */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.09 }}
-            className="mb-5 rounded-2xl p-5 overflow-hidden"
-            style={{
-              background: "linear-gradient(140deg, rgba(52,211,153,0.11) 0%, rgba(34,197,94,0.05) 100%)",
-              border: "1px solid rgba(52,211,153,0.18)",
-            }}
-          >
-            <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
-          </motion.div>
-
-          {/* Micronutrient tracker */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="mb-5 rounded-2xl p-5 overflow-hidden"
-            style={{
-              background: "linear-gradient(140deg, rgba(99,102,241,0.09) 0%, rgba(139,92,246,0.05) 100%)",
-              border: "1px solid rgba(99,102,241,0.15)",
-            }}
-          >
-            <MicronutrientTracker date={date} micronutrientData={micronutrientData} onRefresh={fetchMicronutrients} />
-          </motion.div>
-
-          {/* Alcohol tracker — only when enabled in settings */}
-          {goals.alcoholTracking && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="mb-5"
-            >
-              <AlcoolTracker
-                date={date}
-                initialDrinks={alcoolDrinks}
-                weeklyGoalUnits={goals.weeklyAlcoolUnitsGoal}
-                onUpdate={setAlcoolDrinks}
-              />
-            </motion.div>
-          )}
-
-          {/* Meal sections */}
-          <div className="space-y-3">
+          {/* Meal sections — primary action on this page, so it comes right after the
+              lock banner instead of after the secondary trackers below. */}
+          <div className="space-y-3 mb-5">
             {MEALS.map((meal, i) => (
               <motion.div
                 key={meal}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.12 + i * 0.05 }}
+                transition={{ duration: 0.3, delay: 0.08 + i * 0.05 }}
               >
                 <MealSection
                   meal={meal}
@@ -848,6 +779,85 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               </motion.div>
             ))}
           </div>
+
+          {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
+              Regroupés et repliés par défaut : ce sont des compléments au journal
+              de repas, pas l'action principale de cette page. */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            className="glass p-4 mb-5"
+          >
+            <button
+              type="button"
+              onClick={() => setTrackersOpen((v) => !v)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <IconDroplet size={16} stroke={1.6} style={{ color: "var(--indigo)" }} />
+                <div className="text-left">
+                  <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Suivis complémentaires</p>
+                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    Eau, suppléments, micronutriments{goals.alcoholTracking ? ", alcool" : ""}
+                  </p>
+                </div>
+              </div>
+              {trackersOpen
+                ? <IconChevronUp size={16} style={{ color: "var(--text-muted)" }} />
+                : <IconChevronDown size={16} style={{ color: "var(--text-muted)" }} />}
+            </button>
+            <AnimatePresence initial={false}>
+              {trackersOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="pt-3 space-y-3">
+                    <div className="rounded-2xl p-4 overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      <WaterTracker
+                        date={date}
+                        waterMl={waterMl}
+                        goalMl={goals.waterMl ?? 2000}
+                        onUpdate={setWaterMl}
+                      />
+                    </div>
+
+                    <div className="rounded-2xl p-4 overflow-hidden"
+                      style={{
+                        background: "linear-gradient(140deg, rgba(52,211,153,0.11) 0%, rgba(34,197,94,0.05) 100%)",
+                        border: "1px solid rgba(52,211,153,0.18)",
+                      }}
+                    >
+                      <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
+                    </div>
+
+                    <div className="rounded-2xl p-4 overflow-hidden"
+                      style={{
+                        background: "linear-gradient(140deg, rgba(99,102,241,0.09) 0%, rgba(139,92,246,0.05) 100%)",
+                        border: "1px solid rgba(99,102,241,0.15)",
+                      }}
+                    >
+                      <MicronutrientTracker date={date} micronutrientData={micronutrientData} onRefresh={fetchMicronutrients} />
+                    </div>
+
+                    {goals.alcoholTracking && (
+                      <AlcoolTracker
+                        date={date}
+                        initialDrinks={alcoolDrinks}
+                        weeklyGoalUnits={goals.weeklyAlcoolUnitsGoal}
+                        onUpdate={setAlcoolDrinks}
+                      />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           {/* Micronutrients per meal / food — collapsed by default */}
           <motion.div
