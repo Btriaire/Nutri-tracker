@@ -25,7 +25,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2 } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -673,7 +673,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 : dietReport?.day.status === "conforme" ? "rgba(34,197,94,0.25)" : "var(--border)"}`,
             }}
           >
-            <span className="text-[13px]">🩺</span>
+            <IconStethoscope size={14} stroke={1.7} style={{ color: dietPaused ? "var(--text-muted)"
+              : dietReport?.day.status === "ecarts" ? "#f87171"
+              : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)" }} />
             <span className="text-[12px] font-medium flex-1" style={{
               color: dietPaused ? "var(--text-muted)"
                 : dietReport?.day.status === "ecarts" ? "#f87171"
@@ -899,7 +901,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
               </div>
               <div className="flex flex-col items-center gap-1 mb-6">
-                <span className="text-4xl mb-1">🎯</span>
+                <IconTarget size={30} stroke={1.5} style={{ color: "var(--text-secondary)" }} />
                 <h2 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Valider la journée</h2>
                 <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
                   Confirmez que vous avez terminé de saisir vos repas du jour.
@@ -927,7 +929,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <button onClick={handleValidate} disabled={validating}
                   className="flex-1 btn btn-primary gap-2">
                   {validating
-                    ? <span className="animate-spin">⏳</span>
+                    ? <IconLoader2 size={14} className="animate-spin" />
                     : <IconCheck size={14} />
                   }
                   Valider
