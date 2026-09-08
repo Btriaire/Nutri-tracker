@@ -321,24 +321,33 @@ export async function syncRange(userId: string, from: string, to: string): Promi
     await batch.commit();
   }
 
-  // Auto-sync blood pressure to healthLog when Withings BPM data exists
+  // Auto-sync blood pressure to healthLog when Withings BPM data exists.
+  // Written into the bloodPressure[] array — same shape as Google Fit and
+  // Blood Doctor's writes (see BloodPressureReading in lib/types.ts). The
+  // previous version wrote top-level systolic/diastolic fields directly on
+  // the doc, a shape nothing in the app ever reads (the UI only reads
+  // healthLog.bloodPressure[]) — Withings BP data was silently invisible.
   const bpDays = days.filter(d => d.systolicBP !== null && d.diastolicBP !== null);
   if (bpDays.length > 0) {
     const bpBatch = db.batch();
     for (const day of bpDays) {
       const ref = db.doc(`users/${userId}/healthLog/${day.date}`);
-      // Only set if not already manually entered (don't overwrite user data)
-      const existing = await ref.get();
-      const existingData = existing.data() as { systolic?: number; source?: string } | undefined;
-      if (!existing.exists || existingData?.source === "withings") {
-        bpBatch.set(ref, {
-          date:      day.date,
+      const measuredAtMs = day.measuredAt ?? Date.now();
+      const d = new Date(measuredAtMs);
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const hour = d.getHours();
+      bpBatch.set(ref, {
+        date: day.date,
+        bloodPressure: FieldValue.arrayUnion({
           systolic:  day.systolicBP,
           diastolic: day.diastolicBP,
+          time:      `${hh}:${mm}`,
+          moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
           source:    "withings",
-          syncedAt:  ts,
-        }, { merge: true });
-      }
+        }),
+        updatedAt: ts,
+      }, { merge: true });
     }
     await bpBatch.commit();
   }
