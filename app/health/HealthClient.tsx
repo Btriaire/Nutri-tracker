@@ -11,6 +11,9 @@ import {
   IconDroplet, IconLoader2, IconTrash, IconPencil, IconHeart, IconNote, IconRuler,
   IconBolt, IconMoon, IconAlertCircle, IconCircleCheck, IconArrowDown, IconArrowUp, IconMinus, IconRefresh,
   IconPill, IconCheck, IconPlayerStop, IconClock,
+  IconFirstAidKit, IconMoodSick, IconLungs, IconBrain, IconBandage, IconStethoscope,
+  IconSunrise, IconSunset, IconSparkles, IconClipboardList, IconScale, IconTrendingUp,
+  IconSalad, IconRun, IconBulb, IconAlertTriangle,
 } from "@tabler/icons-react";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, ComposedChart,
@@ -34,27 +37,27 @@ type HealthTab = "synthese" | "cardiaque" | "medical" | "bienetre";
 
 const SYMPTOM_CATEGORIES = [
   {
-    key: "douleur", label: "Douleur", icon: "🤕", color: "#f87171",
+    key: "douleur", label: "Douleur", icon: IconFirstAidKit, color: "#f87171",
     symptoms: ["Maux de tête", "Migraine", "Douleur musculaire", "Douleur articulaire", "Douleur abdominale", "Douleur thoracique", "Douleur de dos", "Douleur cervicale"],
   },
   {
-    key: "digestif", label: "Digestif", icon: "🫃", color: "#fb923c",
+    key: "digestif", label: "Digestif", icon: IconMoodSick, color: "#fb923c",
     symptoms: ["Nausée", "Vomissement", "Diarrhée", "Constipation", "Ballonnements", "Reflux gastrique", "Perte d'appétit", "Crampes abdominales"],
   },
   {
-    key: "respiratoire", label: "Respiratoire", icon: "🫁", color: "#60a5fa",
+    key: "respiratoire", label: "Respiratoire", icon: IconLungs, color: "#60a5fa",
     symptoms: ["Toux sèche", "Toux grasse", "Essoufflement", "Congestion nasale", "Maux de gorge", "Sifflements respiratoires", "Éternuements"],
   },
   {
-    key: "general", label: "Général", icon: "🌡️", color: "#fbbf24",
+    key: "general", label: "Général", icon: IconThermometer, color: "#fbbf24",
     symptoms: ["Fatigue", "Fièvre", "Frissons", "Sueurs nocturnes", "Vertiges", "Malaise général", "Palpitations", "Perte de poids involontaire"],
   },
   {
-    key: "neurologique", label: "Neurologique", icon: "🧠", color: "#a78bfa",
+    key: "neurologique", label: "Neurologique", icon: IconBrain, color: "#a78bfa",
     symptoms: ["Insomnie", "Trouble de concentration", "Engourdissement", "Picotements", "Vision trouble", "Acouphènes", "Perte de mémoire"],
   },
   {
-    key: "cutane", label: "Cutané", icon: "🩹", color: "#34d399",
+    key: "cutane", label: "Cutané", icon: IconBandage, color: "#34d399",
     symptoms: ["Éruption cutanée", "Démangeaisons", "Urticaire", "Rougeur localisée", "Sécheresse cutanée", "Ecchymoses"],
   },
 ] as const;
@@ -130,11 +133,20 @@ function fmtSleep(min: number | null): string {
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
 }
 
-const MOMENT_LABELS: Record<BPMoment, string> = {
-  morning: "🌅 Matin",
-  evening: "🌇 Soir",
-  other:   "🕐 Autre",
+const MOMENT_META: Record<BPMoment, { Icon: typeof IconSunrise; label: string }> = {
+  morning: { Icon: IconSunrise, label: "Matin" },
+  evening: { Icon: IconSunset,  label: "Soir" },
+  other:   { Icon: IconClock,   label: "Autre" },
 };
+
+const BP_SOURCE_LABELS: Record<string, string> = {
+  google_fit:    "Google Fit",
+  withings:      "Withings",
+  "blood-doctor": "Blood Doctor",
+};
+function bpSourceLabel(source?: string): string {
+  return source ? (BP_SOURCE_LABELS[source] ?? source) : "Manuel";
+}
 
 function nowHHMM() {
   const d = new Date();
@@ -658,7 +670,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,rgba(0,150,255,0.15),rgba(0,200,180,0.15))" }}>
-                    ⚖️
+                    <IconScale size={16} style={{ color: "#60a5fa" }} />
                   </div>
                   <div>
                     <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Composition corporelle</p>
@@ -757,7 +769,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
                       Tension artérielle
                     </p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>mmHg · saisie manuelle</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>mmHg · manuel ou synchronisé</p>
                   </div>
                 </div>
                 {bpCat && (
@@ -792,13 +804,24 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       className="flex items-center justify-between px-3 py-2.5 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                       <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          {r.moment && (
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                              {MOMENT_LABELS[r.moment]}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                          {r.moment && (() => {
+                            const { Icon, label } = MOMENT_META[r.moment];
+                            return (
+                              <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                <Icon size={10} stroke={1.8} />
+                                {label}
+                              </span>
+                            );
+                          })()}
                           <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                            style={{
+                              background: r.source ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
+                              color: r.source ? "#60a5fa" : "var(--text-muted)",
+                            }}>
+                            {bpSourceLabel(r.source)}
+                          </span>
                         </div>
                         <div className="flex items-baseline gap-1">
                           <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
@@ -852,7 +875,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       border: "1px solid rgba(248,113,113,0.12)",
                     }}
                   >
-                    <p className="label-xs mb-3">📈 Évolution tension artérielle · 30 jours</p>
+                    <p className="label-xs mb-3 flex items-center gap-1.5">
+                      <IconTrendingUp size={12} stroke={1.8} />
+                      Évolution tension artérielle · 30 jours
+                    </p>
                     <ResponsiveContainer width="100%" height={180}>
                       <LineChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -861,15 +887,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           if (!active || !payload?.length) return null;
                           const s = payload.find(p => p.dataKey === "sys")?.value as number;
                           const d = payload.find(p => p.dataKey === "dia")?.value as number;
-                          const getBpClass = (sys: number, dia: number): { label: string; color: string } => {
-                            if (sys < 90 || dia < 60) return { label: "Hypotension", color: "#60a5fa" };
-                            if (sys < 120 && dia < 80) return { label: "Optimal", color: "#34d399" };
-                            if (sys < 130 && dia < 80) return { label: "Normal élevé", color: "#a3e635" };
-                            if (sys < 140 && dia < 90) return { label: "HTA grade 1", color: "#fb923c" };
-                            if (sys < 180 && dia < 110) return { label: "HTA grade 2", color: "#f87171" };
-                            return { label: "HTA grade 3", color: "#ef4444" };
-                          };
-                          const cls = s && d ? getBpClass(s, d) : null;
+                          const cls = s && d ? bpCategory(s, d) : null;
                           return (
                             <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
                               style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
@@ -1079,9 +1097,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Nutri-IA-Med ── compact ── */}
             {(() => {
               const ALERT_CFG = {
-                vert:   { color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.25)", dot: "🟢" },
-                orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)", dot: "🟡" },
-                rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)", dot: "🔴" },
+                vert:   { color: "#34d399", bg: "rgba(52,211,153,0.08)", border: "rgba(52,211,153,0.25)" },
+                orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.08)", border: "rgba(251,191,36,0.25)" },
+                rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" },
               };
               const cfg = synthesis ? ALERT_CFG[synthesis.alertLevel] : null;
               return (
@@ -1093,13 +1111,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 >
                   {/* ── Header row ── */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px]">🤖</span>
+                    <IconSparkles size={13} stroke={2} style={{ color: "#a78bfa" }} />
                     <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</span>
                     {/* Alert pill */}
                     {synthesis && cfg && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                         style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-                        {cfg.dot} {synthesis.alertLabel}
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
+                        {synthesis.alertLabel}
                       </span>
                     )}
                     <div className="flex-1" />
@@ -1168,23 +1187,26 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         style={{ overflow: "hidden" }}>
                         <div className="mt-3 space-y-1.5">
                           {[
-                            { icon: "❤️", label: "Constantes", text: synthesis.vitaux,    show: true },
-                            { icon: "🩺", label: "Symptômes",  text: synthesis.symptomes, show: !!synthesis.symptomes },
-                            { icon: "🥗", label: "Nutrition",  text: synthesis.nutrition,  show: true },
-                            { icon: "🏃", label: "Activité",   text: synthesis.activite,   show: !!synthesis.activite },
-                          ].filter(s => s.show).map(({ icon, label, text }) => (
-                            <p key={label} className="text-[11px] leading-relaxed">
-                              <span className="mr-1">{icon}</span>
-                              <span className="font-medium" style={{ color: "var(--text-muted)" }}>{label} · </span>
-                              <span style={{ color: "var(--text-secondary)" }}>{text}</span>
+                            { Icon: IconHeart,      label: "Constantes", text: synthesis.vitaux,    show: true },
+                            { Icon: IconStethoscope,label: "Symptômes",  text: synthesis.symptomes, show: !!synthesis.symptomes },
+                            { Icon: IconSalad,      label: "Nutrition",  text: synthesis.nutrition,  show: true },
+                            { Icon: IconRun,        label: "Activité",   text: synthesis.activite,   show: !!synthesis.activite },
+                          ].filter(s => s.show).map(({ Icon, label, text }) => (
+                            <p key={label} className="text-[11px] leading-relaxed flex items-start gap-1.5">
+                              <Icon size={12} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "var(--text-muted)" }} />
+                              <span>
+                                <span className="font-medium" style={{ color: "var(--text-muted)" }}>{label} · </span>
+                                <span style={{ color: "var(--text-secondary)" }}>{text}</span>
+                              </span>
                             </p>
                           ))}
                         </div>
 
                         {synthesis.recommandations?.length > 0 && (
                           <div className="mt-3">
-                            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
-                              💡 Recommandations
+                            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+                              <IconBulb size={11} stroke={1.8} />
+                              Recommandations
                             </p>
                             <div className="space-y-1">
                               {synthesis.recommandations.map((r, i) => (
@@ -1198,8 +1220,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         )}
 
                         {synthesis.consulter && (
-                          <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#f87171" }}>
-                            ⚠️ {synthesis.consulter}
+                          <p className="text-[11px] mt-2 leading-relaxed flex items-start gap-1.5" style={{ color: "#f87171" }}>
+                            <IconAlertTriangle size={12} stroke={1.8} className="flex-shrink-0 mt-0.5" />
+                            {synthesis.consulter}
                           </p>
                         )}
 
@@ -1291,7 +1314,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[14px]">🩺</span>
+                  <IconStethoscope size={14} style={{ color: "#fb923c" }} />
                   <p className="label-xs">Symptômes du jour</p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1314,7 +1337,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 <button onClick={() => setSymptomOpen(true)}
                   className="w-full py-2 px-3 rounded-lg flex items-center gap-2 transition-colors"
                   style={{ border: "1px dashed var(--border)" }}>
-                  <span className="text-[13px]">🩺</span>
+                  <IconStethoscope size={13} style={{ color: "var(--text-muted)" }} />
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
                 </button>
               )}
@@ -1341,7 +1364,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         }}>
                         {/* Top row */}
                         <div className="flex items-start gap-2.5">
-                          <span className="text-[14px] flex-shrink-0 mt-0.5">{cat?.icon ?? "🩺"}</span>
+                          {(() => { const CatIcon = cat?.icon ?? IconStethoscope; return <CatIcon size={14} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: cat?.color ?? "var(--text-muted)" }} />; })()}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-[13px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>
@@ -1442,7 +1465,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               onClick={() => setSymCatOpen(v => v === cat.key ? null : cat.key)}
                               className="w-full flex items-center gap-2.5 px-3 py-2.5"
                             >
-                              <span className="text-[15px]">{cat.icon}</span>
+                              <cat.icon size={15} stroke={1.8} style={{ color: cat.color }} />
                               <span className="flex-1 text-left text-[12px] font-semibold" style={{ color: isOpen ? cat.color : "var(--text-secondary)" }}>
                                 {cat.label}
                               </span>
@@ -1501,7 +1524,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 <button onClick={() => setSymptomOpen(true)}
                   className="w-full py-4 rounded-xl flex flex-col items-center gap-1.5 transition-colors"
                   style={{ border: "1.5px dashed var(--border)" }}>
-                  <span className="text-[18px]">🩺</span>
+                  <IconStethoscope size={18} style={{ color: "var(--text-muted)" }} />
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
                 </button>
               )}
@@ -1524,7 +1547,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[14px]">📋</span>
+                    <IconClipboardList size={14} style={{ color: "#fb923c" }} />
                     <p className="label-xs">Historique des symptômes</p>
                     <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(251,146,60,0.1)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.25)" }}>
@@ -1558,7 +1581,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                   border: `1px solid ${s.endTime ? "rgba(52,211,153,0.3)" : `${sevColor}44`}`,
                                   color: s.endTime ? "#34d399" : sevColor,
                                 }}>
-                                <span>{cat?.icon ?? "🩺"}</span>
+                                {(() => { const CatIcon = cat?.icon ?? IconStethoscope; return <CatIcon size={11} stroke={1.8} />; })()}
                                 {s.name}
                                 {s.severity && <span style={{ opacity: 0.7 }}>· {s.severity}</span>}
                                 {s.time && !s.endTime && <span style={{ opacity: 0.5 }}>· {s.time}</span>}
@@ -1575,9 +1598,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         {/* AI synthesis badge if exists for that day */}
                         {e.aiSynthesis && (
                           <div className="flex items-center gap-1.5 mt-1.5 pl-3.5">
-                            <span className="text-[10px]">
-                              {e.aiSynthesis.alertLevel === "vert" ? "🟢" : e.aiSynthesis.alertLevel === "orange" ? "🟡" : "🔴"}
-                            </span>
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
+                              background: e.aiSynthesis.alertLevel === "vert" ? "#34d399" : e.aiSynthesis.alertLevel === "orange" ? "#fbbf24" : "#f87171",
+                            }} />
                             <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                               Nutri-IA-Med · {e.aiSynthesis.alertLabel}
                             </span>
@@ -1945,13 +1968,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               <div className="flex gap-2 mb-6">
                 {(["morning", "evening", "other"] as BPMoment[]).map(m => (
                   <button key={m} onClick={() => setBpMoment(m)}
-                    className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
+                    className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
                     style={{
                       background: bpMoment === m ? "rgba(234,67,53,0.1)" : "rgba(255,255,255,0.04)",
                       border: `1px solid ${bpMoment === m ? "rgba(234,67,53,0.4)" : "var(--border)"}`,
                       color: bpMoment === m ? "#EA4335" : "var(--text-secondary)",
                     }}>
-                    {m === "morning" ? "🌅 Matin" : m === "evening" ? "🌇 Soir" : "🕐 Autre"}
+                    {(() => { const { Icon, label } = MOMENT_META[m]; return <><Icon size={13} stroke={1.8} />{label}</>; })()}
                   </button>
                 ))}
               </div>
@@ -2025,7 +2048,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       }}>
                       {medAiLoading
                         ? <IconLoader2 size={11} className="animate-spin" />
-                        : <span>🤖</span>
+                        : <IconSparkles size={11} stroke={2} />
                       }
                       <span>Nutri-AI-Med</span>
                     </button>
@@ -2042,7 +2065,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       className="rounded-xl p-3 space-y-1.5 overflow-hidden"
                       style={{ background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.25)" }}>
                       <div className="flex items-start gap-2">
-                        <span className="text-[13px]">🤖</span>
+                        <IconSparkles size={13} stroke={2} style={{ color: "#c084fc" }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[11px] font-semibold" style={{ color: "#c084fc" }}>
                             {medAiInfo.class}
@@ -2264,8 +2287,9 @@ function BienEtreTab({ date }: { date: string }) {
       )}
       {!loadingMood && !hasData && (
         <div className="glass p-4 text-center">
-          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-            Commence à noter ton humeur pour voir l&apos;évolution sur 30 jours ✨
+          <p className="text-[13px] flex items-center justify-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+            <IconSparkles size={13} stroke={1.8} />
+            Commence à noter ton humeur pour voir l&apos;évolution sur 30 jours
           </p>
         </div>
       )}
