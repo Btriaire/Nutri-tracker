@@ -359,7 +359,8 @@ export default function HubClient() {
           style={{
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            marginTop: -34,
+            marginLeft: -34,
             width: 68,
             height: 68,
             background: "linear-gradient(135deg, rgba(30,32,44,0.96), rgba(15,16,24,0.96))",
