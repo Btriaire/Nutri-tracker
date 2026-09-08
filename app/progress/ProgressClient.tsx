@@ -430,6 +430,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const weightLoading = loading;
   const [plan,            setPlan]       = useState<NutritionPlan | undefined>(initialPlan);
   const [planOpen,        setPlanOpen]   = useState(false);
+  const [wellnessOpen,    setWellnessOpen] = useState(false);
   const [planRecalcLoading, setPlanRecalcLoading] = useState(false);
   const [targetDate,      setTargetDate] = useState<string>(
     initialTargetDate ?? plan?.projectedTargetDate ?? ""
@@ -574,6 +575,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const delta7d  = (() => { const w = findWeightBefore(7);  return (w && lastWeight) ? lastWeight - w : null; })();
   const delta15d = (() => { const w = findWeightBefore(14); return (w && lastWeight) ? lastWeight - w : null; })();
   const delta30d = (() => { const w = findWeightBefore(30); return (w && lastWeight) ? lastWeight - w : null; })();
+  // Lifted to top level so it's usable both in "Mon plan" and in the unified
+  // Poids & Simulation deltas row — was previously duplicated across two
+  // separate cards with two different day-bucket groupings.
+  const totalLossKg = (plan?.startWeightKg && effectiveCurrentWeight) ? effectiveCurrentWeight - plan.startWeightKg : null;
 
   const avgSleepPts = pointsForRange.filter((p) => (p.sleepMinutes ?? 0) > 0);
   const avgSleepH   = avgSleepPts.length
@@ -784,10 +789,6 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
           const progressPct = (startKg && targetKg && currentKg && startKg !== targetKg)
             ? Math.max(0, Math.min(100, Math.abs(currentKg - startKg) / Math.abs(targetKg - startKg) * 100))
             : null;
-          const totalLossKg = (startKg && currentKg) ? currentKg - startKg : null;
-          const lossSign = (v: number) => v <= 0 ? v.toFixed(1) : `+${v.toFixed(1)}`;
-          const lossColor = (v: number | null) => v === null ? "var(--text-muted)" : v <= 0 ? "var(--fiber)" : "var(--protein)";
-
           return (
             <>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.02 }}
@@ -903,28 +904,6 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   )}
                 </AnimatePresence>
               </motion.div>
-
-              {/* ── Pertes de poids — vue rapide toujours visible ── */}
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
-                className="glass p-4 mb-5">
-                <p className="label-xs mb-2">Pertes de poids</p>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { label: "Total",  value: totalLossKg },
-                    { label: "30 j",   value: delta30d },
-                    { label: "7 j",    value: delta7d },
-                    { label: "48 h",   value: delta48h },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <span className="text-[13px] font-bold tabular-nums" style={{ color: lossColor(value) }}>
-                        {value !== null ? `${lossSign(value)} kg` : "—"}
-                      </span>
-                      <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
             </>
           );
         })()}
@@ -964,6 +943,27 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </button>
           ))}
         </motion.div>
+
+        {/* Jump-to-section nav — la vue Tendances empile ~13 blocs, ce mini-nav
+            évite d'avoir à tout scroller pour retrouver une section précise. */}
+        {range !== "1j" && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.03 }}
+            className="flex gap-1.5 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            {[
+              { id: "poids",     label: "⚖️ Poids" },
+              { id: "nutrition", label: "🔥 Nutrition" },
+              { id: "corps",     label: "📊 Corps" },
+              { id: "bienetre",  label: "🌙 Bien-être" },
+            ].map((s) => (
+              <button key={s.id}
+                onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                {s.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
 
         {/* ═══════════ VUE JOUR ═══════════ */}
         {range === "1j" && (
@@ -1135,7 +1135,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             </motion.div>
 
             {/* Calories & Activité — fused card */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
+            <motion.div id="nutrition" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }}
               className="glass p-5 mb-4">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -1249,7 +1249,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
             {/* ── Dual-axis weight + simulation chart ── */}
             {(weightPtsFiltered.length > 0 || effectiveCurrentWeight) && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              <motion.div id="poids" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }} className="glass p-5 mb-4">
 
                 {/* Header */}
@@ -1270,7 +1270,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       </span>
                     )}
                   </div>
-                  {/* Independent period selector for the weight chart */}
+                  {/* Independent period selector for the weight chart — clairement
+                      étiqueté pour éviter de le confondre avec le sélecteur global
+                      en haut de page (qui ne s'applique pas à ce graphique). */}
+                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Période — ce graphique uniquement</p>
                   <div className="flex gap-1">
                     {WEIGHT_RANGES.map(wr => (
                       <button
@@ -1324,10 +1327,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   ))}
                 </div>
 
-                {/* 7j / 15j / 30j deltas */}
-                {(delta7d !== null || delta15d !== null || delta30d !== null) && (
-                  <div className="flex gap-2 mb-3">
+                {/* Deltas — un seul endroit désormais pour toutes les fenêtres
+                    (fusionné avec l'ancienne carte "Pertes de poids" du haut de
+                    page, qui montrait les mêmes valeurs delta7d/delta30d dans un
+                    découpage différent — deux "sources de vérité" pour la même
+                    donnée). flex-wrap pour ne pas serrer 5 items sur mobile. */}
+                {(totalLossKg !== null || delta48h !== null || delta7d !== null || delta15d !== null || delta30d !== null) && (
+                  <div className="flex gap-2 mb-3 flex-wrap">
                     {([
+                      { label: "Total",    delta: totalLossKg },
+                      { label: "48 h",     delta: delta48h },
                       { label: "7 jours",  delta: delta7d  },
                       { label: "14 jours", delta: delta15d },
                       { label: "30 jours", delta: delta30d },
@@ -1337,7 +1346,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       const gain = delta >  0.05;
                       const color = loss ? "#4ade80" : gain ? "#f87171" : "var(--text-muted)";
                       return (
-                        <div key={label} className="flex-1 flex flex-col items-center p-2 rounded-xl gap-0.5"
+                        <div key={label} className="flex-1 min-w-[64px] flex flex-col items-center p-2 rounded-xl gap-0.5"
                           style={{ background: loss ? "rgba(74,222,128,0.07)" : gain ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${loss ? "rgba(74,222,128,0.2)" : gain ? "rgba(248,113,113,0.2)" : "var(--border)"}` }}>
                           <span className="flex items-center gap-0.5 text-[13px] font-bold tabular-nums leading-tight" style={{ color }}>
                             {loss ? <IconArrowDown size={11} stroke={2.5} /> : gain ? <IconArrowUp size={11} stroke={2.5} /> : <IconMinus size={11} stroke={2} />}
@@ -1790,13 +1799,34 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             <SupplementsProgressSection />
 
             {/* Body composition chart (Withings) */}
-            <BodyCompChart
-              userAge={goals.age}
-              userGender={goals.gender}
-              userHeightCm={goals.heightCm}
-              userCurrentWeightKg={goals.currentWeightKg}
-            />
+            <div id="corps">
+              <BodyCompChart
+                userAge={goals.age}
+                userGender={goals.gender}
+                userHeightCm={goals.heightCm}
+                userCurrentWeightKg={goals.currentWeightKg}
+              />
+            </div>
 
+
+            {/* ── Bien-être & rythme (groupe replié — méditation, faim, alcool, jeûne, repas) ── */}
+            <motion.div id="bienetre" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+              className="glass p-4 mb-4">
+              <button className="w-full flex items-center justify-between" onClick={() => setWellnessOpen(v => !v)}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[16px]">🌙</span>
+                  <div className="text-left">
+                    <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Bien-être &amp; rythme</p>
+                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
+                  </div>
+                </div>
+                {wellnessOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+              </button>
+              <AnimatePresence initial={false}>
+                {wellnessOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} style={{ overflow: "hidden" }}>
+                    <div className="pt-3 space-y-3">
 
             {/* ── Méditation progression ── */}
             {(() => {
@@ -2223,6 +2253,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
             {/* Meal timing widget */}
             <MealTimingWidget />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </>
         )}
       </div>
