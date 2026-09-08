@@ -150,14 +150,14 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
         {!launched && !autoLoad && !collapsed && (
           <button
             onClick={load}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-medium transition-all"
+            className="mx-auto flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95"
             style={{
               background: "rgba(139,92,246,0.08)",
               border: "1px solid rgba(139,92,246,0.2)",
               color: "#a78bfa",
             }}
           >
-            <IconSparkles size={12} stroke={2} />
+            <IconSparkles size={11} stroke={2} />
             Lancer l&apos;analyse IA
           </button>
         )}
