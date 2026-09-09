@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconLoader2, IconChartLine, IconChevronDown, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconLoader2, IconChartLine, IconChevronDown, IconInfoCircle,
+  IconScale, IconHeartbeat, IconMoon, IconGauge, IconCircleCheck, IconAlertTriangle,
+  IconDeviceWatch, IconBrandApple, IconActivity, IconPencil,
+} from "@tabler/icons-react";
+import type { Icon as TablerIcon } from "@tabler/icons-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine,
@@ -145,11 +150,11 @@ function calculateVisceralsForPoint(
   return { vai, wc, tg, hdl, imc, wcMeasured, tgMeasured, hdlMeasured };
 }
 
-const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] = [
+const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[] = [
   {
     id:    "composition",
     label: "Composition",
-    emoji: "⚖️",
+    Icon:  IconScale,
     metrics: [
       { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "#f97316" },
       { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "#8b5cf6", decimals: 1 },
@@ -159,7 +164,7 @@ const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] =
   {
     id:    "vitaux",
     label: "Vitaux",
-    emoji: "❤️",
+    Icon:  IconHeartbeat,
     metrics: [
       { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "#f43f5e" },
       { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "#fb7185" },
@@ -169,7 +174,7 @@ const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] =
   {
     id:    "sommeil",
     label: "Sommeil",
-    emoji: "🌙",
+    Icon:  IconMoon,
     metrics: [
       { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "#6366f1", decimals: 1 },
       { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "#4f46e5", decimals: 1 },
@@ -180,7 +185,7 @@ const TABS: { id: Tab; label: string; emoji: string; metrics?: MetricDef[] }[] =
   {
     id:    "visceral",
     label: "Viscéral",
-    emoji: "🫀",
+    Icon:  IconGauge,
     metrics: [], // Custom display, no standard metrics
   },
 ];
@@ -432,7 +437,7 @@ export default function BodyCompChart({
                 color:      tab === t.id ? "var(--protein)"          : "var(--text-muted)",
                 border:     tab === t.id ? "1px solid rgba(167,139,250,0.3)" : "1px solid transparent",
               }}>
-              <span>{t.emoji}</span>
+              <t.Icon size={13} stroke={1.8} />
               {t.label}
             </button>
           ))}
@@ -448,7 +453,7 @@ export default function BodyCompChart({
 
       {!loading && !hasData && (
         <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
-          <span className="text-3xl">📊</span>
+          <IconChartLine size={28} stroke={1.5} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
           <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
             {tab === "sommeil"
               ? "Aucune donnée de sommeil disponible"
@@ -473,7 +478,7 @@ export default function BodyCompChart({
             if (!userGender || !userHeightCm || !userCurrentWeightKg) {
               return (
                 <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
-                  <span className="text-3xl">🫀</span>
+                  <IconGauge size={28} stroke={1.5} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
                   <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                     Veuillez compléter votre profil (âge, sexe, taille, poids) dans les réglages
                   </p>
@@ -493,7 +498,7 @@ export default function BodyCompChart({
             if (visceralsData.length === 0) {
               return (
                 <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
-                  <span className="text-3xl">🫀</span>
+                  <IconGauge size={28} stroke={1.5} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
                   <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                     Données de composition corporelle manquantes
                   </p>
@@ -531,7 +536,9 @@ export default function BodyCompChart({
                   {/* VAI stat */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
                     style={{ background: vaiStatus?.bg, border: `1px solid ${vaiStatus?.color}33` }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>VAI (estimé)</span>
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      VAI ({allMeasured ? "mesuré" : someMeasured ? "partiel" : "estimé"})
+                    </span>
                     <div className="flex items-baseline gap-0.5">
                       <span className="text-[18px] font-bold tabular-nums" style={{ color: vaiStatus?.color }}>
                         {latestV.estimatedVAI?.toFixed(2)}
@@ -575,13 +582,17 @@ export default function BodyCompChart({
 
                 {/* Legend */}
                 <div className="px-4 pb-2">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {allMeasured
+                      ? <IconCircleCheck size={11} stroke={1.8} style={{ color: "#34d399", flexShrink: 0 }} />
+                      : <IconAlertTriangle size={11} stroke={1.8} style={{ color: "#fbbf24", flexShrink: 0 }} />
+                    }
                     <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                       {allMeasured
-                        ? "✅ Basé sur vos mesures réelles"
+                        ? "Basé sur vos mesures réelles"
                         : someMeasured
-                          ? "⚠️ PARTIELLEMENT ESTIMÉ — certaines valeurs mesurées, d'autres estimées"
-                          : "⚠️ ESTIMATION"} · Normal VAI &lt; 1.0 · Risque &gt; 1.5
+                          ? "Partiellement estimé — certaines valeurs mesurées, d'autres estimées"
+                          : "Estimation"} · Normal VAI &lt; 1.0 · Risque &gt; 1.5
                     </span>
                   </div>
                 </div>
@@ -817,18 +828,22 @@ export default function BodyCompChart({
               {/* Show which sources are used */}
               {(() => {
                 const sources = new Set(chartData.map(p => p.sleepSource).filter(Boolean));
-                const SOURCE_LABEL: Record<string, string> = {
-                  withings:    "🛏 Withings",
-                  applehealth: "🍎 Apple",
-                  googlefit:   "💚 Google Fit",
-                  manual:      "✏️ Manuel",
+                const SOURCE_META: Record<string, { Icon: TablerIcon; label: string }> = {
+                  withings:    { Icon: IconDeviceWatch, label: "Withings" },
+                  applehealth: { Icon: IconBrandApple,  label: "Apple" },
+                  googlefit:   { Icon: IconActivity,    label: "Google Fit" },
+                  manual:      { Icon: IconPencil,      label: "Manuel" },
                 };
-                return Array.from(sources).map(s => s && (
-                  <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-                    {SOURCE_LABEL[s] ?? s}
-                  </span>
-                ));
+                return Array.from(sources).map(s => {
+                  if (!s) return null;
+                  const meta = SOURCE_META[s];
+                  return (
+                    <span key={s} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                      {meta ? <><meta.Icon size={9} stroke={1.8} />{meta.label}</> : s}
+                    </span>
+                  );
+                });
               })()}
             </div>
           )}
@@ -851,9 +866,10 @@ export default function BodyCompChart({
                       onClick={() => setBpListOpen(o => !o)}
                       className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
                       style={{ background: "rgba(244,63,94,0.05)" }}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <IconHeartbeat size={12} stroke={1.8} style={{ color: "#f43f5e" }} />
                         <span className="text-[11px] font-semibold" style={{ color: "#f43f5e" }}>
-                          ❤️ Historique tensions
+                          Historique tensions
                         </span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums"
                           style={{ background: "rgba(244,63,94,0.12)", color: "#f43f5e" }}>
