@@ -676,6 +676,9 @@ export interface SupplementProduct {
   micronutrients?: SupplementMicronutrient[];  // profil micronutrimentaire
   notes?:         string;
   frequency:      SupplementFrequency;  // cadence journalière
+  /** false = cure en pause/terminée — n'apparaît plus dans les prises à logger, mais reste configuré et dans l'historique. Absent ou true = actif. */
+  active?:        boolean;
+  pausedAt?:      Timestamp | null;
   createdAt:      Timestamp;
   updatedAt:      Timestamp;
 }

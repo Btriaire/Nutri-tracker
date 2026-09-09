@@ -2,7 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck, IconPencil } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconWand, IconCheck, IconPencil, IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+
+function formatPausedDate(pausedAt: unknown): string {
+  if (!pausedAt || typeof pausedAt !== "object") return "";
+  const ts = pausedAt as { _seconds?: number; seconds?: number };
+  const sec = ts._seconds ?? ts.seconds;
+  if (!sec) return "";
+  return format(new Date(sec * 1000), "d MMM", { locale: fr });
+}
 import type { SupplementProduct, SupplementFrequency, SupplementMicronutrient } from "@/app/lib/types";
 import MicronutrientSelector from "./MicronutrientSelector";
 
@@ -144,6 +154,25 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
       console.error("Failed to save supplement:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleActive = async (product: SupplementProduct) => {
+    const nextActive = product.active === false;
+    try {
+      const res = await fetch(`/api/supplements?id=${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: nextActive }),
+      });
+      if (res.ok) {
+        const { product: updated } = await res.json();
+        setProducts(prev => prev.map(p => p.id === product.id ? updated : p));
+      } else {
+        alert(nextActive ? "La reprise a échoué. Réessaie." : "La mise en pause a échoué. Réessaie.");
+      }
+    } catch (e) {
+      console.error("Failed to toggle supplement active state:", e);
     }
   };
 
@@ -358,20 +387,36 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
             Aucun supplément configuré
           </p>
         ) : (
-          products.map(product => (
+          [...products]
+            .sort((a, b) => Number(a.active === false) - Number(b.active === false))
+            .map(product => {
+            const isPaused = product.active === false;
+            return (
             <div
               key={product.id}
-              className="rounded-lg p-3 flex items-start justify-between"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
+              className="rounded-lg p-3 flex items-start justify-between transition-opacity"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid var(--border)",
+                opacity: isPaused ? 0.55 : 1,
+              }}
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {product.name}
                   </span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {FREQUENCIES.find(f => f.value === product.frequency)?.label}
                   </span>
+                  {isPaused && (() => {
+                    const pausedDate = formatPausedDate(product.pausedAt);
+                    return (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(148,163,184,0.15)", color: "var(--text-muted)" }}>
+                        En pause{pausedDate ? ` depuis le ${pausedDate}` : ""}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {product.description && (
                   <p className="text-[11px] mt-1 line-clamp-1" style={{ color: "var(--text-muted)" }}>
@@ -385,6 +430,17 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                 )}
               </div>
               <div className="flex-shrink-0 flex items-center gap-1.5 ml-2">
+                <button
+                  onClick={() => handleToggleActive(product)}
+                  title={isPaused ? "Reprendre la cure" : "Mettre en pause (cure terminée)"}
+                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                  style={{ background: isPaused ? "rgba(52,211,153,0.1)" : "rgba(251,191,36,0.1)" }}
+                >
+                  {isPaused
+                    ? <IconPlayerPlay size={14} style={{ color: "#34d399" }} />
+                    : <IconPlayerPause size={14} style={{ color: "#fbbf24" }} />
+                  }
+                </button>
                 <button
                   onClick={() => handleEdit(product)}
                   className="p-1.5 rounded-lg transition-all hover:opacity-70"
@@ -401,7 +457,8 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                 </button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

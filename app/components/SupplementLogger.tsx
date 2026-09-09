@@ -251,14 +251,17 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   };
 
   const sortedIntakes = log?.intakes?.sort((a, b) => a.time.localeCompare(b.time)) || [];
+  const activeProducts = products.filter(p => p.active !== false);
 
   // Dedup yesterday's intakes by supplement+moment, then exclude ones already logged today for the same pair
+  // and any supplement that's been paused since (cure terminée) — no point re-suggesting it.
   const todayKeys = new Set(sortedIntakes.map(i => `${i.supplementId}-${i.moment ?? ""}`));
+  const activeProductIds = new Set(activeProducts.map(p => p.id));
   const yesterdaySuggestions = Array.from(
     new Map(
       yesterdayIntakes.map(i => [`${i.supplementId}-${i.moment ?? i.time}`, i])
     ).values()
-  ).filter(i => !todayKeys.has(`${i.supplementId}-${i.moment ?? ""}`));
+  ).filter(i => !todayKeys.has(`${i.supplementId}-${i.moment ?? ""}`) && activeProductIds.has(i.supplementId));
 
   return (
     <div className="space-y-3">
@@ -391,7 +394,10 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 >
                   <option value="">Sélectionner un supplément</option>
-                  {products.map(p => (
+                  {(editingIntakeId && !activeProducts.some(p => p.id === form.supplementId)
+                    ? [...activeProducts, ...products.filter(p => p.id === form.supplementId)]
+                    : activeProducts
+                  ).map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>

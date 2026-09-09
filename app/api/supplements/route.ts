@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       name: body.name,
       ingredients: body.ingredients || [],
       frequency: body.frequency,
+      active: body.active ?? true,
       createdAt: now,
       updatedAt: now,
       ...(body.description       ? { description: body.description }             : {}),
@@ -70,9 +71,6 @@ export async function PATCH(req: NextRequest) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     const body = await req.json() as Partial<SupplementProduct>;
-    if (!body.name || !body.frequency) {
-      return NextResponse.json({ error: "Missing required fields: name, frequency" }, { status: 400 });
-    }
 
     const db = getAdminFirestore();
     const docRef = db.collection(`users/${USER}/supplements`).doc(id);
@@ -80,15 +78,32 @@ export async function PATCH(req: NextRequest) {
     if (!existing.exists) {
       return NextResponse.json({ error: "Supplement not found" }, { status: 404 });
     }
+    const current = existing.data() as SupplementProduct;
 
-    const createdAt = (existing.data() as SupplementProduct).createdAt;
+    // Lightweight toggle (pause/resume) — only `active` is sent, everything else stays as-is.
+    const isToggleOnly = body.active !== undefined && body.name === undefined && body.frequency === undefined;
+    if (isToggleOnly) {
+      const product: SupplementProduct = {
+        ...current,
+        active: body.active!,
+        pausedAt: body.active ? null : Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      await docRef.set(product);
+      return NextResponse.json({ id, product });
+    }
+
+    if (!body.name || !body.frequency) {
+      return NextResponse.json({ error: "Missing required fields: name, frequency" }, { status: 400 });
+    }
 
     const product: SupplementProduct = {
       id,
       name: body.name,
       ingredients: body.ingredients || [],
       frequency: body.frequency,
-      createdAt,
+      active: body.active ?? current.active ?? true,
+      createdAt: current.createdAt,
       updatedAt: Timestamp.now(),
       ...(body.description       ? { description: body.description }             : {}),
       ...(body.dosagePerServing  ? { dosagePerServing: body.dosagePerServing }    : {}),
