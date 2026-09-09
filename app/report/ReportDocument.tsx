@@ -6,6 +6,7 @@ import {
 } from "@tabler/icons-react";
 import { format as dateFnsFormat, parseISO } from "date-fns";
 import type { ReportData, DayNutrition, DayActivity } from "@/app/lib/report-builder";
+import { MEASUREMENT_FIELDS, MEASUREMENT_LABELS } from "@/app/lib/measurement-fields";
 
 const AXIS_LABEL: Record<string, string> = {
   amaigrissement: "Amaigrissement", fatigue: "Fatigue", teint: "Teint", hydratation: "Hydratation",
@@ -377,7 +378,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               { icon: "📊", label: "Durée",            value: `${data.meta.totalDays} jours calendaires` },
               { icon: "🍽️", label: "Jours enregistrés (nutrition)", value: `${data.nutrition.daysLogged} jours` },
               { icon: "🏃", label: "Jours avec activité",           value: `${data.activity.daysWithData} jours` },
-              { icon: "💊", label: "Observance suppléments",        value: data.supplements.productsCount ? `${data.supplements.overallAdherencePct}%` : "—" },
+              { icon: "📏", label: "Relevés de mensurations",       value: data.measurements.entriesCount ? `${data.measurements.entriesCount}` : "—" },
               { icon: "🔎", label: "Scans visage",                  value: `${data.faceScan.scansCount}` },
             ].map(({ icon, label, value }) => (
               <div key={label} className="glass p-3 rounded-xl">
@@ -935,6 +936,35 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <span className="text-[12px] font-semibold" style={{ color: "#fb923c" }}>{data.health.bodyFatEnd}%</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Mensurations */}
+        {data.measurements.latest && (
+          <div className="glass p-4 mb-4 rounded-xl">
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+              📏 Mensurations {data.measurements.entriesCount > 1 ? `(${data.measurements.first?.month} → ${data.measurements.latest?.month})` : `(${data.measurements.latest.month})`}
+            </p>
+            <div className="space-y-1.5">
+              {MEASUREMENT_FIELDS.map(key => {
+                const latestVal = data.measurements.latest?.[key];
+                if (latestVal == null) return null;
+                const delta = data.measurements.delta?.[key];
+                return (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{MEASUREMENT_LABELS[key]}</span>
+                    <span className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
+                      {latestVal} cm
+                      {delta != null && delta !== 0 && (
+                        <span className="text-[10px] font-medium" style={{ color: delta < 0 ? "#34d399" : "#f87171" }}>
+                          ({delta > 0 ? "+" : ""}{delta})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

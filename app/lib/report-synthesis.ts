@@ -1,4 +1,5 @@
 import type { ReportData } from "./report-builder";
+import { MEASUREMENT_FIELDS, MEASUREMENT_LABELS } from "./measurement-fields";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -28,8 +29,8 @@ On te donne aussi la liste des aliments réellement consommés pendant la pério
 Rédige une synthèse structurée, factuelle, professionnelle mais accessible, en français. Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
 {
   "resume": "2-3 phrases de vue d'ensemble de la période, ton neutre et factuel",
-  "habitudes": "2-3 phrases décrivant les habitudes générales observées (régularité des repas, hydratation, activité, sommeil, observance des suppléments)",
-  "evolution": "2-3 phrases sur l'évolution constatée sur la période (poids, tendance calorique, activité) — si les données sont insuffisantes pour conclure, dis-le clairement",
+  "habitudes": "2-3 phrases décrivant les habitudes générales observées (régularité des repas, hydratation, activité, sommeil)",
+  "evolution": "2-3 phrases sur l'évolution constatée sur la période (poids, mensurations si disponibles, tendance calorique, activité) — si les données sont insuffisantes pour conclure, dis-le clairement",
   "defis": ["2 à 4 défis concrets et spécifiques identifiés à partir des chiffres fournis, ex: carences en vitamine D, hydratation insuffisante 4 jours sur 7"],
   "propositions": ["2 à 4 actions concrètes et réalistes pour la période suivante, directement liées aux défis identifiés"],
   "bonnesHabitudes": ["2 à 4 bonnes habitudes alimentaires concrètes observées dans la liste des aliments consommés, ex: consommation régulière de légumes verts, bon apport en légumineuses"],
@@ -45,6 +46,7 @@ RÈGLES :
 - Si une catégorie de données est absente (ex: pas de scan visage), ne l'invente pas et ne la mentionne pas comme un défi.
 - Reste factuel, non alarmiste, non moralisateur. Ce n'est pas un diagnostic médical.
 - Les défis et propositions doivent être courts (1 phrase chacun), concrets, actionnables.
+- L'observance des compléments alimentaires n'est PAS un élément clé à évaluer : ne la mentionne JAMAIS dans "defis" ou "propositions", et ne la présente pas comme un point saillant du "resume" ou de l'"evolution" — c'est une donnée secondaire, pas un indicateur de santé prioritaire.
 - N'ajoute aucun texte hors du JSON.`;
 
 function buildUserMessage(data: ReportData): string {
@@ -105,6 +107,21 @@ function buildUserMessage(data: ReportData): string {
     lines.push(`\n— Scan visage (${data.faceScan.scansCount} scans) —`);
     const d = data.faceScan.delta;
     lines.push(`Évolution 1er→dernier: amaigrissement ${d.amaigrissement >= 0 ? "+" : ""}${d.amaigrissement}, fatigue ${d.fatigue >= 0 ? "+" : ""}${d.fatigue}, teint ${d.teint >= 0 ? "+" : ""}${d.teint}, hydratation ${d.hydratation >= 0 ? "+" : ""}${d.hydratation} (échelle 1-5)`);
+  }
+
+  if (data.measurements.entriesCount > 0) {
+    lines.push(`\n— Mensurations (${data.measurements.entriesCount} relevé${data.measurements.entriesCount > 1 ? "s" : ""}, ${data.measurements.first?.month} → ${data.measurements.latest?.month}) —`);
+    if (data.measurements.delta) {
+      for (const key of MEASUREMENT_FIELDS) {
+        const v = data.measurements.delta[key];
+        if (v != null && v !== 0) lines.push(`${MEASUREMENT_LABELS[key]}: ${v >= 0 ? "+" : ""}${v} cm depuis le premier relevé`);
+      }
+    } else if (data.measurements.latest) {
+      for (const key of MEASUREMENT_FIELDS) {
+        const v = data.measurements.latest[key];
+        if (v != null) lines.push(`${MEASUREMENT_LABELS[key]}: ${v} cm (dernier relevé)`);
+      }
+    }
   }
 
   return lines.join("\n");

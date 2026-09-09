@@ -8,6 +8,8 @@ import type {
   SupplementProduct, SupplementLog, MicronutrientDay, MicronutrientCode,
   FaceScanEntry, SupplementFrequency, MicronutrientInfo,
 } from "@/app/lib/types";
+import type { MeasurementEntry } from "@/app/api/measurements/route";
+import { MEASUREMENT_FIELDS, type MeasurementField } from "@/app/lib/measurement-fields";
 
 // ─── Output types ─────────────────────────────────────────────────────────────
 
@@ -71,6 +73,7 @@ export interface FaceScanRow {
   date:       string;
   scorecard:  { amaigrissement: number; fatigue: number; teint: number; hydratation: number };
 }
+
 
 export interface FoodFrequencyRow {
   name:             string;
@@ -168,6 +171,13 @@ export interface ReportData {
     delta:      { amaigrissement: number; fatigue: number; teint: number; hydratation: number } | null;
     entries:    FaceScanRow[];
   };
+  measurements: {
+    entriesCount: number;
+    first:        MeasurementEntry | null;
+    latest:       MeasurementEntry | null;
+    delta:        Partial<Record<MeasurementField, number>> | null;
+    entries:      MeasurementEntry[];
+  };
   latestSynthesis: AISynthesisResult | null;
   reportSynthesis: ReportSynthesis | null;
 }
@@ -181,7 +191,7 @@ export async function buildReportData(userId: string, from: string, to: string):
   const [
     foodSnaps, fitnessSnaps, healthSnaps, profileSnap,
     supplementProductsSnap, supplementLogsSnap, micronutrientLogsSnap, faceScansSnap,
-    customNutrientsSnap,
+    customNutrientsSnap, measurementsSnap,
   ] = await Promise.all([
     db.collection(`users/${userId}/foodLog`)
       .where("date", ">=", from).where("date", "<=", to)
@@ -204,6 +214,10 @@ export async function buildReportData(userId: string, from: string, to: string):
       .where("date", ">=", from).where("date", "<=", to)
       .orderBy("date", "asc").get(),
     db.collection(`users/${userId}/customNutrients`).get(),
+    // Mensurations : mensuelles et rares, on prend tout l'historique dispo (pas borné à
+    // from/to) pour toujours pouvoir montrer l'évolution "depuis le début", même sur un
+    // rapport courte période.
+    db.collection(`users/${userId}/measurements`).orderBy("month", "asc").limit(24).get(),
   ]);
 
   // User-defined nutrients (see /api/custom-nutrients) — merged so the micronutrient
@@ -479,6 +493,21 @@ export async function buildReportData(userId: string, from: string, to: string):
       }
     : null;
 
+  // ── Mensurations ─────────────────────────────────────────────────────────
+  const measurementEntries: MeasurementEntry[] = measurementsSnap.docs.map(d => {
+    const raw = d.data() as MeasurementEntry & { loggedAt: { seconds: number } };
+    return { ...raw, loggedAt: { seconds: raw.loggedAt?.seconds ?? 0, nanoseconds: 0 } };
+  });
+  const measurementsFirst  = measurementEntries[0] ?? null;
+  const measurementsLatest = measurementEntries[measurementEntries.length - 1] ?? null;
+  const measurementsDelta = (measurementsFirst && measurementsLatest && measurementsFirst !== measurementsLatest)
+    ? MEASUREMENT_FIELDS.reduce((acc, key) => {
+        const a = measurementsFirst[key], b = measurementsLatest[key];
+        if (typeof a === "number" && typeof b === "number") acc[key] = Math.round((b - a) * 10) / 10;
+        return acc;
+      }, {} as Partial<Record<MeasurementField, number>>)
+    : null;
+
   const data: ReportData = {
     meta: {
       from,
@@ -558,6 +587,13 @@ export async function buildReportData(userId: string, from: string, to: string):
       latest: faceScanLatest,
       delta:  faceScanDelta,
       entries: faceScanEntries,
+    },
+    measurements: {
+      entriesCount: measurementEntries.length,
+      first:        measurementsFirst,
+      latest:       measurementsLatest,
+      delta:        measurementsDelta,
+      entries:      measurementEntries,
     },
     latestSynthesis,
     reportSynthesis: null,

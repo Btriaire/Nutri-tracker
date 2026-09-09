@@ -11,13 +11,16 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const period = VALID_PERIODS.has(body?.period) ? body.period : "7d";
+  const length = body?.length === "long" ? "long" : "short";
+  // La version longue couvre toujours depuis le début du suivi — la période n'a de sens
+  // que pour la version courte.
+  const period = length === "long" ? "all" : (VALID_PERIODS.has(body?.period) ? body.period : "7d");
 
   try {
     const res = await fetch(`${VPS_MANAGER_URL}/api/notebooklm-nutri/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ period }),
+      body: JSON.stringify({ period, length }),
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
