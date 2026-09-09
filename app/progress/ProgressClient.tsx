@@ -440,6 +440,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   const [meditSessions,   setMeditSessions]  = useState<{ date: string; durationMin: number; programLabel: string }[]>([]);
   const [fastingSessions, setFastingSessions] = useState<FastingSession[]>([]);
   const [nutriTab,        setNutriTab]       = useState<"macros" | "micros">("macros");
+  const [nutrientsOpen,   setNutrientsOpen]  = useState(false);
   const [alcoolWeekPts,  setAlcoolWeekPts]  = useState<{ date: string; alcoolUnits: number; label: string }[]>([]);
 
   useEffect(() => {
@@ -1643,9 +1644,21 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.12 }} className="glass p-5 mb-4">
 
-                  {/* ── Header + toggle ─────────────────────────────────── */}
-                  <div className="flex items-center justify-between mb-4">
+                  {/* ── Header — click to expand/collapse ─────────────────── */}
+                  <button className="w-full flex items-center justify-between" onClick={() => setNutrientsOpen(v => !v)}>
                     <p className="label-xs">Évolution des nutriments</p>
+                    {nutrientsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {nutrientsOpen && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        style={{ overflow: "hidden" }}>
+                        <div className="pt-4">
+
+                  {/* ── Tabs ─────────────────────────────────────────────── */}
+                  <div className="flex justify-end mb-4">
                     <div className="flex gap-1 p-0.5 rounded-lg"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                       {([["macros", "Macros"], ["micros", "Micros"]] as const).map(([key, lbl]) => (
@@ -1789,6 +1802,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       </div>
                     )
                   )}
+
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               );
             })()}
