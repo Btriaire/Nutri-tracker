@@ -17,7 +17,7 @@ import MacroContributionPanel from "@/app/components/MacroContributionPanel";
 import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
-import { checkDietCompliance, normalizeFoodName, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
+import { checkDietCompliance, normalizeFoodName, resolveDietProgramId, DIET_PROGRAMS } from "@/app/lib/diet-program";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import AlternativeFoodsModal from "@/app/components/AlternativeFoodsModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
@@ -321,9 +321,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const remaining = goals.dailyCalories - Math.round(totals.calories);
   const dayQuality = computeQualityScore(totals, goals, 1, entries.map(e => e.name));
 
+  const activeDietProgramId = resolveDietProgramId(dietProgram);
+
   const dietReport = useMemo(
-    () => (dietProgram?.enabled && !dietPaused ? checkDietCompliance(entries, dietExceptions) : null),
-    [entries, dietProgram?.enabled, dietPaused, dietExceptions]
+    () => (activeDietProgramId && !dietPaused ? checkDietCompliance(entries, dietExceptions, activeDietProgramId) : null),
+    [entries, activeDietProgramId, dietPaused, dietExceptions]
   );
 
   const handleDismissViolation = (foodName: string) => {
@@ -334,7 +336,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       fetch("/api/goals", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dietProgram: { enabled: dietProgram?.enabled ?? true, exceptions: next } }),
+        body: JSON.stringify({ dietProgram: { programId: activeDietProgramId, enabled: activeDietProgramId === "tl", exceptions: next } }),
       }).catch((err) => console.error("Failed to save diet exception:", err));
       return next;
     });
@@ -683,7 +685,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         )}
 
         {/* Diet program compliance — day-level badge */}
-        {dietProgram?.enabled && (
+        {activeDietProgramId && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -707,7 +709,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 : dietReport?.day.status === "ecarts" ? "#f87171"
                 : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
             }}>
-              {DIET_PROGRAM_NAME}
+              {DIET_PROGRAMS[activeDietProgramId].name}
               {" — "}
               {dietPaused
                 ? "jour libre, écarts non comptabilisés"
@@ -743,7 +745,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </motion.div>
         )}
 
-        {showDietInfo && <DietProgramInfoModal onClose={() => setShowDietInfo(false)} />}
+        {showDietInfo && activeDietProgramId && (
+          <DietProgramInfoModal onClose={() => setShowDietInfo(false)} programId={activeDietProgramId} />
+        )}
 
         {/* AI Insight */}
         <motion.div

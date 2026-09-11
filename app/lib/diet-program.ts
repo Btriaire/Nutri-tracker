@@ -1,4 +1,4 @@
-import type { FoodEntry, MealType } from "./types";
+import type { DietProgramId, DietProgramPrefs, FoodEntry, MealType } from "./types";
 
 // ─── Programme Dr.T-L ────────────────────────────────────────────────────────
 // Régime prescrit par le Dr Geneviève Tarpin-Lyonnet (nutritionniste), retranscrit
@@ -15,6 +15,20 @@ import type { FoodEntry, MealType } from "./types";
 // "régime suivi à la lettre". D'où le choix de ne jamais faire échouer un repas
 // simplement parce qu'il manque un composant obligatoire : trop de faux négatifs
 // (l'utilisateur peut avoir mangé l'aliment sans le logger précisément).
+
+export const DIET_PROGRAMS: Record<DietProgramId, { name: string; shortDesc: string; icon: string }> = {
+  tl:          { name: "Programme Dr.T-L",       shortDesc: "Régime prescrit — repères précis par repas", icon: "🩺" },
+  cholesterol: { name: "Anti-cholestérol (LDL)", shortDesc: "Limiter graisses saturées/trans, favoriser fibres et oméga-3", icon: "❤️" },
+};
+
+/** Résout le programme actif en gérant la compat avec l'ancien flag booléen
+ * `enabled` (avant l'ajout du multi-programme, seul le Programme Dr.T-L existait). */
+export function resolveDietProgramId(prefs?: DietProgramPrefs | null): DietProgramId | null {
+  if (!prefs) return null;
+  if (prefs.programId) return prefs.programId;
+  if (prefs.enabled) return "tl";
+  return null;
+}
 
 export interface DietViolation {
   entryId: string;
@@ -158,6 +172,83 @@ export function dietMealSummary(meal: MealType): string {
   return MEAL_RULES[meal].summary;
 }
 
+// ─── Programme Anti-cholestérol (LDL) ──────────────────────────────────────
+// Contrairement au Programme Dr.T-L, pas de quantités par repas : c'est une
+// détection de présence par mots-clés, à tout repas — ces aliments sont des
+// sources connues de graisses saturées/trans (qui font monter le LDL) ou de
+// cholestérol alimentaire. Les apports en graisses saturées eux-mêmes sont déjà
+// suivis en grammes ailleurs dans l'app (pastille "Lip.sat.", score de qualité
+// nutritionnelle) — ce programme complète ce suivi quantitatif par un repérage
+// qualitatif des aliments à limiter.
+
+const FRIED_KEYWORDS = [
+  "frites", "friture", "beignet", "beignets", "nuggets", "tempura", "chips",
+  "panee", "panees", "pane au four", "croquette", "croquettes",
+];
+
+const FATTY_PROCESSED_MEAT_KEYWORDS = [
+  "charcuterie", "saucisson", "saucisse", "saucisses", "lardons", "bacon",
+  "chorizo", "pate de campagne", "pate en croute", "pate de foie", "rillettes",
+  "boudin", "merguez", "salami", "mortadelle", "andouille", "andouillette",
+];
+
+const BUTTER_CREAM_KEYWORDS = [
+  "beurre", "creme fraiche", "creme entiere", "chantilly", "mascarpone",
+];
+
+const FATTY_PASTRY_KEYWORDS = [
+  "viennoiserie", "croissant", "pain au chocolat", "chausson", "chaussons",
+  "donut", "donuts", "brioche",
+];
+
+const FATTY_CHEESE_KEYWORDS = [
+  "roquefort", "comte", "reblochon", "raclette", "fondue savoyarde",
+  "camembert", "brie", "cantal", "beaufort",
+];
+
+const OFFAL_KEYWORDS = [
+  "abats", "foie gras", "ris de veau", "cervelle", "rognons", "tripes",
+];
+
+const COCONUT_PALM_KEYWORDS = [
+  "huile de coco", "huile de palme", "noix de coco",
+];
+
+export const CHOLESTEROL_FAVORISER_SUMMARY =
+  "Avoine, orge et légumineuses (fibres solubles) ; huiles végétales liquides (olive, colza, tournesol) ; " +
+  "oléagineux (noix, amandes, noisettes) ; poissons gras 2-3x/semaine (saumon, maquereau, sardine — oméga-3) ; " +
+  "fruits et légumes à volonté ; protéines végétales (tofu, légumineuses) à la place d'une partie de la viande rouge.";
+
+export const CHOLESTEROL_LIMITER_SUMMARY =
+  "Charcuterie et viandes grasses, fritures, beurre/crème/mascarpone, viennoiseries et pâtisseries, " +
+  "fromages très gras (roquefort, comté, reblochon, raclette...), abats/foie gras, huile de coco/palme — " +
+  "sources de graisses saturées/trans ou de cholestérol alimentaire qui font monter le LDL.";
+
+function checkCholesterolKeywords(normalizedName: string): string | null {
+  let hit = matchesAny(normalizedName, FRIED_KEYWORDS);
+  if (hit) return `friture — riche en graisses (${hit})`;
+
+  hit = matchesAny(normalizedName, FATTY_PROCESSED_MEAT_KEYWORDS);
+  if (hit) return `charcuterie/viande grasse — riche en graisses saturées (${hit})`;
+
+  hit = matchesAny(normalizedName, BUTTER_CREAM_KEYWORDS);
+  if (hit) return `beurre/crème — riche en graisses saturées (${hit})`;
+
+  hit = matchesAny(normalizedName, FATTY_PASTRY_KEYWORDS);
+  if (hit) return `viennoiserie/pâtisserie — graisses saturées/trans (${hit})`;
+
+  hit = matchesAny(normalizedName, FATTY_CHEESE_KEYWORDS);
+  if (hit) return `fromage très gras — à limiter (${hit})`;
+
+  hit = matchesAny(normalizedName, OFFAL_KEYWORDS);
+  if (hit) return `abats — riche en cholestérol alimentaire (${hit})`;
+
+  hit = matchesAny(normalizedName, COCONUT_PALM_KEYWORDS);
+  if (hit) return `huile de coco/palme — riche en graisses saturées (${hit})`;
+
+  return null;
+}
+
 const QUANTITY_TOLERANCE = 1.15; // +15% de marge avant de signaler un écart de quantité
 
 function checkForbiddenKeywords(normalizedName: string): string | null {
@@ -209,17 +300,23 @@ function checkQuantity(meal: MealType, normalizedName: string, grams: number): s
   return null;
 }
 
+const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+
 /**
  * `exceptions` : noms d'aliments (déjà normalizeFoodName()) que l'utilisateur a
  * explicitement marqués "ce n'est pas un écart" — jamais signalés, quel que
  * soit le repas ou la quantité.
  */
-export function checkDietCompliance(entries: FoodEntry[], exceptions: string[] = []): DietReport {
+export function checkDietCompliance(
+  entries: FoodEntry[],
+  exceptions: string[] = [],
+  programId: DietProgramId = "tl",
+): DietReport {
   const violationsByEntryId: Record<string, DietViolation[]> = {};
   const perMeal = {} as Record<MealType, DietMealReport>;
   const exceptionSet = new Set(exceptions);
 
-  (Object.keys(MEAL_RULES) as MealType[]).forEach((meal) => {
+  MEAL_TYPES.forEach((meal) => {
     const mealEntries = entries.filter((e) => e.meal === meal);
     const violations: DietViolation[] = [];
 
@@ -228,11 +325,16 @@ export function checkDietCompliance(entries: FoodEntry[], exceptions: string[] =
       if (exceptionSet.has(normalized)) continue;
       const reasons: string[] = [];
 
-      const forbidden = checkForbiddenKeywords(normalized);
-      if (forbidden) reasons.push(forbidden);
+      if (programId === "cholesterol") {
+        const flagged = checkCholesterolKeywords(normalized);
+        if (flagged) reasons.push(flagged);
+      } else {
+        const forbidden = checkForbiddenKeywords(normalized);
+        if (forbidden) reasons.push(forbidden);
 
-      const overQuantity = checkQuantity(meal, normalized, entry.servingGrams ?? 0);
-      if (overQuantity) reasons.push(overQuantity);
+        const overQuantity = checkQuantity(meal, normalized, entry.servingGrams ?? 0);
+        if (overQuantity) reasons.push(overQuantity);
+      }
 
       for (const reason of reasons) {
         const v = { entryId: entry.id, entryName: entry.name, reason };

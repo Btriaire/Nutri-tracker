@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
-import { checkDietCompliance, DIET_PROGRAM_NAME } from "@/app/lib/diet-program";
+import { checkDietCompliance, resolveDietProgramId, DIET_PROGRAMS } from "@/app/lib/diet-program";
 import { recordReads } from "@/app/lib/quota-tracker";
 import { inferFoodCategory } from "@/app/lib/food-substitution";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
@@ -56,8 +56,9 @@ export async function GET(req: NextRequest) {
 
   const profile     = (profileSnap.exists ? profileSnap.data() : {}) as Partial<UserProfile>;
   const goals        = profile.goals ?? defaultGoals();
-  const dietProgram  = profile.dietProgram;
-  const dietEnabled  = !!dietProgram?.enabled;
+  const dietProgram   = profile.dietProgram;
+  const dietProgramId = resolveDietProgramId(dietProgram);
+  const dietEnabled   = !!dietProgramId;
   const dietExceptions = dietProgram?.exceptions ?? [];
 
   const dayLogs = logSnap.docs.map((d) => d.data() as DayLog);
@@ -148,7 +149,7 @@ export async function GET(req: NextRequest) {
     if ((log.totals?.sugarG ?? 0) > sugarLimitG) daysSugarOverLimit++;
 
     if (dietEnabled && !log.dietPaused) {
-      const report = checkDietCompliance(log.entries ?? [], dietExceptions);
+      const report = checkDietCompliance(log.entries ?? [], dietExceptions, dietProgramId!);
       if (report.day.status === "conforme") dietConformeDays++;
       else if (report.day.status === "ecarts") dietEcartDays++;
       for (const violations of Object.values(report.violationsByEntryId)) {
@@ -185,7 +186,7 @@ export async function GET(req: NextRequest) {
     concerns.push({ label: topViolation[0], detail: `${topViolation[1]}x sur la période`, days: topViolation[1] });
   }
   if (dietEnabled && dietConformeDays >= Math.ceil(loggedDays * 0.6) && loggedDays > 0) {
-    goodHabits.push({ label: `${DIET_PROGRAM_NAME} respecté`, detail: `${dietConformeDays}j/${loggedDays} sans écart`, days: dietConformeDays });
+    goodHabits.push({ label: `${DIET_PROGRAMS[dietProgramId!].name} respecté`, detail: `${dietConformeDays}j/${loggedDays} sans écart`, days: dietConformeDays });
   }
 
   const worstMicro = micronutrients[0];

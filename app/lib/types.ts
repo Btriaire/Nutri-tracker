@@ -298,8 +298,14 @@ export interface UserProfile {
   dietProgram?: DietProgramPrefs;
 }
 
+export type DietProgramId = "tl" | "cholesterol";
+
 export interface DietProgramPrefs {
-  enabled: boolean; // Programme Dr.T-L actif
+  /** Programme actif ; absent/null = aucun. */
+  programId?: DietProgramId | null;
+  /** @deprecated Ancien flag booléen (= "tl" actif), conservé pour compat avec les profils
+   * enregistrés avant l'ajout du multi-programme — utiliser resolveDietProgramId(). */
+  enabled?: boolean;
   exceptions?: string[]; // noms d'aliments (normalisés) jamais signalés comme écart
 }
 
