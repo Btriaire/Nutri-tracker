@@ -8,6 +8,9 @@ import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, 
   IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles, IconBookmarkPlus, IconCheck } from "@tabler/icons-react";
 import FoodItem from "./FoodItem";
 import type { AddedInfo } from "./FoodSearchModal";
+import QualityScoreBadge from "./QualityScoreBadge";
+import QualityScoreDetail from "./QualityScoreDetail";
+import { computeQualityScore } from "@/app/lib/meal-quality";
 
 // Split out of the main bundle: it's a large modal (search, camera, barcode
 // scanning) only ever needed after the user taps "add food".
@@ -61,6 +64,24 @@ export default function MealSection({
 
   const meta = MEAL_META[meal];
   const cal  = Math.round(entries.reduce((s, e) => s + e.nutrition.calories, 0));
+
+  const quality = goals && cal > 0
+    ? computeQualityScore(
+        entries.reduce((acc, e) => ({
+          calories:      acc.calories      + e.nutrition.calories,
+          proteinG:      acc.proteinG      + e.nutrition.proteinG,
+          carbsG:        acc.carbsG        + e.nutrition.carbsG,
+          fatG:          acc.fatG          + e.nutrition.fatG,
+          fiberG:        acc.fiberG        + e.nutrition.fiberG,
+          sugarG:        (acc.sugarG       ?? 0) + (e.nutrition.sugarG ?? 0),
+          sodiumMg:      (acc.sodiumMg     ?? 0) + (e.nutrition.sodiumMg ?? 0),
+          saturatedFatG: (acc.saturatedFatG ?? 0) + (e.nutrition.saturatedFatG ?? 0),
+        }), { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sugarG: 0, sodiumMg: 0, saturatedFatG: 0 }),
+        goals,
+        cal / Math.max(goals.dailyCalories, 1),
+        entries.map(e => e.name),
+      )
+    : null;
 
   const handleDelete = (id: string) => {
     onEntriesChange(meal, entries.filter((e) => e.id !== id));
@@ -146,7 +167,10 @@ export default function MealSection({
             {meta[lang]}
           </span>
           {cal > 0 ? (
-            <span className="text-[12px] font-medium shrink-0" style={{ color: meta.color }}>{cal} kcal</span>
+            <span className="flex items-center gap-1.5 shrink-0">
+              {quality && <QualityScoreBadge score={quality.score} size={18} showValue={false} />}
+              <span className="text-[12px] font-medium" style={{ color: meta.color }}>{cal} kcal</span>
+            </span>
           ) : (
             <span className="label-xs shrink-0">{lang === "fr" ? "Vide" : "Empty"}</span>
           )}
@@ -316,6 +340,18 @@ export default function MealSection({
             {/* Nutrition breakdown panel */}
             {showNutrition && entries.length > 0 && (
               <div className="px-4 pb-3">
+                {quality && (
+                  <div className="rounded-xl p-3 mb-2 flex items-center gap-3"
+                    style={{ border: `1px solid ${quality.color}33`, background: `${quality.color}0d` }}>
+                    <QualityScoreBadge score={quality.score} size={48} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold mb-1.5" style={{ color: quality.color }}>
+                        Qualité nutritionnelle · {quality.label}
+                      </p>
+                      <QualityScoreDetail quality={quality} />
+                    </div>
+                  </div>
+                )}
                 <div className="rounded-xl overflow-hidden"
                   style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
                   {/* Header row */}

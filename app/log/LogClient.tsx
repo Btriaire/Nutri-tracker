@@ -33,6 +33,9 @@ import MeasurementReminderBanner from "@/app/components/MeasurementReminderBanne
 import FaceScanReminderBanner from "@/app/components/FaceScanReminderBanner";
 import type { DayPhoto } from "@/app/api/photos/route";
 import { levelBarStyle, levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
+import QualityScoreBadge from "@/app/components/QualityScoreBadge";
+import QualityScoreDetail from "@/app/components/QualityScoreDetail";
+import { computeQualityScore } from "@/app/lib/meal-quality";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 
@@ -231,6 +234,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [showDietInfo, setShowDietInfo] = useState(false);
   const [dietExceptions, setDietExceptions] = useState<string[]>(dietProgram?.exceptions ?? []);
   const [dietPaused, setDietPaused] = useState(initialLog?.dietPaused ?? false);
+  const [qualityDetailOpen, setQualityDetailOpen] = useState(false);
   const [trackersOpen, setTrackersOpen] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -315,6 +319,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   );
 
   const remaining = goals.dailyCalories - Math.round(totals.calories);
+  const dayQuality = computeQualityScore(totals, goals, 1, entries.map(e => e.name));
 
   const dietReport = useMemo(
     () => (dietProgram?.enabled && !dietPaused ? checkDietCompliance(entries, dietExceptions) : null),
@@ -567,6 +572,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 </span>
               </div>
             </div>
+            {dayQuality && (
+              <button
+                onClick={() => setQualityDetailOpen(v => !v)}
+                className="flex flex-col items-center gap-1 flex-shrink-0 transition-all active:scale-95"
+                aria-label="Détail de la qualité nutritionnelle du jour"
+              >
+                <QualityScoreBadge score={dayQuality.score} size={52} />
+                <span className="text-[8px] font-medium" style={{ color: "var(--text-muted)" }}>Qualité</span>
+              </button>
+            )}
           </div>
 
           {/* ── SVG Macro bars ── */}
@@ -575,6 +590,27 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             carbs={{   val: totals.carbsG,   goal: goals.carbsGrams }}
             fat={{     val: totals.fatG,     goal: goals.fatGrams }}
           />
+
+          {/* ── Détail qualité nutritionnelle (dépliable) ── */}
+          {dayQuality && (
+            <AnimatePresence initial={false}>
+              {qualityDetailOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="mt-3 pt-3 rounded-xl p-3"
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.08)", background: `${dayQuality.color}0d`, border: `1px solid ${dayQuality.color}33` }}>
+                    <p className="text-[11px] font-semibold mb-2" style={{ color: dayQuality.color }}>
+                      Qualité nutritionnelle du jour · {dayQuality.label}
+                    </p>
+                    <QualityScoreDetail quality={dayQuality} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
 
           {/* Validate / Unlock button */}
           {validated ? (
