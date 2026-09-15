@@ -342,6 +342,14 @@ export interface GoogleFitSession {
   elevationGainM: number | null;   // elevation gain in meters
 }
 
+export type SleepStage = "awake" | "light" | "deep" | "rem";
+
+export interface SleepSegment {
+  startMs: number;
+  endMs:   number;
+  stage:   SleepStage;
+}
+
 export interface GoogleFitDay {
   steps:                 number;
   activeCaloriesBurned:  number;
@@ -354,6 +362,10 @@ export interface GoogleFitDay {
   deepSleepMin:          number | null;
   remSleepMin:           number | null;
   sleepSyncedAt?:        string;           // ISO date of the sleep session
+  /** Chronological, real stage transitions for the night — for the hypnogram
+   * timeline. Awake segments ARE included here (unlike lightSleepMin/etc,
+   * which only sum actual sleep) so the graph can show wake-ups. */
+  sleepSegments?:        SleepSegment[];
   sessions:              GoogleFitSession[];
   syncedAt:              Timestamp;
 }

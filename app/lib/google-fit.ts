@@ -1,6 +1,7 @@
 import { getAdminFirestore } from "./firebase-admin";
 import { encrypt, decrypt } from "./oauth";
 import { FieldValue } from "firebase-admin/firestore";
+import type { SleepSegment, SleepStage } from "./types";
 
 interface RawTokens {
   accessToken:  string;
@@ -351,6 +352,7 @@ interface DayFitnessData {
   deepSleepMin:        number | null;
   remSleepMin:         number | null;
   sleepSyncedAt:       string | null;      // ISO date of sleep session start
+  sleepSegments:       SleepSegment[];     // chronological real stage transitions, for the hypnogram timeline
   bloodPressure:       GoogleFitBpReading[];
   sessions:            WorkoutSession[];
 }
@@ -526,11 +528,14 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     }
   }
 
-  // Sleep segments: classify phases (light=4, deep=5, REM=6, awake=1, unspecified=2)
+  // Sleep segments: classify phases per Google's official com.google.sleep.segment
+  // mapping (developers.google.com/fit/scenarios/read-sleep-data) —
+  // 1=awake, 2=sleep(generic), 3=out-of-bed, 4=light, 5=deep, 6=REM.
   // Only count stages that end before noon (excludes afternoon naps).
   // Use a Set keyed by "startNanos-endNanos-stage" to deduplicate identical points
   // (some trackers may sync the same segment multiple times).
   let sleepMinutes: number | null = null;
+  const sleepSegments: SleepSegment[] = [];
   if (sleepRes.ok) {
     const sleepJson = await sleepRes.json() as { bucket?: { dataset?: { point?: SleepSegmentPoint[] }[] }[] };
     let light = 0, deep = 0, rem = 0;
@@ -555,6 +560,15 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         if (stage === 4) light += durMin;   // light sleep
         if (stage === 5) deep  += durMin;   // deep / slow-wave
         if (stage === 6) rem   += durMin;   // REM
+
+        // Timeline for the hypnogram — awake/out-of-bed included so wake-ups show up.
+        const timelineStage: SleepStage | null =
+          stage === 1 || stage === 3 ? "awake"
+          : stage === 2 || stage === 4 ? "light"
+          : stage === 5 ? "deep"
+          : stage === 6 ? "rem"
+          : null;
+        if (timelineStage) sleepSegments.push({ startMs: ptStartMs, endMs: ptEndMs, stage: timelineStage });
       }
     }
     if (light + deep + rem > 0) {
@@ -563,6 +577,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       remSleepMin   = rem   || null;
       sleepMinutes  = light + deep + rem;
     }
+    sleepSegments.sort((a, b) => a.startMs - b.startMs);
   }
   // Fallback: if no segment data, estimate from in-bed time (85% sleep efficiency)
   if (sleepMinutes === null && timeInBedMinutes !== null) {
@@ -615,6 +630,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     activeMinutes:       getInt(4),
     sleepMinutes,
     timeInBedMinutes,
+    sleepSegments,
     lightSleepMin,
     deepSleepMin,
     remSleepMin,
@@ -658,6 +674,7 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
       deepSleepMin:        data.deepSleepMin,
       remSleepMin:         data.remSleepMin,
       sleepSyncedAt:       data.sleepSyncedAt,
+      sleepSegments:       data.sleepSegments,
       sessions:            data.sessions,
       syncedAt:            FieldValue.serverTimestamp(),
     },

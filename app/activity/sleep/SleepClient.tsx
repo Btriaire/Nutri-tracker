@@ -15,6 +15,7 @@ import {
   XAxis, YAxis, Tooltip, ReferenceLine, Cell,
 } from "recharts";
 import { levelBarBg, levelBarClip, levelColor } from "@/app/lib/colors";
+import type { SleepStage } from "@/app/lib/types";
 import type { SleepPoint } from "./page";
 
 interface Props { points: SleepPoint[]; sleepGoalMin: number }
@@ -26,6 +27,94 @@ const STAGES = [
   { key: "deep",  label: "Profond",   emoji: "💤", color: "#3B82F6", desc: "Récupération physique" },
   { key: "rem",   label: "Paradoxal", emoji: "✨", color: "#8B5CF6", desc: "Mémoire · créativité" },
 ] as const;
+
+// ─── Real hypnogram (actual stage timeline from the tracker) ─────────────────
+
+const STAGE_ROW: Record<SleepStage, number> = { awake: 0, rem: 1, light: 2, deep: 3 };
+const STAGE_COLOR: Record<SleepStage, string> = { awake: "#fb923c", rem: "#8B5CF6", light: "#7986CB", deep: "#3B82F6" };
+const STAGE_LABEL: Record<SleepStage, string> = { awake: "Éveillé", rem: "Paradoxal", light: "Léger", deep: "Profond" };
+
+function fmtTime(ms: number) {
+  return new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Real timeline of stage transitions for one night — inspired by the Apple
+ * Watch sleep graph: 4 horizontal "swim lanes" (Éveillé/Paradoxal/Léger/Profond,
+ * top to bottom), each segment drawn at its actual start/end time. Unlike the
+ * old estimated wave, this reflects exactly what the tracker recorded. */
+function SleepHypnogram({ segments }: { segments: { startMs: number; endMs: number; stage: SleepStage }[] }) {
+  if (segments.length === 0) return null;
+
+  const nightStart = segments[0].startMs;
+  const nightEnd   = segments[segments.length - 1].endMs;
+  const span       = Math.max(nightEnd - nightStart, 60_000);
+
+  const W = 300, H = 88, BAR_H = 9, TOP_PAD = 6;
+  const rowGap = (H - TOP_PAD * 2 - BAR_H) / 3;
+  const x = (ms: number) => ((ms - nightStart) / span) * W;
+  const yTop = (stage: SleepStage) => TOP_PAD + STAGE_ROW[stage] * rowGap;
+
+  const awakeCount = segments.filter(s => s.stage === "awake").length;
+  const awakeMin   = Math.round(segments.filter(s => s.stage === "awake").reduce((s, seg) => s + (seg.endMs - seg.startMs), 0) / 60_000);
+
+  return (
+    <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme · relevé réel</p>
+        <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>
+          {fmtTime(nightStart)} → {fmtTime(nightEnd)}
+        </span>
+      </div>
+
+      <div className="flex gap-1.5">
+        {/* Row labels */}
+        <div className="flex-shrink-0 relative" style={{ width: 38, height: H }}>
+          {(Object.keys(STAGE_ROW) as SleepStage[]).map(stage => (
+            <span key={stage}
+              className="absolute text-[7px] text-right w-full leading-none"
+              style={{ top: yTop(stage) + BAR_H / 2 - 3, color: STAGE_COLOR[stage] }}>
+              {STAGE_LABEL[stage]}
+            </span>
+          ))}
+        </div>
+
+        <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="flex-1">
+          {/* Row guides */}
+          {(Object.keys(STAGE_ROW) as SleepStage[]).map(stage => (
+            <line key={stage} x1={0} x2={W} y1={yTop(stage) + BAR_H / 2} y2={yTop(stage) + BAR_H / 2}
+              stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
+          ))}
+          {/* Connectors between consecutive segments */}
+          {segments.slice(0, -1).map((seg, i) => {
+            const next = segments[i + 1];
+            if (seg.stage === next.stage) return null;
+            const cx = x(seg.endMs);
+            return (
+              <line key={`c${i}`} x1={cx} x2={cx}
+                y1={yTop(seg.stage) + BAR_H / 2} y2={yTop(next.stage) + BAR_H / 2}
+                stroke="rgba(255,255,255,0.18)" strokeWidth={1} />
+            );
+          })}
+          {/* Segment bars */}
+          {segments.map((seg, i) => {
+            const x1 = x(seg.startMs);
+            const w  = Math.max(x(seg.endMs) - x1, 2);
+            return (
+              <motion.rect key={i} x={x1} y={yTop(seg.stage)} width={w} height={BAR_H} rx={BAR_H / 2}
+                fill={STAGE_COLOR[seg.stage]}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: Math.min(i * 0.008, 0.6) }} />
+            );
+          })}
+        </svg>
+      </div>
+
+      <p className="text-[8px] text-center mt-2" style={{ color: "var(--text-muted)" }}>
+        {awakeCount > 0 ? `${awakeCount} réveil${awakeCount > 1 ? "s" : ""} détecté${awakeCount > 1 ? "s" : ""} · ${awakeMin} min éveillé` : "Aucun réveil détecté cette nuit"}
+      </p>
+    </div>
+  );
+}
 
 function fmtH(min: number) {
   const h = Math.floor(min / 60), m = min % 60;
@@ -47,10 +136,11 @@ const SOURCE_LABEL: Record<string, string> = {
   manual:      "Manuel",
 };
 
-function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, source, sleepScore }: {
+function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, source, sleepScore, segments }: {
   light: number; deep: number; rem: number;
   totalMin?: number; inBedMin?: number; goalMin?: number;
   source?: string; sleepScore?: number | null;
+  segments?: { startMs: number; endMs: number; stage: SleepStage }[];
 }) {
   const phaseTotal = light + deep + rem;
   const displayMin = totalMin ?? phaseTotal;
@@ -229,8 +319,12 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
         </div>
       </div>
 
-      {/* Hypnogram (only when phases exist) */}
-      {hasPhases && wavePath && (
+      {/* Hypnogram — real timeline when the tracker provides raw segments (Google
+          Fit), estimated wave as fallback for sources with only phase totals
+          (Withings, Apple Health). */}
+      {segments && segments.length > 0 ? (
+        <SleepHypnogram segments={segments} />
+      ) : hasPhases && wavePath && (
         <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme · cycles estimés</p>
@@ -557,6 +651,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
   const [rangeDays, setRangeDays] = useState<7 | 14 | 30>(30);
   const [modal,     setModal]     = useState<{ date: string; current: number | null } | null>(null);
   const [syncing,   setSyncing]   = useState(false);
+  const [selectedNight, setSelectedNight] = useState<string | null>(null);
 
   // Auto-sync Withings on mount (last 7 days, silent)
   useEffect(() => {
@@ -620,9 +715,11 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
     date:     p.date,
   }));
 
-  // Most recent sleep for hypnogram
-  // Most recent night with sleep data — ring shows phases if available, single arc if not
-  const lastSleep = [...points].reverse().find(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+  // Nights with sleep data, most recent first — used both as the default
+  // selection and as the browsable list for the night picker below.
+  const nightsWithData = [...points].reverse().filter(p => p.sleepMinutes != null && p.sleepMinutes > 0);
+  const lastSleep    = nightsWithData[0];
+  const selectedNightData = nightsWithData.find(p => p.date === selectedNight) ?? lastSleep;
 
   // Today's date string
   const today = format(new Date(), "yyyy-MM-dd");
@@ -809,15 +906,42 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           </p>
         </motion.div>
 
-        {/* Dernière nuit — hypnogram + phases */}
-        {lastSleep && (
+        {/* Nuit sélectionnée — hypnogram + phases, navigable jour par jour */}
+        {selectedNightData && (
           <motion.div {...fade(0.15)} className="glass p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="label-xs">Dernière nuit analysée</p>
+              <p className="label-xs">
+                {selectedNightData.date === lastSleep?.date ? "Dernière nuit analysée" : "Nuit analysée"}
+              </p>
               <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                {format(parseISO(lastSleep.date), "dd MMM", { locale: fr })}
+                {format(parseISO(selectedNightData.date), "EEEE dd MMM", { locale: fr })}
               </span>
             </div>
+
+            {/* Night picker — browse any night with sleep data */}
+            {nightsWithData.length > 1 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                {nightsWithData.slice(0, 14).map(p => {
+                  const active = p.date === selectedNightData.date;
+                  return (
+                    <button key={p.date}
+                      onClick={() => setSelectedNight(p.date)}
+                      className="flex-shrink-0 flex flex-col items-center px-2.5 py-1.5 rounded-xl transition-all"
+                      style={{
+                        background: active ? "rgba(121,134,203,0.18)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${active ? "rgba(121,134,203,0.5)" : "var(--border)"}`,
+                      }}>
+                      <span className="text-[9px] font-medium" style={{ color: active ? "#7986CB" : "var(--text-muted)" }}>
+                        {format(parseISO(p.date), "EEE dd", { locale: fr })}
+                      </span>
+                      <span className="text-[8px]" style={{ color: active ? "#7986CB" : "var(--text-muted)", opacity: 0.8 }}>
+                        {p.sleepMinutes ? fmtSleep(p.sleepMinutes) : "—"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Key metrics row */}
             <div className="grid grid-cols-3 gap-2">
@@ -826,16 +950,16 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Endormi</p>
                 <p className="text-[16px] font-bold leading-none" style={{ color: "#7986CB" }}>
-                  {lastSleep.sleepMinutes ? fmtSleep(lastSleep.sleepMinutes) : "—"}
+                  {selectedNightData.sleepMinutes ? fmtSleep(selectedNightData.sleepMinutes) : "—"}
                 </p>
               </div>
               {/* Sleep score (Withings) or time in bed (GFit) */}
-              {lastSleep.sleepScore != null ? (
+              {selectedNightData.sleepScore != null ? (
                 <div className="rounded-xl p-2.5 text-center"
                   style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
                   <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Score</p>
                   <p className="text-[16px] font-bold leading-none" style={{ color: "#818cf8" }}>
-                    {lastSleep.sleepScore}<span className="text-[10px] font-normal">/100</span>
+                    {selectedNightData.sleepScore}<span className="text-[10px] font-normal">/100</span>
                   </p>
                 </div>
               ) : (
@@ -843,7 +967,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Au lit</p>
                   <p className="text-[16px] font-bold leading-none" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {lastSleep.timeInBedMinutes ? fmtSleep(lastSleep.timeInBedMinutes) : "—"}
+                    {selectedNightData.timeInBedMinutes ? fmtSleep(selectedNightData.timeInBedMinutes) : "—"}
                   </p>
                 </div>
               )}
@@ -852,8 +976,8 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Efficacité</p>
                 <p className="text-[16px] font-bold leading-none" style={{ color: "#34d399" }}>
-                  {lastSleep.timeInBedMinutes && lastSleep.sleepMinutes
-                    ? `${Math.round(lastSleep.sleepMinutes / lastSleep.timeInBedMinutes * 100)}%`
+                  {selectedNightData.timeInBedMinutes && selectedNightData.sleepMinutes
+                    ? `${Math.round(selectedNightData.sleepMinutes / selectedNightData.timeInBedMinutes * 100)}%`
                     : "—"}
                 </p>
               </div>
@@ -861,14 +985,15 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
 
             {/* Sleep stages — arc ring (always shown when sleep data exists) */}
             <SleepCycleRing
-              light={lastSleep.lightSleepMin ?? 0}
-              deep={lastSleep.deepSleepMin ?? 0}
-              rem={lastSleep.remSleepMin ?? 0}
-              totalMin={lastSleep.sleepMinutes ?? undefined}
-              inBedMin={lastSleep.timeInBedMinutes ?? undefined}
+              light={selectedNightData.lightSleepMin ?? 0}
+              deep={selectedNightData.deepSleepMin ?? 0}
+              rem={selectedNightData.remSleepMin ?? 0}
+              totalMin={selectedNightData.sleepMinutes ?? undefined}
+              inBedMin={selectedNightData.timeInBedMinutes ?? undefined}
               goalMin={sleepGoalMin}
-              source={lastSleep.source}
-              sleepScore={lastSleep.sleepScore}
+              source={selectedNightData.source}
+              sleepScore={selectedNightData.sleepScore}
+              segments={selectedNightData.sleepSegments}
             />
 
           </motion.div>

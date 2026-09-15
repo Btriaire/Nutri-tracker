@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
-import type { GoogleFitDay, UserProfile, AppleHealthDay, WithingsSleepDay } from "@/app/lib/types";
+import type { GoogleFitDay, UserProfile, AppleHealthDay, WithingsSleepDay, SleepSegment } from "@/app/lib/types";
 import SleepClient from "./SleepClient";
 
 export interface SleepPoint {
@@ -14,6 +14,7 @@ export interface SleepPoint {
   remSleepMin:      number | null;
   sleepScore:       number | null;
   sleepSyncedAt?:   string;
+  sleepSegments?:   SleepSegment[]; // real stage timeline — Google Fit only for now
   source?:          "withings" | "applehealth" | "googlefit" | "manual";
 }
 
@@ -82,6 +83,7 @@ export default async function SleepPage() {
       remSleepMin,
       sleepScore:       ws?.sleepScore ?? null,
       sleepSyncedAt:    gf?.sleepSyncedAt,
+      sleepSegments:    gf?.sleepSegments,
       source,
     };
   });
