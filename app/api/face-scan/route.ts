@@ -132,7 +132,14 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: VISION_MODEL,
         temperature: 0.2,
-        max_tokens: 1500, // free tier TPM cap (8000) — balanced against 2 compressed images + prompt size for richer findings
+        // Groq enforces a separate, tighter OTPM (output tokens/min) cap on this model —
+        // 1000 on the on_demand tier — independent of the 8000 total-TPM cap. Any
+        // max_tokens above ~1000 gets the whole request rejected with 429 before
+        // generation even starts (confirmed empirically: 1500 and 1200 both fail,
+        // 900 succeeds). 900 leaves enough headroom for a full response (summary +
+        // scorecard + up to 6 findings + comparisonNote + conseil, ~700-800 tokens
+        // typically) while staying safely under the hard cap.
+        max_tokens: 900,
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [

@@ -59,7 +59,11 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
       body: JSON.stringify({
         model:           "qwen/qwen3.8-27b", // meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq; qwen3.6-27b itself renamed to qwen3.8-27b by Groq (2026-09)
         temperature:     0.2,
-        max_tokens:      1024,
+        // Groq enforces a separate OTPM (output tokens/min) cap of 1000 on this model
+        // (on_demand tier), independent of the total TPM cap — max_tokens above ~1000
+        // gets the whole request rejected with 429 before generation starts (confirmed
+        // empirically). Stay safely under it.
+        max_tokens:      900,
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.x-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [{
