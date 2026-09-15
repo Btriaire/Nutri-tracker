@@ -57,11 +57,11 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
       method:  "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:           "qwen/qwen3.6-27b", // meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq
+        model:           "qwen/qwen3.8-27b", // meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq; qwen3.6-27b itself renamed to qwen3.8-27b by Groq (2026-09)
         temperature:     0.2,
         max_tokens:      1024,
         response_format: { type: "json_object" },
-        reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
+        reasoning_effort: "none", // qwen3.x-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [{
           role: "user",
           content: [

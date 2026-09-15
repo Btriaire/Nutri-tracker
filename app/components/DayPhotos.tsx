@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { IconPhotoPlus, IconX } from "@tabler/icons-react";
 import type { DayPhoto } from "@/app/api/photos/route";
 
 interface Props {
@@ -111,9 +112,9 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
               <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(photo.id); }}
                 className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: "rgba(239,68,68,0.9)", fontSize: 9 }}
+                style={{ background: "rgba(239,68,68,0.9)" }}
               >
-                ✕
+                <IconX size={10} stroke={2.5} color="#fff" />
               </button>
             </motion.div>
           ))}
@@ -139,7 +140,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
                 style={{ borderColor: "rgba(255,255,255,0.4)", borderTopColor: "transparent" }} />
             ) : (
               <>
-                <span style={{ fontSize: 16 }}>📷</span>
+                <IconPhotoPlus size={16} stroke={1.6} />
                 <span style={{ fontSize: 7, marginTop: 1, color: "var(--text-muted)" }}>
                   {photos.length}/3
                 </span>
@@ -156,13 +157,14 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
         )}
       </div>
 
-      {/* Hidden file input */}
+      {/* Hidden file input — no `capture` attribute, so the OS offers both
+          "Prendre une photo" and "Choisir dans la bibliothèque" (comme pour
+          les photos de repas dans MealSection) plutôt que de forcer l'appareil photo. */}
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         multiple
-        capture="environment"
         className="hidden"
         onChange={e => { handleFiles(e.target.files); e.target.value = ""; }}
       />
@@ -192,10 +194,10 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
             />
             <button
               onClick={() => setLightbox(null)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
               style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
             >
-              ✕
+              <IconX size={16} stroke={2} />
             </button>
           </motion.div>
         )}
