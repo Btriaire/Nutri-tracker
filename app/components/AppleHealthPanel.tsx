@@ -10,7 +10,8 @@ export default function AppleHealthPanel() {
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState<"url" | "token" | null>(null);
+  const [copied, setCopied] = useState<"url" | "token" | "haeUrl" | null>(null);
+  const [method, setMethod] = useState<"shortcuts" | "hae">("hae");
 
   useEffect(() => {
     fetch("/api/apple-health/token", { cache: "no-store" })
@@ -32,9 +33,14 @@ export default function AppleHealthPanel() {
     }
   };
 
-  const ingestUrl = typeof window !== "undefined" ? `${window.location.origin}/api/apple-health/ingest` : "/api/apple-health/ingest";
+  const origin    = typeof window !== "undefined" ? window.location.origin : "";
+  const ingestUrl = `${origin}/api/apple-health/ingest`;
+  // Health Auto Export's "REST API" automation only exposes a single URL field
+  // (no separate body/token field like a Shortcut) — the token has to be
+  // embedded directly in the query string here.
+  const haeUrl = token ? `${origin}/api/apple-health/hae?token=${token}` : "";
 
-  const copyText = (text: string, which: "url" | "token") => {
+  const copyText = (text: string, which: "url" | "token" | "haeUrl") => {
     navigator.clipboard.writeText(text);
     setCopied(which);
     setTimeout(() => setCopied(null), 2000);
@@ -66,10 +72,29 @@ export default function AppleHealthPanel() {
             exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
             <div className="mt-4 space-y-3">
               <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                Apple n&apos;offre pas d&apos;API web pour HealthKit — la synchronisation passe par un
-                <strong style={{ color: "var(--text-secondary)" }}> Raccourci (Shortcuts)</strong> sur ton iPhone
-                qui envoie tes données à cette adresse, ou par l&apos;app <strong style={{ color: "var(--text-secondary)" }}>Health Auto Export</strong> (App Store, ~5€).
+                Apple n&apos;offre pas d&apos;API web pour HealthKit — la synchronisation passe soit par
+                l&apos;app <strong style={{ color: "var(--text-secondary)" }}>Health Auto Export</strong> (App Store,
+                ~5€ — recommandé, notamment pour le <strong style={{ color: "var(--text-secondary)" }}>détail du
+                sommeil</strong> : léger/profond/paradoxal), soit par un
+                <strong style={{ color: "var(--text-secondary)" }}> Raccourci (Shortcuts)</strong> gratuit que tu montes toi-même.
+                <strong style={{ color: "#f87171" }}> Les deux utilisent une URL différente</strong> — vérifie que
+                tu utilises la bonne ci-dessous.
               </p>
+
+              {/* Method selector */}
+              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                {([["hae", "Health Auto Export"], ["shortcuts", "Raccourci Shortcuts"]] as const).map(([key, label]) => (
+                  <button key={key} onClick={() => setMethod(key)}
+                    className="flex-1 py-1.5 rounded-md text-[11px] font-medium transition-all"
+                    style={{
+                      background: method === key ? "rgba(255,45,85,0.14)" : "transparent",
+                      color:      method === key ? "#ff375f" : "var(--text-muted)",
+                      border:     method === key ? "1px solid rgba(255,45,85,0.35)" : "1px solid transparent",
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
 
               {!token ? (
                 <button onClick={generateToken} disabled={loading}
@@ -85,35 +110,56 @@ export default function AppleHealthPanel() {
                     <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Token actif</span>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>URL du webhook</label>
-                    <div className="flex gap-2">
-                      <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-                        {ingestUrl}
+                  {method === "hae" ? (
+                    <div>
+                      <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                        URL à coller dans Health Auto Export (token déjà inclus)
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                          {haeUrl}
+                        </div>
+                        <button onClick={() => copyText(haeUrl, "haeUrl")}
+                          className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                          style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
+                          {copied === "haeUrl" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
+                        </button>
                       </div>
-                      <button onClick={() => copyText(ingestUrl, "url")}
-                        className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
-                        {copied === "url" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
-                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>URL du webhook</label>
+                        <div className="flex gap-2">
+                          <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                            {ingestUrl}
+                          </div>
+                          <button onClick={() => copyText(ingestUrl, "url")}
+                            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
+                            {copied === "url" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
+                          </button>
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>Token</label>
-                    <div className="flex gap-2">
-                      <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-                        {token}
+                      <div>
+                        <label className="text-[10px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>Token (à coller dans le Dictionnaire, pas dans l&apos;URL)</label>
+                        <div className="flex gap-2">
+                          <div className="flex-1 px-3 py-2 rounded-lg text-[11px] font-mono break-all"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                            {token}
+                          </div>
+                          <button onClick={() => token && copyText(token, "token")}
+                            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
+                            {copied === "token" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
+                          </button>
+                        </div>
                       </div>
-                      <button onClick={() => token && copyText(token, "token")}
-                        className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
-                        style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)" }}>
-                        {copied === "token" ? <IconCheck size={14} style={{ color: "var(--fiber)" }} /> : <IconCopy size={14} style={{ color: "var(--indigo)" }} />}
-                      </button>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   <button onClick={generateToken} disabled={loading}
                     className="w-full text-[11px] font-medium py-1.5"
@@ -123,6 +169,39 @@ export default function AppleHealthPanel() {
                 </>
               )}
 
+              {method === "hae" ? (
+                <div className="rounded-lg p-3 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <p className="text-[10px] font-semibold" style={{ color: "var(--text-secondary)" }}>Configurer Health Auto Export (~5 min) :</p>
+
+                  <div>
+                    <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>1. Choisir les métriques à exporter</p>
+                    <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      Dans l&apos;app → onglet <strong>Export</strong> → sélectionne au minimum <strong>Sleep Analysis</strong> (pour le sommeil), plus pas/FC/poids si tu veux le reste.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>2. Activer l&apos;agrégation du sommeil</p>
+                    <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      Réglages de l&apos;app → cherche <strong>&quot;Aggregate Sleep Data&quot;</strong> → active-la. <strong style={{ color: "#f87171" }}>Sans ça, le détail léger/profond/paradoxal n&apos;est pas envoyé</strong>, seulement la durée totale.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>3. Créer l&apos;automatisation</p>
+                    <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      Onglet <strong>Automations</strong> → <strong>+</strong> → type <strong>REST API</strong> → colle l&apos;URL ci-dessus dans le champ URL → Méthode <strong>POST</strong> → programme-la (ex: tous les jours à 8h, ou &quot;à l&apos;ouverture de l&apos;app&quot;).
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>4. Tester</p>
+                    <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      Lance l&apos;automatisation manuellement une fois → vérifie dans Nutri-Tracker (page Sommeil) que le détail des phases apparaît le lendemain.
+                    </p>
+                  </div>
+                </div>
+              ) : (
               <div className="rounded-lg p-3 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                 <p className="text-[10px] font-semibold" style={{ color: "var(--text-secondary)" }}>Créer le Raccourci — guide détaillé (gratuit, ~15 min) :</p>
 
@@ -167,11 +246,8 @@ export default function AppleHealthPanel() {
                     Onglet <strong>Automatisation</strong> → <strong>+</strong> → &quot;Créer une automatisation personnelle&quot; → &quot;Heure de la journée&quot; (ex: 8h, après le réveil) → &quot;Exécuter le raccourci&quot; → &quot;Sync Santé&quot; → <strong>désactive &quot;Demander avant d&apos;exécuter&quot;</strong>.
                   </p>
                 </div>
-
-                <p className="text-[10px] pt-1.5" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
-                  Trop fastidieux ? L&apos;app <strong>Health Auto Export</strong> (App Store, ~5€) fait tout ça sans montage manuel : colle juste l&apos;URL et le token dans ses réglages.
-                </p>
               </div>
+              )}
             </div>
           </motion.div>
         )}
