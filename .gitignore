@@ -43,3 +43,6 @@ next-env.d.ts
 # Ciqual raw data (large, download separately)
 scripts/ciqual.json
 .env*.local
+
+# Sauvegardes de migration (donnees perso, jamais dans git)
+backup-*.json
