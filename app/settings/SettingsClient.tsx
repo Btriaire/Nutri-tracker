@@ -21,6 +21,8 @@ import {
 import { format as formatDate } from "date-fns";
 import SupplementConfig from "@/app/components/SupplementConfig";
 import AppleHealthPanel from "@/app/components/AppleHealthPanel";
+import IntegrationsHealthPanel from "@/app/components/IntegrationsHealthPanel";
+import type { IntegrationHealth } from "@/app/lib/integrations-health";
 
 type OAuthStatus = "connected" | "needs_reauth" | "disconnected";
 
@@ -30,11 +32,12 @@ interface Props {
   initialGoals:       NutritionGoals;
   initialPhotoUrl?:   string;
   initialDisplayName?: string;
+  initialIntegrations: IntegrationHealth[];
 }
 
 interface YearProgress { year: number; status: "pending" | "running" | "done" | "error"; days?: number }
 
-export default function SettingsClient({ fitConnected: initialFit, withingsConnected: initialWithings, initialGoals, initialPhotoUrl, initialDisplayName }: Props) {
+export default function SettingsClient({ fitConnected: initialFit, withingsConnected: initialWithings, initialGoals, initialPhotoUrl, initialDisplayName, initialIntegrations }: Props) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -277,6 +280,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Theme picker */}
         <ThemePicker current={theme} onChange={setTheme} />
+
+        {/* État des synchros — en tête de la zone intégrations, pour voir tout de
+            suite si une source a cessé d'envoyer des données */}
+        <IntegrationsHealthPanel initial={initialIntegrations} />
 
         {/* Apple Health card */}
         <AppleHealthPanel />

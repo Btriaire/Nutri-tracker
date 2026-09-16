@@ -5,6 +5,7 @@ import { getConnectionStatus as withingsStatus } from "@/app/lib/withings";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { NutritionGoals, UserProfile } from "@/app/lib/types";
+import { getIntegrationsHealth, type IntegrationHealth } from "@/app/lib/integrations-health";
 import SettingsClient from "./SettingsClient";
 
 export default async function SettingsPage() {
@@ -13,12 +14,14 @@ export default async function SettingsPage() {
   let goals: NutritionGoals = defaultGoals();
   let photoUrl: string | undefined;
   let displayName: string | undefined;
+  let integrations: IntegrationHealth[] = [];
   try {
     const db = getAdminFirestore();
     const profile = await db.doc("users/owner").get();
-    [fitConnected, withingsConnected] = await Promise.all([
+    [fitConnected, withingsConnected, integrations] = await Promise.all([
       fitStatus("owner"),
       withingsStatus("owner"),
+      getIntegrationsHealth(),
     ]);
     if (profile.exists) {
       const p = profile.data() as UserProfile;
@@ -35,6 +38,7 @@ export default async function SettingsPage() {
       initialGoals={goals}
       initialPhotoUrl={photoUrl}
       initialDisplayName={displayName}
+      initialIntegrations={integrations}
     />
   );
 }
