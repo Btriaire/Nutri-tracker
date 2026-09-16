@@ -6,16 +6,10 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding, FaceScanScorecard } from "@/app/lib/types";
+import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGroqFailure } from "@/app/lib/groq";
 
 const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-// meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq — migrated to
-// qwen/qwen3.6-27b, which also supports up to 5 images per request (needed for
-// the current + previous scan comparison, which the old model likely rejected).
-// qwen/qwen3.6-27b was itself renamed/replaced by Groq (2026-09) — model id
-// updated to qwen/qwen3.8-27b, which caused every scan to fail with
-// "model_not_found" until fixed here.
-const VISION_MODEL = "qwen/qwen3.8-27b";
 const MAX_IMAGE_BYTES = 500 * 1024; // 500KB per image after client-side compression
 
 const DISCLAIMER =
@@ -130,16 +124,9 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: VISION_MODEL,
+        model: GROQ_VISION_MODEL,
         temperature: 0.2,
-        // Groq enforces a separate, tighter OTPM (output tokens/min) cap on this model —
-        // 1000 on the on_demand tier — independent of the 8000 total-TPM cap. Any
-        // max_tokens above ~1000 gets the whole request rejected with 429 before
-        // generation even starts (confirmed empirically: 1500 and 1200 both fail,
-        // 900 succeeds). 900 leaves enough headroom for a full response (summary +
-        // scorecard + up to 6 findings + comparisonNote + conseil, ~700-800 tokens
-        // typically) while staying safely under the hard cap.
-        max_tokens: 900,
+        max_tokens: GROQ_VISION_MAX_TOKENS,
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.6-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [
@@ -151,9 +138,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      console.error("Groq face-scan vision error:", err);
-      return NextResponse.json({ error: "Vision API error" }, { status: 502 });
+      const failure = describeGroqError(res.status, await res.text());
+      await recordGroqFailure("face-scan", failure);
+      return NextResponse.json({ error: failure.message, code: failure.code }, { status: 502 });
     }
 
     const data = await res.json() as { choices: { message: { content: string } }[] };

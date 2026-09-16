@@ -6,6 +6,7 @@ import { FieldPath } from "firebase-admin/firestore";
 import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { DayLog, FitnessDay, HealthEntry, ManualActivity } from "@/app/lib/types";
+import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 const USER    = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -175,7 +176,7 @@ Réponds en français. Maximum 300 mots.`;
       method:  "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model:       "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        model:       GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         max_tokens:  900,
         temperature: 0.4,

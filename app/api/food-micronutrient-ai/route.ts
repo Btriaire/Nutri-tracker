@@ -8,6 +8,7 @@ import {
   scaleProfile, type LibraryMicronutrient,
 } from "@/app/lib/micronutrient-library";
 import type { MicronutrientCode } from "@/app/lib/types";
+import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        model: GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         response_format: { type: "json_object" },
         temperature: 0.2,

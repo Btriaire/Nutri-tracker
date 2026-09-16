@@ -5,6 +5,7 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { HealthEntry, DayLog, FitnessDay, UserProfile, AISynthesisResult as StoredSynthesis } from "@/app/lib/types";
+import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -181,7 +182,7 @@ ${activityLines.length ? activityLines.join("\n") : "Aucune donnée d'activité"
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        model: GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         response_format: { type: "json_object" },
         temperature: 0.3,

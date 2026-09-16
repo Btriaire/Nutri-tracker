@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import type { FoodSearchResult, FoodNutrition } from "@/app/lib/types";
+import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGroqFailure } from "@/app/lib/groq";
 
 export const dynamic = "force-dynamic";
 
@@ -57,13 +58,9 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
       method:  "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:           "qwen/qwen3.8-27b", // meta-llama/llama-4-scout-17b-16e-instruct was deprecated by Groq; qwen3.6-27b itself renamed to qwen3.8-27b by Groq (2026-09)
+        model:           GROQ_VISION_MODEL,
         temperature:     0.2,
-        // Groq enforces a separate OTPM (output tokens/min) cap of 1000 on this model
-        // (on_demand tier), independent of the total TPM cap — max_tokens above ~1000
-        // gets the whole request rejected with 429 before generation starts (confirmed
-        // empirically). Stay safely under it.
-        max_tokens:      900,
+        max_tokens:      GROQ_VISION_MAX_TOKENS,
         response_format: { type: "json_object" },
         reasoning_effort: "none", // qwen3.x-27b defaults to "thinking" mode, which prefixes reasoning text before the JSON and breaks json_object validation
         messages: [{
@@ -78,9 +75,9 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      console.error("Groq vision error:", err);
-      return NextResponse.json({ error: "Vision API error", results: [] }, { status: 502 });
+      const failure = describeGroqError(res.status, await res.text());
+      await recordGroqFailure("food-photo", failure);
+      return NextResponse.json({ error: failure.message, code: failure.code, results: [] }, { status: 502 });
     }
 
     const data  = await res.json() as { choices: { message: { content: string } }[] };

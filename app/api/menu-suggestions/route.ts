@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getMealHabitProfile, getRecentlySuggested, recordSuggested } from "@/app/lib/meal-habits";
 import type { MealType, NutritionGoals } from "@/app/lib/types";
+import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -151,7 +152,7 @@ Format JSON exact :
       method:  "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:           "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        model:           GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         temperature:     0.72,
         max_tokens:      2500,

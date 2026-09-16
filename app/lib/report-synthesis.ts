@@ -1,5 +1,6 @@
 import type { ReportData } from "./report-builder";
 import { MEASUREMENT_FIELDS, MEASUREMENT_LABELS } from "./measurement-fields";
+import { GROQ_TEXT_MODEL } from "./groq";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -136,7 +137,7 @@ export async function generateReportSynthesis(data: ReportData): Promise<ReportS
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+        model: GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         temperature: 0.4,
         max_tokens: 1500,

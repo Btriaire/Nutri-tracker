@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ Example output: meditation 432hz healing frequency Meditative Mind`;
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+      model: GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
       reasoning_effort: "low",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
@@ -103,7 +104,7 @@ Choose the 3 best matches for this theme. Return ONLY a JSON array of indices, e
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: "openai/gpt-oss-120b", // llama-3.3-70b-versatile was deprecated by Groq
+      model: GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
       reasoning_effort: "low",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
