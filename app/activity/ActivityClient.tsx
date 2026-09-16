@@ -1047,7 +1047,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
     ...activities.map((a) => a.caloriesBurned ?? 0),
   ].reduce((s, v) => s + v, 0);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const activityInsightData = useMemo(() => ({
     sessions: (fitnessDay?.googleFit?.sessions ?? []).map((s) => ({
       name:        s.name,

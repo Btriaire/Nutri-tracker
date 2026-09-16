@@ -114,7 +114,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         <motion.div {...fade(0.05)} className="glass p-5 mb-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="label-xs mb-1">Aujourd'hui</p>
+              <p className="label-xs mb-1">Aujourd&apos;hui</p>
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-[42px] font-bold leading-none tabular-nums"
                   style={{ color: todaySteps > 0 ? stepsColor(todaySteps, stepsGoal) : "var(--text-muted)" }}>

@@ -115,7 +115,7 @@ export default function CardioClient({ points, age }: Props) {
         <motion.div {...fade(0.05)} className="glass p-5 mb-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="label-xs mb-1">Aujourd'hui</p>
+              <p className="label-xs mb-1">Aujourd&apos;hui</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-[42px] font-bold leading-none"
                   style={{ color: today ? (zone?.color ?? "var(--text-primary)") : "var(--text-muted)" }}>

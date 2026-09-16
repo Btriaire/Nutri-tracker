@@ -350,7 +350,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 <button onClick={handleSync} disabled={syncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
                   {syncing ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
-                  Aujourd'hui
+                  Aujourd&apos;hui
                 </button>
                 <button onClick={handleSyncHistory} disabled={syncingHistory}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
@@ -373,7 +373,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 >
                   <span className="flex items-center gap-2">
                     <IconDatabase size={13} />
-                    Synchroniser tout l'historique
+                    Synchroniser tout l&apos;historique
                   </span>
                   {showFullSync ? <IconChevronUp size={11} /> : <IconChevronDown size={11} />}
                 </button>
@@ -393,7 +393,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                         {/* Year picker */}
                         <div className="space-y-1.5">
                           <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                            Remonter jusqu'à {new Date().getFullYear() - yearsBack + 1}
+                            Remonter jusqu&apos;à {new Date().getFullYear() - yearsBack + 1}
                           </p>
                           <div className="flex gap-1.5 flex-wrap">
                             {[1, 2, 3, 5, 7, 10].map(y => (
@@ -458,7 +458,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                         </button>
 
                         <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                          Traitement année par année — chaque appel peut prendre jusqu'à 30s.
+                          Traitement année par année — chaque appel peut prendre jusqu&apos;à 30s.
                           Les données sont stockées dans Firestore et disponibles pour les graphiques.
                         </p>
                       </div>
@@ -539,7 +539,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 <button onClick={() => handleWithingsSync()} disabled={wSyncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
                   {wSyncing ? <IconLoader2 size={12} className="animate-spin" /> : <IconRefresh size={12} />}
-                  Aujourd'hui
+                  Aujourd&apos;hui
                 </button>
                 <button onClick={() => handleWithingsSync(90)} disabled={wSyncing}
                   className="btn btn-ghost flex-1 gap-1.5 text-[12px]">
@@ -885,7 +885,7 @@ function ProfilePanel({ initialPhotoUrl, initialDisplayName, initialGoals }: {
             className="input w-full text-[13px]"
           />
           <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
-            Aide à contextualiser le niveau d'activité et le stress
+            Aide à contextualiser le niveau d&apos;activité et le stress
           </p>
         </div>
 
@@ -1086,7 +1086,7 @@ function GoalsPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
     const proposed = new Date();
     proposed.setDate(proposed.getDate() + days);
     setTargetDate(proposed.toISOString().split("T")[0]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [selectedProgram, calories, currentWeight, weight, weeklyGoal, activity, age, height, gender, bodyFatPct, tdeeFormula]);
 
   const handleCalcTDEE = () => {
@@ -2260,7 +2260,7 @@ function AlcoolPanel({ initialGoals }: { initialGoals: NutritionGoals }) {
                       </div>
                       <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
                         🌍 OMS : ≤ 10 u/sem pour les femmes · ≤ 14 u/sem pour les hommes.
-                        1 unité standard = 10 g d'alcool pur.
+                        1 unité standard = 10 g d&apos;alcool pur.
                       </p>
                     </div>
                   </motion.div>

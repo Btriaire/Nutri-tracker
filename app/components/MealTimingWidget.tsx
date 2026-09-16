@@ -225,7 +225,7 @@ export default function MealTimingWidget() {
     return (
       <div className="glass p-4 text-center">
         <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-          Pas encore de données d'horaires — loggez vos repas avec horodatage automatique
+          Pas encore de données d&apos;horaires — loggez vos repas avec horodatage automatique
         </p>
       </div>
     );

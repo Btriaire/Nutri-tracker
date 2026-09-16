@@ -156,7 +156,7 @@ function nowHHMM() {
 function calcSymptomDuration(startHHMM: string, endHHMM: string): number {
   const [sh, sm] = startHHMM.split(":").map(Number);
   const [eh, em] = endHHMM.split(":").map(Number);
-  let startMin = sh * 60 + sm;
+  const startMin = sh * 60 + sm;
   let endMin   = eh * 60 + em;
   if (endMin < startMin) endMin += 24 * 60; // spans midnight
   return Math.max(0, endMin - startMin);
@@ -1158,7 +1158,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {/* Error inline */}
                   {synthesisError && !synthesisLoading && (
                     <p className="text-[10px] mt-1.5" style={{ color: "#f87171" }}>
-                      Erreur d'analyse · réessaye
+                      Erreur d&apos;analyse · réessaye
                     </p>
                   )}
 
@@ -1174,7 +1174,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <button onClick={handleSynthesis}
                       className="w-full mt-2 py-2 rounded-lg text-[11px] font-medium transition-all"
                       style={{ border: "1px dashed rgba(167,139,250,0.25)", color: "#a78bfa" }}>
-                      Lancer l'analyse
+                      Lancer l&apos;analyse
                     </button>
                   )}
 
@@ -1628,7 +1628,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="label-xs mb-1">Aujourd'hui · Google Fit</p>
+                  <p className="label-xs mb-1">Aujourd&apos;hui · Google Fit</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-[42px] font-bold leading-none"
                       style={{ color: todayHr ? (zone?.color ?? "var(--text-primary)") : "var(--text-muted)" }}>

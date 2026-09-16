@@ -379,7 +379,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
             <form onSubmit={handleSubmit} className="space-y-3">
               {editingIntakeId && (
                 <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
-                  Modifier l'horaire de la prise
+                  Modifier l&apos;horaire de la prise
                 </p>
               )}
               <div>
@@ -499,7 +499,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
       <div className="space-y-2">
         {sortedIntakes.length === 0 ? (
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            Aucune prise enregistrée pour aujourd'hui
+            Aucune prise enregistrée pour aujourd&apos;hui
           </p>
         ) : (
           sortedIntakes.map(intake => (

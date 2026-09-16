@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   let fitnessDay: FitnessDay | null = null;
   const recentWeight: WeightPoint[] = [];
   const trendPoints: DayTrendPoint[] = [];
-  let recentPhotos: RecentPhoto[] = [];
+  const recentPhotos: RecentPhoto[] = [];
   let todayMeditationMin            = 0;
   let todayMeditationSessions       = 0;
   let lastBPDate:     string | null = null;

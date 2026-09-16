@@ -348,7 +348,7 @@ function NowPlaying({
     if (iframeRef.current) {
       iframeRef.current.src = active ? buildYTUrl(track.videoId) : "about:blank";
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [track.videoId, iframeKey, active]);
 
   // Stop on session end
@@ -530,7 +530,7 @@ export default function MeditationPlayer() {
         if (d?.sessions) setAllSessions(d.sessions.filter(s => s.durationMin >= 2));
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const startProgram = useCallback((program: Program) => {
@@ -671,7 +671,7 @@ export default function MeditationPlayer() {
     }, 1000);
 
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [running, selected, stepIdx]);
 
   const fmtTime = (s: number) =>
@@ -703,7 +703,7 @@ export default function MeditationPlayer() {
     if (!useApi || allSessions.length === 0) return 0;
     const days = new Set(allSessions.map(s => s.date));
     let count = 0;
-    let d = new Date();
+    const d = new Date();
     // If no session today, start from yesterday
     if (!days.has(today)) d.setDate(d.getDate() - 1);
     while (true) {

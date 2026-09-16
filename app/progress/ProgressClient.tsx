@@ -1021,7 +1021,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       </div>
                     </>
                   ) : (
-                    <p className="text-[12px] py-3" style={{ color: "var(--text-muted)" }}>Aucun repas enregistré aujourd'hui</p>
+                    <p className="text-[12px] py-3" style={{ color: "var(--text-muted)" }}>Aucun repas enregistré aujourd&apos;hui</p>
                   )}
                 </div>
 

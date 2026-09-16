@@ -16,7 +16,7 @@ export default function StepsWidget({ steps, goal = 10000 }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <IconShoe size={14} stroke={1.5} style={{ color: "var(--steps)" }} />
-          <span className="label-xs">Pas aujourd'hui</span>
+          <span className="label-xs">Pas aujourd&apos;hui</span>
         </div>
         <span className="label-xs">{goal.toLocaleString("fr-FR")}</span>
       </div>

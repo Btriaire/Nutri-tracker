@@ -170,7 +170,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
       el.removeEventListener("pointerup",     onUp);
       el.removeEventListener("pointercancel", onUp);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSaveEdit = async () => {
     const grams = Math.max(1, parseFloat(editGrams) || 1);

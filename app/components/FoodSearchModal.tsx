@@ -1405,7 +1405,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     <div className="flex flex-col items-center gap-3 py-12">
                       <span className="text-4xl">📅</span>
                       <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
-                        Pas encore d'historique.<br />Loggez vos repas au quotidien pour les retrouver ici.
+                        Pas encore d&apos;historique.<br />Loggez vos repas au quotidien pour les retrouver ici.
                       </p>
                     </div>
                   )}
@@ -1554,7 +1554,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <span className="text-4xl">⭐</span>
                       <p className="text-[13px] text-center" style={{ color: "var(--text-muted)" }}>
                         Aucun aliment personnel.<br />
-                        Sélectionnez un résultat Nutri-AI pour l'ajouter automatiquement.
+                        Sélectionnez un résultat Nutri-AI pour l&apos;ajouter automatiquement.
                       </p>
                     </div>
                   )}

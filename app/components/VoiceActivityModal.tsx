@@ -272,7 +272,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 {listening ? "À l'écoute… parlez" : supported ? "Touchez le micro et décrivez votre séance" : "Tapez votre activité ci-dessous"}
               </p>
               <p className="text-[11px] text-center mt-1 px-4" style={{ color: "var(--text-muted)" }}>
-                Ex : « J'ai couru 30 minutes puis 20 min de musculation »
+                Ex : « J&apos;ai couru 30 minutes puis 20 min de musculation »
               </p>
 
               {/* Editable transcript */}
