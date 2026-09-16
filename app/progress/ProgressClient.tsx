@@ -734,7 +734,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
         {/* ── Banner ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-5">
           <div className="flex flex-col gap-2.5 md:flex-row md:items-start md:justify-between">
-            <div>
+            <div className="hidden md:block">
               <p className="label-xs mb-0.5">Analyse</p>
               <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Progrès</h1>
             </div>

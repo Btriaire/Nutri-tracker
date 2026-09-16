@@ -555,7 +555,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       <div className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px]" style={{ paddingBottom: "80px" }}>
 
         {/* Header */}
-        <motion.div {...fade(0)} className="mb-5">
+        <motion.div {...fade(0)} className="mb-5 hidden md:block">
           <p className="label-xs mb-0.5">Mes données</p>
           <div className="flex items-center justify-between">
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>

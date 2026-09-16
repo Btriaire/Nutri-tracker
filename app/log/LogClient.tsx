@@ -488,7 +488,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             href="/health/face-scan"
             aria-label="Scan visage"
             className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background: "rgba(99,102,241,0.14)", border: "1px solid rgba(99,102,241,0.4)", color: "var(--indigo)" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconCamera size={17} stroke={1.8} />
           </Link>
@@ -497,7 +497,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             onClick={() => setShowVoice(true)}
             aria-label="Dicter mon repas"
             className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background: "rgba(52,211,153,0.14)", border: "1px solid rgba(52,211,153,0.4)", color: "#34d399" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconMicrophone size={17} stroke={1.8} />
           </button>
@@ -506,7 +506,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             onClick={() => setShowAlternatives(true)}
             aria-label="Aliments Alternatifs"
             className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background: "rgba(59,130,246,0.14)", border: "1px solid rgba(59,130,246,0.4)", color: "var(--protein)" }}
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconArrowsExchange size={17} stroke={1.8} />
           </button>

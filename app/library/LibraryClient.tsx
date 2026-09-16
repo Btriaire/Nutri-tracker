@@ -158,7 +158,7 @@ export default function LibraryClient() {
 
       <div className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px] md:max-w-none md:pr-8">
         {/* Header */}
-        <div className="mb-5">
+        <div className="mb-5 hidden md:block">
           <p className="label-xs mb-0.5">Base alimentaire</p>
           <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
             Bibliothèque

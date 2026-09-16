@@ -1078,7 +1078,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
           className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-start sm:justify-between"
         >
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Activité sportive
             </h1>

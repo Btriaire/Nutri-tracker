@@ -21,6 +21,37 @@ const TABS = [
   { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "#94a3b8", bg: "rgba(148,163,184,0.12)"},
 ] as const;
 
+// La barre du haut affichait le logo sur les 48px les plus precieux de
+// l'ecran, a chaque page, alors que l'utilisateur sait deja quelle appli il
+// ouvre. Elle indique desormais OU il se trouve. Plus long prefixe gagnant.
+const TITLES: [string, string][] = [
+  ["/activity/sleep",   "Sommeil"],
+  ["/activity/steps",   "Pas"],
+  ["/health/face-scan", "Scan du visage"],
+  ["/report/history",   "Historique"],
+  ["/log",              "Journal"],
+  ["/health",           "Santé"],
+  ["/activity",         "Activité"],
+  ["/progress",         "Progrès"],
+  ["/settings",         "Réglages"],
+  ["/dashboard",        "Tableau de bord"],
+  ["/cardio",           "Cardio"],
+  ["/food-bank",        "Aliments"],
+  ["/library",          "Bibliothèque"],
+  ["/report",           "Rapport"],
+  ["/repartition",      "Répartition"],
+  ["/hub",              "Accueil"],
+];
+
+function pageTitle(path: string): string {
+  let best = "";
+  let title = "Nutri-Tracker";
+  for (const [prefix, label] of TITLES) {
+    if (path.startsWith(prefix) && prefix.length > best.length) { best = prefix; title = label; }
+  }
+  return title;
+}
+
 export default function Nav() {
   const path   = usePathname();
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
@@ -47,16 +78,20 @@ export default function Nav() {
 
   return (
     <>
-      {/* Top logo bar (mobile only) */}
-      <div className="fixed top-0 inset-x-0 z-50 flex md:hidden items-center justify-center px-4"
+      {/* Barre du haut (mobile) — titre de section, pas le logo */}
+      <div className="fixed top-0 inset-x-0 z-50 flex md:hidden items-center justify-between px-4"
         style={{
           background: "var(--nav-bg)",
           borderBottom: "1px solid var(--nav-border)",
           backdropFilter: "blur(16px)",
           height: "48px",
         }}>
-        <Link href="/hub" className="flex items-center">
-          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-10 w-auto" priority />
+        <span className="text-[17px] font-semibold tracking-tight truncate"
+          style={{ color: "var(--text-primary)" }}>
+          {pageTitle(path)}
+        </span>
+        <Link href="/hub" className="flex items-center flex-shrink-0 opacity-70 active:opacity-100">
+          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-6 w-auto" priority />
         </Link>
       </div>
 

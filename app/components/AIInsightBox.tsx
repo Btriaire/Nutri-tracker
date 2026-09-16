@@ -108,7 +108,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
             </div>
             <span className="text-[11px] font-semibold tracking-wide uppercase"
               style={{ color: "#a78bfa", letterSpacing: "0.06em" }}>
-              ✨ IA
+              IA
             </span>
             <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
               · {displayLabel}

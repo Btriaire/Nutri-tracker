@@ -200,9 +200,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
       <div className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px]">
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <p className="label-xs mb-0.5">Compte</p>
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
+          <p className="label-xs mb-0.5 hidden md:block">Compte</p>
+          <div className="flex items-center justify-end md:justify-between mb-6">
+            <h1 className="text-[22px] font-semibold tracking-tight hidden md:block" style={{ color: "var(--text-primary)" }}>
               Réglages
             </h1>
             <Link href="/report"

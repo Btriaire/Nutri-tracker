@@ -80,10 +80,10 @@ export default function ReportClient() {
 
         {/* ── Controls (hidden on print) ── */}
         <div className="print-hide">
-          <div className="mb-1">
+          <div className="mb-1 hidden md:block">
             <p className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--text-muted)" }}>Analyses</p>
           </div>
-          <div className="flex items-center justify-between mb-5">
+          <div className="hidden md:flex items-center justify-between mb-5">
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Rapport de santé
             </h1>
