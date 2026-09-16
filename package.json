@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import-ciqual": "tsx scripts/import-ciqual.ts"
+    "import-ciqual": "tsx scripts/import-ciqual.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -41,6 +43,7 @@
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.3",
     "typescript": "^5",
+    "vitest": "^4.1.11",
     "xlsx": "^0.18.5"
   }
 }
