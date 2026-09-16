@@ -40,7 +40,8 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
   // Sync when parent re-fetches on date change
   useEffect(() => { setPhotos(initialPhotos); }, [initialPhotos]);
   const [loading,  setLoading]  = useState(false);
-  const [lightbox, setLightbox] = useState<string | null>(null);   // dataUrl
+  const [lightbox, setLightbox] = useState<string | null>(null);   // URL affichée en grand
+  const [error,    setError]    = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(async (files: FileList | null) => {
@@ -49,6 +50,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
     if (remaining <= 0) return;
 
     setLoading(true);
+    setError(null);
     try {
       const toProcess = Array.from(files).slice(0, remaining);
       for (const file of toProcess) {
@@ -62,9 +64,17 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
         if (res.ok) {
           const data = await res.json() as { photos: DayPhoto[] };
           setPhotos(data.photos);
+        } else {
+          // Auparavant l'échec était avalé : on appuyait, rien ne se passait,
+          // sans la moindre explication.
+          const { error: msg } = await res.json().catch(() => ({ error: null })) as { error?: string };
+          setError(msg || `Envoi échoué (erreur ${res.status})`);
+          break;
         }
       }
-    } catch { /* silent */ }
+    } catch {
+      setError("Envoi impossible — vérifie ta connexion");
+    }
     finally { setLoading(false); }
   }, [date, photos.length]);
 
@@ -150,12 +160,16 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
         )}
 
         {/* Caption */}
-        {photos.length === 0 && (
+        {photos.length === 0 && !error && (
           <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
             Capture ta journée&nbsp;✨
           </p>
         )}
       </div>
+
+      {error && (
+        <p className="text-[10px] mt-1.5 px-0.5" style={{ color: "#f87171" }}>{error}</p>
+      )}
 
       {/* Hidden file input — no `capture` attribute, so the OS offers both
           "Prendre une photo" and "Choisir dans la bibliothèque" (comme pour

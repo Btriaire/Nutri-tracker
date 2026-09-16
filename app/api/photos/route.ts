@@ -3,10 +3,21 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { put, del } from "@vercel/blob";
+
+const USER_ID = "owner";
 
 export interface DayPhoto {
   id:        string;   // e.g. "photo_0", "photo_1", "photo_2", "meal_breakfast"
-  dataUrl:   string;   // base64 data URL (compressed JPEG)
+  /**
+   * Source utilisable directement dans un <img src> :
+   * - photos récentes : URL https Vercel Blob
+   * - photos héritées : data URL base64 (stockée ainsi jusqu'en 09/2026)
+   * Le nom du champ est conservé pour ne pas avoir à migrer les 47 photos
+   * existantes ni à toucher les 7 composants qui le lisent — un <img> traite
+   * les deux formes de la même façon.
+   */
+  dataUrl:   string;
   addedAt:   string;   // ISO timestamp
   label?:    string;   // e.g. "Petit-déjeuner" for meal photos merged into the album
 }
@@ -52,11 +63,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Max 3 photos per day" }, { status: 400 });
   }
 
-  const newPhoto: DayPhoto = {
-    id:      `photo_${Date.now()}`,
-    dataUrl,
-    addedAt: new Date().toISOString(),
-  };
+  // Les photos partaient en base64 directement dans le document Firestore, qui
+  // est plafonné à 1 Mo : 3 photos pesaient déjà jusqu'à 368 Ko, et un
+  // dépassement fait échouer l'écriture (donc perdre la photo). On stocke
+  // désormais le binaire dans Vercel Blob et seulement l'URL dans Firestore.
+  const id = `photo_${Date.now()}`;
+  let storedUrl: string;
+  try {
+    const match = /^data:(image\/[a-zA-Z+]+);base64,(.+)$/.exec(dataUrl);
+    if (!match) return NextResponse.json({ error: "Format d'image invalide" }, { status: 400 });
+    const [, mime, b64] = match;
+    const ext = mime.split("/")[1].replace("jpeg", "jpg");
+    const blob = await put(`dayPhotos/${USER_ID}/${date}/${id}.${ext}`, Buffer.from(b64, "base64"), {
+      access: "public",
+      contentType: mime,
+      addRandomSuffix: true,
+    });
+    storedUrl = blob.url;
+  } catch (e) {
+    console.error("[photos POST] upload Blob échoué", e);
+    return NextResponse.json({ error: "Envoi de la photo échoué" }, { status: 502 });
+  }
+
+  const newPhoto: DayPhoto = { id, dataUrl: storedUrl, addedAt: new Date().toISOString() };
   const photos = [...existing, newPhoto];
   await ref.set({ date, photos }, { merge: true });
 
@@ -82,8 +111,15 @@ export async function DELETE(req: NextRequest) {
   if (!snap.exists) return NextResponse.json({ ok: true, photos: [] });
 
   const existing = (snap.data() as DayPhotosDoc).photos ?? [];
+  const removed  = existing.find(p => p.id === photoId);
   const photos   = existing.filter(p => p.id !== photoId);
   await ref.set({ date, photos }, { merge: true });
+
+  // Sans ça, le binaire resterait dans Blob indéfiniment. Les photos héritées
+  // (base64 inline) n'ont rien à supprimer.
+  if (removed?.dataUrl.startsWith("http")) {
+    await del(removed.dataUrl).catch((e) => console.error("[photos DELETE] blob non supprimé", e));
+  }
 
   return NextResponse.json({ ok: true, photos });
 }
