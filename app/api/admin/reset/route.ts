@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { getSession } from "@/app/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,11 @@ async function deleteCollection(db: FirebaseFirestore.Firestore, path: string) {
 }
 
 export async function DELETE(req: NextRequest) {
+  // Route destructive (vide des collections entières) : on revérifie la session
+  // ici en plus du middleware, pour ne jamais dépendre d'un seul garde-fou.
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { targets } = await req.json() as { targets: string[] };
   const userId = "owner";
   const db = getAdminFirestore();

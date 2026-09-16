@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionSecret, verifySession } from "@/app/lib/session-crypto";
 
 const PUBLIC_PREFIXES = [
   "/login",
@@ -7,7 +8,6 @@ const PUBLIC_PREFIXES = [
   "/api/withings/callback",
   "/api/apple-health/ingest",
   "/api/apple-health/hae",
-  "/api/google-fit/test-sleep",
   "/report/print",
   "/api/report/generate",
   "/api/meditation",
@@ -21,7 +21,7 @@ const PUBLIC_PREFIXES = [
   "/auth.txt",
 ];
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Racine "/" : splash animé public (joué connecté ou non), redirige ensuite
@@ -31,8 +31,11 @@ export function middleware(req: NextRequest) {
 
   if (isPublic) return NextResponse.next();
 
-  const session = req.cookies.get("session")?.value;
-  if (session) return NextResponse.next();
+  // Vérifie la SIGNATURE du cookie, pas juste sa présence : un simple test
+  // d'existence laissait passer n'importe quel cookie fabriqué à la main.
+  const token  = req.cookies.get("session")?.value;
+  const secret = sessionSecret();
+  if (token && secret && await verifySession(token, secret)) return NextResponse.next();
 
   // API routes → 401 JSON
   if (pathname.startsWith("/api/")) {
