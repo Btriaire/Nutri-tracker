@@ -39,7 +39,7 @@ export default function FaceScanTrendChart({ scans }: Props) {
           <div key={axis.key}>
             <div className="flex items-center gap-1.5 mb-1">
               <div className="w-2 h-2 rounded-full" style={{ background: axis.color }} />
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{axis.label}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{axis.label}</span>
             </div>
             <ResponsiveContainer width="100%" height={64}>
               <AreaChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
@@ -50,12 +50,12 @@ export default function FaceScanTrendChart({ scans }: Props) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis domain={[1, 5]} hide />
                 <Tooltip content={({ active, payload, label }) => {
                   if (!active || !payload?.length || payload[0].value == null) return null;
                   return (
-                    <div className="px-2 py-1 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                    <div className="px-2 py-1 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p style={{ color: axis.color }}>{payload[0].value}/5</p>
                     </div>

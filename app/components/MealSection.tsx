@@ -176,7 +176,7 @@ export default function MealSection({
           )}
           {dietMealReport && dietMealReport.status !== "vide" && (
             <span
-              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
               style={{
                 color: dietMealReport.status === "ecarts" ? "#f87171" : "#22c55e",
                 background: dietMealReport.status === "ecarts" ? "#ef444418" : "#22c55e18",
@@ -209,7 +209,7 @@ export default function MealSection({
           aria-label="Photo du repas"
         >
           {uploading
-            ? <span className="animate-spin text-[10px]">⏳</span>
+            ? <span className="animate-spin text-[11px]">⏳</span>
             : <IconCamera size={16} stroke={photoUrl ? 2 : 1.5} />
           }
         </button>
@@ -358,7 +358,7 @@ export default function MealSection({
                   <div className="grid gap-1 px-3 py-2"
                     style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", borderBottom: "1px solid var(--border)" }}>
                     {["Aliment", "kcal", "P", "G", "L"].map((h) => (
-                      <span key={h} className="text-[10px] font-semibold uppercase"
+                      <span key={h} className="text-[11px] font-semibold uppercase"
                         style={{ color: "var(--text-muted)" }}>{h}</span>
                     ))}
                   </div>
@@ -424,7 +424,7 @@ export default function MealSection({
                         style={{ borderTop: "1px solid var(--border)" }}>
                         {micros.map(({ l, v, u }) => (
                           <div key={l} className="flex items-center gap-1">
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{l}</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</span>
                             <span className="text-[11px] font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
                               {Math.round(v)}{u}
                             </span>

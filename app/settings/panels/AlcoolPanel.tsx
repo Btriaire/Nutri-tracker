@@ -151,7 +151,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                         >+</button>
                         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>unités / semaine</span>
                       </div>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         🌍 OMS : ≤ 10 u/sem pour les femmes · ≤ 14 u/sem pour les hommes.
                         1 unité standard = 10 g d&apos;alcool pur.
                       </p>

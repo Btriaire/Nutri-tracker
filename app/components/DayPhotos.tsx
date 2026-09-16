@@ -151,7 +151,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
             ) : (
               <>
                 <IconPhotoPlus size={16} stroke={1.6} />
-                <span style={{ fontSize: 7, marginTop: 1, color: "var(--text-muted)" }}>
+                <span style={{ fontSize: 11, marginTop: 1, color: "var(--text-muted)" }}>
                   {photos.length}/3
                 </span>
               </>
@@ -161,14 +161,14 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
 
         {/* Caption */}
         {photos.length === 0 && !error && (
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            Capture ta journée&nbsp;✨
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            Capture ta journée
           </p>
         )}
       </div>
 
       {error && (
-        <p className="text-[10px] mt-1.5 px-0.5" style={{ color: "#f87171" }}>{error}</p>
+        <p className="text-[11px] mt-1.5 px-0.5" style={{ color: "#f87171" }}>{error}</p>
       )}
 
       {/* Hidden file input — no `capture` attribute, so the OS offers both

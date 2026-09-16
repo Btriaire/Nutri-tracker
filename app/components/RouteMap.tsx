@@ -168,7 +168,7 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
       <div style={{
         position: "absolute", bottom: 6, right: 8,
         display: "flex", gap: 8, alignItems: "center",
-        fontSize: 10, color: "rgba(255,255,255,0.5)",
+        fontSize: 11, color: "rgba(255,255,255,0.5)",
       }}>
         <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />

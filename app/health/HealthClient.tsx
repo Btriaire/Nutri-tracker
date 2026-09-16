@@ -626,7 +626,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   border:     active ? `1px solid ${color}35` : "1px solid transparent",
                 }}>
                 {icon}
-                <span className="text-[10px] font-medium leading-none whitespace-nowrap">{label}</span>
+                <span className="text-[11px] font-medium leading-none whitespace-nowrap">{label}</span>
               </button>
             );
           })}
@@ -662,8 +662,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Composition corporelle (Withings) ── */}
             <motion.div {...fade(0.03)} className="mb-4 rounded-2xl p-5 overflow-hidden"
               style={{
-                background: "linear-gradient(140deg, rgba(96,165,250,0.12) 0%, rgba(34,211,238,0.06) 100%)",
-                border: "1px solid rgba(96,165,250,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -705,7 +705,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     ].map(({ label, value, unit, color, fmt }) => (
                       <div key={label} className="rounded-xl p-3"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                        <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
                         {value !== null
                           ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
                               {fmt(value)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
@@ -719,7 +719,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {/* Weight trend mini chart */}
                   {weightChartData.length > 1 && (
                     <div>
-                      <p className="text-[10px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
+                      <p className="text-[11px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
                       <ResponsiveContainer width="100%" height={80}>
                         <LineChart data={weightChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                           <XAxis dataKey="label" hide />
@@ -744,7 +744,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   )}
 
                   {latestW && (
-                    <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
                       Dernière mesure : {format(parseISO(latestW.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
                     </p>
                   )}
@@ -755,8 +755,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* Tension artérielle */}
             <motion.div {...fade(0.09)} className="mb-4 rounded-2xl p-5 overflow-hidden"
               style={{
-                background: "linear-gradient(140deg, rgba(248,113,113,0.12) 0%, rgba(244,63,94,0.05) 100%)",
-                border: "1px solid rgba(248,113,113,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -808,14 +808,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {r.moment && (() => {
                             const { Icon, label } = MOMENT_META[r.moment];
                             return (
-                              <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                              <span className="flex items-center gap-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                                 <Icon size={10} stroke={1.8} />
                                 {label}
                               </span>
                             );
                           })()}
-                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
-                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
+                          <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full"
                             style={{
                               background: r.source ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
                               color: r.source ? "#60a5fa" : "var(--text-muted)",
@@ -881,8 +881,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     </p>
                     <ResponsiveContainer width="100%" height={180}>
                       <LineChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
                         <Tooltip content={({ active, payload, label: lbl }) => {
                           if (!active || !payload?.length) return null;
                           const s = payload.find(p => p.dataKey === "sys")?.value as number;
@@ -893,7 +893,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                               <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                               {s && d && <p style={{ color: "#EA4335" }} className="font-bold">{s} / {d} mmHg</p>}
-                              {cls && <p className="text-[10px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}
+                              {cls && <p className="text-[11px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}
                             </div>
                           );
                         }} />
@@ -905,18 +905,18 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       </LineChart>
                     </ResponsiveContainer>
                     <div className="flex items-center gap-4 mt-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                         <div className="w-3 h-0.5 rounded" style={{ background: "#EA4335" }} />
                         Systolique
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                         <div className="w-3 h-0.5 rounded" style={{ background: "#7986CB" }} />
                         Diastolique
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(251,188,4,0.7)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(251,188,4,0.7)" }}>
                         — 120
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(249,115,22,0.7)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(249,115,22,0.7)" }}>
                         — 140
                       </div>
                     </div>
@@ -928,8 +928,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* Other vitals grid */}
             <motion.div {...fade(0.12)} className="mb-4 rounded-2xl overflow-hidden"
               style={{
-                background: "linear-gradient(140deg, rgba(52,211,153,0.10) 0%, rgba(34,211,238,0.04) 100%)",
-                border: "1px solid rgba(52,211,153,0.16)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <VitalCard
@@ -979,8 +979,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               return (
                 <motion.div {...fade(0.13)} className="mb-4 rounded-2xl p-4 overflow-hidden"
                   style={{
-                    background: "linear-gradient(140deg, rgba(129,140,248,0.12) 0%, rgba(167,139,250,0.05) 100%)",
-                    border: "1px solid rgba(129,140,248,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                   }}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -1031,8 +1031,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* Notes */}
             <motion.div {...fade(0.15)} className="mb-4 rounded-2xl p-4"
               style={{
-                background: "linear-gradient(140deg, rgba(167,139,250,0.09) 0%, rgba(129,140,248,0.04) 100%)",
-                border: "1px solid rgba(167,139,250,0.15)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -1065,8 +1065,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Mensurations corporelles ── */}
             <motion.div {...fade(0.18)} className="mb-4 rounded-2xl p-4"
               style={{
-                background: "linear-gradient(140deg, rgba(56,189,248,0.09) 0%, rgba(59,130,246,0.04) 100%)",
-                border: "1px solid rgba(56,189,248,0.15)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <button className="w-full flex items-center gap-2" onClick={() => setMeasurementsOpen(v => !v)}>
@@ -1105,8 +1105,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               return (
                 <div className="px-3 py-2.5 rounded-2xl"
                   style={{
-                    background: "linear-gradient(140deg, rgba(167,139,250,0.12) 0%, rgba(192,132,252,0.05) 100%)",
-                    border: "1px solid rgba(167,139,250,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                   }}
                 >
                   {/* ── Header row ── */}
@@ -1115,7 +1115,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</span>
                     {/* Alert pill */}
                     {synthesis && cfg && (
-                      <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      <span className="flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                         style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
                         {synthesis.alertLabel}
@@ -1157,7 +1157,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
                   {/* Error inline */}
                   {synthesisError && !synthesisLoading && (
-                    <p className="text-[10px] mt-1.5" style={{ color: "#f87171" }}>
+                    <p className="text-[11px] mt-1.5" style={{ color: "#f87171" }}>
                       Erreur d&apos;analyse · réessaye
                     </p>
                   )}
@@ -1204,7 +1204,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
                         {synthesis.recommandations?.length > 0 && (
                           <div className="mt-3">
-                            <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+                            <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                               <IconBulb size={11} stroke={1.8} />
                               Recommandations
                             </p>
@@ -1226,7 +1226,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           </p>
                         )}
 
-                        <p className="text-[8px] mt-2" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
                           Indicatif · ne remplace pas un avis médical
                         </p>
                       </motion.div>
@@ -1239,8 +1239,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Médicaments ── */}
             <div className={`rounded-2xl ${meds.length === 0 ? "p-3" : "p-4"}`}
               style={{
-                background: "linear-gradient(140deg, rgba(192,132,252,0.12) 0%, rgba(167,139,250,0.05) 100%)",
-                border: "1px solid rgba(192,132,252,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -1250,7 +1250,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
                 <div className="flex items-center gap-1.5">
                   {meds.length > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                    <span className="text-[11px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(192,132,252,0.12)", color: "#c084fc", border: "1px solid rgba(192,132,252,0.3)" }}>
                       {meds.filter(m => m.taken).length}/{meds.length} pris
                     </span>
@@ -1287,7 +1287,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {m.name}
                         </p>
                         {(m.dose || m.time) && (
-                          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                             {[m.dose, m.time].filter(Boolean).join(" · ")}
                           </p>
                         )}
@@ -1308,8 +1308,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Symptômes ── */}
             <div className={`rounded-2xl ${symptoms.length === 0 && !symptomOpen ? "p-3" : "p-4"}`}
               style={{
-                background: "linear-gradient(140deg, rgba(251,146,60,0.12) 0%, rgba(249,115,22,0.05) 100%)",
-                border: "1px solid rgba(251,146,60,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -1319,7 +1319,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
                 <div className="flex items-center gap-1.5">
                   {symptoms.length > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                    <span className="text-[11px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.3)" }}>
                       {symptoms.length} symptôme{symptoms.length > 1 ? "s" : ""}
                     </span>
@@ -1371,7 +1371,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                 {s.name}
                               </p>
                               {isEnded && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1"
                                   style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
                                   ✓ Terminé
                                 </span>
@@ -1381,7 +1381,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               {sev.map(sv => (
                                 <button key={sv}
                                   onClick={() => handleSetSeverity(s.id, sv)}
-                                  className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide transition-all"
+                                  className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-all"
                                   style={{
                                     background: s.severity === sv ? `${sevColor[sv]}22` : "rgba(255,255,255,0.04)",
                                     border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
@@ -1412,7 +1412,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           )}
                           {isEnded && (
                             <>
-                              <span className="text-[10px]" style={{ color: "var(--border-strong)" }}>→</span>
+                              <span className="text-[11px]" style={{ color: "var(--border-strong)" }}>→</span>
                               <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.endTime}</span>
                               {s.durationMin != null && (
                                 <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md"
@@ -1426,7 +1426,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {!isEnded && (
                             <button
                               onClick={() => handleEndSymptom(s.id)}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ml-auto"
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all ml-auto"
                               style={{
                                 background: "rgba(251,191,36,0.1)",
                                 border:     "1px solid rgba(251,191,36,0.35)",
@@ -1473,13 +1473,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               {(() => {
                                 const n = symptoms.filter(s => s.category === cat.key).length;
                                 return n > 0 ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                                  <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
                                     style={{ background: `${cat.color}22`, color: cat.color, border: `1px solid ${cat.color}55` }}>
                                     {n}
                                   </span>
                                 ) : null;
                               })()}
-                              <span className="text-[10px]" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                              <span className="text-[11px]" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
                             </button>
                             {/* Symptom chips */}
                             <AnimatePresence>
@@ -1542,14 +1542,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               return (
                 <div className="p-4 rounded-2xl"
                   style={{
-                    background: "linear-gradient(140deg, rgba(251,146,60,0.09) 0%, rgba(249,115,22,0.04) 100%)",
-                    border: "1px solid rgba(251,146,60,0.16)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                   }}
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <IconClipboardList size={14} style={{ color: "#fb923c" }} />
                     <p className="label-xs">Historique des symptômes</p>
-                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full"
+                    <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(251,146,60,0.1)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.25)" }}>
                       {history.length} jour{history.length > 1 ? "s" : ""}
                     </span>
@@ -1564,7 +1564,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             {format(parseISO(e.date + "T12:00:00"), "EEEE d MMMM", { locale: fr })}
                           </p>
                           <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                             {(e.symptoms ?? []).length} symptôme{(e.symptoms ?? []).length > 1 ? "s" : ""}
                           </span>
                         </div>
@@ -1575,7 +1575,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             const sevColor = s.severity ? (SEV_COLOR[s.severity] ?? "#fb923c") : "#fb923c";
                             return (
                               <span key={s.id}
-                                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
                                 style={{
                                   background: s.endTime ? "rgba(52,211,153,0.08)" : `${sevColor}12`,
                                   border: `1px solid ${s.endTime ? "rgba(52,211,153,0.3)" : `${sevColor}44`}`,
@@ -1601,7 +1601,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
                               background: e.aiSynthesis.alertLevel === "vert" ? "#34d399" : e.aiSynthesis.alertLevel === "orange" ? "#fbbf24" : "#f87171",
                             }} />
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                               Nutri-IA-Med · {e.aiSynthesis.alertLabel}
                             </span>
                           </div>
@@ -1622,8 +1622,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* Today's summary card */}
             <motion.div {...fade(0.05)} className="mb-4 rounded-2xl p-5 overflow-hidden"
               style={{
-                background: "linear-gradient(140deg, rgba(234,67,53,0.12) 0%, rgba(248,113,113,0.05) 100%)",
-                border: "1px solid rgba(234,67,53,0.2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               <div className="flex items-start justify-between">
@@ -1659,7 +1659,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
                       {Math.abs(delta)} bpm
                     </div>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
                   </div>
                 )}
               </div>
@@ -1712,8 +1712,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {/* ── Vue synthèse combinée ── */}
             <motion.div {...fade(0.14)} className="mb-4 rounded-2xl p-4"
               style={{
-                background: "linear-gradient(140deg, rgba(234,67,53,0.09) 0%, rgba(129,140,248,0.04) 100%)",
-                border: "1px solid rgba(234,67,53,0.14)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               }}
             >
               {/* Legend */}
@@ -1728,7 +1728,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   ].map(({ label, color }) => (
                     <div key={label} className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                      <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -1736,7 +1736,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               {/* BPM — line */}
               <div className="mb-0.5">
-                <p className="text-[8px] font-medium mb-0.5" style={{ color: "#EA4335" }}>BPM</p>
+                <p className="text-[11px] font-medium mb-0.5" style={{ color: "#EA4335" }}>BPM</p>
                 <ResponsiveContainer width="100%" height={68}>
                   <AreaChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }}>
                     <defs>
@@ -1746,7 +1746,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="label" hide />
-                    <YAxis domain={["auto","auto"]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <YAxis domain={["auto","auto"]} tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
                     <ReferenceLine y={60}  stroke="rgba(129,140,248,0.2)" strokeDasharray="3 3" />
                     <ReferenceLine y={100} stroke="rgba(248,113,113,0.2)" strokeDasharray="3 3" />
                     <Tooltip content={({ active, payload, label: lbl }) => {
@@ -1755,7 +1755,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       if (!v) return null;
                       const z = hrZone(v, fcMax);
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: z.color }}>{v} bpm · {z.label}</p>
                         </div>
@@ -1768,15 +1768,15 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Calories — bar */}
-                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#06b6d4" }}>Calories actives (kcal)</p>
+                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "#06b6d4" }}>Calories actives (kcal)</p>
                 <ResponsiveContainer width="100%" height={52}>
                   <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
                     <XAxis dataKey="label" hide />
-                    <YAxis tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "#06b6d4" }}>{payload[0]?.value} kcal</p>
                         </div>
@@ -1789,16 +1789,16 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Activité — bar */}
-                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#34A853" }}>Activité (min)</p>
+                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "#34A853" }}>Activité (min)</p>
                 <ResponsiveContainer width="100%" height={52}>
                   <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
                     <XAxis dataKey="label" hide />
-                    <YAxis tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
+                    <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={3} />
                     <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="3 3" />
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "#34A853" }}>{payload[0]?.value} min</p>
                         </div>
@@ -1811,21 +1811,21 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Sommeil — bar avec X axis */}
-                <p className="text-[8px] font-medium mt-1 mb-0.5" style={{ color: "#7986CB" }}>Sommeil (h) · — objectif 7h</p>
+                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "#7986CB" }}>Sommeil (h) · — objectif 7h</p>
                 <ResponsiveContainer width="100%" height={65}>
                   <BarChart syncId="hs"
                     data={cardioChartData.map(p => ({ ...p, sleepH: p.sleepMinutes != null ? Math.round(p.sleepMinutes / 60 * 10) / 10 : null }))}
                     margin={{ top: 2, right: 2, left: 0, bottom: 0 }}
                     barSize={4}
                   >
-                    <XAxis dataKey="label" tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                    <YAxis domain={[0, 10]} tick={{ fontSize: 8, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={4} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={22} tickCount={4} />
                     <ReferenceLine y={7} stroke="rgba(121,134,203,0.4)" strokeDasharray="3 3" />
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       const v = payload[0]?.value as number | null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[10px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "#7986CB" }}>{v != null ? `${v}h` : "—"}</p>
                         </div>
@@ -1841,8 +1841,8 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             {visible.length > 0 && (
               <motion.div {...fade(0.2)} className="rounded-2xl p-4"
                 style={{
-                  background: "linear-gradient(140deg, rgba(248,113,113,0.08) 0%, rgba(129,140,248,0.04) 100%)",
-                  border: "1px solid rgba(248,113,113,0.14)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                 }}
               >
                 <p className="label-xs mb-3">Détail quotidien</p>
@@ -1860,7 +1860,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           <span className="text-[12px] font-medium" style={{ color: z?.color ?? "var(--text-muted)" }}>
                             {p.hrAvg ? `${p.hrAvg}` : "—"}
                           </span>
-                          {p.hrAvg && <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
+                          {p.hrAvg && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
                         </div>
                         <div className="flex items-center gap-1 w-[52px]">
                           <IconBolt size={11} style={{ color: "var(--fit-green)" }} />
@@ -1955,7 +1955,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   <div className="relative">
                     <input type="number" value={bpPulse} onChange={e => setBpPulse(e.target.value)}
                       placeholder="72" className="input pr-10" min={30} max={250} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: "var(--text-muted)" }}>bpm</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>
                   </div>
                 </div>
                 <div>
@@ -2080,7 +2080,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Dose :</span> {medAiInfo.dose}
                           </p>
                           {medAiInfo.warning && (
-                            <p className="text-[10px] mt-1.5 flex items-start gap-1" style={{ color: "#fbbf24" }}>
+                            <p className="text-[11px] mt-1.5 flex items-start gap-1" style={{ color: "#fbbf24" }}>
                               <IconAlertCircle size={11} className="mt-0.5 flex-shrink-0" />
                               {medAiInfo.warning}
                             </p>
@@ -2178,7 +2178,7 @@ function VitalCard({
               className="input text-[14px] pr-10"
               step={step} min={min} max={max}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px]"
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px]"
               style={{ color: "var(--text-muted)" }}>{unit}</span>
           </div>
           <div className="flex gap-1.5">
@@ -2198,7 +2198,7 @@ function VitalCard({
               </button>
             )}
           </div>
-          <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{refRange}</p>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{refRange}</p>
         </div>
       ) : displayVal != null ? (
         /* ── Display mode — horizontal row ── */
@@ -2211,7 +2211,7 @@ function VitalCard({
           {/* Right: value + status */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {status && (
-              <span className="text-[10px] font-medium hidden sm:inline" style={{ color: status.color }}>
+              <span className="text-[11px] font-medium hidden sm:inline" style={{ color: status.color }}>
                 {status.label}
               </span>
             )}
@@ -2220,7 +2220,7 @@ function VitalCard({
                 style={{ color: status?.color ?? "var(--text-primary)" }}>
                 {displayVal}
               </span>
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
             </div>
             <button onClick={onStartEdit} className="p-1 rounded-md" style={{ color: "var(--text-muted)" }}>
               <IconPencil size={11} />
@@ -2236,7 +2236,7 @@ function VitalCard({
             {icon}
             <span className="text-[11px] font-medium">{label}</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px]" style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "2px 8px" }}>
+          <div className="flex items-center gap-1 text-[11px]" style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "2px 8px" }}>
             <IconPlus size={11} />
             Saisir
           </div>

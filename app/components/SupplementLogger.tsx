@@ -274,7 +274,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           Suppléments & Compléments
         </h3>
         {sortedIntakes.length > 0 && (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
+          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
             {sortedIntakes.length} prise{sortedIntakes.length > 1 ? "s" : ""}
           </span>
         )}
@@ -515,11 +515,11 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {intake.supplementName}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {intake.time}
                   </span>
                   {intake.moment && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
+                    <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
                       {MOMENT_LABEL[intake.moment]}
                     </span>
                   )}

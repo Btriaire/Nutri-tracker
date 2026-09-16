@@ -66,7 +66,6 @@ html, body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
@@ -362,6 +361,89 @@ html, body, .glass, .card, .card-sm, .input, .btn, .btn-primary, .btn-ghost, .bt
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
 }
+
+/* ─── Échelle typographique ──────────────────────────────────────────────────
+   L'app avait dérivé vers 20+ tailles différentes, dont 212 occurrences à 8-9px
+   — illisible sur un téléphone et principal signal « amateur » du design.
+   Échelle à 8 crans, plancher à 11px. Les composants s'y réfèrent via les
+   classes .fs-* ou via les tailles Tailwind arbitraires alignées dessus.      */
+:root {
+  --fs-caption: 11px;   /* plancher : légendes, unités, axes             */
+  --fs-sm:      13px;   /* texte secondaire                              */
+  --fs-body:    15px;   /* corps                                         */
+  --fs-md:      18px;   /* titres de carte, libellés importants          */
+  --fs-lg:      22px;   /* titres de section, chiffres mis en avant      */
+  --fs-xl:      26px;   /* chiffres héros secondaires                    */
+  --fs-hero:    42px;   /* le grand chiffre (anneau calories)            */
+}
+
+.fs-caption { font-size: var(--fs-caption); }
+.fs-sm      { font-size: var(--fs-sm); }
+.fs-body    { font-size: var(--fs-body); }
+.fs-md      { font-size: var(--fs-md); }
+.fs-lg      { font-size: var(--fs-lg); }
+.fs-xl      { font-size: var(--fs-xl); }
+.fs-hero    { font-size: var(--fs-hero); }
+
+/* ─── Chiffres ───────────────────────────────────────────────────────────────
+   Une appli de suivi affiche des nombres qui changent en permanence. En
+   chiffres proportionnels, « 1400 » et « 1411 » n'ont pas la même largeur :
+   la valeur tressaute à chaque mise à jour et les colonnes ne s'alignent pas.
+   Les chiffres tabulaires règlent les deux d'un coup.                        */
+body {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+}
+/* Échappatoire pour la prose (texte IA, conseils) où les chiffres tabulaires
+   font des trous disgracieux au milieu d'une phrase. */
+.pnum { font-variant-numeric: proportional-nums; }
+
+/* Grands nombres : resserrer l'approche, sinon ils paraissent flottants. */
+.num-hero { font-size: var(--fs-hero); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.num-lg   { font-size: var(--fs-lg);   font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+
+/* ─── Couleurs sémantiques ───────────────────────────────────────────────────
+   174 couleurs en dur étaient dispersées dans les composants, hors du système
+   de thèmes. Ces jetons donnent un point d'entrée unique : le sens (bon /
+   attention / problème) plutôt que la teinte.                                */
+:root {
+  --ok:        #34d399;
+  --ok-bg:     rgba(52, 211, 153, 0.12);
+  --warn:      #fbbf24;
+  --warn-bg:   rgba(251, 191, 36, 0.12);
+  --danger:    #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --info:      #60a5fa;
+  --info-bg:   rgba(96, 165, 250, 0.12);
+  --accent:    #a78bfa;
+  --accent-bg: rgba(167, 139, 250, 0.12);
+}
+html[data-theme="lumiere"], html.light {
+  --ok:        #059669;  --ok-bg:     rgba(5, 150, 105, 0.10);
+  --warn:      #b45309;  --warn-bg:   rgba(180, 83, 9, 0.10);
+  --danger:    #dc2626;  --danger-bg: rgba(220, 38, 38, 0.10);
+  --info:      #2563eb;  --info-bg:   rgba(37, 99, 235, 0.10);
+  --accent:    #7c3aed;  --accent-bg: rgba(124, 58, 237, 0.10);
+}
+html[data-theme="mfp"] {
+  --ok:        #00A86B;  --ok-bg:     rgba(0, 168, 107, 0.10);
+  --warn:      #F9A825;  --warn-bg:   rgba(249, 168, 37, 0.12);
+  --danger:    #D32F2F;  --danger-bg: rgba(211, 47, 47, 0.10);
+  --info:      #1565C0;  --info-bg:   rgba(21, 101, 192, 0.10);
+  --accent:    #9C27B0;  --accent-bg: rgba(156, 39, 176, 0.10);
+}
+html[data-theme="ocean"] {
+  --ok:        #26A69A;  --ok-bg:     rgba(38, 166, 154, 0.12);
+  --warn:      #FFCA28;  --warn-bg:   rgba(255, 202, 40, 0.12);
+  --danger:    #EF5350;  --danger-bg: rgba(239, 83, 80, 0.12);
+  --info:      #29B6F6;  --info-bg:   rgba(41, 182, 246, 0.12);
+  --accent:    #26C6DA;  --accent-bg: rgba(38, 198, 218, 0.12);
+}
+
+.t-ok     { color: var(--ok); }
+.t-warn   { color: var(--warn); }
+.t-danger { color: var(--danger); }
+.t-info   { color: var(--info); }
 
 /* ─── Typography ────────────────────────────────────────────────────────────── */
 .label-xs {

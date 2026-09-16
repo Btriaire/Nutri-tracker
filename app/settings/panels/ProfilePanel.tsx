@@ -142,7 +142,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
               )}
             </div>
           )}
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
             Sauvegarde automatique · 128×128 px JPEG
           </p>
         </div>
@@ -180,7 +180,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             min={1920} max={new Date().getFullYear() - 10}
             className="input w-full text-[13px]"
           />
-          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
             Utilisé pour calculer le métabolisme de base (BMR)
           </p>
         </div>
@@ -195,7 +195,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             placeholder="ex. Développeur, Enseignant…"
             className="input w-full text-[13px]"
           />
-          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
             Aide à contextualiser le niveau d&apos;activité et le stress
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             className="input w-full text-[12px] resize-none"
             style={{ lineHeight: "1.5" }}
           />
-          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
             Utilisé par les suggestions IA pour personnaliser les recettes et conseils
           </p>
         </div>

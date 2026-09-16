@@ -145,7 +145,7 @@ export default function PodcastButton() {
               <IconMicrophone size={12} />
               Dernier podcast prêt · {new Date(latest.mtime).toLocaleDateString("fr-FR")}
               {isLongFile(latest.name) && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                   style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}>
                   <IconSparkles size={9} stroke={2} />Bilan complet
                 </span>
@@ -182,7 +182,7 @@ export default function PodcastButton() {
                     <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                       {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko
                       {isLongFile(f.name) && (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                           style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}>
                           <IconSparkles size={9} stroke={2} />Bilan complet
                         </span>

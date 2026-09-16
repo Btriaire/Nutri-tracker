@@ -374,7 +374,7 @@ export default function HubClient() {
           whileTap={{ scale: 0.92 }}
         >
           <IconLayoutDashboard size={22} stroke={1.7} style={{ color: "var(--text-primary)" }} />
-          <span className="text-[8px] font-semibold tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
+          <span className="text-[11px] font-semibold tracking-wide" style={{ color: "rgba(255,255,255,0.55)" }}>
             DASH
           </span>
         </motion.button>

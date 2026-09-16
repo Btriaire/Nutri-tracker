@@ -321,7 +321,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                   ✨ {items.length} activité{items.length > 1 ? "s" : ""} reconnue{items.length > 1 ? "s" : ""}
                 </span>
                 <button onClick={() => { setPhase("idle"); setItems([]); }}
-                  className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+                  className="text-[11px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
                   Recommencer
                 </button>
               </div>
@@ -380,7 +380,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                             <button onClick={() => !isSaving && adjustDuration(idx, 5)} className="w-5 h-5 rounded-md flex items-center justify-center"
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconPlus size={9} /></button>
                           </div>
-                          <span className="inline-flex items-center gap-0.5 text-[9px]" style={{ color: "var(--text-muted)" }}>
+                          <span className="inline-flex items-center gap-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
                             <IconClock size={9} /> min
                           </span>
                         </div>

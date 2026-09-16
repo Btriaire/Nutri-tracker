@@ -332,7 +332,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           <div>
             <p className="text-[11px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>URL du webhook</p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[10px] truncate"
+              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[11px] truncate"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 {webhookUrl}
               </div>
@@ -354,7 +354,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
               'Dans "Automatisation" : planifie à 23h55 chaque soir',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5"
                   style={{ background: "rgba(255,45,85,0.15)", color: "#ff2d55" }}>{i + 1}</span>
                 <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{step}</p>
               </div>
@@ -367,7 +367,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
               <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Corps JSON du raccourci</p>
               <CopyBtn text={sampleJson} k="json" label="Copier JSON" />
             </div>
-            <pre className="text-[10px] p-3 rounded-xl overflow-x-auto"
+            <pre className="text-[11px] p-3 rounded-xl overflow-x-auto"
               style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--border)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
               {sampleJson}
             </pre>
@@ -423,7 +423,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                   ].map(({ label, value }) => (
                     <div key={label} className="px-3 py-2 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
                     </div>
                   ))}

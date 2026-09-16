@@ -79,7 +79,7 @@ export default function IntegrationsHealthPanel({ initial }: { initial: Integrat
               <meta.Icon size={13} stroke={1.8} style={{ color: meta.color, flexShrink: 0, marginTop: 1 }} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{item.label}</p>
-                <p className="text-[10.5px] leading-relaxed" style={{ color: item.state === "ok" ? "var(--text-muted)" : meta.color }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: item.state === "ok" ? "var(--text-muted)" : meta.color }}>
                   {item.detail}
                 </p>
               </div>

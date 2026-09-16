@@ -143,7 +143,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   {delta > 0 ? <IconArrowUp size={12} /> : delta < 0 ? <IconArrowDown size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta).toLocaleString("fr-FR")}
                 </div>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
               </div>
             )}
           </div>
@@ -160,12 +160,12 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>0</span>
-                <span className="text-[10px] font-medium tabular-nums"
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>0</span>
+                <span className="text-[11px] font-medium tabular-nums"
                   style={{ color: stepsColor(todaySteps, stepsGoal) }}>
                   {Math.round(pctToday)}%
                 </span>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{stepsGoal.toLocaleString("fr-FR")}</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{stepsGoal.toLocaleString("fr-FR")}</span>
               </div>
             </div>
           )}
@@ -182,7 +182,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2.5">
               <div className="flex items-center gap-1">{icon}</div>
               <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{value}</span>
-              <span className="text-[9px] leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
         </motion.div>
@@ -223,7 +223,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                 Record sur {rangeDays} jours : <strong style={{ color: "#FBBC04" }}>{bestDay.toLocaleString("fr-FR")} pas</strong>
               </p>
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {format(parseISO(bestDate), "EEEE d MMMM", { locale: fr })}
               </p>
             </div>
@@ -260,8 +260,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                   tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length || !payload[0]?.value) return null;
@@ -277,7 +277,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   );
                 }} />
                 <ReferenceLine y={stepsGoal} stroke="rgba(56,189,248,0.35)" strokeDasharray="4 3"
-                  label={{ value: `${(stepsGoal / 1000).toFixed(0)}k`, fill: "rgba(56,189,248,0.7)", fontSize: 8, position: "right" }} />
+                  label={{ value: `${(stepsGoal / 1000).toFixed(0)}k`, fill: "rgba(56,189,248,0.7)", fontSize: 11, position: "right" }} />
                 <Bar dataKey="steps" radius={[3, 3, 0, 0]}>
                   {chartData.map((p, i) => (
                     <Cell key={i} fill={p.steps > 0 ? stepsColor(p.steps, stepsGoal) : "rgba(255,255,255,0.08)"} fillOpacity={0.85} />
@@ -299,7 +299,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -322,8 +322,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length) return null;
                   return (
@@ -338,7 +338,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 <Area type="monotone" dataKey="activeMinutes" stroke="#34A853" strokeWidth={1.5} fill="url(#actGrad2)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
-            <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = recommandation OMS 30 min</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = recommandation OMS 30 min</p>
           </motion.div>
         )}
 
@@ -354,8 +354,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length) return null;
                   return (

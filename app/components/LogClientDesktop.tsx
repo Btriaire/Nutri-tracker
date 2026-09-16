@@ -135,7 +135,7 @@ export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" 
           <FaceScanReminderBanner />
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>Journée</span>
+            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>Journée</span>
             <DayTypeSelector date={date} initialType={initialDayType} initialJetlag={initialJetlag} />
           </div>
 

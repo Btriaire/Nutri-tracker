@@ -82,7 +82,7 @@ function FoodSlot({
       {!showingSearch && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderTop: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
           <IconHistory size={11} stroke={2} style={{ color: "var(--text-muted)" }} />
-          <span className="text-[9.5px] uppercase tracking-wide font-semibold" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: "var(--text-muted)" }}>
             Mes aliments récents
           </span>
         </div>
@@ -103,7 +103,7 @@ function FoodSlot({
                 <span className="text-[12px] truncate" style={{ color: "var(--text-primary)" }}>
                   {r.name}{r.brand ? ` · ${r.brand}` : ""}
                 </span>
-                <span className="text-[10.5px] flex-shrink-0 tabular-nums" style={{ color: "var(--calories)" }}>
+                <span className="text-[11px] flex-shrink-0 tabular-nums" style={{ color: "var(--calories)" }}>
                   {Math.round(r.nutrition.calories)} kcal
                 </span>
               </button>
@@ -126,7 +126,7 @@ function FoodSlot({
               style={{ borderTop: "1px solid var(--border)" }}
             >
               <span className="text-[12px] truncate" style={{ color: "var(--text-primary)" }}>{r.name}</span>
-              <span className="text-[10.5px] flex-shrink-0 tabular-nums" style={{ color: "var(--calories)" }}>
+              <span className="text-[11px] flex-shrink-0 tabular-nums" style={{ color: "var(--calories)" }}>
                 {Math.round(r.nutritionPer100g.calories)} kcal/100g
               </span>
             </button>
@@ -149,13 +149,13 @@ function PickedCard({
       <div className="flex items-center gap-2.5">
         <div className="flex-1 min-w-0">
           <p className="text-[12.5px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{picked.name}</p>
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
             {Math.round(picked.per100g.calories)} kcal / 100g
           </p>
         </div>
         <button
           onClick={onClear}
-          className="text-[10.5px] font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+          className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
           style={{ color: "var(--protein)", background: "rgba(59,130,246,0.12)" }}
         >
           Changer
@@ -164,7 +164,7 @@ function PickedCard({
       {gramsInput && (
         <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
           <IconScale size={12} stroke={1.8} style={{ color: "var(--text-muted)" }} />
-          <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Quantité :</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Quantité :</span>
           <input
             type="number"
             inputMode="decimal"
@@ -173,7 +173,7 @@ function PickedCard({
             className="w-16 px-2 py-1 rounded-lg text-[12px] tabular-nums outline-none"
             style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
           />
-          <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>g</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>g</span>
         </div>
       )}
     </div>
@@ -193,14 +193,14 @@ function SuggestionsPanel({
   if (!loading && suggestions.length === 0) return null;
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: NUTRI_IA_ACCENT }}>
+      <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: NUTRI_IA_ACCENT }}>
         <IconSparkles size={11} stroke={2} /> Suggestions Nutri-IA{!loading && suggestions.length > 0 ? ` (${suggestions.length})` : ""}
       </p>
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-3">
             <IconLoader2 size={13} className="animate-spin" style={{ color: "var(--text-muted)" }} />
-            <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>Nutri-IA cherche des équivalents…</span>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Nutri-IA cherche des équivalents…</span>
           </div>
         ) : (
           <div className="max-h-[260px] overflow-y-auto">
@@ -224,11 +224,11 @@ function SuggestionsPanel({
                     )}
                     <span className="text-[12px] truncate" style={{ color: "var(--text-primary)" }}>{s.name}</span>
                   </span>
-                  <span className="text-[10px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                  <span className="text-[11px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
                     {Math.round(s.per100g.calories)} kcal/100g
                   </span>
                   <span
-                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
                     style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}` }}
                   >
                     {style.label}
@@ -252,9 +252,9 @@ function MacroRow({ row }: { row: SubstitutionResult["rows"][number] }) {
   return (
     <div className="py-1.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10.5px] font-medium" style={{ color: "var(--text-secondary)" }}>{row.label}</span>
+        <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>{row.label}</span>
         <span
-          className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+          className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
           style={{ color: style.color, background: style.bg, border: `1px solid ${style.border}` }}
         >
           {row.match === "na" ? "—" : style.label}
@@ -262,20 +262,20 @@ function MacroRow({ row }: { row: SubstitutionResult["rows"][number] }) {
       </div>
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-[9px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>A</span>
+          <span className="text-[11px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>A</span>
           <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
             <div className="h-full rounded-full" style={{ width: `${(row.sourceValue / maxVal) * 100}%`, background: "var(--protein)" }} />
           </div>
-          <span className="text-[10px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[11px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
             {row.sourceValue.toFixed(1)}{row.unit}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[9px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>B</span>
+          <span className="text-[11px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>B</span>
           <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
             <div className="h-full rounded-full" style={{ width: `${(row.targetValue / maxVal) * 100}%`, background: "#4ade80" }} />
           </div>
-          <span className="text-[10px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[11px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
             {row.targetValue.toFixed(1)}{row.unit}
           </span>
         </div>
@@ -391,14 +391,14 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
           </div>
 
           <div className="overflow-y-auto px-4 py-4 space-y-3">
-            <p className="text-[10.5px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               Comparez deux aliments à calories égales pour trouver un substitut adapté —
               choisissez un aliment de référence et une quantité, puis un substitut.
             </p>
 
             {/* Slot A */}
             <div>
-              <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--protein)" }}>
+              <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--protein)" }}>
                 A · Aliment de référence
               </p>
               {source
@@ -428,7 +428,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
 
             {/* Slot B */}
             <div>
-              <p className="text-[9px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "#4ade80" }}>
+              <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "#4ade80" }}>
                 {target ? "B · Substitut" : "Ou recherchez un autre aliment"}
               </p>
               {target
@@ -444,14 +444,14 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                 className="rounded-xl p-3 mt-1"
                 style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}
               >
-                <p className="text-[9px] uppercase tracking-wide text-center mb-2 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px] uppercase tracking-wide text-center mb-2 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Correspondance calorique
                 </p>
                 <div className="rounded-lg overflow-hidden mb-1" style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }}>
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold truncate" style={{ color: "var(--protein)" }}>{grams} g · {source.name}</p>
-                      <p className="text-[9.5px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {Math.round(source.per100g.calories)} kcal/100g
                       </p>
                     </div>
@@ -465,7 +465,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold truncate" style={{ color: "#4ade80" }}>{result.targetGrams} g · {target.name}</p>
-                      <p className="text-[9.5px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {Math.round(target.per100g.calories)} kcal/100g
                       </p>
                     </div>
@@ -474,14 +474,14 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                     </span>
                   </div>
                 </div>
-                <p className="text-[9.5px] text-center mb-3" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px] text-center mb-3" style={{ color: "var(--text-muted)" }}>
                   écart de {Math.abs(Math.round(result.sourceCalories) - Math.round(result.targetCalories))} kcal
                   {" · "}1 g de {source.name.toLowerCase()} ≈ {(target.per100g.calories > 0 ? source.per100g.calories / target.per100g.calories : 0).toFixed(2)} g de {target.name.toLowerCase()}
                 </p>
 
                 <div className="flex items-center justify-center mb-3">
                   <span
-                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                    className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
                     style={{
                       color: MATCH_STYLE[result.overallMatch].color,
                       background: MATCH_STYLE[result.overallMatch].bg,
@@ -498,7 +498,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                   {result.rows.map((row) => <MacroRow key={row.key} row={row} />)}
                 </div>
 
-                <p className="text-[9px] italic mt-2 px-0.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px] italic mt-2 px-0.5" style={{ color: "var(--text-muted)" }}>
                   Comparaison indicative des autres macronutriments à cette quantité équivalente.
                 </p>
               </motion.div>

@@ -262,7 +262,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
             style={{ color: "#f87171" }}
           >
             <IconTrash size={18} stroke={2} />
-            <span className="text-[10px] font-semibold">Supprimer</span>
+            <span className="text-[11px] font-semibold">Supprimer</span>
           </button>
         </div>
 
@@ -322,7 +322,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   {entry.name}
                 </p>
                 {formatLoggedTime(entry.loggedAt) && (
-                  <span className="text-[10px] tabular-nums flex-shrink-0"
+                  <span className="text-[11px] tabular-nums flex-shrink-0"
                     style={{ color: "var(--text-muted)", opacity: 0.7 }}>
                     {formatLoggedTime(entry.loggedAt)}
                   </span>
@@ -341,7 +341,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               <p className="text-[13px] font-semibold t-calories tabular-nums">
                 {Math.round(n.calories)} kcal
               </p>
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 P{Math.round(n.proteinG)} · G{Math.round(n.carbsG)} · L{Math.round(n.fatG)}
               </p>
             </div>
@@ -395,7 +395,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                     style={{ height: "28px" }}
                     min="1"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px]"
                     style={{ color: "var(--text-muted)" }}>g</span>
                 </div>
                 <button
@@ -432,7 +432,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                     <button
                       key={g}
                       onClick={() => setEditGrams(String(g))}
-                      className="px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all"
+                      className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
                       style={{
                         background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
                         border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
@@ -467,13 +467,13 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   <IconExclamationCircle size={14} stroke={2} style={{ color: "#ef4444", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-medium" style={{ color: "#f87171" }}>Hors régime</p>
-                    <ul className="text-[10.5px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                    <ul className="text-[11px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
                       {dietViolations.map((v, i) => <li key={i}>{v.reason}</li>)}
                     </ul>
                     {onDismissViolation && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onDismissViolation(entry.name); }}
-                        className="mt-1.5 text-[10.5px] font-medium underline underline-offset-2"
+                        className="mt-1.5 text-[11px] font-medium underline underline-offset-2"
                         style={{ color: "var(--text-muted)" }}
                       >
                         Ce n&apos;est pas un écart — ne plus signaler « {entry.name} »
@@ -493,8 +493,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
                     style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[9px] ml-0.5">g</span></span>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                    <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[11px] ml-0.5">g</span></span>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                   </div>
                 ))}
               </div>

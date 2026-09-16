@@ -215,7 +215,7 @@ export default function ThemePicker({ current, onChange }: { current: Theme; onC
                     >
                       {t.name}
                     </p>
-                    <p className="text-[10px] leading-tight" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>
                       {t.desc}
                     </p>
                   </div>

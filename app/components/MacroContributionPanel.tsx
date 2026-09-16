@@ -109,7 +109,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                     }}
                   >
                     <c.Icon size={14} stroke={1.6} style={{ color: active === c.key ? c.color : "var(--text-muted)" }} />
-                    <span className="text-[9px] font-semibold" style={{ color: active === c.key ? c.color : "var(--text-muted)" }}>
+                    <span className="text-[11px] font-semibold" style={{ color: active === c.key ? c.color : "var(--text-muted)" }}>
                       {c.label}
                     </span>
                   </button>
@@ -122,7 +122,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                 </p>
               ) : (
                 <div className="space-y-2.5">
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                     Total {cat.label.toLowerCase()} : <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{Math.round(dayTotal)}{cat.unit}</span>
                   </p>
 
@@ -139,11 +139,11 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                         <div className="flex items-baseline justify-between gap-2 mb-0.5">
                           <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                             {entry.name}
-                            <span className="text-[9px] ml-1.5" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[11px] ml-1.5" style={{ color: "var(--text-muted)" }}>
                               {MEAL_LABEL[entry.meal]}
                             </span>
                           </span>
-                          <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                          <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                             {Math.round(amount)}{cat.unit} <span style={{ opacity: 0.7 }}>({Math.round(dayPct)}%)</span>
                           </span>
                         </div>

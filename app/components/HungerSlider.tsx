@@ -102,7 +102,7 @@ export default function HungerSlider({ value, onChange, label, compact = false }
       {!compact && (
         <div className="flex justify-between px-0.5">
           {([1, 2, 3, 4, 5] as HungerLevel[]).map((l) => (
-            <span key={l} className="text-[10px]"
+            <span key={l} className="text-[11px]"
               style={{ color: value === l ? HUNGER_CFG[l].color : "var(--text-muted)", opacity: value === l ? 1 : 0.4 }}>
               {HUNGER_CFG[l].label.split(" ")[0]}
             </span>

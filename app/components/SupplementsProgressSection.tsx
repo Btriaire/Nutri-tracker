@@ -185,7 +185,7 @@ export default function SupplementsProgressSection() {
                     </span>
                   </div>
                   {rda > 0 && (
-                    <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
                       Apport recommandé : {rda}{info.unit}/j
                     </p>
                   )}
@@ -202,7 +202,7 @@ export default function SupplementsProgressSection() {
                       <Tooltip content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
                         return (
-                          <div className="px-2.5 py-1.5 rounded-lg text-[10px]"
+                          <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
                             style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                             <p style={{ color: "var(--text-muted)" }}>{label}</p>
                             <p style={{ color: info.color }}>{payload[0].value}{info.unit}</p>

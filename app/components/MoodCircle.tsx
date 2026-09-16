@@ -124,7 +124,7 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
                   active, so anything smaller gets clipped under it. */}
               {active && (
                 <span
-                  className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-md"
+                  className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-md"
                   style={{
                     background: "var(--surface)",
                     color: ballColor,
@@ -155,7 +155,7 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
       </div>
 
       <p className="text-[13px] font-semibold" style={{ color: ballColor }}>{label}</p>
-      <p className="text-center text-[10px]" style={{ color: "var(--text-muted)" }}>
+      <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
         Déplace la bille vers un point — le centre, c&apos;est ton état normal.
       </p>
     </div>

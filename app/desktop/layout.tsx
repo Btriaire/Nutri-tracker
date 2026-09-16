@@ -18,7 +18,7 @@ export default function DesktopLayout({ children }: { children: React.ReactNode 
         🖥️ Mode PC
         <a
           href="/dashboard"
-          className="ml-1 px-2 py-0.5 rounded text-[10px] hover:opacity-100 opacity-55 transition-opacity"
+          className="ml-1 px-2 py-0.5 rounded text-[11px] hover:opacity-100 opacity-55 transition-opacity"
           style={{ border: "1px solid rgba(255,255,255,0.14)" }}
         >
           ← Mobile

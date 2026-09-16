@@ -223,7 +223,7 @@ function MetricChip({ value, unit, color, icon }: {
       style={{ background: `${color}12`, border: `1px solid ${color}22` }}>
       <span style={{ color, opacity: 0.75, display: "flex" }}>{icon}</span>
       <span className="text-[13px] font-bold tabular-nums leading-none" style={{ color }}>{value}</span>
-      <span className="text-[9px] leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+      <span className="text-[11px] leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
     </div>
   );
 }
@@ -291,21 +291,21 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "rgba(99,179,237,0.7)" }} />
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Pas</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Pas</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f97316" }} />
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Sport (min)</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sport (min)</span>
             </div>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={130}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -30, bottom: 0 }} barGap={2}>
             <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="steps" orientation="left" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+            <YAxis yAxisId="steps" orientation="left" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
               tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} domain={[0, maxSteps * 1.1]} />
-            <YAxis yAxisId="sport" orientation="right" tick={{ fontSize: 9, fill: "rgba(249,115,22,0.6)" }} tickLine={false} axisLine={false} />
+            <YAxis yAxisId="sport" orientation="right" tick={{ fontSize: 11, fill: "rgba(249,115,22,0.6)" }} tickLine={false} axisLine={false} />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
@@ -344,7 +344,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
               ].map(({ v, l }) => (
                 <div key={l} className="flex-1 text-center">
                   <p className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{v}</p>
-                  <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{l}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</p>
                 </div>
               ))}
             </div>
@@ -376,14 +376,14 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                   <div className="flex items-center gap-1 w-[60px] flex-shrink-0">
                     {p.steps > 0 ? (
                       <>
-                        <span className="text-[10px]">👟</span>
+                        <span className="text-[11px]">👟</span>
                         <span className="text-[11px] font-semibold tabular-nums"
                           style={{ color: stepsOk ? "#34A853" : "var(--text-secondary)" }}>
                           {p.steps >= 1000 ? `${(p.steps / 1000).toFixed(1)}k` : String(p.steps)}
                         </span>
                       </>
                     ) : (
-                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>—</span>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>—</span>
                     )}
                   </div>
 
@@ -391,12 +391,12 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                   <div className="flex-1 flex items-center gap-1 flex-wrap min-w-0">
                     {p.sessions.slice(0, 3).map((s, i) => (
                       <span key={i} className="text-[11px] px-1.5 py-0.5 rounded-md flex-shrink-0"
-                        style={{ background: "rgba(249,115,22,0.1)", color: "var(--calories)", fontSize: 10 }}>
+                        style={{ background: "rgba(249,115,22,0.1)", color: "var(--calories)", fontSize: 11 }}>
                         {s.emoji} {s.durationMin}min
                       </span>
                     ))}
                     {p.sessions.length === 0 && (
-                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Repos</span>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Repos</span>
                     )}
                   </div>
 
@@ -1179,7 +1179,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2">
               <Icon size={18} style={{ color }} />
               <span className="text-[14px] font-bold tabular-nums" style={{ color }}>{value}</span>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
         </motion.div>
@@ -1264,7 +1264,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <IconBookmark size={15} style={{ color: "var(--protein)" }} />
               <p className="label-xs">Séances types</p>
               {templates.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full ml-0.5"
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full ml-0.5"
                   style={{ background: "rgba(167,139,250,0.15)", color: "var(--protein)" }}>
                   {templates.length}
                 </span>
@@ -1516,12 +1516,12 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[14px] font-bold leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
                                     {dispName}
-                                    {edit.name && <span className="text-[10px] ml-1.5" style={{ color: "var(--protein)" }}>✎</span>}
+                                    {edit.name && <span className="text-[11px] ml-1.5" style={{ color: "var(--protein)" }}>✎</span>}
                                   </p>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                                       style={{ background: "rgba(251,191,36,0.15)", color: "#fbbf24" }}>GFIT</span>
-                                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                                       {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                                     </span>
                                   </div>
@@ -1661,7 +1661,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 <p className="text-[14px] font-bold leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
                                   {a.name}
                                 </p>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: "rgba(99,179,237,0.15)", color: "#60a5fa" }}>MANUEL</span>
                               </div>
                               <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -1708,25 +1708,25 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 {isMuscu(editForm.actType) ? (
                                   <div className="flex gap-2">
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
+                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
                                       <input type="number" min="1" value={editForm.sets}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, sets: e.target.value }))}
                                         className="input text-[12px] text-center"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
+                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
                                       <input type="number" min="1" value={editForm.reps}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, reps: e.target.value }))}
                                         className="input text-[12px] text-center"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
+                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
                                       <input type="number" min="0" step="0.5" value={editForm.weightKg}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, weightKg: e.target.value }))}
                                         className="input text-[12px] text-center" placeholder="—"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[9px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
+                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
                                       <input type="number" min="0" value={editForm.calories}
                                         onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
                                         className="input text-[12px] text-center"/>
@@ -2050,7 +2050,7 @@ function ActivityFormBody({
               border: `1px solid ${form.actType === opt.type ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
             }}>
             <span className="text-[18px]">{opt.emoji}</span>
-            <span className="text-[9px] leading-tight" style={{ color: form.actType === opt.type ? "var(--protein)" : "var(--text-muted)" }}>
+            <span className="text-[11px] leading-tight" style={{ color: form.actType === opt.type ? "var(--protein)" : "var(--text-muted)" }}>
               {opt.label.split(" ")[0]}
             </span>
           </button>
@@ -2128,7 +2128,7 @@ function ActivityFormBody({
                 <button
                   type="button"
                   onClick={toggleVariableWeight}
-                  className="flex-shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
+                  className="flex-shrink-0 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
                   title="Poids variable par série"
                   style={{
                     background: form.variableWeight ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
@@ -2160,7 +2160,7 @@ function ActivityFormBody({
               <div className="flex gap-1.5 flex-wrap">
                 {Array.from({ length: setsCount }, (_, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>S{i + 1}</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>S{i + 1}</span>
                     <input
                       type="number"
                       value={form.weightPerSet[i] ?? ""}

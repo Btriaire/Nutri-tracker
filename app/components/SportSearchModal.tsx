@@ -254,7 +254,7 @@ function ExerciseCard({
             {exercise.name}
           </span>
           <span
-            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+            className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
             style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
           >
             {categoryLabel[exercise.category]}

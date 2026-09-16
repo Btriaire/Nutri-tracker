@@ -41,8 +41,8 @@ function MacroPill({ label, value, unit, color }: { label: string; value: number
   return (
     <div className="flex flex-col items-center gap-0.5 flex-1">
       <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{Math.round(value)}</span>
-      <span className="text-[9px] font-medium" style={{ color }}>{unit}</span>
-      <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[11px] font-medium" style={{ color }}>{unit}</span>
+      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }
@@ -57,7 +57,7 @@ function IngredientRow({ ing }: { ing: SuggestionIngredient }) {
         <span className="text-[12.5px] truncate block" style={{ color: "var(--text-primary)" }}>
           {ing.name}
         </span>
-        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           {ing.quantity} {ing.unit}
         </span>
       </div>
@@ -66,9 +66,9 @@ function IngredientRow({ ing }: { ing: SuggestionIngredient }) {
           {Math.round(ing.calories)} kcal
         </span>
         <div className="flex gap-1">
-          <span className="text-[9px] tabular-nums" style={{ color: "var(--protein)" }}>{Math.round(ing.proteinG)}P</span>
-          <span className="text-[9px] tabular-nums" style={{ color: "var(--carbs)" }}>{Math.round(ing.carbsG)}G</span>
-          <span className="text-[9px] tabular-nums" style={{ color: "var(--fat)" }}>{Math.round(ing.fatG)}L</span>
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--protein)" }}>{Math.round(ing.proteinG)}P</span>
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--carbs)" }}>{Math.round(ing.carbsG)}G</span>
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--fat)" }}>{Math.round(ing.fatG)}L</span>
         </div>
       </div>
     </div>
@@ -133,7 +133,7 @@ function SuggestionCard({
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
             <IconClock size={11} style={{ color: "var(--text-muted)" }} />
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{suggestion.prepTimeMin} min</span>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{suggestion.prepTimeMin} min</span>
           </div>
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{
@@ -141,7 +141,7 @@ function SuggestionCard({
               border: `1px solid ${suggestion.difficulty === "facile" ? "rgba(34,197,94,0.2)" : "rgba(249,115,22,0.2)"}`,
             }}>
             <IconChefHat size={11} style={{ color: suggestion.difficulty === "facile" ? "#22c55e" : "var(--calories)" }} />
-            <span className="text-[10px] capitalize"
+            <span className="text-[11px] capitalize"
               style={{ color: suggestion.difficulty === "facile" ? "#22c55e" : "var(--calories)" }}>
               {suggestion.difficulty}
             </span>
@@ -467,7 +467,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
 
             {/* Footer note */}
             <div className="px-5 pb-6 pt-0 flex-shrink-0">
-              <p className="text-center text-[10px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
                 ✨ Suggestions générées par IA · inspirées de l&apos;approche Jean-Michel Cohen
               </p>
             </div>

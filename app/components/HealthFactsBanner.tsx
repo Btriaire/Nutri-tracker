@@ -6,32 +6,38 @@ import { IconLeaf } from "@tabler/icons-react";
 
 // Evidence-based nutrition & health facts (inspired by nutritional medicine research)
 const HEALTH_FACTS = [
-  { emoji: "🥦", text: "Les légumes crucifères (brocoli, chou, choux de Bruxelles) contiennent du sulforaphane, un composé puissamment anti-inflammatoire et protecteur des cellules." },
-  { emoji: "🫒", text: "L'huile d'olive extra vierge contient de l'oléocanthal, un anti-inflammatoire naturel aussi puissant que l'ibuprofène à faible dose." },
-  { emoji: "🍇", text: "Le resvératrol des raisins noirs et du vin rouge (avec modération) active les sirtuines, enzymes liées à la longévité cellulaire." },
-  { emoji: "🧅", text: "La quercétine des oignons et des pommes est l'un des flavonoïdes les plus puissants pour la protection vasculaire et anti-inflammatoire." },
-  { emoji: "🌿", text: "Le curcuma (curcumine) multiplie son efficacité par 20 en présence de poivre noir (pipérine) — une combinaison ancestrale validée par la science." },
-  { emoji: "🐟", text: "Les oméga-3 (sardines, maquereaux, saumon sauvage) réduisent les triglycérides et l'inflammation systémique. 2 portions par semaine suffisent." },
-  { emoji: "🫐", text: "Les petits fruits rouges (myrtilles, framboises) sont les aliments les plus riches en anthocyanines — protecteurs du cerveau et de la vision." },
-  { emoji: "🥑", text: "Les graisses mono-insaturées de l'avocat augmentent l'absorption des caroténoïdes des légumes d'un facteur 3 à 5 quand consommés ensemble." },
-  { emoji: "🌰", text: "Les noix de Grenoble sont les seules noix riches en ALA (oméga-3 végétal) — une poignée par jour protège la santé cardiovasculaire." },
-  { emoji: "🧄", text: "L'allicine de l'ail (libérée 10 min après écrasement) est un puissant antibactérien naturel et stimulant immunitaire reconnu." },
-  { emoji: "🍵", text: "Le thé matcha contient 137× plus d'EGCG (catéchine anti-oxydante) que le thé vert infusé — boire 1 à 2 tasses par jour est optimal." },
-  { emoji: "🫘", text: "Les légumineuses (lentilles, pois chiches) fournissent fibres prébiotiques + protéines végétales. Elles nourrissent le microbiote et stabilisent la glycémie." },
-  { emoji: "🥕", text: "Les caroténoïdes (carottes, patates douces) sont mieux absorbés cuits avec un corps gras qu'à l'état cru — cuire les carottes double leur biodisponibilité." },
-  { emoji: "🍅", text: "Le lycopène de la tomate est 4× plus biodisponible dans la tomate cuite avec de l'huile d'olive que dans la tomate crue." },
-  { emoji: "🌾", text: "Les céréales complètes conservent le germe et le son riches en zinc, magnésium et vitamine B. Le raffinage détruit 75% de ces micronutriments." },
-  { emoji: "🫚", text: "L'index glycémique d'un aliment est modifié par la cuisson, la maturité et la combinaison avec fibres/graisses — manger des légumes avant les féculents réduit le pic glycémique de 30%." },
-  { emoji: "🦠", text: "70% du système immunitaire réside dans l'intestin. Un microbiote diversifié est la première défense contre maladies chroniques et infections." },
-  { emoji: "🍋", text: "La vitamine C des agrumes est détruite par la chaleur au-delà de 60°C. Les jus d'agrumes frais doivent être consommés dans les 20 minutes après pressage." },
-  { emoji: "🧠", text: "La phosphatidylcholine des œufs est un précurseur essentiel de l'acétylcholine, neurotransmetteur clé de la mémoire et de l'attention." },
-  { emoji: "🌱", text: "La fermentation transforme les légumes : la choucroute crue non pasteurisée contient plus de probiotiques vivants que la plupart des compléments." },
-  { emoji: "🫀", text: "La bêtaïne de la betterave améliore la méthylation cellulaire et réduit l'homocystéine, un marqueur inflammatoire lié aux maladies cardiaques." },
-  { emoji: "🍄", text: "Les champignons exposés au soleil (côté lamelles vers le haut, 20 min) synthétisent de la vitamine D2 utilisable par l'organisme." },
+  { text: "Les légumes crucifères (brocoli, chou, choux de Bruxelles) contiennent du sulforaphane, un composé puissamment anti-inflammatoire et protecteur des cellules." },
+  { text: "L'huile d'olive extra vierge contient de l'oléocanthal, un anti-inflammatoire naturel aussi puissant que l'ibuprofène à faible dose." },
+  { text: "Le resvératrol des raisins noirs et du vin rouge (avec modération) active les sirtuines, enzymes liées à la longévité cellulaire." },
+  { text: "La quercétine des oignons et des pommes est l'un des flavonoïdes les plus puissants pour la protection vasculaire et anti-inflammatoire." },
+  { text: "Le curcuma (curcumine) multiplie son efficacité par 20 en présence de poivre noir (pipérine) — une combinaison ancestrale validée par la science." },
+  { text: "Les oméga-3 (sardines, maquereaux, saumon sauvage) réduisent les triglycérides et l'inflammation systémique. 2 portions par semaine suffisent." },
+  { text: "Les petits fruits rouges (myrtilles, framboises) sont les aliments les plus riches en anthocyanines — protecteurs du cerveau et de la vision." },
+  { text: "Les graisses mono-insaturées de l'avocat augmentent l'absorption des caroténoïdes des légumes d'un facteur 3 à 5 quand consommés ensemble." },
+  { text: "Les noix de Grenoble sont les seules noix riches en ALA (oméga-3 végétal) — une poignée par jour protège la santé cardiovasculaire." },
+  { text: "L'allicine de l'ail (libérée 10 min après écrasement) est un puissant antibactérien naturel et stimulant immunitaire reconnu." },
+  { text: "Le thé matcha contient 137× plus d'EGCG (catéchine anti-oxydante) que le thé vert infusé — boire 1 à 2 tasses par jour est optimal." },
+  { text: "Les légumineuses (lentilles, pois chiches) fournissent fibres prébiotiques + protéines végétales. Elles nourrissent le microbiote et stabilisent la glycémie." },
+  { text: "Les caroténoïdes (carottes, patates douces) sont mieux absorbés cuits avec un corps gras qu'à l'état cru — cuire les carottes double leur biodisponibilité." },
+  { text: "Le lycopène de la tomate est 4× plus biodisponible dans la tomate cuite avec de l'huile d'olive que dans la tomate crue." },
+  { text: "Les céréales complètes conservent le germe et le son riches en zinc, magnésium et vitamine B. Le raffinage détruit 75% de ces micronutriments." },
+  { text: "L'index glycémique d'un aliment est modifié par la cuisson, la maturité et la combinaison avec fibres/graisses — manger des légumes avant les féculents réduit le pic glycémique de 30%." },
+  { text: "70% du système immunitaire réside dans l'intestin. Un microbiote diversifié est la première défense contre maladies chroniques et infections." },
+  { text: "La vitamine C des agrumes est détruite par la chaleur au-delà de 60°C. Les jus d'agrumes frais doivent être consommés dans les 20 minutes après pressage." },
+  { text: "La phosphatidylcholine des œufs est un précurseur essentiel de l'acétylcholine, neurotransmetteur clé de la mémoire et de l'attention." },
+  { text: "La fermentation transforme les légumes : la choucroute crue non pasteurisée contient plus de probiotiques vivants que la plupart des compléments." },
+  { text: "La bêtaïne de la betterave améliore la méthylation cellulaire et réduit l'homocystéine, un marqueur inflammatoire lié aux maladies cardiaques." },
+  { text: "Les champignons exposés au soleil (côté lamelles vers le haut, 20 min) synthétisent de la vitamine D2 utilisable par l'organisme." },
 ];
 
+/** Point de départ stable : même valeur côté serveur et côté client (donc pas
+ *  de mismatch d'hydratation), mais différente chaque jour. */
+function dayIndex(len: number): number {
+  return Math.floor(Date.now() / 86_400_000) % len;
+}
+
 export default function HealthFactsBanner() {
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * HEALTH_FACTS.length));
+  const [idx, setIdx] = useState(() => dayIndex(HEALTH_FACTS.length));
   const [direction, setDirection] = useState(1);
 
   const next = useCallback(() => {
@@ -66,7 +72,7 @@ export default function HealthFactsBanner() {
           <IconLeaf size={14} stroke={2} style={{ color: "#34d399" }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#34d399" }}>
+          <p className="text-[11px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#34d399" }}>
             Nutrition &amp; Santé
           </p>
           <AnimatePresence mode="wait" initial={false}>
@@ -79,7 +85,7 @@ export default function HealthFactsBanner() {
               className="text-[12px] leading-relaxed"
               style={{ color: "var(--text-secondary)" }}
             >
-              <span className="mr-1.5">{fact.emoji}</span>{fact.text}
+              <span className="mr-1.5"></span>{fact.text}
             </motion.p>
           </AnimatePresence>
         </div>

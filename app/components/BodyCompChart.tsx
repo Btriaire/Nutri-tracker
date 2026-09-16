@@ -143,17 +143,17 @@ function MiniStat({ label, value, unit, color, trend }: {
   return (
     <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
       <div className="flex items-baseline gap-0.5">
         <span className="text-[18px] font-bold tabular-nums" style={{ color }}>
           {typeof value === "number" && unit !== "/100"
             ? value >= 10 ? Math.round(value) : value.toFixed(1)
             : Math.round(value ?? 0)}
         </span>
-        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
       </div>
       {trend != null && (
-        <span className="text-[9px] tabular-nums" style={{ color: trend >= 0 ? "#f87171" : "#34d399" }}>
+        <span className="text-[11px] tabular-nums" style={{ color: trend >= 0 ? "#f87171" : "#34d399" }}>
           {trend >= 0 ? "▲" : "▼"} {Math.abs(trend).toFixed(1)}{unit.replace("/100", "")}
         </span>
       )}
@@ -418,7 +418,7 @@ export default function BodyCompChart({
                   {/* VAI stat */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
                     style={{ background: vaiStatus?.bg, border: `1px solid ${vaiStatus?.color}33` }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       VAI ({allMeasured ? "mesuré" : someMeasured ? "partiel" : "estimé"})
                     </span>
                     <div className="flex items-baseline gap-0.5">
@@ -427,7 +427,7 @@ export default function BodyCompChart({
                       </span>
                     </div>
                     {vaiTrend != null && (
-                      <span className="text-[9px] tabular-nums" style={{ color: vaiTrend >= 0 ? "#f87171" : "#34d399" }}>
+                      <span className="text-[11px] tabular-nums" style={{ color: vaiTrend >= 0 ? "#f87171" : "#34d399" }}>
                         {vaiTrend >= 0 ? "▲" : "▼"} {Math.abs(vaiTrend).toFixed(2)}
                       </span>
                     )}
@@ -435,7 +435,7 @@ export default function BodyCompChart({
 
                   {/* Detail metrics */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       WC (cm) {latestCalc.wcMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
@@ -444,7 +444,7 @@ export default function BodyCompChart({
                   </div>
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       TG (mg/dL) {latestCalc.tgMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
@@ -453,7 +453,7 @@ export default function BodyCompChart({
                   </div>
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       HDL (mg/dL) {latestCalc.hdlMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
@@ -469,7 +469,7 @@ export default function BodyCompChart({
                       ? <IconCircleCheck size={11} stroke={1.8} style={{ color: "#34d399", flexShrink: 0 }} />
                       : <IconAlertTriangle size={11} stroke={1.8} style={{ color: "#fbbf24", flexShrink: 0 }} />
                     }
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       {allMeasured
                         ? "Basé sur vos mesures réelles"
                         : someMeasured
@@ -493,7 +493,7 @@ export default function BodyCompChart({
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                       <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                         tickFormatter={d => format(parseISO(d), "d MMM", { locale: fr })}
                         tickLine={false}
                         axisLine={false}
@@ -501,7 +501,7 @@ export default function BodyCompChart({
                       />
                       <YAxis
                         domain={[0.5, 2.5]}
-                        tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                         tickLine={false}
                         axisLine={false}
                         width={36}
@@ -531,7 +531,7 @@ export default function BodyCompChart({
                       <p>
                         <strong>Formule VAI :</strong> [WC/(39.68+1.88×IMC)] × (TG/1.03) × (1.31/HDL)
                       </p>
-                      <p style={{ color: "var(--text-muted)", fontSize: "10px" }}>
+                      <p style={{ color: "var(--text-muted)", fontSize: "11px" }}>
                         WC = tour de taille (mesuré via Mensurations si disponible, sinon estimé) ·
                         TG/HDL = mesurés via Blood Doctor si une analyse existe, sinon estimés à partir du % de graisse
                       </p>
@@ -554,7 +554,7 @@ export default function BodyCompChart({
               return (
                 <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-shrink-0"
                   style={{ background: cls.bg, border: `1px solid ${cls.color}33`, minWidth: 96 }}>
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Tension</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Tension</span>
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
                       {latestBP.systolicBP}
@@ -563,9 +563,9 @@ export default function BodyCompChart({
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
                       {latestBP.diastolicBP}
                     </span>
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>mmHg</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>mmHg</span>
                   </div>
-                  <span className="text-[9px] font-medium" style={{ color: cls.color }}>{cls.label}</span>
+                  <span className="text-[11px] font-medium" style={{ color: cls.color }}>{cls.label}</span>
                 </div>
               );
             })()}
@@ -611,7 +611,7 @@ export default function BodyCompChart({
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                   tickFormatter={d => format(parseISO(d), "d MMM", { locale: fr })}
                   tickLine={false}
                   axisLine={false}
@@ -622,7 +622,7 @@ export default function BodyCompChart({
                   yAxisId="left"
                   domain={tab === "vitaux" ? getMetricDomain("restingHR") : (tab === "composition" ? [0, 100] : [yMin, yMax])}
                   hide={tab === "composition"}
-                  tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                   tickLine={false}
                   axisLine={false}
                   width={36}
@@ -647,7 +647,7 @@ export default function BodyCompChart({
                       const pad = Math.max(4, (max - min) * 0.15);
                       return [Math.floor(min - pad), Math.ceil(max + pad)] as [number, number];
                     })()}
-                    tick={{ fontSize: 9, fill: "rgba(244,63,94,0.5)" }}
+                    tick={{ fontSize: 11, fill: "rgba(244,63,94,0.5)" }}
                     tickLine={false}
                     axisLine={false}
                     width={30}
@@ -706,7 +706,7 @@ export default function BodyCompChart({
           {/* Legend note + source badges */}
           {tab === "sommeil" && (
             <div className="flex items-center justify-center gap-3 pb-3">
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— 7h recommandées</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>— 7h recommandées</p>
               {/* Show which sources are used */}
               {(() => {
                 const sources = new Set(chartData.map(p => p.sleepSource).filter(Boolean));
@@ -720,7 +720,7 @@ export default function BodyCompChart({
                   if (!s) return null;
                   const meta = SOURCE_META[s];
                   return (
-                    <span key={s} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full"
+                    <span key={s} className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full"
                       style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                       {meta ? <><meta.Icon size={9} stroke={1.8} />{meta.label}</> : s}
                     </span>
@@ -737,7 +737,7 @@ export default function BodyCompChart({
               <div className="px-4 pb-1">
                 {/* Legend row */}
                 <div className="flex items-center justify-center flex-wrap gap-2 pb-2">
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>— TA 120/80 mmHg</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>— TA 120/80 mmHg</p>
                 </div>
 
                 {/* Collapsible BP list */}
@@ -753,7 +753,7 @@ export default function BodyCompChart({
                         <span className="text-[11px] font-semibold" style={{ color: "#f43f5e" }}>
                           Historique tensions
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full tabular-nums"
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full tabular-nums"
                           style={{ background: "rgba(244,63,94,0.12)", color: "#f43f5e" }}>
                           {bpPoints.length} mesures
                         </span>
@@ -780,18 +780,18 @@ export default function BodyCompChart({
                                   className="flex items-center gap-3 px-3 py-2"
                                   style={{ borderTop: i === 0 ? "1px solid var(--border)" : "1px solid rgba(255,255,255,0.03)", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                                   {/* Date */}
-                                  <span className="text-[10px] w-[52px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                                  <span className="text-[11px] w-[52px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
                                     {format(parseISO(p.date), "dd MMM", { locale: fr })}
                                   </span>
                                   {/* Values */}
                                   <span className="text-[13px] font-bold tabular-nums flex-1" style={{ color: cls.color }}>
                                     {p.systolicBP}
-                                    <span className="text-[10px] font-normal mx-0.5" style={{ color: "var(--text-muted)" }}>/</span>
+                                    <span className="text-[11px] font-normal mx-0.5" style={{ color: "var(--text-muted)" }}>/</span>
                                     {p.diastolicBP}
-                                    <span className="text-[9px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
+                                    <span className="text-[11px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
                                   </span>
                                   {/* Classification badge */}
-                                  <span className="text-[9px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
+                                  <span className="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
                                     style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.color}33` }}>
                                     {cls.label}
                                   </span>

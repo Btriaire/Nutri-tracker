@@ -149,10 +149,10 @@ function MacroSVGBars({
         return (
           <div key={label}>
             <div className="flex justify-between items-baseline mb-1">
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
               <span className="text-[11px] font-semibold tabular-nums" style={{ color: col }}>
                 {Math.round(val)}
-                <span className="text-[9px] font-normal" style={{ color: "var(--text-muted)" }}>g</span>
+                <span className="text-[11px] font-normal" style={{ color: "var(--text-muted)" }}>g</span>
               </span>
             </div>
             <svg viewBox={`0 0 ${W} ${BH}`} width="100%" height={BH} style={{ display: "block" }}>
@@ -165,7 +165,7 @@ function MacroSVGBars({
                 transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
               />
             </svg>
-            <p className="text-[9px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}g</p>
+            <p className="text-[11px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}g</p>
           </div>
         );
       })}
@@ -186,16 +186,16 @@ function TrackedNutrientPill({
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1 mb-1">
         <Icon size={12} stroke={1.6} style={{ color, flexShrink: 0 }} />
-        <span className="text-[9px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
-        <span className="ml-auto text-[10px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
-          {value}<span className="font-normal text-[8px]">{unit}</span>
+        <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+        <span className="ml-auto text-[11px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
+          {value}<span className="font-normal text-[11px]">{unit}</span>
         </span>
       </div>
       <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full w-full"
           style={levelBarStyle(over && invertAlert ? 1.1 : fraction)} />
       </div>
-      <p className="text-[8px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+      <p className="text-[11px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
     </div>
   );
 }
@@ -530,7 +530,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <DayPhotos date={date} initialPhotos={dayPhotos} />
           {/* Day type selector — compact row below photos */}
           <div className="flex items-center gap-2 mt-2 px-0.5">
-            <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
               Journée
             </span>
             <DayTypeSelector
@@ -548,8 +548,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           transition={{ duration: 0.35, delay: 0.05 }}
           className="mb-5 rounded-2xl p-5"
           style={{
-            background: "linear-gradient(140deg, rgba(249,115,22,0.14) 0%, rgba(251,191,36,0.06) 100%)",
-            border: "1px solid rgba(249,115,22,0.3)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
             boxShadow: "0 10px 30px -14px rgba(249,115,22,0.4)",
           }}
         >
@@ -565,7 +565,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               />
               {/* Stats under bar */}
               <div className="flex justify-between mt-1.5">
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                   Objectif {goals.dailyCalories} kcal
                 </span>
                 <span className="text-[11px] font-semibold tabular-nums"
@@ -581,7 +581,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 aria-label="Détail de la qualité nutritionnelle du jour"
               >
                 <QualityScoreBadge score={dayQuality.score} size={52} />
-                <span className="text-[8px] font-medium" style={{ color: "var(--text-muted)" }}>Qualité</span>
+                <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Qualité</span>
               </button>
             )}
           </div>
@@ -634,7 +634,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 title="Déverrouiller pour modifier la journée"
               >
                 <IconLockOpen size={11} />
-                <span className="text-[10px] font-medium">{unlockConfirming ? "Confirmer ?" : "Modifier"}</span>
+                <span className="text-[11px] font-medium">{unlockConfirming ? "Confirmer ?" : "Modifier"}</span>
               </button>
             </div>
           ) : (
@@ -838,7 +838,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <IconDroplet size={16} stroke={1.6} style={{ color: "var(--indigo)" }} />
                 <div className="text-left">
                   <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Suivis complémentaires</p>
-                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                     Eau, suppléments, micronutriments{goals.alcoholTracking ? ", alcool" : ""}
                   </p>
                 </div>
@@ -869,8 +869,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
 
                     <div className="rounded-2xl p-4 overflow-hidden"
                       style={{
-                        background: "linear-gradient(140deg, rgba(52,211,153,0.11) 0%, rgba(34,197,94,0.05) 100%)",
-                        border: "1px solid rgba(52,211,153,0.18)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                       }}
                     >
                       <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
@@ -878,8 +878,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
 
                     <div className="rounded-2xl p-4 overflow-hidden"
                       style={{
-                        background: "linear-gradient(140deg, rgba(99,102,241,0.09) 0%, rgba(139,92,246,0.05) 100%)",
-                        border: "1px solid rgba(99,102,241,0.15)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
                       }}
                     >
                       <MicronutrientTracker date={date} micronutrientData={micronutrientData} onRefresh={fetchMicronutrients} />
@@ -967,7 +967,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   <div key={label} className="p-3 rounded-xl text-center"
                     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                     <p className="text-[12px] tabular-nums font-bold" style={{ color }}>{val}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
                   </div>
                 ))}
               </div>

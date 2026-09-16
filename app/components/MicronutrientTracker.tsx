@@ -104,7 +104,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
         className="flex items-center gap-2 py-1.5"
       >
         <span
-          className="flex-shrink-0 flex items-center justify-center rounded-md text-[9px] font-bold"
+          className="flex-shrink-0 flex items-center justify-center rounded-md text-[11px] font-bold"
           style={{ width: 26, height: 20, background: `${row.color}1f`, color: row.color, border: `1px solid ${row.color}40` }}
         >
           {row.symbol}
@@ -115,7 +115,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
             <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
               {row.label}
             </span>
-            <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
               {formatMicroAmount(row.amount)}
               {row.rda > 0 && <>/{formatMicroAmount(row.rda)}</>}
               {row.unit}
@@ -133,7 +133,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
         </div>
 
         <span
-          className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-right"
+          className="flex-shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-full text-right"
           style={{ color: status.color, background: `${status.color}18`, minWidth: 46, textAlign: "center" }}
         >
           {status.label}
@@ -153,7 +153,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
           Micronutriments ({rows.length})
         </h3>
         {lowCount > 0 && (
-          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "#f87171", background: "#f8717118" }}>
+          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "#f87171", background: "#f8717118" }}>
             {lowCount} faible{lowCount > 1 ? "s" : ""}
           </span>
         )}

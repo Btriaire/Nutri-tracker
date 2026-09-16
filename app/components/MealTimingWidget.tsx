@@ -268,14 +268,14 @@ export default function MealTimingWidget() {
                 <circle cx="7" cy="7" r="5" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
                 <circle cx="7" cy="7" r="2" fill="rgba(255,255,255,0.5)"/>
               </svg>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Moyenne</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Moyenne</span>
             </div>
             <div className="flex items-center gap-1.5">
               <svg width="18" height="10" viewBox="0 0 18 10">
                 <rect x="1" y="2" width="16" height="6" rx="3"
                   fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" strokeWidth="0.75"/>
               </svg>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>±1σ</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>±1σ</span>
             </div>
             <div className="flex items-center gap-1.5">
               <svg width="22" height="8" viewBox="0 0 22 8">
@@ -284,7 +284,7 @@ export default function MealTimingWidget() {
                     fill="rgba(255,255,255,1)" opacity={op}/>
                 ))}
               </svg>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>7 derniers repas</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>7 derniers repas</span>
             </div>
           </div>
         </>

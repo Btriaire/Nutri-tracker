@@ -89,7 +89,7 @@ export default function Nav() {
                 <Icon size={22} stroke={active ? 2.2 : 1.6}
                   style={{ color: active ? color : "var(--text-muted)" }} />
               </div>
-              <span className="text-[9.5px] font-medium leading-none"
+              <span className="text-[11px] font-medium leading-none"
                 style={{ color: active ? color : "var(--text-muted)" }}>
                 {label}
               </span>

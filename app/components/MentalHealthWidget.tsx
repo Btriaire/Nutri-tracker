@@ -270,7 +270,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Humeur: cercle valence × arousal (modèle Halcyon-PaLaMa) ── */}
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
               <div className="flex justify-center py-1">
                 <MoodCircle initialX={moodPos.x} initialY={moodPos.y} onChange={handleMoodCircleChange} />
               </div>
@@ -278,7 +278,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Emotion tags ── */}
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
                 Émotions du jour
                 {tags.length > 0 && (
                   <span className="ml-2 normal-case font-normal" style={{ color: "#818cf8" }}>
@@ -310,7 +310,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Note ── */}
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Note (optionnel)</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Note (optionnel)</p>
               <input
                 type="text"
                 value={note}

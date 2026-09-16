@@ -172,7 +172,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               exit={{ opacity: 0 }}
               className="mt-1"
             >
-              <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
                 {icon} {text.slice(0, 60)}…
               </p>
             </motion.div>

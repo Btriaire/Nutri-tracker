@@ -141,7 +141,7 @@ export default function CardioClient({ points, age }: Props) {
                   {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta)} bpm
                 </div>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
               </div>
             )}
           </div>
@@ -203,12 +203,12 @@ export default function CardioClient({ points, age }: Props) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
                 <Tooltip content={<HrTooltip />} />
                 {/* Zone reference lines */}
-                <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" label={{ value: "60", fill: "rgba(129,140,248,0.5)", fontSize: 8, position: "right" }} />
-                <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" label={{ value: "100", fill: "rgba(248,113,113,0.5)", fontSize: 8, position: "right" }} />
+                <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" label={{ value: "60", fill: "rgba(129,140,248,0.5)", fontSize: 11, position: "right" }} />
+                <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" label={{ value: "100", fill: "rgba(248,113,113,0.5)", fontSize: 11, position: "right" }} />
                 <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "#EA4335" }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -226,7 +226,7 @@ export default function CardioClient({ points, age }: Props) {
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -243,8 +243,8 @@ export default function CardioClient({ points, age }: Props) {
                   <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
                 return (
@@ -272,8 +272,8 @@ export default function CardioClient({ points, age }: Props) {
                   <stop offset="95%" stopColor="#7986CB" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                 tickFormatter={(v: number) => `${Math.round(v / 60)}h`} />
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
@@ -289,7 +289,7 @@ export default function CardioClient({ points, age }: Props) {
               <Area type="monotone" dataKey="sleepMinutes" stroke="#7986CB" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
-          <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
+          <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
         </motion.div>
 
         {/* Daily log table */}
@@ -310,7 +310,7 @@ export default function CardioClient({ points, age }: Props) {
                     <span className="text-[12px] font-medium" style={{ color: z?.color ?? "var(--text-muted)" }}>
                       {p.hrAvg ? `${p.hrAvg}` : "—"}
                     </span>
-                    {p.hrAvg && <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
+                    {p.hrAvg && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
                   </div>
                   {/* Active min */}
                   <div className="flex items-center gap-1 w-[52px]">

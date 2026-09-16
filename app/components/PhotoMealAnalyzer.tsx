@@ -494,7 +494,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                     </span>
                     <button
                       onClick={() => { setPhase("idle"); setItems([]); }}
-                      className="text-[10px] px-2 py-0.5 rounded-md"
+                      className="text-[11px] px-2 py-0.5 rounded-md"
                       style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>
                       Nouvelle photo
                     </button>
@@ -554,7 +554,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                           <div className="mt-1.5">
                             <MacroBar proteinG={n.proteinG} carbsG={n.carbsG} fatG={n.fatG} height={5} />
                           </div>
-                          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
                             P&nbsp;{n.proteinG}g&ensp;G&nbsp;{n.carbsG}g&ensp;L&nbsp;{n.fatG}g
                           </p>
                         </div>
@@ -565,7 +565,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             style={{ color: mealColor }}>
                             {n.calories}
                           </span>
-                          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>kcal</span>
+                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal</span>
                           {/* gram stepper */}
                           <div className="flex items-center gap-1 mt-0.5">
                             <button
@@ -593,7 +593,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
                               <IconPlus size={9} />
                             </button>
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>g</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>g</span>
                           </div>
                         </div>
                       </div>
@@ -637,7 +637,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             <svg width="7" height="7" viewBox="0 0 7 7">
                               <circle cx="3.5" cy="3.5" r="3.5" fill={color} />
                             </svg>
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                               {label} {val}g
                             </span>
                           </div>
@@ -654,9 +654,9 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                         { label: "Lipides",   color: "#a78bfa", val: totals.fatG,     goal: 60 },
                       ].map(({ label, color, val, goal }) => (
                         <div key={label}>
-                          <p className="text-[9px] mb-1 truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
+                          <p className="text-[11px] mb-1 truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
                           <FillBar value={val} goal={goal} color={color} width={72} height={4} />
-                          <p className="text-[10px] mt-0.5 font-semibold tabular-nums" style={{ color }}>
+                          <p className="text-[11px] mt-0.5 font-semibold tabular-nums" style={{ color }}>
                             {Math.round(val)}g
                           </p>
                         </div>

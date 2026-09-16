@@ -139,7 +139,7 @@ export default function PixelWall({ points, today }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Mur de pixels — {monthLabelCap}</p>
-        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           {filledDays} jour{filledDays !== 1 ? "s" : ""} rempli{filledDays !== 1 ? "s" : ""} sur {totalDays}
         </span>
       </div>
@@ -152,7 +152,7 @@ export default function PixelWall({ points, today }: Props) {
             {DAY_COLS.map((d, i) => (
               <div
                 key={i}
-                className="text-center text-[9px] font-medium"
+                className="text-center text-[11px] font-medium"
                 style={{ width: 32, color: "var(--text-muted)" }}
               >
                 {d}

@@ -89,7 +89,7 @@ export default function HistoryClient() {
                       <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                         Rapport {r.period === "7d" ? "7 jours" : "30 jours"} — {format(new Date(r.to), "d MMM yyyy", { locale: fr })}
                       </p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         Généré le {format(new Date(r.generatedAt), "d MMM yyyy 'à' HH:mm", { locale: fr })} · {r.sizeKb} Ko
                       </p>
                     </div>

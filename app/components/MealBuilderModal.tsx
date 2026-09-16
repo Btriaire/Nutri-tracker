@@ -390,7 +390,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                             <p className="text-[13px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                               {r.nutrition.calories}
                             </p>
-                            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                           </div>
                           <IconPlus size={14} stroke={1.5} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                         </button>

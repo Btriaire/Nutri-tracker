@@ -93,7 +93,7 @@ function NutrientGroup({ label, rows, accent }: { label: string; rows: { l: stri
             style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)" }}>
             <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{l}</span>
             <span className="text-[12px] tabular-nums font-semibold" style={{ color: "var(--text-primary)" }}>
-              {u === "g" ? (Math.round((v ?? 0) * 10) / 10) : Math.round(v ?? 0)}<span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{u}</span>
+              {u === "g" ? (Math.round((v ?? 0) * 10) / 10) : Math.round(v ?? 0)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{u}</span>
             </span>
           </div>
         ))}
@@ -113,8 +113,8 @@ function MacroPills({ n }: { n: FoodNutrition }) {
       ].map(({ l, v, c }) => (
         <div key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md"
           style={{ background: "rgba(255,255,255,0.04)" }}>
-          <span className="text-[9px] font-bold" style={{ color: c }}>{l}</span>
-          <span className="text-[10px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{Math.round(v)}g</span>
+          <span className="text-[11px] font-bold" style={{ color: c }}>{l}</span>
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{Math.round(v)}g</span>
         </div>
       ))}
     </div>
@@ -1066,7 +1066,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           <motion.span
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="text-[10px]"
+                            className="text-[11px]"
                             style={{ color: "var(--text-muted)" }}
                           >
                             {aiResults.length} résultat{aiResults.length > 1 ? "s" : ""} IA
@@ -1112,7 +1112,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 100%)", borderRadius: "10px 10px 60% 60%" }} />
                               <span style={{ position: "relative", zIndex: 1 }}>{cat.emoji}</span>
                             </div>
-                            <span className="text-[10px] font-medium leading-tight text-center" style={{ color: "var(--text-secondary)" }}>{cat.label}</span>
+                            <span className="text-[11px] font-medium leading-tight text-center" style={{ color: "var(--text-secondary)" }}>{cat.label}</span>
                           </motion.button>
                         ))}
                       </div>
@@ -1149,7 +1149,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
                                     <div className="text-right flex-shrink-0">
                                       <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                     </div>
                                   </div>
                                   <MacroPills n={r.nutrition} />
@@ -1191,13 +1191,13 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
                                 <div className="text-right flex-shrink-0">
                                   <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
                                 {r.brand && <span className="text-[11px] truncate max-w-[90px]" style={{ color: "var(--text-muted)" }}>{r.brand}</span>}
                                 {r.brand && <span style={{ color: "var(--border-strong)" }}>·</span>}
-                                <span className="text-[10px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
+                                <span className="text-[11px]" style={{ color: badge?.color ?? "var(--text-muted)" }}>{badge?.label}</span>
                               </div>
                               <MacroPills n={r.nutrition} />
                             </div>
@@ -1223,7 +1223,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[11px]">✨</span>
                         <p className="label-xs" style={{ color: "#a855f7" }}>Résultats Nutri-AI</p>
-                        <p className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>— valeurs estimées</p>
+                        <p className="text-[11px] ml-1" style={{ color: "var(--text-muted)" }}>— valeurs estimées</p>
                       </div>
                       <div className="space-y-1">
                         {aiResults.map((r) => {
@@ -1239,11 +1239,11 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
                                     <div className="text-right flex-shrink-0">
                                       <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
-                                    <span className="text-[10px]" style={{ color: "#a855f7" }}>Nutri-AI</span>
+                                    <span className="text-[11px]" style={{ color: "#a855f7" }}>Nutri-AI</span>
                                   </div>
                                   <MacroPills n={r.nutrition} />
                                 </div>
@@ -1509,7 +1509,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                         <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                                           {entry.name}
                                         </p>
-                                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                                           {entry.servingLabel} · P&nbsp;{Math.round(entry.nutrition.proteinG)}g&ensp;G&nbsp;{Math.round(entry.nutrition.carbsG)}g&ensp;L&nbsp;{Math.round(entry.nutrition.fatG)}g
                                         </p>
                                       </div>
@@ -1573,7 +1573,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 <p className="text-[13px] font-medium leading-snug flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>{r.name}</p>
                                 <div className="text-right flex-shrink-0">
                                   <p className="text-[14px] font-bold tabular-nums leading-tight" style={{ color: "var(--calories)" }}>{r.nutrition.calories}</p>
-                                  <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                                 </div>
                               </div>
                               <MacroPills n={r.nutrition} />
@@ -1692,7 +1692,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             {selected.weightVerified && (
                               <span className="flex items-center gap-0.5" title="Poids moyen vérifié">
                                 <IconRosetteDiscountCheckFilled size={13} style={{ color: "#34d399" }} />
-                                <span className="text-[10px] font-medium" style={{ color: "#34d399" }}>vérifié</span>
+                                <span className="text-[11px] font-medium" style={{ color: "#34d399" }}>vérifié</span>
                               </span>
                             )}
                           </div>
@@ -1785,9 +1785,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 <div key={l} className="flex flex-col items-center py-3"
                                   style={{ borderLeft: i > 0 ? "1px solid var(--border)" : "none" }}>
                                   <span className="text-[14px] font-bold tabular-nums" style={{ color: c }}>
-                                    {Math.round(v * 10) / 10}<span className="text-[10px] font-normal ml-px" style={{ color: "var(--text-muted)" }}>g</span>
+                                    {Math.round(v * 10) / 10}<span className="text-[11px] font-normal ml-px" style={{ color: "var(--text-muted)" }}>g</span>
                                   </span>
-                                  <span className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{l}</span>
+                                  <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{l}</span>
                                 </div>
                               ))}
                             </div>

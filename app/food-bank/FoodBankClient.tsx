@@ -69,13 +69,13 @@ function QualityBadges({ food }: { food: BankFood }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {quality.nutriScore && (
-        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
           style={{ background: `${NUTRISCORE_COLOR[quality.nutriScore]}22`, color: NUTRISCORE_COLOR[quality.nutriScore] }}>
           <IconLeaf size={11} /> Nutri-Score {quality.nutriScore.toUpperCase()}
         </span>
       )}
       {quality.novaGroup && (
-        <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+        <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full"
           style={{
             background: quality.novaGroup >= 4 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.05)",
             color: quality.novaGroup >= 4 ? "#f87171" : "var(--text-muted)",
@@ -84,7 +84,7 @@ function QualityBadges({ food }: { food: BankFood }) {
         </span>
       )}
       {quality.additivesCount != null && quality.additivesCount > 0 && (
-        <span className="flex items-center gap-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--text-muted)" }}>
           <IconFlask2 size={11} /> {quality.additivesCount} additif{quality.additivesCount > 1 ? "s" : ""}
         </span>
       )}
@@ -108,10 +108,10 @@ function FoodDetail({ food }: { food: BankFood }) {
           <span className="text-[11px] font-semibold" style={{ color: "var(--calories)" }}>
             {Math.round(n.calories)} kcal
           </span>
-          <span className="text-[10.5px]" style={{ color: "var(--protein)" }}>{n.proteinG.toFixed(1)}g P</span>
-          <span className="text-[10.5px]" style={{ color: "var(--carbs)" }}>{n.carbsG.toFixed(1)}g G</span>
-          <span className="text-[10.5px]" style={{ color: "var(--fat)" }}>{n.fatG.toFixed(1)}g L</span>
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ 100g</span>
+          <span className="text-[11px]" style={{ color: "var(--protein)" }}>{n.proteinG.toFixed(1)}g P</span>
+          <span className="text-[11px]" style={{ color: "var(--carbs)" }}>{n.carbsG.toFixed(1)}g G</span>
+          <span className="text-[11px]" style={{ color: "var(--fat)" }}>{n.fatG.toFixed(1)}g L</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ 100g</span>
         </div>
 
         <QualityBadges food={food} />
@@ -121,17 +121,17 @@ function FoodDetail({ food }: { food: BankFood }) {
           <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
             <IconScale size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatGrams(food.totalGrams)}</p>
-            <p className="text-[8.5px]" style={{ color: "var(--text-muted)" }}>au total</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>au total</p>
           </div>
           <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
             <IconCalendar size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatDate(food.firstLoggedDate)}</p>
-            <p className="text-[8.5px]" style={{ color: "var(--text-muted)" }}>1ère fois</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>1ère fois</p>
           </div>
           <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
             <IconFlame size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatDate(food.lastLoggedDate)}</p>
-            <p className="text-[8.5px]" style={{ color: "var(--text-muted)" }}>dernière fois</p>
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>dernière fois</p>
           </div>
         </div>
 
@@ -140,11 +140,11 @@ function FoodDetail({ food }: { food: BankFood }) {
           <div className="space-y-1">
             {meals.sort((a, b) => b[1] - a[1]).map(([meal, count]) => (
               <div key={meal} className="flex items-center gap-2">
-                <span className="text-[9.5px] w-16 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{MEAL_LABELS[meal]}</span>
+                <span className="text-[11px] w-16 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{MEAL_LABELS[meal]}</span>
                 <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                   <div className="h-full rounded-full" style={{ width: `${(count / maxMeal) * 100}%`, background: "var(--protein)" }} />
                 </div>
-                <span className="text-[9.5px] w-4 text-right tabular-nums" style={{ color: "var(--text-muted)" }}>{count}</span>
+                <span className="text-[11px] w-4 text-right tabular-nums" style={{ color: "var(--text-muted)" }}>{count}</span>
               </div>
             ))}
           </div>
@@ -169,11 +169,11 @@ function FoodRow({ food, expanded, onToggle }: { food: BankFood; expanded: boole
           <p className="text-[12.5px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
             {food.name}{food.brand ? ` · ${food.brand}` : ""}
           </p>
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
             {SOURCE_LABEL[food.source] ?? food.source} · dernière fois {formatDate(food.lastLoggedDate)}
           </p>
         </div>
-        <span className="text-[10.5px] font-semibold px-2 py-1 rounded-full flex-shrink-0 tabular-nums"
+        <span className="text-[11px] font-semibold px-2 py-1 rounded-full flex-shrink-0 tabular-nums"
           style={{ background: "rgba(167,139,250,0.12)", color: "var(--protein)" }}>
           ×{food.timesLogged}
         </span>
@@ -309,10 +309,10 @@ export default function FoodBankClient() {
 
         {/* Sort */}
         <div className="flex items-center gap-1.5 mb-4">
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Trier :</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Trier :</span>
           {SORT_OPTIONS.map((opt) => (
             <button key={opt.id} onClick={() => setSortMode(opt.id)}
-              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium transition-colors"
+              className="px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors"
               style={{
                 background: sortMode === opt.id ? "rgba(255,255,255,0.08)" : "transparent",
                 color: sortMode === opt.id ? "var(--text-primary)" : "var(--text-muted)",

@@ -219,7 +219,7 @@ export default function ActivityCategoryPicker({
                   style={{ color: cat.c1 }}>
                   {cat.label}
                 </p>
-                <p className="text-[10px] mt-0.5 mb-auto"
+                <p className="text-[11px] mt-0.5 mb-auto"
                   style={{ color: "var(--text-muted)" }}>
                   {cat.sub}
                 </p>
@@ -232,7 +232,7 @@ export default function ActivityCategoryPicker({
                         key={e.id}
                         type="button"
                         onClick={ev => { ev.stopPropagation(); onSelectExercise(e, cat.c1, cat.c2); }}
-                        className="flex items-center gap-0.5 rounded-lg text-[10px] font-medium truncate transition-all active:opacity-70"
+                        className="flex items-center gap-0.5 rounded-lg text-[11px] font-medium truncate transition-all active:opacity-70"
                         style={{
                           maxWidth: "72px",
                           padding: "2px 6px",
@@ -246,13 +246,13 @@ export default function ActivityCategoryPicker({
                       </button>
                     ))}
                     {favExercises.length > 2 && (
-                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         +{favExercises.length - 2}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <p className="text-[9px] mt-2.5" style={{ color: `${cat.c1}60` }}>
+                  <p className="text-[11px] mt-2.5" style={{ color: `${cat.c1}60` }}>
                     {catExercises.length} activités
                   </p>
                 )}
@@ -353,7 +353,7 @@ export default function ActivityCategoryPicker({
                   if (favExercises.length === 0) return null;
                   return (
                     <div className="px-5 pt-1 pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest mb-2.5"
+                      <p className="text-[11px] font-semibold uppercase tracking-widest mb-2.5"
                         style={{ color: "var(--text-muted)" }}>
                         ⭐ Favoris
                       </p>
@@ -407,7 +407,7 @@ export default function ActivityCategoryPicker({
                           {e.name}
                         </p>
                         {e.muscles && e.muscles.length > 0 && (
-                          <p className="text-[10px] truncate mt-0.5"
+                          <p className="text-[11px] truncate mt-0.5"
                             style={{ color: "var(--text-muted)" }}>
                             {e.muscles.slice(0, 3).join(" · ")}
                           </p>

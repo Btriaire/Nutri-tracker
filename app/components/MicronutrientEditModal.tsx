@@ -83,7 +83,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
                 </h2>
               </div>
               {verified && (
-                <span className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: "var(--fiber)" }}>
+                <span className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--fiber)" }}>
                   <IconCheck size={11} /> Vérifié manuellement
                 </span>
               )}
@@ -121,7 +121,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
                       className="input text-[11px] text-right"
                       style={{ width: 56, height: 26, padding: "0 6px" }}
                     />
-                    <span className="text-[9px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{info.unit}</span>
+                    <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{info.unit}</span>
                   </label>
                 );
               })}

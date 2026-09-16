@@ -432,7 +432,7 @@ function NowPlaying({
             <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
               {track.label}
             </p>
-            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" }}>
               {track.emoji} {isPlaying ? "♪ en lecture" : "toucher pour démarrer"}
             </p>
           </div>
@@ -455,8 +455,8 @@ function NowPlaying({
                 color:      muted ? "#f87171" : "#34d399",
               }}>
               {muted
-                ? <><IconVolumeOff size={13} stroke={1.5} /><span style={{ fontSize: 10, fontWeight: 600 }}>Muet</span></>
-                : <><IconVolume    size={13} stroke={1.5} /><span style={{ fontSize: 10, fontWeight: 600 }}>Son</span></>
+                ? <><IconVolumeOff size={13} stroke={1.5} /><span style={{ fontSize: 11, fontWeight: 600 }}>Muet</span></>
+                : <><IconVolume    size={13} stroke={1.5} /><span style={{ fontSize: 11, fontWeight: 600 }}>Son</span></>
               }
             </button>
           </div>
@@ -902,7 +902,7 @@ export default function MeditationPlayer() {
         <div className="px-4 pb-4 space-y-3">
           {/* Duration chips */}
           <div>
-            <p className="text-[10px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Durée</p>
+            <p className="text-[11px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Durée</p>
             <div className="flex gap-1.5">
               {AI_DURATIONS.map((d) => (
                 <button key={d} onClick={() => setAiDuration(d)}
@@ -1013,7 +1013,7 @@ export default function MeditationPlayer() {
                       <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                         {track.label}
                       </p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {aiDuration} min · {aiTheme}
                       </p>
                     </div>
@@ -1042,7 +1042,7 @@ export default function MeditationPlayer() {
         <div className="flex justify-between mb-3">
           {last7.map(({ key, label, isToday, hasSess, mins }) => (
             <div key={key} className="flex flex-col items-center gap-1">
-              <span className="text-[9px] uppercase" style={{ color: isToday ? "#34d399" : "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px] uppercase" style={{ color: isToday ? "#34d399" : "var(--text-muted)" }}>{label}</span>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                 style={{
                   background: hasSess ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
@@ -1053,7 +1053,7 @@ export default function MeditationPlayer() {
                   : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", display: "inline-block" }} />
                 }
               </div>
-              {hasSess && <span className="text-[8px] font-medium" style={{ color: "#34d399" }}>{mins}m</span>}
+              {hasSess && <span className="text-[11px] font-medium" style={{ color: "#34d399" }}>{mins}m</span>}
             </div>
           ))}
         </div>
@@ -1066,7 +1066,7 @@ export default function MeditationPlayer() {
           ].map(({ v, l }) => (
             <div key={l}>
               <p className="text-[15px] font-bold" style={{ color: "#34d399" }}>{v}</p>
-              <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{l}</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</p>
             </div>
           ))}
         </div>
@@ -1094,7 +1094,7 @@ export default function MeditationPlayer() {
             >
               {/* Done count badge */}
               {doneSessions > 0 && (
-                <span className="absolute top-2 right-2.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                <span className="absolute top-2 right-2.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                   style={{ background: `${program.color}25`, color: program.color }}>
                   {doneSessions}×
                 </span>
@@ -1112,12 +1112,12 @@ export default function MeditationPlayer() {
               </p>
 
               {/* Duration + last date */}
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full mb-1"
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full mb-1"
                 style={{ background: `${program.color}18`, color: program.color }}>
                 {program.durationMin} min
               </span>
               {lastDate && (
-                <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                   {format(new Date(lastDate + "T00:00:00"), "d MMM", { locale: fr })}
                 </p>
               )}
@@ -1167,7 +1167,7 @@ export default function MeditationPlayer() {
                         <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                           {s.programLabel}
                         </p>
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                           {format(new Date(s.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
                         </p>
                       </div>
@@ -1184,7 +1184,7 @@ export default function MeditationPlayer() {
         </div>
       )}
 
-      <p className="text-[10px] text-center" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
         🎵 Musique ambiante · Nécessite une connexion internet
       </p>
     </div>

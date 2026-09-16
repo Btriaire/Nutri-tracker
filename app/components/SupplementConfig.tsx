@@ -406,13 +406,13 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {product.name}
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {FREQUENCIES.find(f => f.value === product.frequency)?.label}
                   </span>
                   {isPaused && (() => {
                     const pausedDate = formatPausedDate(product.pausedAt);
                     return (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(148,163,184,0.15)", color: "var(--text-muted)" }}>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(148,163,184,0.15)", color: "var(--text-muted)" }}>
                         En pause{pausedDate ? ` depuis le ${pausedDate}` : ""}
                       </span>
                     );
@@ -424,7 +424,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   </p>
                 )}
                 {product.recommendedDosage && (
-                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                     {product.recommendedDosage}
                   </p>
                 )}

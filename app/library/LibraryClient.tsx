@@ -304,7 +304,7 @@ export default function LibraryClient() {
                                   <span style={{ color: "var(--border-strong)" }}>·</span>
                                 </>
                               )}
-                              <span className="text-[10px]" style={{ color: SOURCE_COLOR[food.source] ?? "var(--text-muted)" }}>
+                              <span className="text-[11px]" style={{ color: SOURCE_COLOR[food.source] ?? "var(--text-muted)" }}>
                                 {SOURCE_LABEL[food.source]}
                               </span>
                             </div>
@@ -314,7 +314,7 @@ export default function LibraryClient() {
                             <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                               {food.nutrition.calories}
                             </p>
-                            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/{food.servingSizeG}g</p>
+                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{food.servingSizeG}g</p>
                           </div>
                         </motion.button>
                       );

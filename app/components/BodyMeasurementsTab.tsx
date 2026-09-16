@@ -235,20 +235,20 @@ export default function BodyMeasurementsTab() {
                     <div className="flex items-center gap-1">
                       <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{curr} cm</span>
                       {delta !== null && (
-                        <span className="text-[9px]" style={{ color: delta < 0 ? "#4ade80" : "#f87171" }}>
+                        <span className="text-[11px]" style={{ color: delta < 0 ? "#4ade80" : "#f87171" }}>
                           {delta > 0 ? "+" : ""}{delta.toFixed(1)}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>—</span>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>—</span>
                   )}
                 </button>
               );
             })}
           </div>
         </div>
-        <p className="text-[10px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
           💡 Mesurez toujours au même moment · Maximum 1 saisie / mois recommandée
         </p>
       </div>
@@ -267,7 +267,7 @@ export default function BodyMeasurementsTab() {
             {FIELDS.map(f => (
               <button key={f.key}
                 onClick={() => setActiveChart(f.key)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all"
                 style={{
                   background: activeChart === f.key ? `${f.color}20` : "rgba(255,255,255,0.04)",
                   border: `1px solid ${activeChart === f.key ? `${f.color}50` : "var(--border)"}`,
@@ -281,8 +281,8 @@ export default function BodyMeasurementsTab() {
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} tickFormatter={v => `${v}`} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} tickFormatter={v => `${v}`} />
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
                 const v = payload[0]?.value;
@@ -362,7 +362,7 @@ export default function BodyMeasurementsTab() {
                   ))}
                 </div>
 
-                <p className="text-[10px] mb-4" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
                   💡 Mesurez à jeun, le matin, toujours au même endroit.
                   Tour de taille : au nombril. Bras : à mi-chemin entre coude et épaule.
                 </p>

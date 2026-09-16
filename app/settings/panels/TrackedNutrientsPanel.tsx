@@ -168,12 +168,12 @@ export default function TrackedNutrientsPanel() {
           {/* Source badge */}
           <div className="flex items-center gap-1.5 flex-wrap px-1">
             {(["OMS", "EFSA", "FDA", "ANSES"] as const).map(org => (
-              <span key={org} className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+              <span key={org} className="text-[11px] font-bold px-1.5 py-0.5 rounded"
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                 {org}
               </span>
             ))}
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Références internationales</span>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Références internationales</span>
           </div>
 
           {(Object.keys(NUTRIENT_REFS) as NutrientKey[]).map((key) => {
@@ -198,7 +198,7 @@ export default function TrackedNutrientsPanel() {
                   <span className="text-base">{cfg.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{cfg.label}</p>
-                    <p className="text-[9px]" style={{ color: isMax ? "#f87171" : "#a78bfa" }}>
+                    <p className="text-[11px]" style={{ color: isMax ? "#f87171" : "#a78bfa" }}>
                       {isMax ? "MAX recommandé" : "MIN recommandé"}
                     </p>
                   </div>
@@ -221,7 +221,7 @@ export default function TrackedNutrientsPanel() {
 
                       {/* Reference presets */}
                       <div>
-                        <p className="text-[9px] uppercase tracking-wide mt-2.5 mb-1.5 font-semibold"
+                        <p className="text-[11px] uppercase tracking-wide mt-2.5 mb-1.5 font-semibold"
                           style={{ color: "var(--text-muted)" }}>Références</p>
                         <div className="flex flex-col gap-1">
                           {cfg.refs.map((ref, i) => {
@@ -236,7 +236,7 @@ export default function TrackedNutrientsPanel() {
                                   border: `1px solid ${isSelected ? cfg.color : "var(--border)"}`,
                                 }}>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded"
                                     style={{
                                       background: isSelected ? `${cfg.color}25` : "rgba(255,255,255,0.06)",
                                       color: isSelected ? cfg.color : "var(--text-muted)",
@@ -246,11 +246,11 @@ export default function TrackedNutrientsPanel() {
                                     }}>
                                     {ref.label}
                                   </span>
-                                  <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>{ref.desc}</span>
+                                  <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{ref.desc}</span>
                                 </div>
                                 <span className="text-[12px] font-bold tabular-nums flex-shrink-0 ml-2"
                                   style={{ color: isSelected ? cfg.color : "var(--text-primary)" }}>
-                                  {val} <span className="text-[9px] font-normal" style={{ color: "var(--text-muted)" }}>{cfg.unit}</span>
+                                  {val} <span className="text-[11px] font-normal" style={{ color: "var(--text-muted)" }}>{cfg.unit}</span>
                                 </span>
                               </button>
                             );
@@ -259,7 +259,7 @@ export default function TrackedNutrientsPanel() {
                       </div>
 
                       {/* Note */}
-                      <p className="text-[10px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
                         {cfg.note}
                         {key === "protein" && weightKg && <span> · basé sur {weightKg} kg</span>}
                       </p>
@@ -293,7 +293,7 @@ export default function TrackedNutrientsPanel() {
                             background: isMax && currentVal > maxRef ? "#ef4444" : cfg.color,
                           }} />
                         </div>
-                        <div className="flex justify-between text-[8px] mt-1" style={{ color: "var(--text-muted)" }}>
+                        <div className="flex justify-between text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
                           <span>0</span>
                           <span>Objectif : {currentVal} {cfg.unit}</span>
                           <span>Réf. max : {maxRef} {cfg.unit}</span>

@@ -71,7 +71,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
       </div>
       <div className="text-center">
         <p className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</p>
-        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
       </div>
     </div>
   );

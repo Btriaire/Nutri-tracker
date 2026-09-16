@@ -851,7 +851,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
                               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                               <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{value}</span>
-                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                             </div>
                           ))}
                         </div>
@@ -859,7 +859,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {/* Progress bar */}
                         {progressPct !== null && (
                           <div className="mb-3">
-                            <div className="flex justify-between text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>
+                            <div className="flex justify-between text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
                               <span>{startKg} kg</span>
                               <span>{Math.round(progressPct)}% atteint</span>
                               <span>{targetKg} kg</span>
@@ -887,14 +887,14 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
                                     {sign(wk)} kg
                                   </span>
-                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
+                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
                                 </div>
                                 <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
                                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                                   <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
                                     {sign(mo)} kg
                                   </span>
-                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
+                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
                                 </div>
                               </div>
                               {/* Target date */}
@@ -1014,8 +1014,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl"
                             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                             <span className="text-[16px] font-bold tabular-nums" style={{ color }}>{val}{unit}</span>
-                            <span className="text-[9px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
-                            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
+                            <span className="text-[11px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
                           </div>
                         ))}
                       </div>
@@ -1043,8 +1043,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <Icon size={22} stroke={1.5} style={{ color, flexShrink: 0 }} />
                         <div>
                           <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color }}>{val}</p>
-                          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</p>
-                          {goal && <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{goal}</p>}
+                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                          {goal && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{goal}</p>}
                         </div>
                       </div>
                     ))}
@@ -1065,9 +1065,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--fit-indigo)" }}>
                           {fmtSleep(todayPoint?.sleepMinutes)}
                         </p>
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
                         {todayPoint?.sleepMinutes && (
-                          <p className="text-[9px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "#fbbf24" }}>
+                          <p className="text-[11px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "#fbbf24" }}>
                             {todayPoint.sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant"}
                           </p>
                         )}
@@ -1080,8 +1080,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "#38bdf8" }}>
                           {todayPoint?.waterMl ? `${(todayPoint.waterMl / 1000).toFixed(1)}L` : "—"}
                         </p>
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Hydratation</p>
-                        <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Hydratation</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                           / {((goals.waterMl ?? 2000) / 1000).toFixed(1)}L objectif
                         </p>
                       </div>
@@ -1120,17 +1120,17 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Moy. calories</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>{avgCalories || "—"}</span>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>kcal/j</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/j</span>
               </div>
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Moy. pas</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--steps)" }}>{avgSteps ? avgSteps.toLocaleString("fr-FR") : "—"}</span>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>pas/j</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>pas/j</span>
               </div>
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Min. actives</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--fit-green)" }}>{avgActiveMins || "—"}</span>
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>min/j</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>min/j</span>
               </div>
             </motion.div>
 
@@ -1154,7 +1154,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </div>
 
               {/* Calorie chart */}
-              <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Calories consommées</p>
+              <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Calories consommées</p>
               {loading ? (
                 <div className="h-32 flex items-center justify-center">
                   <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</span>
@@ -1174,8 +1174,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                       <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="kcal" color="var(--calories)" /> : null} />
                       <ReferenceLine y={goals.dailyCalories} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 4" />
                       <Area type="monotone" dataKey="calories" stroke="var(--calories)" strokeWidth={2} fill="url(#calGrad)" dot={false} />
@@ -1183,8 +1183,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   ) : (
                     <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                       <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="kcal" color="var(--calories)" /> : null} />
                       <ReferenceLine y={goals.dailyCalories} stroke="rgba(249,115,22,0.4)" strokeDasharray="4 4" />
                       <Bar dataKey="calories" fill="var(--calories)" fillOpacity={0.8} radius={[3, 3, 0, 0]} />
@@ -1199,9 +1199,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <div className="h-px my-4" style={{ background: "var(--border)" }} />
                   <div className="flex items-center gap-2 mb-3">
                     <IconRun size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
-                    <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
+                    <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
                     {avgSteps > 0 && (
-                      <span className="ml-auto text-[10px] tabular-nums" style={{ color: "var(--steps)" }}>
+                      <span className="ml-auto text-[11px] tabular-nums" style={{ color: "var(--steps)" }}>
                         ~{avgSteps.toLocaleString("fr-FR")} pas/j
                       </span>
                     )}
@@ -1209,7 +1209,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {/* Steps */}
                   {avgSteps > 0 && (
                     <>
-                      <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
+                      <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
                       <ResponsiveContainer width="100%" height={90}>
                         <AreaChart data={chartData.filter((p) => (p.steps ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
                           <defs>
@@ -1218,8 +1218,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                               <stop offset="95%" stopColor="var(--steps)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                          <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                           <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={(payload[0].value as number).toLocaleString("fr-FR")} unit="pas" color="var(--steps)" /> : null} />
                           <ReferenceLine y={10000} stroke="rgba(56,189,248,0.3)" strokeDasharray="4 4" />
                           <Area type="monotone" dataKey="steps" stroke="var(--steps)" strokeWidth={1.5} fill="url(#stepsGrad)" dot={false} />
@@ -1231,11 +1231,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {avgActiveMins > 0 && (
                     <>
                       <div className="h-px my-3" style={{ background: "var(--border)" }} />
-                      <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives · moy. {avgActiveMins} min/j</p>
+                      <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives · moy. {avgActiveMins} min/j</p>
                       <ResponsiveContainer width="100%" height={80}>
                         <BarChart data={chartData.filter((p) => (p.activeMinutes ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
-                          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                          <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                           <Tooltip content={({ active, payload, label: lbl }) => active && payload?.length ? <Tt label={String(lbl ?? "")} value={payload[0].value as number} unit="min" color="var(--fit-green)" /> : null} />
                           <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 4" />
                           <Bar dataKey="activeMinutes" fill="var(--fit-green)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
@@ -1273,13 +1273,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {/* Independent period selector for the weight chart — clairement
                       étiqueté pour éviter de le confondre avec le sélecteur global
                       en haut de page (qui ne s'applique pas à ce graphique). */}
-                  <p className="text-[9px] mb-1" style={{ color: "var(--text-muted)" }}>Période — ce graphique uniquement</p>
+                  <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Période — ce graphique uniquement</p>
                   <div className="flex gap-1">
                     {WEIGHT_RANGES.map(wr => (
                       <button
                         key={wr.key}
                         onClick={() => setWeightRange(wr.key)}
-                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all"
+                        className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
                         style={{
                           background: weightRange === wr.key ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.05)",
                           color:      weightRange === wr.key ? "var(--protein)"         : "var(--text-muted)",
@@ -1294,7 +1294,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {targetWeightKg && (
                     <button
                       onClick={() => setShowAdequacyColoring(v => !v)}
-                      className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all"
+                      className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                       style={{
                         background: showAdequacyColoring ? "rgba(96,165,250,0.14)" : "rgba(255,255,255,0.05)",
                         color:      showAdequacyColoring ? "#60a5fa" : "var(--text-muted)",
@@ -1322,7 +1322,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <div key={label} className="flex-1 flex flex-col items-center p-2 rounded-xl gap-0.5"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                       <span className="text-[12px] font-bold tabular-nums leading-tight" style={{ color }}>{value}</span>
-                      <span className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -1352,7 +1352,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {loss ? <IconArrowDown size={11} stroke={2.5} /> : gain ? <IconArrowUp size={11} stroke={2.5} /> : <IconMinus size={11} stroke={2} />}
                             {Math.abs(delta).toFixed(1)} kg
                           </span>
-                          <span className="text-[9px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                          <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
                         </div>
                       );
                     })}
@@ -1375,8 +1375,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           <span className="text-[11px] font-bold tabular-nums" style={{ color: cfg.color }}>
                             {actualDelta != null ? `${actualDelta > 0 ? "+" : ""}${actualDelta.toFixed(1)} kg` : "—"}
                           </span>
-                          <span className="text-[9px] text-center leading-tight" style={{ color: cfg.color }}>{cfg.label}</span>
-                          <span className="text-[8px] text-center" style={{ color: "var(--text-muted)" }}>sur {days} j</span>
+                          <span className="text-[11px] text-center leading-tight" style={{ color: cfg.color }}>{cfg.label}</span>
+                          <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>sur {days} j</span>
                         </div>
                       );
                     })}
@@ -1386,7 +1386,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Editable target date */}
                 <div className="flex items-center gap-2 mb-3">
                   <IconCalendar size={12} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
                   <input
                     type="date" value={targetDate}
                     onChange={e => setTargetDate(e.target.value)}
@@ -1418,16 +1418,16 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                           tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
                         {/* Left Y: weight */}
                         <YAxis yAxisId="w" orientation="left"
-                          tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                           domain={[weightYMin ?? "auto", weightYMax ?? "auto"]}
                           tickFormatter={v => `${v}kg`} width={40} />
                         {/* Right Y: calories */}
                         <YAxis yAxisId="c" orientation="right"
-                          tick={{ fontSize: 9, fill: "rgba(249,115,22,0.55)" }} tickLine={false} axisLine={false}
+                          tick={{ fontSize: 11, fill: "rgba(249,115,22,0.55)" }} tickLine={false} axisLine={false}
                           tickFormatter={v => `${v}`} width={32} />
                         <Tooltip
                           content={({ active, payload, label: lbl }) => {
@@ -1458,7 +1458,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   </p>
                                 ))}
                                 {gap != null && (
-                                  <p className="text-[10px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "#f87171" }}>
+                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "#f87171" }}>
                                     Écart : {gap > 0 ? "+" : ""}{gap.toFixed(1)} kg {gap > 0 ? "sous objectif" : "au-dessus"}
                                   </p>
                                 )}
@@ -1470,7 +1470,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {targetWeightKg && (
                           <ReferenceLine yAxisId="w" y={targetWeightKg}
                             stroke="rgba(74,222,128,0.3)" strokeWidth={1} strokeDasharray="4 3"
-                            label={{ value: `🎯 ${targetWeightKg}kg`, fontSize: 9, fill: "#4ade80", position: "insideTopRight" }} />
+                            label={{ value: `🎯 ${targetWeightKg}kg`, fontSize: 11, fill: "#4ade80", position: "insideTopRight" }} />
                         )}
                         {/* Today line */}
                         <ReferenceLine yAxisId="w" x="Auj."
@@ -1547,41 +1547,41 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <>
                           <div className="flex items-center gap-1.5">
                             <div className="w-6 h-0.5 rounded" style={{ background: "#60a5fa" }} />
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <div className="w-6 h-0.5 rounded" style={{ background: "#f87171" }} />
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
                           </div>
                         </>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
-                          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
+                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0" style={{ borderTop: "2px dashed #4ade80" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-3 rounded-sm opacity-70" style={{ background: "rgba(248,113,113,0.35)" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Écart réel/simulé</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Écart réel/simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-3 rounded-sm opacity-60" style={{ background: "rgba(74,222,128,0.35)" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fourchette future</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Fourchette future</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(249,115,22,0.5)" }} />
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Calories</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Calories</span>
                       </div>
                     </div>
 
                     {/* Model explanation */}
                     <div className="mt-2.5 px-3 py-2 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                      <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                         📉 <span style={{ color: "var(--text-secondary)" }}>Modèle par paliers</span> — 3 semaines de perte active
                         → 1 semaine de stagnation/rebond → répétition. Chaque cycle perd ~15% de moins (adaptation métabolique).
                         La fourchette indique l&apos;incertitude croissante.
@@ -1685,7 +1685,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           return (
                             <div key={k} className="flex items-center gap-1">
                               <div className="w-2 h-2 rounded-full" style={{ background: cssVar }} />
-                              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                             </div>
                           );
                         })}
@@ -1693,9 +1693,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <ResponsiveContainer key={range} width="100%" height={140}>
                         <ComposedChart data={macroChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
-                          <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                             interval={caloriePoints.length > 20 ? Math.floor(caloriePoints.length / 8) : 0} />
-                          <YAxis tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
+                          <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                             tickFormatter={v => `${v}g`} />
                           <Tooltip content={({ active, payload, label }) => {
                             if (!active || !payload?.length) return null;
@@ -1726,9 +1726,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         ].map(({ label, val, goal, cssVar }) => (
                           <div key={label} className="flex-1 text-center">
                             <p className="text-[15px] font-bold tabular-nums" style={{ color: cssVar }}>{val}g</p>
-                            <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>{label} moy.</p>
+                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label} moy.</p>
                             {goal > 0 && (
-                              <p className="text-[9px] tabular-nums"
+                              <p className="text-[11px] tabular-nums"
                                 style={{ color: val >= goal * 0.85 && val <= goal * 1.15 ? "#34d399" : "#fbbf24" }}>
                                 obj. {goal}g
                               </p>
@@ -1765,7 +1765,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[11px] font-bold tabular-nums"
                                     style={{ color: isOkAvg ? "#34d399" : "#f87171" }}>{avgVal}{ref.unit}</span>
-                                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>moy.</span>
+                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>moy.</span>
                                 </div>
                               </div>
                               <ResponsiveContainer width="100%" height={64}>
@@ -1781,7 +1781,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   <Tooltip content={({ active, payload, label }) => {
                                     if (!active || !payload?.length) return null;
                                     return (
-                                      <div className="px-2 py-1 rounded-lg text-[10px]"
+                                      <div className="px-2 py-1 rounded-lg text-[11px]"
                                         style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                         <p style={{ color: "var(--text-muted)" }}>{label}</p>
                                         <p style={{ color: ref.color }}>{payload[0].value}{ref.unit}</p>
@@ -1793,7 +1793,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                     fill={`url(#micro-grad-${k})`} dot={{ r: 1.3, fill: ref.color, strokeWidth: 0 }} activeDot={{ r: 3 }} connectNulls />
                                 </AreaChart>
                               </ResponsiveContainer>
-                              <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                                 {k === "fiberG" ? `Objectif ≥ ${ref.refLine}${ref.unit}` : `Limite ${ref.refLine}${ref.unit}`} · {ref.note}
                               </p>
                             </div>
@@ -1834,7 +1834,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <IconMoon size={16} stroke={1.6} style={{ color: "var(--fit-indigo)" }} />
                   <div className="text-left">
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Bien-être &amp; rythme</p>
-                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
                   </div>
                 </div>
                 {wellnessOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
@@ -1907,7 +1907,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           style={{ color: "rgba(196,181,253,0.6)" }}>méditation</p>
                       </div>
                       {streak > 0 && (
-                        <span className="text-[10px] font-light px-2.5 py-0.5 rounded-full"
+                        <span className="text-[11px] font-light px-2.5 py-0.5 rounded-full"
                           style={{
                             background: "rgba(139,92,246,0.09)",
                             border: "1px solid rgba(139,92,246,0.2)",
@@ -1923,7 +1923,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <span className="text-[28px] font-extralight tabular-nums leading-none"
                         style={{ color: "#ede9fe" }}>{totalMin}</span>
                       <span className="text-[11px] font-light" style={{ color: "rgba(196,181,253,0.45)" }}>min</span>
-                      <span className="ml-2 text-[10px] font-light" style={{ color: "rgba(196,181,253,0.35)" }}>
+                      <span className="ml-2 text-[11px] font-light" style={{ color: "rgba(196,181,253,0.35)" }}>
                         · {totalSessions} séances · moy. {avgMin} min
                       </span>
                     </div>
@@ -1939,7 +1939,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </defs>
                         <Tooltip content={({ active, payload, label: lbl }) =>
                           active && payload?.length ? (
-                            <div className="px-2 py-1 rounded-lg text-[10px]"
+                            <div className="px-2 py-1 rounded-lg text-[11px]"
                               style={{ background: "rgba(30,10,60,0.92)", border: "1px solid rgba(139,92,246,0.3)", color: "#ede9fe" }}>
                               <p style={{ color: "rgba(196,181,253,0.5)" }}>{lbl}</p>
                               <p>{payload[0].value} min</p>
@@ -2076,7 +2076,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           Niveaux de faim
                         </p>
                       </div>
-                      <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                         Par repas · {displayDays.length} jours · intensité = niveau de faim (1–5)
                       </p>
                     </div>
@@ -2093,8 +2093,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         ))}
                       </div>
                       <div className="flex justify-between w-full px-0.5">
-                        <span style={{ fontSize: 7, color: "rgba(250,250,250,0.25)" }}>rassasié</span>
-                        <span style={{ fontSize: 7, color: "rgba(250,250,250,0.25)" }}>très faim</span>
+                        <span style={{ fontSize: 11, color: "rgba(250,250,250,0.25)" }}>rassasié</span>
+                        <span style={{ fontSize: 11, color: "rgba(250,250,250,0.25)" }}>très faim</span>
                       </div>
                     </div>
                   </div>
@@ -2109,7 +2109,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           <div key={p.date} className="flex-shrink-0 text-center"
                             style={{
                               width: 22, margin: "0 1px",
-                              fontSize: 7,
+                              fontSize: 11,
                               color: i === displayDays.length - 1 ? "rgba(250,250,250,0.6)" : "rgba(250,250,250,0.25)",
                               fontWeight: i === displayDays.length - 1 ? 700 : 400,
                             }}>
@@ -2130,7 +2130,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                               <span style={{ color: MEAL_COLORS[meal], opacity: 0.8 }}>
                                 {MEAL_ICONS[meal]}
                               </span>
-                              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                                 {MEAL_SHORT[meal]}
                               </span>
                             </div>
@@ -2201,7 +2201,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {/* Label */}
                             <div className="flex-shrink-0 ml-2 flex items-center gap-1" style={{ width: 28 }}>
                               <IconFlame size={9} style={{ color: "var(--calories)", opacity: 0.6, flexShrink: 0 }} />
-                              <span style={{ fontSize: 8, color: "var(--text-muted)", lineHeight: 1.2 }}>
+                              <span style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.2 }}>
                                 kcal
                               </span>
                             </div>
@@ -2224,7 +2224,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {MEAL_ICONS[meal]}
                           </span>
                           {/* Label */}
-                          <p className="text-[9px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[11px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>
                             {MEAL_SHORT[meal]}
                           </p>
                           {/* Score */}
@@ -2243,7 +2243,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             ))}
                           </div>
                           {/* Level label */}
-                          <p className="text-[8px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
                             {HUNGER_LABEL[Math.round(avg)] ?? "—"}
                           </p>
                         </div>
@@ -2383,17 +2383,17 @@ function FastingTracker({
         </div>
         <div className="flex items-center gap-1.5">
           {streak > 0 && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}>
               {streak}🔥
             </span>
           )}
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: "rgba(129,140,248,0.12)", color: "#818cf8", border: "1px solid rgba(129,140,248,0.25)" }}>
             {withEnd.length} / {fullDone.length} ✓
           </span>
           {avgH > 0 && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.25)" }}>
               ⌀ {avgH.toFixed(1)}h
             </span>
@@ -2406,7 +2406,7 @@ function FastingTracker({
         <BarChart data={chartData} margin={{ top: 14, right: 2, left: -28, bottom: 0 }} barCategoryGap="22%">
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 9, fill: "rgba(250,250,250,0.3)" }}
+            tick={{ fontSize: 11, fill: "rgba(250,250,250,0.3)" }}
             axisLine={false} tickLine={false}
           />
           <YAxis domain={[0, durationH + durationH * 0.1]} hide />
@@ -2414,7 +2414,7 @@ function FastingTracker({
             y={durationH}
             stroke="rgba(34,197,94,0.35)"
             strokeDasharray="4 3"
-            label={{ value: `${durationH}h`, position: "insideTopRight", fontSize: 8, fill: "rgba(34,197,94,0.6)" }}
+            label={{ value: `${durationH}h`, position: "insideTopRight", fontSize: 11, fill: "rgba(34,197,94,0.6)" }}
           />
           <Bar dataKey="hours" radius={[4, 4, 2, 2]} label={<CustomLabel />}>
             {chartData.map((d, i) => (
@@ -2434,7 +2434,7 @@ function FastingTracker({
         ].map(l => (
           <div key={l.label} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-sm" style={{ background: l.c }} />
-            <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
           </div>
         ))}
       </div>
@@ -2488,7 +2488,7 @@ function AlcoolWeekWidget({
           <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "#f87171" : "#c084fc" }}>
             {weeklyTotal.toFixed(1)}
           </span>
-          <span className="text-[10px] ml-0.5" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[11px] ml-0.5" style={{ color: "var(--text-muted)" }}>
             / {weeklyGoal}u sem.
           </span>
         </div>
@@ -2513,7 +2513,7 @@ function AlcoolWeekWidget({
           const col  = barColor(p.alcoolUnits);
           return (
             <div key={p.date} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[8px] tabular-nums" style={{ color: p.alcoolUnits > 0 ? col : "transparent" }}>
+              <span className="text-[11px] tabular-nums" style={{ color: p.alcoolUnits > 0 ? col : "transparent" }}>
                 {p.alcoolUnits > 0 ? p.alcoolUnits.toFixed(1) : "·"}
               </span>
               <div className="w-full flex items-end justify-center" style={{ height: "40px" }}>
@@ -2525,14 +2525,14 @@ function AlcoolWeekWidget({
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                 />
               </div>
-              <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{p.label}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.label}</span>
             </div>
           );
         })}
       </div>
 
       {/* Daily limit reference */}
-      <p className="text-[9px] mt-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
         Seuil jour : {dailyLimit}u · OMS ≤ {weeklyGoal}u/sem.
         {overWeek && (
           <span style={{ color: "#f87171" }}> · +{(weeklyTotal - weeklyGoal).toFixed(1)}u au-dessus</span>

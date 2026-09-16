@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format, parseISO, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { IconFlame, IconTrophy, IconCalendar, IconChartBar } from "@tabler/icons-react";
 import type { StreakData, HeatmapDay } from "@/app/api/streak/route";
 
 // ── Heat colour (0-100+ pct) ──────────────────────────────────────────────────
@@ -49,7 +50,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
           return (
             <div key={wi} style={{ flex: 1, minWidth: 0 }}>
               {label && (
-                <span className="text-[8px] capitalize" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[11px] capitalize" style={{ color: "var(--text-muted)" }}>
                   {label.label}
                 </span>
               )}
@@ -84,7 +85,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
 
       {/* Legend */}
       <div className="flex items-center gap-2 mt-2">
-        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>0%</span>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>0%</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
           <div key={v} style={{
             width: LEGEND_CELL, height: LEGEND_CELL, borderRadius: 2, flexShrink: 0,
@@ -96,7 +97,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
               : "var(--calories)",
           }} />
         ))}
-        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>100%+</span>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>100%+</span>
       </div>
     </div>
   );
@@ -104,16 +105,16 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
 
 // ── Stat pill ─────────────────────────────────────────────────────────────────
 
-function StatPill({ emoji, label, value, sub }: { emoji: string; label: string; value: string | number; sub?: string }) {
+function StatPill({ Icon, label, value, sub }: { Icon: typeof IconTrophy; label: string; value: string | number; sub?: string }) {
   return (
     <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1">
-      <span className="text-[10px] leading-none flex-shrink-0">{emoji}</span>
+      <Icon size={14} stroke={1.6} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
       <div className="min-w-0">
         <span className="text-[12px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
           {value}
         </span>
-        {sub && <span className="text-[9px] tabular-nums ml-0.5" style={{ color: "var(--calories)" }}>{sub}</span>}
-        <p className="text-[9px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
+        {sub && <span className="text-[11px] tabular-nums ml-0.5" style={{ color: "var(--calories)" }}>{sub}</span>}
+        <p className="text-[11px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
       </div>
     </div>
   );
@@ -148,7 +149,7 @@ export default function StreakWidget() {
     ? "Commence aujourd'hui !"
     : data.currentStreak === 1
     ? "1 jour · continue !"
-    : `${data.currentStreak} jours d'affilée 🎯`;
+    : `${data.currentStreak} jours d'affilée`;
 
   return (
     <motion.div
@@ -160,7 +161,7 @@ export default function StreakWidget() {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[13px]">🔥</span>
+          <IconFlame size={15} stroke={1.7} style={{ color: "var(--calories)" }} />
           <div>
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
               Régularité · <span style={{ color: "var(--calories)" }}>{streakLabel}</span>
@@ -170,7 +171,7 @@ export default function StreakWidget() {
         {data.currentStreak >= 3 && (
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
             style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.3)" }}>
-            <span className="text-[11px]">🔥</span>
+            <IconFlame size={12} stroke={1.8} style={{ color: "var(--calories)" }} />
             <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
               {data.currentStreak}
             </span>
@@ -181,11 +182,11 @@ export default function StreakWidget() {
       {/* Stats row */}
       <div className="flex items-stretch mb-2"
         style={{ borderRadius: 8, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-        <StatPill emoji="🏆" label="Record" value={data.longestStreak} sub="j" />
+        <StatPill Icon={IconTrophy} label="Record" value={data.longestStreak} sub="j" />
         <div style={{ width: 1, background: "var(--border)", margin: "4px 0" }} />
-        <StatPill emoji="📅" label="Jours loggés" value={data.totalLoggedDays} />
+        <StatPill Icon={IconCalendar} label="Jours loggés" value={data.totalLoggedDays} />
         <div style={{ width: 1, background: "var(--border)", margin: "4px 0" }} />
-        <StatPill emoji="📊" label="Moy/sem." value={data.weeklyAvgDays} sub="j" />
+        <StatPill Icon={IconChartBar} label="Moy/sem." value={data.weeklyAvgDays} sub="j" />
       </div>
 
       {/* Heatmap */}

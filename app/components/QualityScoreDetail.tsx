@@ -23,8 +23,8 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-0.5">
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                <span className="text-[10px] font-medium tabular-nums" style={{ color: barColor }}>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                <span className="text-[11px] font-medium tabular-nums" style={{ color: barColor }}>
                   {val.toFixed(1)}/{max}
                 </span>
               </div>
@@ -39,7 +39,7 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
       {quality.tips.length > 0 && (
         <div className="pt-1.5 space-y-1">
           {quality.tips.map((tip, i) => (
-            <p key={i} className="text-[10.5px] leading-relaxed flex items-start gap-1.5" style={{ color: "var(--text-muted)" }}>
+            <p key={i} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: "var(--text-muted)" }}>
               <IconBulb size={11} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "#fbbf24" }} />
               {tip}
             </p>

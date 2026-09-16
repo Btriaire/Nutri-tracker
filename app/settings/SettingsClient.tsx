@@ -434,7 +434,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                                   {p.year}
                                 </span>
                                 {p.status === "done" && p.days !== undefined && (
-                                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{p.days} j</span>
+                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.days} j</span>
                                 )}
                               </div>
                             ))}
@@ -460,7 +460,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                           }
                         </button>
 
-                        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                           Traitement année par année — chaque appel peut prendre jusqu&apos;à 30s.
                           Les données sont stockées dans Firestore et disponibles pour les graphiques.
                         </p>
@@ -568,7 +568,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               {wDebugRes && (
                 <div className="rounded-xl p-3 overflow-x-auto"
                   style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                  <pre className="text-[10px] leading-relaxed whitespace-pre-wrap"
+                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap"
                     style={{ color: "#fbbf24", fontFamily: "monospace" }}>
                     {wDebugRes}
                   </pre>

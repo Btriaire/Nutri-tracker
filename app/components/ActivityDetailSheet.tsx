@@ -52,7 +52,7 @@ function Stepper({
 }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="text-[10px] font-semibold uppercase tracking-widest"
+      <p className="text-[11px] font-semibold uppercase tracking-widest"
         style={{ color: "rgba(255,255,255,0.4)" }}>
         {label}
       </p>
@@ -211,7 +211,7 @@ export default function ActivityDetailSheet({
                       style={{ color: catColor }}>
                       ~{kcalFinal ?? kcalEst} kcal
                     </span>
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>
                       estimées
                     </span>
                   </div>

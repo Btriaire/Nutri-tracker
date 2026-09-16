@@ -96,14 +96,14 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
 
           {/* Top foods */}
           <div>
-            <p className="text-[10px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
               Tes aliments les plus fréquents
             </p>
             <div style={{ height: topFoods.length * 28 + 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topFoods} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<ChartTooltip unit=" fois" />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                   <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={14}>
                     {topFoods.map((_, i) => <Cell key={i} fill="var(--protein)" fillOpacity={0.4 + (i / topFoods.length) * 0.6} />)}
@@ -115,7 +115,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
 
           {/* Category breakdown */}
           <div>
-            <p className="text-[10px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
               Répartition par catégorie
             </p>
             <div className="flex items-center gap-4">
@@ -135,8 +135,8 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
                   return (
                     <div key={c.cat} className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colorForIndex(i) }} />
-                      <span className="text-[10.5px] flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{meta.emoji} {meta.label}</span>
-                      <span className="text-[10px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.pct}%</span>
+                      <span className="text-[11px] flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{meta.emoji} {meta.label}</span>
+                      <span className="text-[11px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.pct}%</span>
                     </div>
                   );
                 })}
@@ -147,13 +147,13 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
           {/* Discovery timeline */}
           {discoveryTimeline.length > 1 && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
                 Nouveaux aliments essayés par mois
               </p>
               <div style={{ height: 90 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={discoveryTimeline} margin={{ top: 0, right: 4, left: -28, bottom: 0 }}>
-                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                     <YAxis hide />
                     <Tooltip content={<ChartTooltip unit=" nouveaux" />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]} fill="var(--fiber)" />
@@ -166,15 +166,15 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
           {/* Top brands */}
           {topBrands.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
                 Marques les plus fidèles
               </p>
               <div className="space-y-1">
                 {topBrands.map(([brand, count], i) => (
                   <div key={brand} className="flex items-center gap-2">
-                    <span className="text-[10px] w-4 flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>{i + 1}</span>
+                    <span className="text-[11px] w-4 flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>{i + 1}</span>
                     <span className="text-[11.5px] flex-1 truncate" style={{ color: "var(--text-primary)" }}>{brand}</span>
-                    <span className="text-[10px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>×{count}</span>
+                    <span className="text-[11px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>×{count}</span>
                   </div>
                 ))}
               </div>

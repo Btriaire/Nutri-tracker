@@ -73,7 +73,7 @@ function MicroGauge({ m }: { m: MicroRow }) {
           </span>
         </div>
       </div>
-      <span className="text-[10px] text-center" style={{ color: "var(--text-muted)" }}>{m.label}</span>
+      <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>{m.label}</span>
     </div>
   );
 }
@@ -91,12 +91,12 @@ function InsightList({ title, items, tone }: { title: string; items: Insight[]; 
       <div className="space-y-2.5">
         {items.map((it, i) => (
           <div key={i} className="flex items-center gap-2.5">
-            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
               style={{ background: `${color}22`, color }}>
               {i + 1}
             </span>
             <span className="text-[12.5px] flex-1" style={{ color: "var(--text-primary)" }}>{it.label}</span>
-            <span className="text-[10.5px] flex-shrink-0" style={{ color }}>{it.detail}</span>
+            <span className="text-[11px] flex-shrink-0" style={{ color }}>{it.detail}</span>
           </div>
         ))}
       </div>
@@ -258,11 +258,11 @@ export default function RepartitionClient() {
                 </div>
                 <div className="flex gap-2 mt-4 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
                   <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>dont sucres</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>dont sucres</p>
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data.macros.sugarG} g</p>
                   </div>
                   <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
-                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>dont saturés</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>dont saturés</p>
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data.macros.saturatedFatG} g</p>
                   </div>
                 </div>
@@ -289,7 +289,7 @@ export default function RepartitionClient() {
                       {data.foodGroups.slice(0, 6).map((g) => (
                         <div key={g.category} className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: GROUP_COLORS[g.category] ?? "#64748b" }} />
-                          <span className="text-[10.5px] truncate" style={{ color: "var(--text-secondary)" }}>{g.label} {g.pct}%</span>
+                          <span className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>{g.label} {g.pct}%</span>
                         </div>
                       ))}
                     </div>

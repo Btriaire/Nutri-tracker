@@ -99,7 +99,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           Évolution de la faim
         </p>
         {hasAny && (
-          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full"
+          <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full"
             style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
             {recorded.length}/{MEALS.length} repas
           </span>
@@ -229,7 +229,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
       {/* Mini legend */}
       <div className="flex justify-between px-1 pt-0.5">
         {([1, 2, 3, 4, 5] as HungerLevel[]).map((lvl) => (
-          <span key={lvl} className="text-[10px] font-medium tabular-nums"
+          <span key={lvl} className="text-[11px] font-medium tabular-nums"
             style={{ color: "var(--text-muted)", opacity: 0.45 }}>
             {lvl}
           </span>

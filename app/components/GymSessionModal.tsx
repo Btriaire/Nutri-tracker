@@ -432,7 +432,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             {exercises.length > 0 && (
               <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <MuscleBodyMap primary={primaryMuscles} secondary={secondaryMuscles} accent={ACCENT} size={180} />
-                <div className="flex justify-center gap-4 mt-2 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                <div className="flex justify-center gap-4 mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} /> Principal</span>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: `${ACCENT}66` }} /> Secondaire</span>
                 </div>
@@ -452,7 +452,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{MUSCLE_LABELS[ex.primaryMuscle]}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{MUSCLE_LABELS[ex.primaryMuscle]}</p>
                     </div>
                     <button onClick={() => openCamera(i)} aria-label="Photo de l'appareil"
                       className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
@@ -472,7 +472,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             border: `1.5px solid ${s.done ? ACCENT : "rgba(255,255,255,0.18)"}`,
                             color: s.done ? "#fff" : "var(--text-muted)",
                           }}>
-                          {s.done ? <IconCheck size={12} stroke={3} /> : <span className="text-[10px] tabular-nums">{si + 1}</span>}
+                          {s.done ? <IconCheck size={12} stroke={3} /> : <span className="text-[11px] tabular-nums">{si + 1}</span>}
                         </button>
                         {/* reps */}
                         <div className="flex items-center gap-1 flex-1">
@@ -481,7 +481,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
                           <button onClick={() => updateSet(i, si, "reps", s.reps + 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>reps</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>reps</span>
                         {/* weight */}
                         <div className="flex items-center gap-1 flex-1">
                           <button onClick={() => updateSet(i, si, "weightKg", s.weightKg - 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
@@ -489,7 +489,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
                           <button onClick={() => updateSet(i, si, "weightKg", s.weightKg + 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
-                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>kg</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kg</span>
                         <button onClick={() => removeSet(i, si)} className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ color: "var(--text-muted)" }}><IconX size={11} /></button>
                       </div>
                     ))}

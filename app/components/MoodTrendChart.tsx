@@ -75,7 +75,7 @@ export default function MoodTrendChart({ points }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Évolution 30 jours</p>
-        <div className="flex items-center gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
           <span className="flex items-center gap-1">
             <span className="inline-block w-4 h-0.5 rounded" style={{ background: "#a855f7" }} />
             😊 Humeur
@@ -101,7 +101,7 @@ export default function MoodTrendChart({ points }: Props) {
           />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+            tick={{ fontSize: 11, fill: "var(--text-muted)" }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
@@ -157,7 +157,7 @@ export default function MoodTrendChart({ points }: Props) {
       </ResponsiveContainer>
 
       {/* Bottom legend */}
-      <div className="flex items-center justify-center gap-5 mt-2 text-[10px]" style={{ color: "var(--text-muted)" }}>
+      <div className="flex items-center justify-center gap-5 mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-0.5 rounded" style={{ background: "#a855f7" }} />
           😊 Humeur

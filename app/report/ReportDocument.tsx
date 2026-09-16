@@ -126,13 +126,13 @@ function HBarRow({
   return (
     <div className="mb-2.5">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10.5px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
-        <span className="text-[10px] font-semibold" style={{ color }}>{valueLabel}</span>
+        <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
+        <span className="text-[11px] font-semibold" style={{ color }}>{valueLabel}</span>
       </div>
       <div className="rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
         <div style={{ width: `${width}%`, height: "100%", background: color, borderRadius: 999 }} />
       </div>
-      {sub && <p className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
+      {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
     </div>
   );
 }
@@ -180,9 +180,9 @@ function YAxisScale({ max, mid, min, height, unit = "" }: { max: number; mid: nu
   const fmt = (v: number) => (Number.isInteger(v) ? v : Math.round(v * 10) / 10).toLocaleString("fr-FR");
   return (
     <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ height, width: 30 }}>
-      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(max)}{unit}</span>
-      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(mid)}{unit}</span>
-      <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(min)}{unit}</span>
+      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(max)}{unit}</span>
+      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(mid)}{unit}</span>
+      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(min)}{unit}</span>
     </div>
   );
 }
@@ -212,12 +212,12 @@ function TrendChartCard({
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{title}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{title}</p>
         <div className="flex items-center gap-3">
           {series.map(s => (
             <div key={s.label} className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.label}</span>
             </div>
           ))}
         </div>
@@ -225,9 +225,9 @@ function TrendChartCard({
       <div className="flex gap-1.5">
         {/* Y-axis scale */}
         <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ height: 90, width: 26 }}>
-          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMax)}{unit}</span>
-          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMid)}{unit}</span>
-          <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMin)}{unit}</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMax)}{unit}</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMid)}{unit}</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMin)}{unit}</span>
         </div>
         <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 90, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
           {/* Gridlines */}
@@ -244,19 +244,19 @@ function TrendChartCard({
         </div>
       </div>
       <div className="flex items-center justify-between mt-1.5" style={{ paddingLeft: 30 }}>
-        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(from)}</span>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtDate(from)}</span>
         <div className="flex items-center gap-3">
           {series.map(s => {
             const first = s.points[0]?.value;
             const last  = s.points[s.points.length - 1]?.value;
             return (
-              <span key={s.label} className="text-[9px] font-medium" style={{ color: s.color }}>
+              <span key={s.label} className="text-[11px] font-medium" style={{ color: s.color }}>
                 {first}{unit} → {last}{unit}
               </span>
             );
           })}
         </div>
-        <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(to)}</span>
+        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtDate(to)}</span>
       </div>
     </div>
   );
@@ -312,12 +312,12 @@ function KpiCard({
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-medium uppercase tracking-wider mb-0.5"
+        <p className="text-[11px] font-medium uppercase tracking-wider mb-0.5"
           style={{ color: "var(--text-muted)" }}>{label}</p>
         <p className="text-[18px] font-bold leading-none" style={{ color }}>
           {value}{unit && <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>}
         </p>
-        {sub && <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
+        {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
       </div>
       {pct !== undefined && <GoalRing pct={pct} color={color} size={36} />}
     </div>
@@ -347,7 +347,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#f97316" }}>NutriTracker</p>
-              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Rapport de santé personnel</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Rapport de santé personnel</p>
             </div>
           </div>
 
@@ -382,13 +382,13 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               { icon: "🔎", label: "Scans visage",                  value: `${data.faceScan.scansCount}` },
             ].map(({ icon, label, value }) => (
               <div key={label} className="glass p-3 rounded-xl">
-                <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>{icon} {label}</p>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>{icon} {label}</p>
                 <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{value}</p>
               </div>
             ))}
           </div>
 
-          <p className="text-[10px] mt-4 text-right" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] mt-4 text-right" style={{ color: "var(--text-muted)" }}>
             Généré le {format(new Date(data.meta.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
           </p>
         </div>
@@ -465,9 +465,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             return (
               <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-xl"
                 style={{ background: s.bg, border: `1px solid ${s.border}` }}>
-                <p className="text-[9px] font-medium uppercase tracking-wider" style={{ color: s.color }}>{label}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: s.color }}>{label}</p>
                 <p className="text-[16px] font-bold" style={{ color: s.color }}>{pct}%</p>
-                <p className="text-[9px]" style={{ color: s.color }}>{s.label}</p>
+                <p className="text-[11px]" style={{ color: s.color }}>{s.label}</p>
               </div>
             );
           })}
@@ -497,9 +497,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               ].map(({ label, val, goal, color, unit }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                   <span className="text-[11px] font-semibold ml-auto" style={{ color }}>{val}{unit}</span>
-                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
                 </div>
               ))}
             </div>
@@ -519,7 +519,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                 </div>
                 <span className="text-[12px] font-semibold" style={{ color }}>
-                  {val}{unit} <span className="text-[10px] font-normal" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
+                  {val}{unit} <span className="text-[11px] font-normal" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
                 </span>
               </div>
             ))}
@@ -530,17 +530,17 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {data.nutrition.daily.length > 1 && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Évolution des calories
               </p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-2 rounded" style={{ background: "#f97316" }} />
-                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Calories</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Calories</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-px" style={{ background: "rgba(249,115,22,0.4)" }} />
-                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>Objectif</span>
+                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Objectif</span>
                 </div>
               </div>
             </div>
@@ -587,7 +587,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               {data.reportSynthesis.bonnesHabitudes.length > 0 && (
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
                   <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>👍 Bonnes habitudes</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>👍 Bonnes habitudes</p>
                   </div>
                   <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
                     {data.reportSynthesis.bonnesHabitudes.map((h, i) => (
@@ -599,7 +599,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               {data.reportSynthesis.mauvaisesHabitudes.length > 0 && (
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
                   <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>👎 À corriger</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>👎 À corriger</p>
                   </div>
                   <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
                     {data.reportSynthesis.mauvaisesHabitudes.map((h, i) => (
@@ -613,13 +613,13 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.reportSynthesis.alimentsAFavoriser.length > 0 && (
               <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>✅ Aliments à favoriser</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>✅ Aliments à favoriser</p>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
                   {data.reportSynthesis.alimentsAFavoriser.map((f, i) => (
                     <div key={i} className="px-3 py-2 report-card">
                       <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{f.name}</p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
                     </div>
                   ))}
                 </div>
@@ -629,20 +629,20 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.reportSynthesis.alimentsAEviter.length > 0 && (
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>⛔ Aliments à limiter / éviter</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>⛔ Aliments à limiter / éviter</p>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
                   {data.reportSynthesis.alimentsAEviter.map((f, i) => (
                     <div key={i} className="px-3 py-2 report-card">
                       <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{f.name}</p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.raison}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <p className="text-[9px] mt-3 leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+            <p className="text-[11px] mt-3 leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
               Analyse générée par IA à partir des aliments réellement enregistrés sur la période. Ne remplace pas un avis nutritionnel professionnel.
             </p>
           </div>
@@ -671,7 +671,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           const stepsMax = Math.max(data.profile.goals.stepsGoal * 1.3, ...data.activity.daily.map((d: DayActivity) => d.steps ?? 0));
           return (
             <div className="mb-4">
-              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution des pas</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution des pas</p>
               <div className="flex gap-1.5">
                 <YAxisScale max={stepsMax} mid={stepsMax / 2} min={0} height={60} />
                 <div className="rounded-xl overflow-hidden flex-1" style={{ height: 60, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
@@ -690,7 +690,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Sleep trend */}
         {data.activity.daily.filter(d => d.sleepMin !== null).length > 1 && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution du sommeil</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution du sommeil</p>
             <div className="flex gap-1.5">
               <YAxisScale max={12} mid={6} min={0} height={50} unit="h" />
               <div className="rounded-xl overflow-hidden flex-1" style={{ height: 50, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
@@ -703,8 +703,8 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               </div>
             </div>
             <div className="flex justify-between mt-1" style={{ paddingLeft: 34 }}>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.from)}</span>
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.to)}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.from)}</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{fmtDate(data.meta.to)}</span>
             </div>
           </div>
         )}
@@ -725,7 +725,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           ].map(({ label, val, color }) => (
             <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-xl"
               style={{ background: `${color}14`, border: `1px solid ${color}40` }}>
-              <p className="text-[9px] font-medium uppercase tracking-wider text-center px-1" style={{ color }}>{label}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-center px-1" style={{ color }}>{label}</p>
               <p className="text-[16px] font-bold" style={{ color }}>{val}</p>
             </div>
           ))}
@@ -734,7 +734,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Adherence bar chart */}
         {data.supplements.perProduct.length > 0 && (
           <div className="glass p-3.5 rounded-xl mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
               Observance par complément (%)
             </p>
             {data.supplements.perProduct.map(row => (
@@ -752,7 +752,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {data.supplements.perProduct.length > 0 && (
           <div className="rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--border)" }}>
             <div className="px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Observance par complément
               </p>
             </div>
@@ -764,7 +764,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   <div key={row.id} className="flex items-center justify-between px-3 py-2.5 report-card">
                     <div className="min-w-0">
                       <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{row.name}</p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {FREQ_LABEL[row.frequency] ?? row.frequency} · {row.actualTotal}/{row.expectedTotal} prises · {row.daysMissed} j manqué{row.daysMissed > 1 ? "s" : ""}
                       </p>
                     </div>
@@ -782,7 +782,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Micronutrient % AJR bar chart */}
         {data.micronutrients.perNutrient.length > 0 && (
           <div className="glass p-3.5 rounded-xl mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
               Répartition des apports (% AJR)
             </p>
             {data.micronutrients.perNutrient.map(n => {
@@ -803,10 +803,10 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {data.micronutrients.perNutrient.length > 0 && (
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
             <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Apports micronutriments (suppléments) vs AJR
               </p>
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {data.micronutrients.daysLogged} jours suivis
               </span>
             </div>
@@ -823,11 +823,11 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   <div key={n.code} className="flex items-center justify-between px-3 py-2 report-card">
                     <div className="min-w-0">
                       <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{n.label}</p>
-                      <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {n.avgPerDay}{n.unit}/j moy. {n.rda ? `· AJR ${n.rda}${n.unit}` : ""} {n.pctRda !== null ? `· ${n.pctRda}% AJR` : ""}
                       </p>
                     </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                       style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                       {cfg.label}
                     </span>
@@ -864,12 +864,12 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Weight */}
         {(data.health.weightStart || data.health.weightEnd) && (
           <div className="glass p-4 mb-4 rounded-xl">
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
               ⚖️ Évolution du poids
             </p>
             <div className="flex items-center justify-between">
               <div className="text-center">
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Début</p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Début</p>
                 <p className="text-[20px] font-bold" style={{ color: "var(--text-primary)" }}>
                   {fmtN(data.health.weightStart, " kg", 1)}
                 </p>
@@ -894,7 +894,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <div className="h-px flex-1" style={{ background: "var(--border)" }} />
               </div>
               <div className="text-center">
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Fin</p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Fin</p>
                 <p className="text-[20px] font-bold" style={{ color: "var(--text-primary)" }}>
                   {fmtN(data.health.weightEnd, " kg", 1)}
                 </p>
@@ -923,7 +923,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <span className="text-[12px] font-semibold" style={{ color: "#f472b6" }}>
                   {data.profile.goals.targetWeightKg} kg
                   {data.health.weightEnd && (
-                    <span className="text-[10px] font-normal ml-1.5" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px] font-normal ml-1.5" style={{ color: "var(--text-muted)" }}>
                       (encore {Math.abs(Math.round((data.health.weightEnd - data.profile.goals.targetWeightKg) * 10) / 10)} kg)
                     </span>
                   )}
@@ -942,7 +942,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Mensurations */}
         {data.measurements.latest && (
           <div className="glass p-4 mb-4 rounded-xl">
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
               📏 Mensurations {data.measurements.entriesCount > 1 ? `(${data.measurements.first?.month} → ${data.measurements.latest?.month})` : `(${data.measurements.latest.month})`}
             </p>
             <div className="space-y-1.5">
@@ -956,7 +956,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                     <span className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
                       {latestVal} cm
                       {delta != null && delta !== 0 && (
-                        <span className="text-[10px] font-medium" style={{ color: delta < 0 ? "#34d399" : "#f87171" }}>
+                        <span className="text-[11px] font-medium" style={{ color: delta < 0 ? "#34d399" : "#f87171" }}>
                           ({delta > 0 ? "+" : ""}{delta})
                         </span>
                       )}
@@ -978,9 +978,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             <div key={label} className="glass px-3 py-2.5 rounded-xl flex items-center gap-3">
               <span className="text-[14px]">{icon}</span>
               <div>
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
                 <p className="text-[15px] font-bold" style={{ color }}>
-                  {val}{unit && <span className="text-[10px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>}
+                  {val}{unit && <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>}
                 </p>
               </div>
             </div>
@@ -1024,10 +1024,10 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {data.health.symptomsTotal > 0 && (
           <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid var(--border)" }}>
             <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 🩺 Symptômes enregistrés
               </p>
-              <span className="text-[10px] px-2 py-0.5 rounded-full"
+              <span className="text-[11px] px-2 py-0.5 rounded-full"
                 style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.3)" }}>
                 {data.health.symptomsTotal} occurrences
               </span>
@@ -1037,7 +1037,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <div key={s.name} className="flex items-center justify-between px-3 py-2">
                   <div>
                     <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{s.name}</p>
-                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{s.category}</p>
+                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.category}</p>
                   </div>
                   <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(251,146,60,0.08)", color: "#fb923c" }}>
@@ -1096,7 +1096,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                       {dateFnsFormat(parseISO(day.date + "T12:00:00"), "EEEE d MMMM yyyy", { locale: fr })}
                     </p>
                     <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       {day.symptoms.length} symptôme{day.symptoms.length > 1 ? "s" : ""}
                     </span>
                   </div>
@@ -1108,7 +1108,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                       const sevColor = s.severity ? (SEV_COLOR[s.severity] ?? catColor) : catColor;
                       return (
                         <span key={i}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
                           style={{ background: `${sevColor}14`, border: `1px solid ${sevColor}44`, color: sevColor }}>
                           <span>{SCAT_ICON[s.category] ?? "🩺"}</span>
                           {s.name}
@@ -1127,10 +1127,10 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                         style={{ background: `${cfg.color}0d`, border: `1px solid ${cfg.color}30` }}>
                         <span className="text-[11px] flex-shrink-0">{cfg.dot}</span>
                         <div>
-                          <p className="text-[10px] font-semibold" style={{ color: cfg.color }}>
+                          <p className="text-[11px] font-semibold" style={{ color: cfg.color }}>
                             Nutri-IA-Med · {day.synthesis.alertLabel}
                           </p>
-                          <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
                             {day.synthesis.summary}
                           </p>
                         </div>
@@ -1153,14 +1153,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             <div className="flex items-center gap-2">
               <span className="text-[13px]">🔎</span>
               <p className="text-[12px] font-bold" style={{ color: "var(--text-primary)" }}>Scan Visage</p>
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {data.faceScan.scansCount} scan{data.faceScan.scansCount > 1 ? "s" : ""}
               </span>
             </div>
             {data.faceScan.delta && (
               <div className="flex items-center gap-2">
                 {Object.entries(data.faceScan.delta).map(([axis, delta]) => (
-                  <span key={axis} className="flex items-center gap-0.5 text-[10px] font-semibold"
+                  <span key={axis} className="flex items-center gap-0.5 text-[11px] font-semibold"
                     style={{ color: delta < 0 ? "#34d399" : delta > 0 ? "#f87171" : "var(--text-muted)" }}>
                     {delta < 0 ? <IconArrowDown size={10} /> : delta > 0 ? <IconArrowUp size={10} /> : <IconMinus size={10} />}
                     {AXIS_LABEL[axis]?.slice(0, 4) ?? axis}
@@ -1169,7 +1169,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               </div>
             )}
           </div>
-          <p className="text-[9px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
             Scores visuels indicatifs (1-5, non diagnostiques) — évolution du {data.faceScan.first ? fmtDate(data.faceScan.first.date) : "—"} au {data.faceScan.latest ? fmtDate(data.faceScan.latest.date) : "—"}.
           </p>
         </div>
@@ -1196,7 +1196,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               <span className="text-[14px]">{cfg.dot}</span>
               <span className="text-[13px] font-semibold" style={{ color: cfg.color }}>{s.alertLabel}</span>
               {s.generatedAt && (
-                <span className="ml-auto text-[10px]" style={{ color: "var(--text-muted)" }}>
+                <span className="ml-auto text-[11px]" style={{ color: "var(--text-muted)" }}>
                   {dateFnsFormat(new Date(s.generatedAt), "d MMM yyyy", { locale: fr })}
                 </span>
               )}
@@ -1219,7 +1219,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)" }}>
                   <span className="text-[13px] flex-shrink-0 mt-0.5">{icon}</span>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{text}</p>
                   </div>
                 </div>
@@ -1230,7 +1230,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {s.recommandations?.length > 0 && (
               <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(167,139,250,0.08)", borderBottom: "1px solid rgba(167,139,250,0.15)" }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#a78bfa" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#a78bfa" }}>
                     💡 Recommandations
                   </p>
                 </div>
@@ -1272,7 +1272,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)" }}>
               <span className="text-[13px] flex-shrink-0 mt-0.5">🔁</span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Habitudes observées</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Habitudes observées</p>
                 <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{data.reportSynthesis.habitudes}</p>
               </div>
             </div>
@@ -1280,7 +1280,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               style={{ background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.15)" }}>
               <span className="text-[13px] flex-shrink-0 mt-0.5">📈</span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Évolution sur la période</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-muted)" }}>Évolution sur la période</p>
                 <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{data.reportSynthesis.evolution}</p>
               </div>
             </div>
@@ -1289,7 +1289,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           {data.reportSynthesis.defis.length > 0 && (
             <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
               <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>
                   ⚠️ Défis identifiés
                 </p>
               </div>
@@ -1307,7 +1307,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           {data.reportSynthesis.propositions.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
               <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>
                   💡 Propositions pour la prochaine période
                 </p>
               </div>
@@ -1329,10 +1329,10 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       ═══════════════════════════════════════════════════════════ */}
       <div className="text-center py-6 space-y-1">
         <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>NutriTracker · Rapport personnel de santé</p>
-        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           Généré le {format(new Date(data.meta.generatedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })} · Données confidentielles
         </p>
-        <p className="text-[9px]" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
+        <p className="text-[11px]" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
           Ce rapport est indicatif et ne remplace pas un avis médical professionnel.
         </p>
       </div>

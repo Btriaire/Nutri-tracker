@@ -165,7 +165,7 @@ export default function FaceScanClient() {
           <div className="flex-1 space-y-1.5">
             {SCORE_AXES.map(axis => (
               <div key={axis.key} className="flex items-center justify-between gap-2">
-                <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{axis.label}</span>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{axis.label}</span>
                 <StarRow score={scan.analysis.scorecard[axis.key]} color={axis.color} />
               </div>
             ))}
@@ -183,14 +183,14 @@ export default function FaceScanClient() {
             <div key={i} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{f.indicator}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${CONFIDENCE_COLOR[f.confidence]}18`, color: CONFIDENCE_COLOR[f.confidence] }}>
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${CONFIDENCE_COLOR[f.confidence]}18`, color: CONFIDENCE_COLOR[f.confidence] }}>
                   confiance {f.confidence}
                 </span>
               </div>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{f.observation}</p>
               <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-secondary)" }}>{f.relevance}</p>
               {f.source && REFERENCE_LABELS[f.source] && (
-                <p className="text-[9px] mt-1.5 font-medium" style={{ color: "var(--indigo)" }}>
+                <p className="text-[11px] mt-1.5 font-medium" style={{ color: "var(--indigo)" }}>
                   📎 {REFERENCE_LABELS[f.source]}
                 </p>
               )}
@@ -201,7 +201,7 @@ export default function FaceScanClient() {
 
       {scan.analysis.comparisonNote && (
         <div className="rounded-lg p-3" style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)" }}>
-          <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--indigo)" }}>
+          <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--indigo)" }}>
             {scan.analysis.comparisonMode === "first" ? "Comparaison avec le tout premier scan" : "Comparaison avec le scan précédent"}
           </p>
           <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{scan.analysis.comparisonNote}</p>
@@ -210,14 +210,14 @@ export default function FaceScanClient() {
 
       {scan.analysis.conseil && (
         <div className="rounded-lg p-3" style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.25)" }}>
-          <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>💡 Conseil bien-être</p>
+          <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>💡 Conseil bien-être</p>
           <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{scan.analysis.conseil}</p>
         </div>
       )}
 
       <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
         <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
-        <p className="text-[10px] leading-relaxed" style={{ color: "#f59e0b" }}>{scan.analysis.disclaimer}</p>
+        <p className="text-[11px] leading-relaxed" style={{ color: "#f59e0b" }}>{scan.analysis.disclaimer}</p>
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ export default function FaceScanClient() {
 
           {history.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] mb-1.5" style={{ color: "var(--text-muted)" }}>Comparer avec :</p>
+              <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Comparer avec :</p>
               <div className="flex gap-1.5">
                 {(() => {
                   const first = history[history.length - 1];
@@ -302,7 +302,7 @@ export default function FaceScanClient() {
                       key={opt.key}
                       type="button"
                       onClick={() => setCompareMode(opt.key)}
-                      className="px-2.5 py-1.5 rounded-lg text-[10px] font-medium transition-all"
+                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
                       style={{
                         background: compareMode === opt.key ? "rgba(99,102,241,0.18)" : "rgba(255,255,255,0.05)",
                         border: `1px solid ${compareMode === opt.key ? "rgba(99,102,241,0.45)" : "var(--border)"}`,
@@ -359,7 +359,7 @@ export default function FaceScanClient() {
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: "hidden" }}>
                 <ul className="px-3 pb-3 space-y-1.5">
                   {SOURCES.map((s, i) => (
-                    <li key={i} className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>• {s}</li>
+                    <li key={i} className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>• {s}</li>
                   ))}
                 </ul>
               </motion.div>
@@ -395,7 +395,7 @@ export default function FaceScanClient() {
                         <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                           {format(new Date(scan.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
                         </p>
-                        <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
                           {scan.analysis.findings.length} observation{scan.analysis.findings.length > 1 ? "s" : ""}
                         </p>
                       </div>

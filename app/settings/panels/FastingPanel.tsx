@@ -148,7 +148,7 @@ export default function FastingPanel() {
                             style={{ color: duration === h ? "#818cf8" : "var(--text-primary)" }}>
                             {label}
                           </span>
-                          <span className="text-[9px]"
+                          <span className="text-[11px]"
                             style={{ color: duration === h ? "#818cf8" : "var(--text-muted)" }}>
                             {desc}
                           </span>
@@ -181,7 +181,7 @@ export default function FastingPanel() {
                         );
                       })}
                     </div>
-                    <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
                       {days.length === 0
                         ? "Aucun jour sélectionné"
                         : `${days.length} jour${days.length > 1 ? "s" : ""} par semaine`}

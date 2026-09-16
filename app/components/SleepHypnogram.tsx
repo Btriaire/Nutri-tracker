@@ -173,7 +173,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
       {/* Simulation badge */}
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Cycles de sommeil</p>
-        <span className="text-[9px] px-2 py-0.5 rounded-full font-medium"
+        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
           style={{ background: "rgba(96,165,250,0.1)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.25)" }}>
           Simulation · {Math.round(sleepMinutes / 60 * 10) / 10}h
         </span>
@@ -259,14 +259,14 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
               <span className="text-[13px] font-bold tabular-nums" style={{ color: cfg.color }}>
                 {fmtMin(mins)}
               </span>
-              <span className="text-[9px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
-              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{pct}%</span>
+              <span className="text-[11px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
+              <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{pct}%</span>
             </div>
           );
         })}
       </div>
 
-      <p className="text-[9px] mt-2 text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
+      <p className="text-[11px] mt-2 text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
         Architecture simulée basée sur les cycles typiques · données réelles non disponibles
       </p>
     </div>

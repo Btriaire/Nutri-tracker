@@ -73,7 +73,7 @@ function TimeEditor({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] uppercase tracking-widest flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+      <span className="text-[11px] uppercase tracking-widest flex-shrink-0" style={{ color: "var(--text-muted)" }}>
         {label}
       </span>
       <input
@@ -353,7 +353,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           <div className="flex-1 space-y-3">
             {/* Remaining */}
             <div>
-              <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Restant</p>
+              <p className="text-[11px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Restant</p>
               <p className="text-[18px] font-bold tabular-nums leading-none font-mono" style={{ color: "var(--text-primary)" }}>
                 {fmtMs(remainMs)}
               </p>
@@ -388,7 +388,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
                   <motion.div key="display"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex items-center gap-2">
-                    <p className="text-[9px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Début</p>
+                    <p className="text-[11px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Début</p>
                     <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                       {session.startedAtMs ? msToHHMM(session.startedAtMs) : "—"}
                     </p>
@@ -411,7 +411,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
             {/* End estimate */}
             {session.startedAtMs && !editingStart && (
               <div>
-                <p className="text-[9px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>Fin prévue</p>
+                <p className="text-[11px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>Fin prévue</p>
                 <p className="text-[12px] font-medium" style={{ color: rc }}>
                   {new Date(session.startedAtMs + targetMs).toLocaleTimeString("fr-FR", {
                     hour: "2-digit", minute: "2-digit",

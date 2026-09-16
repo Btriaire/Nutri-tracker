@@ -32,11 +32,8 @@ export default function PhotoStrip({ photos }: Props) {
         className="mb-2"
       >
         {/* Header */}
-        <div className="flex items-center gap-1.5 mb-1.5 px-1">
-          <span style={{ fontSize: 11 }}>🌟</span>
-          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
-            Souvenirs
-          </p>
+        <div className="mb-2 px-1">
+          <p className="label-xs">Souvenirs</p>
         </div>
 
         {/* Horizontal scroll */}
@@ -49,28 +46,19 @@ export default function PhotoStrip({ photos }: Props) {
               key={photo.id}
               whileTap={{ scale: 0.94 }}
               onClick={() => setLightbox({ dataUrl: photo.dataUrl, date })}
-              className="flex-shrink-0 relative group"
-              style={{ width: 44, height: 44 }}
+              className="flex-shrink-0 flex flex-col items-center gap-1"
+              style={{ width: 56 }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.dataUrl}
                 alt={`souvenir ${date}`}
-                className="w-full h-full object-cover rounded-xl"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                className="object-cover rounded-xl"
+                style={{ width: 56, height: 56, border: "1px solid var(--border-strong)" }}
               />
-              {/* Date label on hover / always on mobile */}
-              <div
-                className="absolute bottom-0 left-0 right-0 rounded-b-xl text-center"
-                style={{
-                  background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
-                  padding: "4px 2px 2px",
-                }}
-              >
-                <span style={{ fontSize: 6, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
-                  {fmtDate(date)}
-                </span>
-              </div>
+              <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+                {fmtDate(date)}
+              </span>
             </motion.button>
           ))}
         </div>

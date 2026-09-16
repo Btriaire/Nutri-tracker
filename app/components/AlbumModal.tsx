@@ -157,17 +157,17 @@ export default function AlbumModal({ open, onClose }: Props) {
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {day.totalCalories > 0 && (
-                            <span className="text-[10px] flex items-center gap-0.5" style={{ color: "var(--calories)" }}>
+                            <span className="text-[11px] flex items-center gap-0.5" style={{ color: "var(--calories)" }}>
                               <IconFlame size={10} /> {day.totalCalories} kcal
                             </span>
                           )}
                           {day.activityNames.length > 0 && (
-                            <span className="text-[10px]" style={{ color: "var(--fit-green)" }}>
+                            <span className="text-[11px]" style={{ color: "var(--fit-green)" }}>
                               🏃 {day.activityNames.slice(0, 2).join(", ")}
                             </span>
                           )}
                           {(day.photos.length + day.activityThumbnails.length) > 0 && (
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                               📷 {day.photos.length + day.activityThumbnails.length}
                             </span>
                           )}
@@ -234,7 +234,7 @@ export default function AlbumModal({ open, onClose }: Props) {
                                         );
                                       })()}
                                     </div>
-                                    <span className="text-[10px]" style={{ color: "var(--calories)" }}>
+                                    <span className="text-[11px]" style={{ color: "var(--calories)" }}>
                                       {total} kcal
                                     </span>
                                   </div>
@@ -244,7 +244,7 @@ export default function AlbumModal({ open, onClose }: Props) {
                                         <span className="text-[12px] truncate flex-1 pr-2" style={{ color: "var(--text-primary)" }}>
                                           {e.name}
                                         </span>
-                                        <span className="text-[10px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                                        <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                                           {e.grams}g · {e.calories} kcal
                                         </span>
                                       </div>

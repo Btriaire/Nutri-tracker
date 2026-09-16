@@ -278,7 +278,7 @@ export default function BreathingGuide() {
                 border: `1px solid ${sel ? p.color + "55" : "var(--border)"}`,
               }}>
               <span className="text-[20px]">{p.emoji}</span>
-              <p className="text-[10px] font-semibold leading-tight" style={{ color: sel ? p.color : "var(--text-primary)" }}>
+              <p className="text-[11px] font-semibold leading-tight" style={{ color: sel ? p.color : "var(--text-primary)" }}>
                 {p.name}
               </p>
             </button>
@@ -362,14 +362,14 @@ export default function BreathingGuide() {
             className="flex items-center gap-4 mt-4 text-center">
             <div>
               <p className="text-[18px] font-bold tabular-nums" style={{ color: prog.color }}>{cycleCount}</p>
-              <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>cycles</p>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>cycles</p>
             </div>
             <div className="w-px h-6" style={{ background: "var(--border)" }} />
             <div>
               <p className="text-[18px] font-bold tabular-nums" style={{ color: prog.color }}>
                 {remaining !== null ? fmtTime(remaining) : fmtTime(elapsedSec)}
               </p>
-              <p className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {remaining !== null ? "restantes" : "écoulé"}
               </p>
             </div>
@@ -394,7 +394,7 @@ export default function BreathingGuide() {
             return (
               <button key={d.value} onClick={() => setDuration(d.value)}
                 disabled={active}
-                className="px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all"
+                className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
                 style={{
                   background: sel ? `${prog.color}25` : "rgba(255,255,255,0.04)",
                   border: `1px solid ${sel ? prog.color + "60" : "var(--border)"}`,
@@ -406,7 +406,7 @@ export default function BreathingGuide() {
             );
           })}
           {prog.recMin && !active && (
-            <span className="text-[9px] ml-auto" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[11px] ml-auto" style={{ color: "var(--text-muted)" }}>
               Recommandé : {prog.recMin} min
             </span>
           )}
@@ -424,7 +424,7 @@ export default function BreathingGuide() {
             {soundOn ? "Sons zen activés" : "Sons désactivés"}
           </button>
           {soundOn && !active && (
-            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
               Drone · Vent · Cloche
             </span>
           )}

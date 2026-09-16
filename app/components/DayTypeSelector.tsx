@@ -94,7 +94,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             {label}
             {showAutoBadge && (
               <span
-                className="ml-0.5 flex items-center gap-0.5 px-1 rounded text-[9px] font-semibold"
+                className="ml-0.5 flex items-center gap-0.5 px-1 rounded text-[11px] font-semibold"
                 style={{ background: `${color}22`, color }}
               >
                 <IconSparkles size={8} />
@@ -123,7 +123,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
               color:      jetlag ? "#f87171" : "var(--text-muted)",
             }}
           >
-            <span style={{ fontSize: 10 }}>⏱</span>
+            <span style={{ fontSize: 11 }}>⏱</span>
             Jet lag
             <span className="ml-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: jetlag ? "#f87171" : "rgba(255,255,255,0.15)" }} />

@@ -119,12 +119,12 @@ export default function ReportClient() {
             {/* Custom range */}
             <div className="flex gap-3 items-center">
               <div className="flex-1">
-                <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Du</p>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Du</p>
                 <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
                   className="input text-[12px] w-full" style={{ height: 36 }} />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] mb-1" style={{ color: "var(--text-muted)" }}>Au</p>
+                <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Au</p>
                 <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
                   className="input text-[12px] w-full" style={{ height: 36 }} />
               </div>

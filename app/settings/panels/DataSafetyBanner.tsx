@@ -41,7 +41,7 @@ export default function DataSafetyBanner() {
         <p className="text-[12px] font-semibold" style={{ color: "#34d399" }}>
           Tes données sont en sécurité
         </p>
-        <p className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
           Stockées dans Firestore · accessibles uniquement par toi
         </p>
       </div>

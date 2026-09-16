@@ -306,7 +306,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="flex items-center gap-1.5 mb-2">
             <p className="label-xs">Alcool</p>
             {loading && (
-              <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>…</span>
+              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>…</span>
             )}
           </div>
 
@@ -317,7 +317,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 style={{ color: over ? "#f87171" : "#c084fc" }}>
                 {totalUnits.toFixed(1)}
               </span>
-              <span className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
+              <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
             </div>
             {totalKcal > 0 && (
               <div className="flex flex-col">
@@ -325,7 +325,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                   style={{ color: "var(--calories)" }}>
                   {totalKcal}
                 </span>
-                <span className="text-[9px] mt-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
               </div>
             )}
           </div>
@@ -339,7 +339,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
-          <p className="text-[9px]" style={{ color: over ? "#f87171" : "var(--text-muted)" }}>
+          <p className="text-[11px]" style={{ color: over ? "#f87171" : "var(--text-muted)" }}>
             {over
               ? `+${(totalUnits - dailyGoal).toFixed(1)}u au-delà du seuil journalier`
               : `${totalUnits.toFixed(1)} / ${dailyGoal}u seuil jour (${weeklyGoal}u/sem.)`}
@@ -380,11 +380,11 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all active:scale-95"
               style={{ background: "rgba(192,132,252,0.07)", border: "1px solid rgba(192,132,252,0.18)" }}>
               <DrinkIcon type={p.type} color="#c084fc" />
-              <span className="text-[8px] text-center leading-tight w-full px-0.5 truncate"
+              <span className="text-[11px] text-center leading-tight w-full px-0.5 truncate"
                 style={{ color: "var(--text-muted)" }}>
                 {p.type.replace(" 25cl", "").replace(" 33cl", " 33")}
               </span>
-              <span className="text-[9px] font-bold tabular-nums" style={{ color: "#c084fc" }}>
+              <span className="text-[11px] font-bold tabular-nums" style={{ color: "#c084fc" }}>
                 {u.toFixed(1)}u
               </span>
             </button>
@@ -429,7 +429,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               <div className="flex gap-2">
                 {/* Volume */}
                 <div className="flex-1">
-                  <p className="text-[9px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Volume (ml)</p>
+                  <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Volume (ml)</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomMl(v => Math.max(10, v - 25))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -450,7 +450,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
 
                 {/* ABV */}
                 <div className="flex-1">
-                  <p className="text-[9px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Alcool (% vol)</p>
+                  <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Alcool (% vol)</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomAbv(v => Math.max(0.5, Math.round((v - 0.5) * 10) / 10))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"

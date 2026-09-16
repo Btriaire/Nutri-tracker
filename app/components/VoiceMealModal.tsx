@@ -397,7 +397,7 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
                   ✨ {items.length} aliment{items.length > 1 ? "s" : ""} reconnu{items.length > 1 ? "s" : ""}
                 </span>
                 <button onClick={() => { setPhase("idle"); setItems([]); }}
-                  className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+                  className="text-[11px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
                   Recommencer
                 </button>
               </div>
@@ -440,19 +440,19 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
                           </p>
                           {/* Meal badge — tap to cycle */}
                           <button onClick={() => !isSaving && cycleMeal(idx)}
-                            className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all active:scale-95"
+                            className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all active:scale-95"
                             style={{ background: `${mm.color}1f`, border: `1px solid ${mm.color}55`, color: mm.color }}>
                             <span>{mm.emoji}</span>{mm.label}
                           </button>
                           <div className="mt-1.5"><MacroBar proteinG={n.proteinG} carbsG={n.carbsG} fatG={n.fatG} /></div>
-                          <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
                             P&nbsp;{n.proteinG}g&ensp;G&nbsp;{n.carbsG}g&ensp;L&nbsp;{n.fatG}g
                           </p>
                         </div>
 
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <span className="text-[15px] font-bold tabular-nums leading-none" style={{ color: ACCENT }}>{n.calories}</span>
-                          <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>kcal</span>
+                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal</span>
                           <div className="flex items-center gap-1 mt-0.5">
                             <button onClick={() => !isSaving && adjustGrams(idx, -10)} className="w-5 h-5 rounded-md flex items-center justify-center"
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconMinus size={9} /></button>
@@ -463,7 +463,7 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
                               disabled={isSaving} />
                             <button onClick={() => !isSaving && adjustGrams(idx, 10)} className="w-5 h-5 rounded-md flex items-center justify-center"
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconPlus size={9} /></button>
-                            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>g</span>
+                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>g</span>
                           </div>
                         </div>
                       </div>
