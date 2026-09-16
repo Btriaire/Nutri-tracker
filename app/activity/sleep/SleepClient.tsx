@@ -9,6 +9,7 @@ import { fr } from "date-fns/locale";
 import {
   IconChevronLeft, IconMoon, IconCircleCheck, IconTrophy, IconArrowUp, IconArrowDown, IconMinus,
   IconPlus, IconX, IconPencil, IconTrash, IconLoader2, IconRefresh,
+  IconDeviceWatch, IconBrandApple, IconActivity,
 } from "@tabler/icons-react";
 import {
   ResponsiveContainer, BarChart, Bar,
@@ -23,9 +24,9 @@ interface Props { points: SleepPoint[]; sleepGoalMin: number }
 // ─── Sleep Cycle Ring ─────────────────────────────────────────────────────────
 
 const STAGES = [
-  { key: "light", label: "Léger",     emoji: "🌙", color: "#7986CB", desc: "Endormissement · rêverie" },
-  { key: "deep",  label: "Profond",   emoji: "💤", color: "#3B82F6", desc: "Récupération physique" },
-  { key: "rem",   label: "Paradoxal", emoji: "✨", color: "#8B5CF6", desc: "Mémoire · créativité" },
+  { key: "light", label: "Léger",     color: "#7986CB", desc: "Endormissement · rêverie" },
+  { key: "deep",  label: "Profond",   color: "#3B82F6", desc: "Récupération physique" },
+  { key: "rem",   label: "Paradoxal", color: "#8B5CF6", desc: "Mémoire · créativité" },
 ] as const;
 
 // ─── Real hypnogram (actual stage timeline from the tracker) ─────────────────
@@ -160,7 +161,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
   }
 
   // Build arc segments
-  type ArcSeg = { path: string; color: string; label: string; min: number; pct: number; desc: string; emoji: string };
+  type ArcSeg = { path: string; color: string; label: string; min: number; pct: number; desc: string };
   const arcs: ArcSeg[] = [];
 
   // Total arc span based on sleep vs goal (never exceeds full circle)
@@ -181,7 +182,6 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
         color: STAGES[i].color,
         label: STAGES[i].label,
         desc:  STAGES[i].desc,
-        emoji: STAGES[i].emoji,
         min:   v,
         pct:   Math.round(v / phaseTotal * 100),
       });
@@ -191,7 +191,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
     const color = sleepQualityColor(displayMin, goalMin);
     arcs.push({
       path:  describeArc(START, START + Math.max(totalSpan - 0.01, 0.05)),
-      color, label: "Sommeil", desc: "Total enregistré", emoji: "🌙",
+      color, label: "Sommeil", desc: "Total enregistré",
       min: displayMin, pct: Math.round(Math.min(displayMin / goalMin, 1) * 100),
     });
   }
@@ -252,7 +252,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
           </svg>
           {/* Center */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-            <span style={{ fontSize: 26 }}>😴</span>
+            <IconMoon size={22} stroke={1.6} style={{ color: qualColor }} />
             <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color: qualColor }}>
               {fmtH(displayMin)}
             </p>
@@ -377,9 +377,13 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
 
       <div className="flex items-center gap-2 flex-wrap">
         {source && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full"
+          <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full"
             style={{ background: source === "withings" ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.05)", color: source === "withings" ? "#34d399" : "var(--text-muted)", border: `1px solid ${source === "withings" ? "rgba(52,211,153,0.2)" : "var(--border)"}` }}>
-            {source === "withings" ? "🛏" : source === "applehealth" ? "🍎" : source === "googlefit" ? "💚" : "✏️"} {SOURCE_LABEL[source] ?? source}
+            {source === "withings" ? <IconDeviceWatch size={10} stroke={1.8} />
+              : source === "applehealth" ? <IconBrandApple size={10} stroke={1.8} />
+              : source === "googlefit" ? <IconActivity size={10} stroke={1.8} />
+              : <IconPencil size={10} stroke={1.8} />}
+            {SOURCE_LABEL[source] ?? source}
           </span>
         )}
         {sleepScore != null && (
@@ -822,7 +826,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
             <span className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>Série en cours</span>
             <span className="text-[18px] font-bold">{streak} <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>nuits</span></span>
             <span className="text-[10px]" style={{ color: streak >= 3 ? "#34A853" : "var(--text-muted)" }}>
-              {streak >= 7 ? "🔥 Excellente semaine !" : streak >= 3 ? "Bonne régularité" : "Continue !"}
+              {streak >= 7 ? "Excellente semaine !" : streak >= 3 ? "Bonne régularité" : "Continue !"}
             </span>
           </div>
           <div className="glass p-4 flex flex-col gap-1">
