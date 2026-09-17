@@ -99,7 +99,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
             <div
               key={m.code}
               className="flex items-center gap-2 p-2 rounded-lg"
-              style={{ background: `${info.color}15`, border: `1px solid ${info.color}33` }}
+              style={{ background: `color-mix(in srgb, ${info.color} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${info.color} 20%, transparent)` }}
             >
               <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: info.color }}>
                 {info.symbol}
@@ -153,8 +153,8 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                   }}
                   className="w-full text-left px-2 py-1.5 rounded text-[11px] transition-all hover:opacity-80"
                   style={{
-                    background: `${info.color}12`,
-                    border: `1px solid ${info.color}25`,
+                    background: `color-mix(in srgb, ${info.color} 7%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${info.color} 15%, transparent)`,
                     color: "var(--text-primary)",
                   }}
                 >

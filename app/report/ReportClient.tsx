@@ -87,7 +87,7 @@ export default function ReportClient() {
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Rapport de santé
             </h1>
-            <IconFileTypePdf size={20} style={{ color: "#f97316" }} />
+            <IconFileTypePdf size={20} style={{ color: "var(--calories)" }} />
           </div>
 
           {/* Period selector */}
@@ -108,7 +108,7 @@ export default function ReportClient() {
                     style={{
                       background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
                       border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
-                      color:      active ? "#f97316" : "var(--text-muted)",
+                      color:      active ? "var(--calories)" : "var(--text-muted)",
                     }}>
                     {p.label}
                   </button>
@@ -135,7 +135,7 @@ export default function ReportClient() {
               style={{
                 background: "linear-gradient(135deg,rgba(249,115,22,0.18),rgba(251,191,36,0.15))",
                 border: "1px solid rgba(249,115,22,0.4)",
-                color: "#f97316",
+                color: "var(--calories)",
               }}>
               {loading
                 ? <><IconLoader2 size={14} className="animate-spin" />Génération en cours…</>
@@ -146,7 +146,7 @@ export default function ReportClient() {
 
           {error && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[12px] mb-4"
-              style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
+              style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
               <IconAlertCircle size={13} /> Erreur de génération. Vérifiez la connexion et réessayez.
             </div>
           )}
@@ -174,7 +174,7 @@ export default function ReportClient() {
                   style={{
                     background: "linear-gradient(135deg,rgba(248,113,113,0.18),rgba(249,115,22,0.18))",
                     border: "1px solid rgba(248,113,113,0.4)",
-                    color: "#f87171",
+                    color: "var(--danger)",
                   }}>
                   <IconFileTypePdf size={16} />
                   Télécharger PDF

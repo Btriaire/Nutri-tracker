@@ -50,8 +50,8 @@ function hhmmToMs(dateStr: string, time: string): number {
 
 function ringColor(pct: number): string {
   if (pct >= 0.9) return "#22c55e";
-  if (pct >= 0.6) return "#fbbf24";
-  if (pct >= 0.3) return "#f97316";
+  if (pct >= 0.6) return "var(--carbs)";
+  if (pct >= 0.3) return "var(--calories)";
   return "#818cf8";
 }
 
@@ -302,7 +302,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         className="glass px-4 pt-4 pb-5 mb-4"
-        style={{ borderColor: `${rc}30` }}
+        style={{ borderColor: `color-mix(in srgb, ${rc} 19%, transparent)` }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -316,7 +316,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           </div>
           <motion.button whileTap={{ scale: 0.93 }} onClick={handleStop} disabled={stopping}
             className="px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-            style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
+            style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
             {stopping ? "…" : "Arrêter"}
           </motion.button>
         </div>

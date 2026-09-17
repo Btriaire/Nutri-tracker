@@ -48,7 +48,7 @@ export default function ResetPanel() {
       >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: "rgba(248,113,113,0.1)" }}>
-          <IconTrash size={17} style={{ color: "#f87171" }} />
+          <IconTrash size={17} style={{ color: "var(--danger)" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Remise à zéro</p>
@@ -96,7 +96,7 @@ export default function ResetPanel() {
                 <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
               </div>
               <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ background: checked ? "#f87171" : "rgba(255,255,255,0.06)", border: `1px solid ${checked ? "#f87171" : "var(--border)"}` }}>
+                style={{ background: checked ? "var(--danger)" : "rgba(255,255,255,0.06)", border: `1px solid ${checked ? "var(--danger)" : "var(--border)"}` }}>
                 {checked && <IconCircleCheck size={13} color="#fff" />}
               </div>
             </button>
@@ -113,7 +113,7 @@ export default function ResetPanel() {
             height: "40px",
             background: selected.size > 0 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.04)",
             border: `1px solid ${selected.size > 0 ? "rgba(248,113,113,0.4)" : "var(--border)"}`,
-            color: selected.size > 0 ? "#f87171" : "var(--text-muted)",
+            color: selected.size > 0 ? "var(--danger)" : "var(--text-muted)",
           }}>
           <IconTrash size={13} />
           Réinitialiser ({selected.size} sélectionné{selected.size > 1 ? "s" : ""})
@@ -122,8 +122,8 @@ export default function ResetPanel() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px]"
             style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)" }}>
-            <IconAlertCircle size={14} style={{ color: "#f87171" }} />
-            <p style={{ color: "#f87171" }}>
+            <IconAlertCircle size={14} style={{ color: "var(--danger)" }} />
+            <p style={{ color: "var(--danger)" }}>
               Cette action est <strong>irréversible</strong>. Confirmer la suppression ?
             </p>
           </div>
@@ -133,7 +133,7 @@ export default function ResetPanel() {
             </button>
             <button onClick={handleReset} disabled={resetting}
               className="flex-1 btn gap-1.5 text-[12px]"
-              style={{ height: "36px", background: "#f87171", color: "#fff", border: "none" }}>
+              style={{ height: "36px", background: "var(--danger)", color: "#fff", border: "none" }}>
               {resetting ? <><IconLoader2 size={12} className="animate-spin" /> Suppression…</> : <><IconTrash size={12} /> Confirmer</>}
             </button>
           </div>

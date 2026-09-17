@@ -168,7 +168,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
       </div>
 
       {error && (
-        <p className="text-[11px] mt-1.5 px-0.5" style={{ color: "#f87171" }}>{error}</p>
+        <p className="text-[11px] mt-1.5 px-0.5" style={{ color: "var(--danger)" }}>{error}</p>
       )}
 
       {/* Hidden file input — no `capture` attribute, so the OS offers both

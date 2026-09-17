@@ -70,7 +70,7 @@ function QualityBadges({ food }: { food: BankFood }) {
     <div className="flex items-center gap-2 flex-wrap">
       {quality.nutriScore && (
         <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
-          style={{ background: `${NUTRISCORE_COLOR[quality.nutriScore]}22`, color: NUTRISCORE_COLOR[quality.nutriScore] }}>
+          style={{ background: `color-mix(in srgb, ${NUTRISCORE_COLOR[quality.nutriScore]} 13%, transparent)`, color: NUTRISCORE_COLOR[quality.nutriScore] }}>
           <IconLeaf size={11} /> Nutri-Score {quality.nutriScore.toUpperCase()}
         </span>
       )}
@@ -78,7 +78,7 @@ function QualityBadges({ food }: { food: BankFood }) {
         <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full"
           style={{
             background: quality.novaGroup >= 4 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.05)",
-            color: quality.novaGroup >= 4 ? "#f87171" : "var(--text-muted)",
+            color: quality.novaGroup >= 4 ? "var(--danger)" : "var(--text-muted)",
           }}>
           NOVA {quality.novaGroup}{quality.novaGroup >= 4 ? " · ultra-transformé" : ""}
         </span>

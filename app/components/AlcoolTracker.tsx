@@ -104,7 +104,7 @@ function DrinkIcon({ type, color = "#c084fc" }: { type: string; color?: string }
 function WineGlassSVG({ units, dailyGoal }: { units: number; dailyGoal: number }) {
   const pct  = dailyGoal > 0 ? Math.min(1, units / dailyGoal) : Math.min(1, units / 3);
   const over = dailyGoal > 0 && units > dailyGoal;
-  const liquidColor = over ? "#f87171" : units === 0 ? "rgba(255,255,255,0.10)" : "#c084fc";
+  const liquidColor = over ? "var(--danger)" : units === 0 ? "rgba(255,255,255,0.10)" : "#c084fc";
 
   // Bowl geometry: trapezoid top(10,8)→(70,8), narrowing to stem at (37,66)→(43,66)
   const W = 80, bowlT = 8, bowlB = 66, bowlH = bowlB - bowlT;
@@ -314,7 +314,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="flex gap-2 mb-2.5">
             <div className="flex flex-col">
               <span className="text-[20px] font-bold tabular-nums leading-none"
-                style={{ color: over ? "#f87171" : "#c084fc" }}>
+                style={{ color: over ? "var(--danger)" : "#c084fc" }}>
                 {totalUnits.toFixed(1)}
               </span>
               <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
@@ -334,12 +334,12 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="h-1.5 rounded-full overflow-hidden mb-1"
             style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full"
-              style={{ background: over ? "#f87171" : "#c084fc" }}
+              style={{ background: over ? "var(--danger)" : "#c084fc" }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
-          <p className="text-[11px]" style={{ color: over ? "#f87171" : "var(--text-muted)" }}>
+          <p className="text-[11px]" style={{ color: over ? "var(--danger)" : "var(--text-muted)" }}>
             {over
               ? `+${(totalUnits - dailyGoal).toFixed(1)}u au-delà du seuil journalier`
               : `${totalUnits.toFixed(1)} / ${dailyGoal}u seuil jour (${weeklyGoal}u/sem.)`}

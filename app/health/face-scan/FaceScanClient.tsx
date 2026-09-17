@@ -34,8 +34,8 @@ async function compressImage(file: File, maxSide = 480): Promise<Blob> {
 
 const CONFIDENCE_COLOR: Record<FaceScanConfidence, string> = {
   "faible": "var(--text-muted)",
-  "modérée": "#fbbf24",
-  "élevée": "#f87171",
+  "modérée": "var(--carbs)",
+  "élevée": "var(--danger)",
 };
 
 const SCORE_AXES: { key: keyof FaceScanScorecard; label: string; color: string }[] = [
@@ -183,7 +183,7 @@ export default function FaceScanClient() {
             <div key={i} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{f.indicator}</span>
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${CONFIDENCE_COLOR[f.confidence]}18`, color: CONFIDENCE_COLOR[f.confidence] }}>
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `color-mix(in srgb, ${CONFIDENCE_COLOR[f.confidence]} 9%, transparent)`, color: CONFIDENCE_COLOR[f.confidence] }}>
                   confiance {f.confidence}
                 </span>
               </div>
@@ -320,7 +320,7 @@ export default function FaceScanClient() {
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="text-[11px] mb-2" style={{ color: "#f87171" }}>
+                className="text-[11px] mb-2" style={{ color: "var(--danger)" }}>
                 {error}
               </motion.p>
             )}

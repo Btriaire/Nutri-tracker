@@ -11,9 +11,9 @@ function createZenAudio(color: string) {
 
   // ── 1. Drone base (low sine, barely audible) ──────────────────────────────
   const droneFreq: Record<string, number> = {
-    "#60a5fa": 136.1, // OM frequency — blue (cohérence)
-    "#34d399": 174.0, // solfège Fa — green (box)
-    "#a78bfa": 111.0, // very low, sleepy — purple (4-7-8)
+    "var(--fat)": 136.1, // OM frequency — blue (cohérence)
+    "var(--fiber)": 174.0, // solfège Fa — green (box)
+    "var(--protein)": 111.0, // very low, sleepy — purple (4-7-8)
   };
   const freq   = droneFreq[color] ?? 136.1;
   const drone  = ctx.createOscillator();
@@ -109,7 +109,7 @@ const PROGRAMS: Program[] = [
   {
     id: "coherence", emoji: "💙", name: "Cohérence cardiaque",
     desc: "5s inspire · 5s expire · réduit le cortisol",
-    color: "#60a5fa", glow: "rgba(96,165,250,0.35)",
+    color: "var(--fat)", glow: "rgba(96,165,250,0.35)",
     recMin: 3,
     phases: [
       { label: "Inspirez",  seconds: 5, scale: 1.35, opacity: 1    },
@@ -119,7 +119,7 @@ const PROGRAMS: Program[] = [
   {
     id: "box", emoji: "🟦", name: "Box breathing",
     desc: "4s · 4s · 4s · 4s · technique Navy SEALs",
-    color: "#34d399", glow: "rgba(52,211,153,0.35)",
+    color: "var(--fiber)", glow: "rgba(52,211,153,0.35)",
     recMin: 5,
     phases: [
       { label: "Inspirez",  seconds: 4, scale: 1.35, opacity: 1    },
@@ -131,7 +131,7 @@ const PROGRAMS: Program[] = [
   {
     id: "sleep", emoji: "🌙", name: "Sommeil 4-7-8",
     desc: "4s · 7s · 8s · induction du sommeil",
-    color: "#a78bfa", glow: "rgba(167,139,250,0.35)",
+    color: "var(--protein)", glow: "rgba(167,139,250,0.35)",
     recMin: 4,
     phases: [
       { label: "Inspirez",  seconds: 4,  scale: 1.35, opacity: 1    },
@@ -274,7 +274,7 @@ export default function BreathingGuide() {
             <button key={p.id} onClick={() => handleSelectProgram(p.id)}
               className="flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all text-center"
               style={{
-                background: sel ? `${p.color}18` : "rgba(255,255,255,0.03)",
+                background: sel ? `color-mix(in srgb, ${p.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
                 border: `1px solid ${sel ? p.color + "55" : "var(--border)"}`,
               }}>
               <span className="text-[20px]">{p.emoji}</span>
@@ -296,7 +296,7 @@ export default function BreathingGuide() {
               key={`glow-${phaseIdx}`}
               className="absolute rounded-full"
               style={{ width: 180, height: 180, background: "transparent",
-                border: `2px solid ${prog.color}30`, top: "50%", left: "50%",
+                border: `2px solid color-mix(in srgb, ${prog.color} 19%, transparent)`, top: "50%", left: "50%",
                 x: "-50%", y: "-50%", marginTop: 20 }}
               animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.7, 0.4] }}
               transition={{ duration: phase.seconds, ease: "easeInOut", repeat: 0 }}
@@ -317,8 +317,8 @@ export default function BreathingGuide() {
           className="relative flex items-center justify-center rounded-full"
           style={{
             width: 130, height: 130,
-            background: `radial-gradient(circle at 40% 35%, ${prog.color}cc, ${prog.color}55)`,
-            boxShadow: active ? `0 0 40px 8px ${prog.glow}, 0 0 80px 20px ${prog.glow}55` : "none",
+            background: `radial-gradient(circle at 40% 35%, color-mix(in srgb, ${prog.color} 80%, transparent), color-mix(in srgb, ${prog.color} 33%, transparent))`,
+            boxShadow: active ? `0 0 40px 8px ${prog.glow}, 0 0 80px 20px color-mix(in srgb, ${prog.glow} 33%, transparent)` : "none",
           }}
         >
           {/* Phase label + countdown */}
@@ -396,7 +396,7 @@ export default function BreathingGuide() {
                 disabled={active}
                 className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
                 style={{
-                  background: sel ? `${prog.color}25` : "rgba(255,255,255,0.04)",
+                  background: sel ? `color-mix(in srgb, ${prog.color} 15%, transparent)` : "rgba(255,255,255,0.04)",
                   border: `1px solid ${sel ? prog.color + "60" : "var(--border)"}`,
                   color: sel ? prog.color : "var(--text-muted)",
                   opacity: active ? 0.5 : 1,
@@ -434,7 +434,7 @@ export default function BreathingGuide() {
         {active ? (
           <button onClick={handleStop}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }}>
+            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "var(--danger)" }}>
             <IconPlayerStop size={14} stroke={2} />
             Arrêter
           </button>
@@ -442,7 +442,7 @@ export default function BreathingGuide() {
           <motion.button onClick={handleStart}
             whileTap={{ scale: 0.97 }}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[13px] transition-all"
-            style={{ background: `${prog.color}22`, border: `1px solid ${prog.color}55`, color: prog.color }}>
+            style={{ background: `color-mix(in srgb, ${prog.color} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${prog.color} 33%, transparent)`, color: prog.color }}>
             <IconPlayerPlay size={14} stroke={2} />
             Commencer
           </motion.button>

@@ -33,7 +33,7 @@ const CATEGORY_COLORS: Record<ExerciseEntry["category"], string> = {
   cardio:      "#ef4444",
   musculation: "#8b5cf6",
   sport:       "#3b82f6",
-  fonctionnel: "#f97316",
+  fonctionnel: "var(--calories)",
   flexibilite: "#10b981",
 };
 
@@ -255,7 +255,7 @@ function ExerciseCard({
           </span>
           <span
             className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+            style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 27%, transparent)` }}
           >
             {categoryLabel[exercise.category]}
           </span>
@@ -286,7 +286,7 @@ function ExerciseCard({
           style={{ background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.35)" }}
           title="Personnaliser avant d'ajouter"
         >
-          <IconPencil size={13} style={{ color: "#fbbf24" }} />
+          <IconPencil size={13} style={{ color: "var(--carbs)" }} />
         </button>
         {/* Direct add */}
         <button

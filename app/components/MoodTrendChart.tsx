@@ -56,8 +56,8 @@ function CustomTooltip({ active, payload, label }: {
     >
       <p className="font-medium mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
       {mood   != null && <p style={{ color: "#a855f7" }}>😊 Humeur&nbsp;&nbsp;<span className="font-bold">{mood}/5</span></p>}
-      {stress != null && <p style={{ color: "#f87171" }}>😰 Stress&nbsp;&nbsp;&nbsp;<span className="font-bold">{stress}/5</span></p>}
-      {energy != null && <p style={{ color: "#fbbf24" }}>⚡ Énergie&nbsp;<span className="font-bold">{energy}/5</span></p>}
+      {stress != null && <p style={{ color: "var(--danger)" }}>😰 Stress&nbsp;&nbsp;&nbsp;<span className="font-bold">{stress}/5</span></p>}
+      {energy != null && <p style={{ color: "var(--carbs)" }}>⚡ Énergie&nbsp;<span className="font-bold">{energy}/5</span></p>}
     </div>
   );
 }
@@ -81,11 +81,11 @@ export default function MoodTrendChart({ points }: Props) {
             😊 Humeur
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-4 h-0.5 rounded" style={{ background: "#f87171", borderBottom: "1px dashed #f87171" }} />
+            <span className="inline-block w-4 h-0.5 rounded" style={{ background: "var(--danger)", borderBottom: "1px dashed var(--danger)" }} />
             😰 Stress
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-4 h-0.5 rounded" style={{ background: "#fbbf24" }} />
+            <span className="inline-block w-4 h-0.5 rounded" style={{ background: "var(--carbs)" }} />
             ⚡ Énergie
           </span>
         </div>
@@ -136,7 +136,7 @@ export default function MoodTrendChart({ points }: Props) {
           <Line
             type="monotone"
             dataKey="stress"
-            stroke="#f87171"
+            stroke="var(--danger)"
             strokeWidth={1.5}
             strokeDasharray="4 3"
             dot={false}
@@ -147,7 +147,7 @@ export default function MoodTrendChart({ points }: Props) {
           <Line
             type="monotone"
             dataKey="energy"
-            stroke="#fbbf24"
+            stroke="var(--carbs)"
             strokeWidth={1.5}
             strokeDasharray="4 3"
             dot={false}
@@ -163,11 +163,11 @@ export default function MoodTrendChart({ points }: Props) {
           😊 Humeur
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-0.5 rounded" style={{ background: "#f87171" }} />
+          <span className="inline-block w-3 h-0.5 rounded" style={{ background: "var(--danger)" }} />
           😰 Stress
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-0.5 rounded" style={{ background: "#fbbf24" }} />
+          <span className="inline-block w-3 h-0.5 rounded" style={{ background: "var(--carbs)" }} />
           ⚡ Énergie
         </span>
       </div>

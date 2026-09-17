@@ -18,12 +18,12 @@ import type { MeasurementEntry } from "@/app/api/measurements/route";
 type MeasurementKey = "waistCm" | "hipsCm" | "chestCm" | "armsCm" | "thighsCm" | "neckCm" | "calfsCm";
 
 const FIELDS: { key: MeasurementKey; label: string; Icon: typeof IconRuler; color: string; slug: Slug }[] = [
-  { key: "neckCm",   label: "Cou",           Icon: IconStretching,           color: "#a78bfa", slug: "neck"        },
-  { key: "chestCm",  label: "Poitrine",       Icon: IconLungs,                color: "#60a5fa", slug: "chest"       },
-  { key: "armsCm",   label: "Bras",           Icon: IconBarbell,              color: "#f97316", slug: "biceps"      },
-  { key: "waistCm",  label: "Tour de taille", Icon: IconRulerMeasure,         color: "#34d399", slug: "abs"         },
-  { key: "hipsCm",   label: "Hanches",        Icon: IconAdjustmentsHorizontal, color: "#f472b6", slug: "gluteal"     },
-  { key: "thighsCm", label: "Cuisse",         Icon: IconRun,                  color: "#fbbf24", slug: "quadriceps"  },
+  { key: "neckCm",   label: "Cou",           Icon: IconStretching,           color: "var(--protein)", slug: "neck"        },
+  { key: "chestCm",  label: "Poitrine",       Icon: IconLungs,                color: "var(--fat)", slug: "chest"       },
+  { key: "armsCm",   label: "Bras",           Icon: IconBarbell,              color: "var(--calories)", slug: "biceps"      },
+  { key: "waistCm",  label: "Tour de taille", Icon: IconRulerMeasure,         color: "var(--fiber)", slug: "abs"         },
+  { key: "hipsCm",   label: "Hanches",        Icon: IconAdjustmentsHorizontal, color: "var(--weight)", slug: "gluteal"     },
+  { key: "thighsCm", label: "Cuisse",         Icon: IconRun,                  color: "var(--carbs)", slug: "quadriceps"  },
   { key: "calfsCm",  label: "Mollet",         Icon: IconWalk,                 color: "#fb923c", slug: "calves"      },
 ];
 
@@ -47,7 +47,7 @@ function AnatomicalBody({
     const isHighlighted = highlighted === key;
     const dimmed = highlighted !== null && !isHighlighted;
     const base = hasVal ? color : "#52525b";
-    return { slug, color: dimmed ? `${base}40` : base };
+    return { slug, color: dimmed ? `color-mix(in srgb, ${base} 25%, transparent)` : base };
   });
 
   return (
@@ -173,7 +173,7 @@ export default function BodyMeasurementsTab() {
           style={{
             background: "rgba(139,92,246,0.12)",
             border: "1px solid rgba(139,92,246,0.3)",
-            color: "#a78bfa",
+            color: "var(--protein)",
           }}
         >
           <IconRuler size={13} stroke={2} />
@@ -187,8 +187,8 @@ export default function BodyMeasurementsTab() {
           className="flex items-center gap-2 px-3 py-2 rounded-xl"
           style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)" }}
         >
-          <IconCheck size={13} stroke={2} style={{ color: "#34d399" }} />
-          <span className="text-[12px]" style={{ color: "#34d399" }}>Mensurations enregistrées !</span>
+          <IconCheck size={13} stroke={2} style={{ color: "var(--fiber)" }} />
+          <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Mensurations enregistrées !</span>
         </motion.div>
       )}
 
@@ -200,7 +200,7 @@ export default function BodyMeasurementsTab() {
             {loading ? (
               <div className="w-full h-[220px] flex items-center justify-center">
                 <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-                  style={{ borderColor: "rgba(139,92,246,0.3)", borderTopColor: "#a78bfa" }} />
+                  style={{ borderColor: "rgba(139,92,246,0.3)", borderTopColor: "var(--protein)" }} />
               </div>
             ) : (
               <AnatomicalBody
@@ -225,8 +225,8 @@ export default function BodyMeasurementsTab() {
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all text-left"
                   onClick={() => setHighlighted(highlighted === key ? null : key)}
                   style={{
-                    background: highlighted === key ? `${color}15` : "rgba(255,255,255,0.03)",
-                    border: `1px solid ${highlighted === key ? `${color}40` : "var(--border)"}`,
+                    background: highlighted === key ? `color-mix(in srgb, ${color} 8%, transparent)` : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${highlighted === key ? `color-mix(in srgb, ${color} 25%, transparent)` : "var(--border)"}`,
                   }}
                 >
                   <Icon size={14} stroke={1.75} className="flex-shrink-0" style={{ color }} />
@@ -235,7 +235,7 @@ export default function BodyMeasurementsTab() {
                     <div className="flex items-center gap-1">
                       <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{curr} cm</span>
                       {delta !== null && (
-                        <span className="text-[11px]" style={{ color: delta < 0 ? "#4ade80" : "#f87171" }}>
+                        <span className="text-[11px]" style={{ color: delta < 0 ? "#4ade80" : "var(--danger)" }}>
                           {delta > 0 ? "+" : ""}{delta.toFixed(1)}
                         </span>
                       )}
@@ -269,8 +269,8 @@ export default function BodyMeasurementsTab() {
                 onClick={() => setActiveChart(f.key)}
                 className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all"
                 style={{
-                  background: activeChart === f.key ? `${f.color}20` : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${activeChart === f.key ? `${f.color}50` : "var(--border)"}`,
+                  background: activeChart === f.key ? `color-mix(in srgb, ${f.color} 13%, transparent)` : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${activeChart === f.key ? `color-mix(in srgb, ${f.color} 31%, transparent)` : "var(--border)"}`,
                   color: activeChart === f.key ? f.color : "var(--text-muted)",
                 }}>
                 <f.Icon size={11} stroke={1.75} />

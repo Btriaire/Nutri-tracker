@@ -149,8 +149,8 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           {/* Gradient def */}
           <defs>
             <linearGradient id="hungerGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#f97316" stopOpacity={0.8} />
-              <stop offset="100%" stopColor="#f97316" stopOpacity={0.0} />
+              <stop offset="0%"   stopColor="var(--calories)" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="var(--calories)" stopOpacity={0.0} />
             </linearGradient>
             <linearGradient id="hungerLine" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%"   stopColor="#22c55e" />

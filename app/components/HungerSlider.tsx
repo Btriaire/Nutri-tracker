@@ -8,7 +8,7 @@ export const HUNGER_CFG: Record<HungerLevel, { emoji: string; label: string; col
   1: { emoji: "😌", label: "Pas faim",  color: "#22c55e" },
   2: { emoji: "🙂", label: "Peu faim",  color: "#84cc16" },
   3: { emoji: "😐", label: "Modéré",   color: "#f59e0b" },
-  4: { emoji: "😤", label: "Faim",      color: "#f97316" },
+  4: { emoji: "😤", label: "Faim",      color: "var(--calories)" },
   5: { emoji: "🤤", label: "Très faim", color: "#ef4444" },
 };
 

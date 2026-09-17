@@ -77,7 +77,7 @@ export default function AppleHealthPanel() {
                 ~5€ — recommandé, notamment pour le <strong style={{ color: "var(--text-secondary)" }}>détail du
                 sommeil</strong> : léger/profond/paradoxal), soit par un
                 <strong style={{ color: "var(--text-secondary)" }}> Raccourci (Shortcuts)</strong> gratuit que tu montes toi-même.
-                <strong style={{ color: "#f87171" }}> Les deux utilisent une URL différente</strong> — vérifie que
+                <strong style={{ color: "var(--danger)" }}> Les deux utilisent une URL différente</strong> — vérifie que
                 tu utilises la bonne ci-dessous.
               </p>
 
@@ -183,7 +183,7 @@ export default function AppleHealthPanel() {
                   <div>
                     <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>2. Activer l&apos;agrégation du sommeil</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                      Réglages de l&apos;app → cherche <strong>&quot;Aggregate Sleep Data&quot;</strong> → active-la. <strong style={{ color: "#f87171" }}>Sans ça, le détail léger/profond/paradoxal n&apos;est pas envoyé</strong>, seulement la durée totale.
+                      Réglages de l&apos;app → cherche <strong>&quot;Aggregate Sleep Data&quot;</strong> → active-la. <strong style={{ color: "var(--danger)" }}>Sans ça, le détail léger/profond/paradoxal n&apos;est pas envoyé</strong>, seulement la durée totale.
                     </p>
                   </div>
 

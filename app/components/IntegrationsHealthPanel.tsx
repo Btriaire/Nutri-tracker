@@ -15,9 +15,9 @@ import type { IntegrationHealth, IntegrationState } from "@/app/lib/integrations
 // récent alors que le payload était vide).
 
 const STATE_META: Record<IntegrationState, { color: string; Icon: typeof IconCircleCheck; label: string }> = {
-  ok:    { color: "#34d399", Icon: IconCircleCheck,       label: "OK" },
-  stale: { color: "#fbbf24", Icon: IconClockExclamation,  label: "Muet" },
-  error: { color: "#f87171", Icon: IconAlertTriangle,     label: "Erreur" },
+  ok:    { color: "var(--fiber)", Icon: IconCircleCheck,       label: "OK" },
+  stale: { color: "var(--carbs)", Icon: IconClockExclamation,  label: "Muet" },
+  error: { color: "var(--danger)", Icon: IconAlertTriangle,     label: "Erreur" },
   off:   { color: "var(--text-muted)", Icon: IconPlugConnectedX, label: "Inactif" },
 };
 
@@ -52,7 +52,7 @@ export default function IntegrationsHealthPanel({ initial }: { initial: Integrat
       <div className="flex items-center gap-3 mb-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: problems > 0 ? "rgba(251,191,36,0.15)" : "rgba(52,211,153,0.15)" }}>
-          <IconActivityHeartbeat size={18} style={{ color: problems > 0 ? "#fbbf24" : "#34d399" }} />
+          <IconActivityHeartbeat size={18} style={{ color: problems > 0 ? "var(--carbs)" : "var(--fiber)" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>État des synchros</p>
@@ -75,7 +75,7 @@ export default function IntegrationsHealthPanel({ initial }: { initial: Integrat
           const meta = STATE_META[item.state];
           return (
             <div key={item.id} className="flex items-start gap-2.5 px-3 py-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${item.state === "ok" ? "var(--border)" : `${meta.color}33`}` }}>
+              style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${item.state === "ok" ? "var(--border)" : `color-mix(in srgb, ${meta.color} 20%, transparent)`}` }}>
               <meta.Icon size={13} stroke={1.8} style={{ color: meta.color, flexShrink: 0, marginTop: 1 }} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{item.label}</p>

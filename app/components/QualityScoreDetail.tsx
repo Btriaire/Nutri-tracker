@@ -19,7 +19,7 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
         {ROWS.map(({ key, label, max }) => {
           const val = quality.breakdown[key];
           const pct = Math.round((val / max) * 100);
-          const barColor = pct >= 85 ? "#22c55e" : pct >= 60 ? "#fbbf24" : "#f87171";
+          const barColor = pct >= 85 ? "#22c55e" : pct >= 60 ? "var(--carbs)" : "var(--danger)";
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-0.5">
@@ -40,7 +40,7 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
         <div className="pt-1.5 space-y-1">
           {quality.tips.map((tip, i) => (
             <p key={i} className="text-[11px] leading-relaxed flex items-start gap-1.5" style={{ color: "var(--text-muted)" }}>
-              <IconBulb size={11} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "#fbbf24" }} />
+              <IconBulb size={11} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "var(--carbs)" }} />
               {tip}
             </p>
           ))}

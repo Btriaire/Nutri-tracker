@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     label: "Composition",
     Icon:  IconScale,
     metrics: [
-      { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "#f97316" },
+      { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "var(--calories)" },
       { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "#8b5cf6", decimals: 1 },
       { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "#ef4444", decimals: 1 },
     ],
@@ -61,7 +61,7 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
       { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "#6366f1", decimals: 1 },
       { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "#4f46e5", decimals: 1 },
       { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "#7c3aed", decimals: 1 },
-      { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "#34d399" },
+      { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "var(--fiber)" },
     ],
   },
   {
@@ -96,11 +96,11 @@ function movingAverage(data: BodyCompPoint[], key: keyof BodyCompPoint, window: 
 // ─── BP classification ─────────────────────────────────────────────────────────
 
 function bpClass(sys: number, dia: number): { label: string; color: string; bg: string } {
-  if (sys < 90 || dia < 60)      return { label: "Hypotension",     color: "#60a5fa", bg: "rgba(96,165,250,0.08)"  };
-  if (sys < 120 && dia < 80)     return { label: "Optimal",         color: "#34d399", bg: "rgba(52,211,153,0.08)"  };
+  if (sys < 90 || dia < 60)      return { label: "Hypotension",     color: "var(--fat)", bg: "rgba(96,165,250,0.08)"  };
+  if (sys < 120 && dia < 80)     return { label: "Optimal",         color: "var(--fiber)", bg: "rgba(52,211,153,0.08)"  };
   if (sys < 130 && dia < 80)     return { label: "Normal élevé",    color: "#a3e635", bg: "rgba(163,230,53,0.08)"  };
   if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "#fb923c", bg: "rgba(251,146,60,0.08)"  };
-  if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "#f87171", bg: "rgba(248,113,113,0.08)" };
+  if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "var(--danger)", bg: "rgba(248,113,113,0.08)" };
   return                                  { label: "HTA grade 3",     color: "#ef4444", bg: "rgba(239,68,68,0.1)"   };
 }
 
@@ -153,7 +153,7 @@ function MiniStat({ label, value, unit, color, trend }: {
         <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
       </div>
       {trend != null && (
-        <span className="text-[11px] tabular-nums" style={{ color: trend >= 0 ? "#f87171" : "#34d399" }}>
+        <span className="text-[11px] tabular-nums" style={{ color: trend >= 0 ? "var(--danger)" : "var(--fiber)" }}>
           {trend >= 0 ? "▲" : "▼"} {Math.abs(trend).toFixed(1)}{unit.replace("/100", "")}
         </span>
       )}
@@ -396,8 +396,8 @@ export default function BodyCompChart({
               : null;
 
             const vaiStatus = latestV.estimatedVAI
-              ? latestV.estimatedVAI < 1.0 ? { label: "Faible risque", color: "#34d399", bg: "rgba(52,211,153,0.08)" }
-              : latestV.estimatedVAI < 1.5 ? { label: "Risque modéré", color: "#fbbf24", bg: "rgba(251,191,36,0.08)" }
+              ? latestV.estimatedVAI < 1.0 ? { label: "Faible risque", color: "var(--fiber)", bg: "rgba(52,211,153,0.08)" }
+              : latestV.estimatedVAI < 1.5 ? { label: "Risque modéré", color: "var(--carbs)", bg: "rgba(251,191,36,0.08)" }
               : latestV.estimatedVAI < 2.0 ? { label: "Risque élevé", color: "#fb923c", bg: "rgba(251,146,60,0.08)" }
               :             { label: "Risque très élevé", color: "#ef4444", bg: "rgba(239,68,68,0.1)" }
               : null;
@@ -417,7 +417,7 @@ export default function BodyCompChart({
                 <div className="px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                   {/* VAI stat */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
-                    style={{ background: vaiStatus?.bg, border: `1px solid ${vaiStatus?.color}33` }}>
+                    style={{ background: vaiStatus?.bg, border: `1px solid color-mix(in srgb, ${vaiStatus?.color} 20%, transparent)` }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       VAI ({allMeasured ? "mesuré" : someMeasured ? "partiel" : "estimé"})
                     </span>
@@ -427,7 +427,7 @@ export default function BodyCompChart({
                       </span>
                     </div>
                     {vaiTrend != null && (
-                      <span className="text-[11px] tabular-nums" style={{ color: vaiTrend >= 0 ? "#f87171" : "#34d399" }}>
+                      <span className="text-[11px] tabular-nums" style={{ color: vaiTrend >= 0 ? "var(--danger)" : "var(--fiber)" }}>
                         {vaiTrend >= 0 ? "▲" : "▼"} {Math.abs(vaiTrend).toFixed(2)}
                       </span>
                     )}
@@ -436,7 +436,7 @@ export default function BodyCompChart({
                   {/* Detail metrics */}
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                      WC (cm) {latestCalc.wcMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                      WC (cm) {latestCalc.wcMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.wc?.toFixed(1)}
@@ -445,7 +445,7 @@ export default function BodyCompChart({
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                      TG (mg/dL) {latestCalc.tgMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                      TG (mg/dL) {latestCalc.tgMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.tg}
@@ -454,7 +454,7 @@ export default function BodyCompChart({
 
                   <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                      HDL (mg/dL) {latestCalc.hdlMeasured && <span style={{ color: "#34d399" }}>· mesuré</span>}
+                      HDL (mg/dL) {latestCalc.hdlMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {latestCalc.hdl}
@@ -466,8 +466,8 @@ export default function BodyCompChart({
                 <div className="px-4 pb-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {allMeasured
-                      ? <IconCircleCheck size={11} stroke={1.8} style={{ color: "#34d399", flexShrink: 0 }} />
-                      : <IconAlertTriangle size={11} stroke={1.8} style={{ color: "#fbbf24", flexShrink: 0 }} />
+                      ? <IconCircleCheck size={11} stroke={1.8} style={{ color: "var(--fiber)", flexShrink: 0 }} />
+                      : <IconAlertTriangle size={11} stroke={1.8} style={{ color: "var(--carbs)", flexShrink: 0 }} />
                     }
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                       {allMeasured
@@ -553,7 +553,7 @@ export default function BodyCompChart({
               const cls = bpClass(latestBP.systolicBP!, latestBP.diastolicBP!);
               return (
                 <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-shrink-0"
-                  style={{ background: cls.bg, border: `1px solid ${cls.color}33`, minWidth: 96 }}>
+                  style={{ background: cls.bg, border: `1px solid color-mix(in srgb, ${cls.color} 20%, transparent)`, minWidth: 96 }}>
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Tension</span>
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
@@ -585,8 +585,8 @@ export default function BodyCompChart({
                 <button key={m.label} onClick={() => toggleMetric(m.label)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
                   style={{
-                    background: isHidden ? "rgba(255,255,255,0.03)" : `${m.color}18`,
-                    border: `1px solid ${isHidden ? "var(--border)" : `${m.color}55`}`,
+                    background: isHidden ? "rgba(255,255,255,0.03)" : `color-mix(in srgb, ${m.color} 9%, transparent)`,
+                    border: `1px solid ${isHidden ? "var(--border)" : `color-mix(in srgb, ${m.color} 33%, transparent)`}`,
                     color: isHidden ? "var(--text-muted)" : m.color,
                     opacity: isHidden ? 0.5 : 1,
                   }}>
@@ -792,7 +792,7 @@ export default function BodyCompChart({
                                   </span>
                                   {/* Classification badge */}
                                   <span className="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium"
-                                    style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.color}33` }}>
+                                    style={{ background: cls.bg, color: cls.color, border: `1px solid color-mix(in srgb, ${cls.color} 20%, transparent)` }}>
                                     {cls.label}
                                   </span>
                                 </div>

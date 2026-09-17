@@ -22,10 +22,10 @@ import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/a
 import type { DietMealReport, DietViolation } from "@/app/lib/diet-program";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
-  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "#fbbf24", color2: "#f97316" },
-  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "#fb923c", color2: "#f97316" },
-  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat,     color: "#f87171", color2: "#f43f5e" },
-  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple,    color: "#34d399", color2: "#22d3ee" },
+  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "var(--carbs)", color2: "var(--calories)" },
+  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "#fb923c", color2: "var(--calories)" },
+  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat,     color: "var(--danger)", color2: "#f43f5e" },
+  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple,    color: "var(--fiber)", color2: "#22d3ee" },
 };
 
 
@@ -131,8 +131,8 @@ export default function MealSection({
   return (
     <div className="overflow-hidden rounded-2xl"
       style={{
-        background: `linear-gradient(140deg, ${meta.color}12 0%, ${meta.color2}07 100%)`,
-        border: `1px solid ${meta.color}22`,
+        background: `linear-gradient(140deg, color-mix(in srgb, ${meta.color} 7%, transparent) 0%, color-mix(in srgb, ${meta.color2} 3%, transparent) 100%)`,
+        border: `1px solid color-mix(in srgb, ${meta.color} 13%, transparent)`,
       }}
     >
       {/* Hidden photo input — no `capture` attribute, so the OS offers both
@@ -152,7 +152,7 @@ export default function MealSection({
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-4"
-        style={{ borderBottom: open && (entries.length > 0 || photoUrl) ? `1px solid ${meta.color}18` : "none" }}
+        style={{ borderBottom: open && (entries.length > 0 || photoUrl) ? `1px solid color-mix(in srgb, ${meta.color} 9%, transparent)` : "none" }}
       >
         {/* Left: toggle expand */}
         <button
@@ -160,7 +160,7 @@ export default function MealSection({
           className="flex items-center gap-2.5 flex-1 py-3 text-left transition-colors min-w-0"
         >
           <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-md"
-            style={{ background: `${meta.color}20`, color: meta.color }}>
+            style={{ background: `color-mix(in srgb, ${meta.color} 13%, transparent)`, color: meta.color }}>
             <meta.Icon size={13} />
           </span>
           <span className="font-medium text-[13.5px] truncate" style={{ color: "var(--text-primary)" }}>
@@ -178,7 +178,7 @@ export default function MealSection({
             <span
               className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
               style={{
-                color: dietMealReport.status === "ecarts" ? "#f87171" : "#22c55e",
+                color: dietMealReport.status === "ecarts" ? "var(--danger)" : "#22c55e",
                 background: dietMealReport.status === "ecarts" ? "#ef444418" : "#22c55e18",
               }}
               title={dietMealReport.status === "ecarts" ? dietMealReport.violations.map(v => v.reason).join(", ") : "Aucun écart détecté"}
@@ -326,7 +326,7 @@ export default function MealSection({
                   style={{
                     background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))",
                     border: "1px solid rgba(139,92,246,0.25)",
-                    color: "#a78bfa",
+                    color: "var(--protein)",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.18), rgba(59,130,246,0.14))")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))")}
@@ -342,7 +342,7 @@ export default function MealSection({
               <div className="px-4 pb-3">
                 {quality && (
                   <div className="rounded-xl p-3 mb-2 flex items-center gap-3"
-                    style={{ border: `1px solid ${quality.color}33`, background: `${quality.color}0d` }}>
+                    style={{ border: `1px solid color-mix(in srgb, ${quality.color} 20%, transparent)`, background: `color-mix(in srgb, ${quality.color} 5%, transparent)` }}>
                     <QualityScoreBadge score={quality.score} size={48} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-semibold mb-1.5" style={{ color: quality.color }}>
@@ -636,7 +636,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
             <button
               onClick={() => { onDelete(); setOpen(false); }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium"
-              style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }}
+              style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "var(--danger)" }}
             >
               <IconTrash size={14} stroke={1.5} /> Supprimer
             </button>
@@ -677,7 +677,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
       {/* Inline delete */}
       <button onClick={onDelete}
         className="flex items-center justify-center w-7 h-7 rounded-lg transition-all"
-        style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}
+        style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "var(--danger)" }}
         title="Supprimer la photo">
         <IconTrash size={13} stroke={2} />
       </button>

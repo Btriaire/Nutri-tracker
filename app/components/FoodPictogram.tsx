@@ -151,7 +151,7 @@ export default function FoodPictogram({ name, category, size = 44, className }: 
         lineHeight:   1,
         position:     "relative",
         overflow:     "hidden",
-        boxShadow:    `0 3px 10px ${g1}55, inset 0 1px 0 rgba(255,255,255,0.22)`,
+        boxShadow:    `0 3px 10px color-mix(in srgb, ${g1} 33%, transparent), inset 0 1px 0 rgba(255,255,255,0.22)`,
         flexShrink:   0,
       }}
     >

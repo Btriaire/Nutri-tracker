@@ -14,7 +14,7 @@ import {
 } from "@/app/lib/food-substitution";
 import type { RecentFood } from "@/app/api/food/recent/route";
 
-const NUTRI_IA_ACCENT = "#34d399"; // Nutri-IA green — matches VoiceMealModal/FoodSearchModal branding
+const NUTRI_IA_ACCENT = "var(--fiber)"; // Nutri-IA green — matches VoiceMealModal/FoodSearchModal branding
 
 interface PickedFood {
   name:    string;
@@ -29,8 +29,8 @@ interface Props {
 
 const MATCH_STYLE: Record<Exclude<MatchLevel, "na">, { color: string; bg: string; border: string; label: string }> = {
   close:  { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.3)",  label: "Proche"  },
-  medium: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)",  label: "Modéré"  },
-  far:    { color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)", label: "Éloigné" },
+  medium: { color: "var(--carbs)", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)",  label: "Modéré"  },
+  far:    { color: "var(--danger)", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)", label: "Éloigné" },
 };
 
 // ─── Food picker (search + recent history) ────────────────────────────────────

@@ -36,7 +36,7 @@ export default function MuscleBodyMap({
   const common = {
     data,
     bodyColor: "#2a3340",
-    highlightedColors: [`${accent}66`, accent], // [secondaire (alpha), primaire]
+    highlightedColors: [`color-mix(in srgb, ${accent} 40%, transparent)`, accent], // [secondaire (alpha), primaire]
     onClick: handleClick,
     style: { width: "auto", height: size, cursor: onMuscleClick ? "pointer" : "default" },
   };

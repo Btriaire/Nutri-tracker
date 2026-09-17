@@ -39,7 +39,7 @@ const ACT_CATEGORIES: Array<{
     id: "loisirs",
     label: "Loisirs intense",
     sub: "Sports & jeux",
-    c1: "#a78bfa",
+    c1: "var(--protein)",
     c2: "#ec4899",
     filter: (e) => e.category === "sport" || e.category === "fonctionnel",
   },
@@ -47,7 +47,7 @@ const ACT_CATEGORIES: Array<{
     id: "detente",
     label: "Détente",
     sub: "Yoga & mobilité",
-    c1: "#34d399",
+    c1: "var(--fiber)",
     c2: "#22d3ee",
     filter: (e) => e.category === "flexibilite",
   },
@@ -193,8 +193,8 @@ export default function ActivityCategoryPicker({
               transition={{ duration: 0.12 }}
               className="relative overflow-hidden text-left rounded-2xl"
               style={{
-                background: `linear-gradient(140deg, ${cat.c1}16 0%, ${cat.c2}0c 100%)`,
-                border: `1px solid ${cat.c1}28`,
+                background: `linear-gradient(140deg, color-mix(in srgb, ${cat.c1} 9%, transparent) 0%, color-mix(in srgb, ${cat.c2} 5%, transparent) 100%)`,
+                border: `1px solid color-mix(in srgb, ${cat.c1} 16%, transparent)`,
                 minHeight: "110px",
                 padding: "14px",
               }}
@@ -209,7 +209,7 @@ export default function ActivityCategoryPicker({
               <div className="relative z-10 flex flex-col h-full">
                 {/* Icon circle */}
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2.5 overflow-hidden flex-shrink-0"
-                  style={{ background: `${cat.c1}20`, border: `1px solid ${cat.c1}30` }}>
+                  style={{ background: `color-mix(in srgb, ${cat.c1} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${cat.c1} 19%, transparent)` }}>
                   <div style={{ width: 36, height: 36, transform: "scale(0.56)", transformOrigin: "center" }}>
                     <CatSvg color={cat.c1} />
                   </div>
@@ -236,8 +236,8 @@ export default function ActivityCategoryPicker({
                         style={{
                           maxWidth: "72px",
                           padding: "2px 6px",
-                          background: `${cat.c1}1a`,
-                          border: `1px solid ${cat.c1}30`,
+                          background: `color-mix(in srgb, ${cat.c1} 10%, transparent)`,
+                          border: `1px solid color-mix(in srgb, ${cat.c1} 19%, transparent)`,
                           color: cat.c1,
                         }}
                       >
@@ -252,7 +252,7 @@ export default function ActivityCategoryPicker({
                     )}
                   </div>
                 ) : (
-                  <p className="text-[11px] mt-2.5" style={{ color: `${cat.c1}60` }}>
+                  <p className="text-[11px] mt-2.5" style={{ color: `color-mix(in srgb, ${cat.c1} 38%, transparent)` }}>
                     {catExercises.length} activités
                   </p>
                 )}
@@ -283,7 +283,7 @@ export default function ActivityCategoryPicker({
                 maxHeight: "82vh",
                 background: "rgba(10,10,14,0.98)",
                 backdropFilter: "blur(24px)",
-                borderTop: `1px solid ${activeCat.c1}22`,
+                borderTop: `1px solid color-mix(in srgb, ${activeCat.c1} 13%, transparent)`,
               }}
               onClick={e => e.stopPropagation()}
             >
@@ -296,7 +296,7 @@ export default function ActivityCategoryPicker({
               <div className="flex items-center justify-between px-5 py-3.5 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${activeCat.c1}18`, border: `1px solid ${activeCat.c1}28` }}>
+                    style={{ background: `color-mix(in srgb, ${activeCat.c1} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${activeCat.c1} 16%, transparent)` }}>
                     {/* Small icon */}
                     <svg width="22" height="22" viewBox="0 0 64 64" fill="none">
                       {activeCat.id === "endurance" && <>
@@ -366,8 +366,8 @@ export default function ActivityCategoryPicker({
                             className="flex items-center gap-1.5 rounded-xl text-[12px] font-medium transition-all active:opacity-70"
                             style={{
                               padding: "6px 12px",
-                              background: `${activeCat.c1}18`,
-                              border: `1px solid ${activeCat.c1}35`,
+                              background: `color-mix(in srgb, ${activeCat.c1} 9%, transparent)`,
+                              border: `1px solid color-mix(in srgb, ${activeCat.c1} 21%, transparent)`,
                               color: activeCat.c1,
                             }}
                           >
@@ -426,7 +426,7 @@ export default function ActivityCategoryPicker({
                         onClick={ev => { ev.stopPropagation(); onToggleFav(e.id); }}
                         className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl transition-all"
                         style={{
-                          background: isFav ? `${activeCat.c1}20` : "rgba(255,255,255,0.04)",
+                          background: isFav ? `color-mix(in srgb, ${activeCat.c1} 13%, transparent)` : "rgba(255,255,255,0.04)",
                           border: `1px solid ${isFav ? activeCat.c1 + "40" : "rgba(255,255,255,0.06)"}`,
                         }}
                       >

@@ -30,7 +30,7 @@ function CalorieDonut({ eaten, goal, size = 120 }: { eaten: number; goal: number
   const cx = size / 2, R = cx - 8, circ = 2 * Math.PI * R;
   const frac = Math.min(1.05, eaten / Math.max(1, goal));
   const over = frac > 1;
-  const col  = over ? "#ef4444" : frac > 0.88 ? "#f97316" : frac > 0.65 ? "#fbbf24" : "#22c55e";
+  const col  = over ? "#ef4444" : frac > 0.88 ? "var(--calories)" : frac > 0.65 ? "var(--carbs)" : "#22c55e";
   const dash = `${Math.min(frac, 1) * circ} ${circ}`;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>

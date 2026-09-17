@@ -77,9 +77,9 @@ function fmtSleep(min?: number): string {
 function hrZoneColor(bpm: number, maxHr: number): string {
   const pct = bpm / maxHr;
   if (pct < 0.50) return "var(--fit-indigo)";
-  if (pct < 0.60) return "#4285F4";
+  if (pct < 0.60) return "var(--fit-blue)";
   if (pct < 0.70) return "var(--fit-green)";
-  if (pct < 0.85) return "#FBBC04";
+  if (pct < 0.85) return "var(--fit-yellow)";
   return "var(--fit-red)";
 }
 
@@ -745,7 +745,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 style={{
                   background: "rgba(248,113,113,0.1)",
                   border: "1px solid rgba(248,113,113,0.3)",
-                  color: "#f87171",
+                  color: "var(--danger)",
                 }}
               >
                 <IconFileTypePdf size={13} />
@@ -769,7 +769,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 style={{
                   background: "rgba(139,92,246,0.1)",
                   border: "1px solid rgba(139,92,246,0.3)",
-                  color: "#a78bfa",
+                  color: "var(--protein)",
                 }}
               >
                 <IconBrain size={13} />
@@ -781,7 +781,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 style={{
                   background: "rgba(96,165,250,0.1)",
                   border: "1px solid rgba(96,165,250,0.3)",
-                  color: "#60a5fa",
+                  color: "var(--fat)",
                 }}
               >
                 <IconChartGridDots size={13} />
@@ -1067,7 +1067,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </p>
                         <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
                         {todayPoint?.sleepMinutes && (
-                          <p className="text-[11px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "#fbbf24" }}>
+                          <p className="text-[11px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "var(--carbs)" }}>
                             {todayPoint.sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant"}
                           </p>
                         )}
@@ -1264,7 +1264,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                     {weightDelta !== null && (
                       <span className="flex items-center gap-1 text-[12px] font-medium"
-                        style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "#f87171" : "var(--text-muted)" }}>
+                        style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "var(--danger)" : "var(--text-muted)" }}>
                         {weightDelta < -0.1 ? <IconArrowDown size={11} stroke={2} /> : weightDelta > 0.1 ? <IconArrowUp size={11} stroke={2} /> : <IconMinus size={11} stroke={2} />}
                         {Math.abs(weightDelta).toFixed(1)} kg sur la période
                       </span>
@@ -1297,7 +1297,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
                       style={{
                         background: showAdequacyColoring ? "rgba(96,165,250,0.14)" : "rgba(255,255,255,0.05)",
-                        color:      showAdequacyColoring ? "#60a5fa" : "var(--text-muted)",
+                        color:      showAdequacyColoring ? "var(--fat)" : "var(--text-muted)",
                         border:     `1px solid ${showAdequacyColoring ? "rgba(96,165,250,0.4)" : "var(--border)"}`,
                       }}
                     >
@@ -1314,7 +1314,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     { label: "Objectif", value: targetWeightKg   ? `${targetWeightKg.toFixed(1)} kg`  : "—", color: "#4ade80" },
                     { label: "Écart",
                       value: (effectiveCurrentWeight && targetWeightKg) ? `${Math.abs(effectiveCurrentWeight - targetWeightKg).toFixed(1)} kg` : "—",
-                      color: (effectiveCurrentWeight && targetWeightKg && effectiveCurrentWeight > targetWeightKg) ? "#f87171" : "#4ade80" },
+                      color: (effectiveCurrentWeight && targetWeightKg && effectiveCurrentWeight > targetWeightKg) ? "var(--danger)" : "#4ade80" },
                     { label: "Date cible",
                       value: targetDate ? format(new Date(targetDate + "T00:00:00"), "dd/MM/yy") : "—",
                       color: "var(--calories)" },
@@ -1344,7 +1344,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       if (delta === null) return null;
                       const loss = delta < -0.05;
                       const gain = delta >  0.05;
-                      const color = loss ? "#4ade80" : gain ? "#f87171" : "var(--text-muted)";
+                      const color = loss ? "#4ade80" : gain ? "var(--danger)" : "var(--text-muted)";
                       return (
                         <div key={label} className="flex-1 min-w-[64px] flex flex-col items-center p-2 rounded-xl gap-0.5"
                           style={{ background: loss ? "rgba(74,222,128,0.07)" : gain ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${loss ? "rgba(74,222,128,0.2)" : gain ? "rgba(248,113,113,0.2)" : "var(--border)"}` }}>
@@ -1364,9 +1364,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <div className="flex gap-2 mb-3">
                     {adequacyWindows.map(({ days, actualDelta, status }) => {
                       const cfg = status === "onTrack"
-                        ? { emoji: "🙂", label: "Conforme",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.3)" }
+                        ? { emoji: "🙂", label: "Conforme",   color: "var(--fat)", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.3)" }
                         : status === "offTrack"
-                        ? { emoji: "😕", label: "Sous rythme", color: "#f87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" }
+                        ? { emoji: "😕", label: "Sous rythme", color: "var(--danger)", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.25)" }
                         : { emoji: "🤷", label: "Pas assez de données", color: "var(--text-muted)", bg: "rgba(255,255,255,0.03)", border: "var(--border)" };
                       return (
                         <div key={days} className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl"
@@ -1413,8 +1413,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             <stop offset="95%" stopColor="#4ade80" stopOpacity={0.02} />
                           </linearGradient>
                           <linearGradient id="gapGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#f87171" stopOpacity={0.16} />
-                            <stop offset="95%" stopColor="#f87171" stopOpacity={0.04} />
+                            <stop offset="5%"  stopColor="var(--danger)" stopOpacity={0.16} />
+                            <stop offset="95%" stopColor="var(--danger)" stopOpacity={0.04} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -1458,7 +1458,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   </p>
                                 ))}
                                 {gap != null && (
-                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "#f87171" }}>
+                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "var(--danger)" }}>
                                     Écart : {gap > 0 ? "+" : ""}{gap.toFixed(1)} kg {gap > 0 ? "sous objectif" : "au-dessus"}
                                   </p>
                                 )}
@@ -1511,7 +1511,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {showAdequacyColoring ? (
                           <>
                             {(["blueSeg", "redSeg", "neutralSeg"] as const).map(segKey => {
-                              const segColor = segKey === "blueSeg" ? "#60a5fa" : segKey === "redSeg" ? "#f87171" : "var(--text-muted)";
+                              const segColor = segKey === "blueSeg" ? "var(--fat)" : segKey === "redSeg" ? "var(--danger)" : "var(--text-muted)";
                               return (
                                 <Line key={segKey} yAxisId="w" type="linear" dataKey={segKey} name={segKey}
                                   stroke={segColor} strokeWidth={2} legendType="none"
@@ -1546,11 +1546,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       {showAdequacyColoring ? (
                         <>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-0.5 rounded" style={{ background: "#60a5fa" }} />
+                            <div className="w-6 h-0.5 rounded" style={{ background: "var(--fat)" }} />
                             <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-0.5 rounded" style={{ background: "#f87171" }} />
+                            <div className="w-6 h-0.5 rounded" style={{ background: "var(--danger)" }} />
                             <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
                           </div>
                         </>
@@ -1627,9 +1627,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
               const REF = {
                 fiberG:        { refLine: 25,   unit: "g",  label: "Fibres",        color: "#4ade80", note: "≥ 25 g/j"    },
-                sugarG:        { refLine: 25,   unit: "g",  label: "Sucres libres", color: "#f472b6", note: "< 25 g/j"    },
+                sugarG:        { refLine: 25,   unit: "g",  label: "Sucres libres", color: "var(--weight)", note: "< 25 g/j"    },
                 sodiumMg:      { refLine: 2000, unit: "mg", label: "Sodium",        color: "#fb923c", note: "< 2000 mg/j" },
-                saturatedFatG: { refLine: 22,   unit: "g",  label: "Lipides sat.",  color: "#f97316", note: "< 22 g/j"    },
+                saturatedFatG: { refLine: 22,   unit: "g",  label: "Lipides sat.",  color: "var(--calories)", note: "< 22 g/j"    },
               } as const;
               type MicroKey = keyof typeof REF;
               const activeMicros: MicroKey[] = (["fiberG", "sugarG", "sodiumMg", "saturatedFatG"] as MicroKey[]).filter(k => {
@@ -1729,7 +1729,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label} moy.</p>
                             {goal > 0 && (
                               <p className="text-[11px] tabular-nums"
-                                style={{ color: val >= goal * 0.85 && val <= goal * 1.15 ? "#34d399" : "#fbbf24" }}>
+                                style={{ color: val >= goal * 0.85 && val <= goal * 1.15 ? "var(--fiber)" : "var(--carbs)" }}>
                                 obj. {goal}g
                               </p>
                             )}
@@ -1764,7 +1764,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[11px] font-bold tabular-nums"
-                                    style={{ color: isOkAvg ? "#34d399" : "#f87171" }}>{avgVal}{ref.unit}</span>
+                                    style={{ color: isOkAvg ? "var(--fiber)" : "var(--danger)" }}>{avgVal}{ref.unit}</span>
                                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>moy.</span>
                                 </div>
                               </div>
@@ -1933,8 +1933,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <AreaChart data={meditChartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="meditWave" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%"   stopColor="#a78bfa" stopOpacity={0.4} />
-                            <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.02} />
+                            <stop offset="0%"   stopColor="var(--protein)" stopOpacity={0.4} />
+                            <stop offset="100%" stopColor="var(--protein)" stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
                         <Tooltip content={({ active, payload, label: lbl }) =>
@@ -1947,7 +1947,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           ) : null
                         } />
                         <Area type="monotone" dataKey="mins"
-                          stroke="#a78bfa" strokeWidth={1.5}
+                          stroke="var(--protein)" strokeWidth={1.5}
                           fill="url(#meditWave)" dot={false} />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -1992,9 +1992,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             {(() => {
               const MEAL_COLORS = {
                 breakfast: "#f59e0b",
-                lunch:     "#f97316",
+                lunch:     "var(--calories)",
                 dinner:    "#8b5cf6",
-                snacks:    "#34d399",
+                snacks:    "var(--fiber)",
               };
               // Professional icon components per meal
               const MEAL_ICONS = {
@@ -2147,7 +2147,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                     width: 22, height: 22, margin: "0 1px",
                                     background: cellBg(meal, val),
                                     border: val != null
-                                      ? `1px solid ${MEAL_COLORS[meal]}28`
+                                      ? `1px solid color-mix(in srgb, ${MEAL_COLORS[meal]} 16%, transparent)`
                                       : "1px solid rgba(255,255,255,0.03)",
                                   }}
                                 >
@@ -2218,7 +2218,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       if (avg === null) return null;
                       return (
                         <div key={meal} className="flex flex-col items-center p-2.5 rounded-xl"
-                          style={{ background: `${MEAL_COLORS[meal]}0D`, border: `1px solid ${MEAL_COLORS[meal]}22` }}>
+                          style={{ background: `color-mix(in srgb, ${MEAL_COLORS[meal]} 5%, transparent)`, border: `1px solid color-mix(in srgb, ${MEAL_COLORS[meal]} 13%, transparent)` }}>
                           {/* Icon */}
                           <span style={{ color: MEAL_COLORS[meal], opacity: 0.8, marginBottom: 2 }}>
                             {MEAL_ICONS[meal]}
@@ -2348,10 +2348,10 @@ function FastingTracker({
   }
 
   function barFill(pct: number, active: boolean): string {
-    if (active)    return "#f97316";
+    if (active)    return "var(--calories)";
     if (pct >= 1)  return "#22c55e";
     if (pct >= 0.75) return "#86efac";
-    if (pct >= 0.5)  return "#fbbf24";
+    if (pct >= 0.5)  return "var(--carbs)";
     return "#a855f7";
   }
 
@@ -2394,7 +2394,7 @@ function FastingTracker({
           </span>
           {avgH > 0 && (
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.25)" }}>
+              style={{ background: "rgba(251,191,36,0.1)", color: "var(--carbs)", border: "1px solid rgba(251,191,36,0.25)" }}>
               ⌀ {avgH.toFixed(1)}h
             </span>
           )}
@@ -2428,7 +2428,7 @@ function FastingTracker({
       <div className="flex items-center gap-3 mt-1">
         {[
           { c: "#a855f7", label: "< 50%" },
-          { c: "#fbbf24", label: "50-74%" },
+          { c: "var(--carbs)", label: "50-74%" },
           { c: "#86efac", label: "75-99%" },
           { c: "#22c55e", label: "100% ✓" },
         ].map(l => (
@@ -2457,8 +2457,8 @@ function AlcoolWeekWidget({
 
   function barColor(units: number): string {
     if (units === 0)            return "rgba(192,132,252,0.15)";
-    if (units > dailyLimit)     return "#f87171";
-    if (units > dailyLimit * 0.8) return "#fbbf24";
+    if (units > dailyLimit)     return "var(--danger)";
+    if (units > dailyLimit * 0.8) return "var(--carbs)";
     return "#c084fc";
   }
 
@@ -2485,7 +2485,7 @@ function AlcoolWeekWidget({
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "#f87171" : "#c084fc" }}>
+          <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "var(--danger)" : "#c084fc" }}>
             {weeklyTotal.toFixed(1)}
           </span>
           <span className="text-[11px] ml-0.5" style={{ color: "var(--text-muted)" }}>
@@ -2498,7 +2498,7 @@ function AlcoolWeekWidget({
       <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
         <motion.div
           className="h-full rounded-full"
-          style={{ background: overWeek ? "#f87171" : "linear-gradient(90deg,#a855f7,#c084fc)" }}
+          style={{ background: overWeek ? "var(--danger)" : "linear-gradient(90deg,#a855f7,#c084fc)" }}
           initial={{ width: 0 }}
           animate={{ width: `${pctWeek * 100}%` }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -2535,7 +2535,7 @@ function AlcoolWeekWidget({
       <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
         Seuil jour : {dailyLimit}u · OMS ≤ {weeklyGoal}u/sem.
         {overWeek && (
-          <span style={{ color: "#f87171" }}> · +{(weeklyTotal - weeklyGoal).toFixed(1)}u au-dessus</span>
+          <span style={{ color: "var(--danger)" }}> · +{(weeklyTotal - weeklyGoal).toFixed(1)}u au-dessus</span>
         )}
       </p>
     </motion.div>

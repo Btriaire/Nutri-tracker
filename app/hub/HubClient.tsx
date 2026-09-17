@@ -11,20 +11,20 @@ function JournalSVG() {
     <svg width="160" height="140" viewBox="0 0 160 140" fill="none" overflow="visible">
       <defs>
         <linearGradient id="j-bowl" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f97316" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#f97316" stopOpacity="0.06" />
+          <stop offset="0%" stopColor="var(--calories)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--calories)" stopOpacity="0.06" />
         </linearGradient>
       </defs>
 
       {/* Bowl */}
       <path d="M36,62 Q32,108 80,116 Q128,108 124,62 Z"
-        fill="url(#j-bowl)" stroke="#f97316" strokeWidth="1.8" strokeOpacity="0.6" />
+        fill="url(#j-bowl)" stroke="var(--calories)" strokeWidth="1.8" strokeOpacity="0.6" />
       {/* Rim */}
       <ellipse cx="80" cy="62" rx="44" ry="8" fill="none"
-        stroke="#f97316" strokeWidth="1.8" strokeOpacity="0.5" />
+        stroke="var(--calories)" strokeWidth="1.8" strokeOpacity="0.5" />
 
       {/* Fork (left) */}
-      <g stroke="#f97316" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round">
+      <g stroke="var(--calories)" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round">
         <line x1="52" y1="30" x2="52" y2="60" />
         <line x1="49" y1="30" x2="49" y2="44" />
         <line x1="55" y1="30" x2="55" y2="44" />
@@ -32,9 +32,9 @@ function JournalSVG() {
       </g>
 
       {/* Spoon (right) */}
-      <g stroke="#f97316" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round">
+      <g stroke="var(--calories)" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round">
         <line x1="108" y1="52" x2="108" y2="60" />
-        <ellipse cx="108" cy="42" rx="5" ry="8" stroke="#f97316" strokeOpacity="0.55" />
+        <ellipse cx="108" cy="42" rx="5" ry="8" stroke="var(--calories)" strokeOpacity="0.55" />
       </g>
 
       {/* Steam strands */}
@@ -42,7 +42,7 @@ function JournalSVG() {
         <motion.path
           key={i}
           d={`M${80 + dx},56 Q${80 + dx - 5},46 ${80 + dx},36 Q${80 + dx + 5},26 ${80 + dx},18`}
-          fill="none" stroke="#f97316" strokeWidth="1.6" strokeLinecap="round"
+          fill="none" stroke="var(--calories)" strokeWidth="1.6" strokeLinecap="round"
           strokeOpacity="0.45"
           animate={{ opacity: [0, 0.7, 0], y: [0, -8, -14] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: delay * -1 / 6 }}
@@ -56,8 +56,8 @@ function JournalSVG() {
           transition={{ duration: 2 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }}
           style={{ transformOrigin: `${x}px ${y}px` }}
         >
-          <line x1={x} y1={y - 5} x2={x} y2={y + 5} stroke="#f97316" strokeWidth="1.2" strokeOpacity="0.6" />
-          <line x1={x - 5} y1={y} x2={x + 5} y2={y} stroke="#f97316" strokeWidth="1.2" strokeOpacity="0.6" />
+          <line x1={x} y1={y - 5} x2={x} y2={y + 5} stroke="var(--calories)" strokeWidth="1.2" strokeOpacity="0.6" />
+          <line x1={x - 5} y1={y} x2={x + 5} y2={y} stroke="var(--calories)" strokeWidth="1.2" strokeOpacity="0.6" />
         </motion.g>
       ))}
     </svg>
@@ -70,8 +70,8 @@ function ActiviteSVG() {
     <svg width="160" height="140" viewBox="0 0 160 140" fill="none" overflow="visible">
       <defs>
         <linearGradient id="a-flame" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#34d399" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#34d399" stopOpacity="0.2" />
+          <stop offset="0%" stopColor="var(--fiber)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--fiber)" stopOpacity="0.2" />
         </linearGradient>
         <filter id="a-glow">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -84,14 +84,14 @@ function ActiviteSVG() {
         Array.from({ length: 8 }, (_, col) => (
           <circle key={`${row}-${col}`}
             cx={16 + col * 19} cy={100 + row * 12 - 24}
-            r="1" fill="#34d399" fillOpacity="0.12" />
+            r="1" fill="var(--fiber)" fillOpacity="0.12" />
         ))
       )}
 
       {/* Flame shape */}
       <motion.path
         d="M80,118 C58,118 46,102 50,85 C54,70 62,72 62,60 C62,48 70,38 80,28 C80,28 78,46 86,52 C92,56 96,62 96,72 C102,64 100,52 96,44 C108,56 114,72 110,88 C106,104 96,118 80,118 Z"
-        fill="url(#a-flame)" stroke="#34d399" strokeWidth="1.5" strokeOpacity="0.7"
+        fill="url(#a-flame)" stroke="var(--fiber)" strokeWidth="1.5" strokeOpacity="0.7"
         filter="url(#a-glow)"
         animate={{ scaleY: [1, 1.04, 0.97, 1.02, 1], scaleX: [1, 0.97, 1.02, 0.98, 1] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -101,7 +101,7 @@ function ActiviteSVG() {
       {/* ECG line across flame */}
       <motion.path
         d="M10,80 L34,80 L42,56 L50,104 L58,80 L70,80 L78,48 L86,108 L94,80 L106,80 L114,62 L122,80 L150,80"
-        fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        fill="none" stroke="var(--fiber)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         strokeOpacity="0.9"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: [0, 1, 1, 0] }}
@@ -109,7 +109,7 @@ function ActiviteSVG() {
       />
 
       {/* Pulse dot */}
-      <motion.circle cx="94" cy="80" r="4" fill="#34d399"
+      <motion.circle cx="94" cy="80" r="4" fill="var(--fiber)"
         animate={{ scale: [0, 1.4, 0], opacity: [0, 1, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, delay: 1.6 }}
         style={{ transformOrigin: "94px 80px" }}
@@ -121,9 +121,9 @@ function ActiviteSVG() {
 // ─── Animated SVG : Progrès ───────────────────────────────────────────────────
 function ProgresSVG() {
   const bars = [
-    { x: 26, h: 52, color: "#a78bfa" },
-    { x: 58, h: 80, color: "#a78bfa" },
-    { x: 90, h: 64, color: "#a78bfa" },
+    { x: 26, h: 52, color: "var(--protein)" },
+    { x: 58, h: 80, color: "var(--protein)" },
+    { x: 90, h: 64, color: "var(--protein)" },
     { x: 122, h: 96, color: "#c4b5fd" },
   ];
   const baseline = 118;
@@ -132,8 +132,8 @@ function ProgresSVG() {
     <svg width="160" height="140" viewBox="0 0 160 140" fill="none" overflow="visible">
       <defs>
         <linearGradient id="p-bar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.2" />
+          <stop offset="0%" stopColor="var(--protein)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--protein)" stopOpacity="0.2" />
         </linearGradient>
       </defs>
 
@@ -170,7 +170,7 @@ function ProgresSVG() {
       {/* Star (top right) */}
       <motion.polygon
         points="136,22 138.5,30 146,30 140,35 142,43 136,38 130,43 132,35 126,30 133.5,30"
-        fill="#a78bfa" fillOpacity="0.8"
+        fill="var(--protein)" fillOpacity="0.8"
         stroke="#c4b5fd" strokeWidth="0.8"
         animate={{ scale: [0.85, 1.15, 0.85], rotate: [0, 15, -10, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -239,7 +239,7 @@ const CARDS = [
     label:   "JOURNAL",
     sub:     "Repas & calories",
     SVG:     JournalSVG,
-    color:   "#f97316",
+    color:   "var(--calories)",
     glow:    "rgba(249,115,22,0.18)",
     border:  "rgba(249,115,22,0.25)",
     bg:      "rgba(249,115,22,0.07)",
@@ -249,7 +249,7 @@ const CARDS = [
     label:   "ACTIVITÉ",
     sub:     "Mouvement & brûlé",
     SVG:     ActiviteSVG,
-    color:   "#34d399",
+    color:   "var(--fiber)",
     glow:    "rgba(52,211,153,0.18)",
     border:  "rgba(52,211,153,0.25)",
     bg:      "rgba(52,211,153,0.07)",
@@ -259,7 +259,7 @@ const CARDS = [
     label:   "PROGRÈS",
     sub:     "Tendances & courbes",
     SVG:     ProgresSVG,
-    color:   "#a78bfa",
+    color:   "var(--protein)",
     glow:    "rgba(167,139,250,0.18)",
     border:  "rgba(167,139,250,0.25)",
     bg:      "rgba(167,139,250,0.07)",

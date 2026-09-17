@@ -26,9 +26,9 @@ const RANGES = [
 function hrZone(bpm: number, maxHr: number): { label: string; color: string; desc: string } {
   const pct = bpm / maxHr;
   if (pct < 0.50) return { label: "Repos",        color: "var(--fit-indigo)", desc: "Récupération active" };
-  if (pct < 0.60) return { label: "Échauffement", color: "#4285F4",           desc: "Zone 1 · 50–60%" };
+  if (pct < 0.60) return { label: "Échauffement", color: "var(--fit-blue)",           desc: "Zone 1 · 50–60%" };
   if (pct < 0.70) return { label: "Aérobie",      color: "var(--fit-green)",  desc: "Zone 2 · 60–70%" };
-  if (pct < 0.85) return { label: "Seuil",        color: "#FBBC04",           desc: "Zone 3 · 70–85%" };
+  if (pct < 0.85) return { label: "Seuil",        color: "var(--fit-yellow)",           desc: "Zone 3 · 70–85%" };
   return                 { label: "Maximal",      color: "var(--fit-red)",    desc: "Zone 4 · >85%" };
 }
 
@@ -152,7 +152,7 @@ export default function CardioClient({ points, age }: Props) {
           {[
             { label: "Moyenne",  value: avgHr ? `${avgHr} bpm` : "—", icon: <IconHeart size={14} style={{ color: "var(--fit-red)" }} /> },
             { label: "Min",      value: minHr ? `${minHr} bpm` : "—", icon: <IconArrowDown size={14} style={{ color: "var(--fit-green)" }} /> },
-            { label: "Max",      value: maxHr ? `${maxHr} bpm` : "—", icon: <IconArrowUp size={14} style={{ color: "#f97316" }} /> },
+            { label: "Max",      value: maxHr ? `${maxHr} bpm` : "—", icon: <IconArrowUp size={14} style={{ color: "var(--calories)" }} /> },
           ].map(({ label, value, icon }) => (
             <div key={label} className="card flex flex-col gap-1">
               <div className="flex items-center gap-1">{icon}<span className="label-xs">{label}</span></div>
@@ -169,7 +169,7 @@ export default function CardioClient({ points, age }: Props) {
               ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta < 0
                 ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>En baisse de <strong style={{ color: "var(--fit-green)" }}>{Math.abs(weekDelta)} bpm</strong> cette semaine</span></>
-                : <><IconAlertCircle size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}>En hausse de <strong style={{ color: "#fbbf24" }}>{weekDelta} bpm</strong> cette semaine</span></>
+                : <><IconAlertCircle size={15} style={{ color: "var(--carbs)" }} /><span style={{ color: "var(--text-secondary)" }}>En hausse de <strong style={{ color: "var(--carbs)" }}>{weekDelta} bpm</strong> cette semaine</span></>
             }
           </motion.div>
         )}
@@ -198,8 +198,8 @@ export default function CardioClient({ points, age }: Props) {
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#EA4335" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#EA4335" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--fit-red)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--fit-red)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -209,7 +209,7 @@ export default function CardioClient({ points, age }: Props) {
                 {/* Zone reference lines */}
                 <ReferenceLine y={60}  stroke="rgba(129,140,248,0.25)" strokeDasharray="4 3" label={{ value: "60", fill: "rgba(129,140,248,0.5)", fontSize: 11, position: "right" }} />
                 <ReferenceLine y={100} stroke="rgba(248,113,113,0.25)" strokeDasharray="4 3" label={{ value: "100", fill: "rgba(248,113,113,0.5)", fontSize: 11, position: "right" }} />
-                <Area type="monotone" dataKey="hrAvg" stroke="#EA4335" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "#EA4335" }} />
+                <Area type="monotone" dataKey="hrAvg" stroke="var(--fit-red)" strokeWidth={2} fill="url(#hrGrad)" dot={false} connectNulls activeDot={{ r: 4, fill: "var(--fit-red)" }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -239,8 +239,8 @@ export default function CardioClient({ points, age }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#34A853" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="var(--fit-green)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--fit-green)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -256,7 +256,7 @@ export default function CardioClient({ points, age }: Props) {
                 );
               }} />
               <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="activeMin" stroke="#34A853" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
+              <Area type="monotone" dataKey="activeMin" stroke="var(--fit-green)" strokeWidth={1.5} fill="url(#actGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -268,8 +268,8 @@ export default function CardioClient({ points, age }: Props) {
             <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#7986CB" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7986CB" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="var(--fit-indigo)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--fit-indigo)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -286,7 +286,7 @@ export default function CardioClient({ points, age }: Props) {
                 );
               }} />
               <ReferenceLine y={420} stroke="rgba(121,134,203,0.3)" strokeDasharray="4 3" />
-              <Area type="monotone" dataKey="sleepMinutes" stroke="#7986CB" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
+              <Area type="monotone" dataKey="sleepMinutes" stroke="var(--fit-indigo)" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
           <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>

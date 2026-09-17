@@ -134,7 +134,7 @@ export default function ChartPrefsPanel() {
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
                       <span className="text-[11px] font-medium"
-                        style={{ color: macroDisp === opt.value ? "#34d399" : "var(--text-muted)" }}>
+                        style={{ color: macroDisp === opt.value ? "var(--fiber)" : "var(--text-muted)" }}>
                         {opt.label}
                       </span>
                     </button>
@@ -157,7 +157,7 @@ export default function ChartPrefsPanel() {
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
                       <span className="text-[11px] font-medium"
-                        style={{ color: wtType === opt.value ? "#fbbf24" : "var(--text-muted)" }}>
+                        style={{ color: wtType === opt.value ? "var(--carbs)" : "var(--text-muted)" }}>
                         {opt.label}
                       </span>
                     </button>

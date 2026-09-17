@@ -87,11 +87,11 @@ function MacroBar({
       {/* Protein */}
       <rect x={0}          y={0} width={pP} height={6} rx={r}   fill="#3b82f6" />
       {/* Carbs */}
-      <rect x={pP}         y={0} width={pC} height={6} rx={0}   fill="#fbbf24" />
+      <rect x={pP}         y={0} width={pC} height={6} rx={0}   fill="var(--carbs)" />
       {/* Fat */}
-      <rect x={pP + pC}    y={0} width={pF} height={6} rx={0}   fill="#a78bfa" />
+      <rect x={pP + pC}    y={0} width={pF} height={6} rx={0}   fill="var(--protein)" />
       {/* Right cap on last segment */}
-      <rect x={200 - r}    y={0} width={r}  height={6} rx={r}   fill="#a78bfa" />
+      <rect x={200 - r}    y={0} width={r}  height={6} rx={r}   fill="var(--protein)" />
     </svg>
   );
 }
@@ -329,7 +329,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
         <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: `${mealColor}22` }}>
+            style={{ background: `color-mix(in srgb, ${mealColor} 13%, transparent)` }}>
             <IconSparkles size={16} style={{ color: mealColor }} />
           </div>
           <div className="flex-1 min-w-0">
@@ -383,7 +383,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                   <motion.div
                     initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="mb-4 px-4 py-3 rounded-xl text-[13px]"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--danger)" }}>
                     {error}
                   </motion.div>
                 )}
@@ -391,7 +391,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
 
               {/* Previous preview */}
               {preview && (
-                <div className="mb-4 rounded-xl overflow-hidden" style={{ maxHeight: 160, border: `1px solid ${mealColor}25` }}>
+                <div className="mb-4 rounded-xl overflow-hidden" style={{ maxHeight: 160, border: `1px solid color-mix(in srgb, ${mealColor} 15%, transparent)` }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt="" style={{ width: "100%", objectFit: "cover" }} />
                 </div>
@@ -403,10 +403,10 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="flex-1 flex flex-col items-center gap-3 py-7 rounded-2xl transition-all active:scale-[0.97]"
-                  style={{ background: `${mealColor}0C`, border: `2px dashed ${mealColor}45` }}
+                  style={{ background: `color-mix(in srgb, ${mealColor} 5%, transparent)`, border: `2px dashed color-mix(in srgb, ${mealColor} 27%, transparent)` }}
                 >
                   <svg width="52" height="52" viewBox="0 0 52 52" style={{ display: "block" }}>
-                    <circle cx="26" cy="26" r="24" fill={`${mealColor}15`} />
+                    <circle cx="26" cy="26" r="24" fill={`color-mix(in srgb, ${mealColor} 8%, transparent)`} />
                     <text x="26" y="26" textAnchor="middle" dominantBaseline="middle" fontSize="22">📷</text>
                   </svg>
                   <span className="text-[13px] font-semibold px-2 text-center" style={{ color: "var(--text-primary)" }}>
@@ -448,7 +448,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                   className="rounded-2xl overflow-hidden"
-                  style={{ width: 100, height: 100, border: `2px solid ${mealColor}30`, flexShrink: 0 }}>
+                  style={{ width: 100, height: 100, border: `2px solid color-mix(in srgb, ${mealColor} 19%, transparent)`, flexShrink: 0 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </motion.div>
@@ -483,7 +483,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 <motion.div
                   initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
                   className="mb-4 rounded-xl overflow-hidden relative"
-                  style={{ maxHeight: 120, border: `1px solid ${mealColor}20` }}>
+                  style={{ maxHeight: 120, border: `1px solid color-mix(in srgb, ${mealColor} 13%, transparent)` }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt="" style={{ width: "100%", objectFit: "cover" }} />
                   <div className="absolute inset-0"
@@ -508,7 +508,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                   <motion.div
                     initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="mb-3 px-4 py-3 rounded-xl text-[13px]"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--danger)" }}>
                     {error}
                   </motion.div>
                 )}
@@ -527,7 +527,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       transition={{ delay: idx * 0.06, duration: 0.25 }}
                       className="rounded-xl p-3"
                       style={{
-                        background: item.selected ? `${mealColor}0D` : "rgba(255,255,255,0.025)",
+                        background: item.selected ? `color-mix(in srgb, ${mealColor} 5%, transparent)` : "rgba(255,255,255,0.025)",
                         border:     `1px solid ${item.selected ? mealColor + "35" : "rgba(255,255,255,0.07)"}`,
                         opacity:    isSaving ? 0.65 : 1,
                         transition: "background 0.15s, border-color 0.15s, opacity 0.2s",
@@ -630,8 +630,8 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       <div className="flex items-center gap-4 mt-2">
                         {[
                           { label: "Prot.", color: "#3b82f6", val: Math.round(totals.proteinG) },
-                          { label: "Gluc.", color: "#fbbf24", val: Math.round(totals.carbsG) },
-                          { label: "Lip.",  color: "#a78bfa", val: Math.round(totals.fatG) },
+                          { label: "Gluc.", color: "var(--carbs)", val: Math.round(totals.carbsG) },
+                          { label: "Lip.",  color: "var(--protein)", val: Math.round(totals.fatG) },
                         ].map(({ label, color, val }) => (
                           <div key={label} className="flex items-center gap-1">
                             <svg width="7" height="7" viewBox="0 0 7 7">
@@ -650,8 +650,8 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       style={{ background: "rgba(255,255,255,0.02)" }}>
                       {[
                         { label: "Protéines", color: "#3b82f6", val: totals.proteinG, goal: 50 },
-                        { label: "Glucides",  color: "#fbbf24", val: totals.carbsG,   goal: 150 },
-                        { label: "Lipides",   color: "#a78bfa", val: totals.fatG,     goal: 60 },
+                        { label: "Glucides",  color: "var(--carbs)", val: totals.carbsG,   goal: 150 },
+                        { label: "Lipides",   color: "var(--protein)", val: totals.fatG,     goal: 60 },
                       ].map(({ label, color, val, goal }) => (
                         <div key={label}>
                           <p className="text-[11px] mb-1 truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
@@ -685,9 +685,9 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 disabled={phase === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]"
                 style={{
-                  background: phase === "saving" ? `${mealColor}70` : mealColor,
+                  background: phase === "saving" ? `color-mix(in srgb, ${mealColor} 44%, transparent)` : mealColor,
                   color: "#fff",
-                  boxShadow: phase !== "saving" ? `0 4px 20px ${mealColor}35` : "none",
+                  boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${mealColor} 21%, transparent)` : "none",
                 }}>
                 {phase === "saving" ? (
                   <>

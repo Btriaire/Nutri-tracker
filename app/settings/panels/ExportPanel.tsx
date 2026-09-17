@@ -66,7 +66,7 @@ export default function ExportPanel() {
       >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: "linear-gradient(135deg,rgba(96,165,250,0.15),rgba(167,139,250,0.15))" }}>
-          <IconDatabase size={17} style={{ color: "#60a5fa" }} />
+          <IconDatabase size={17} style={{ color: "var(--fat)" }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-semibold">Exporter mes données</p>
@@ -99,7 +99,7 @@ export default function ExportPanel() {
             style={{
               background: exportFmt === f ? (f === "json" ? "rgba(96,165,250,0.15)" : "rgba(52,211,153,0.12)") : "rgba(255,255,255,0.04)",
               border:     exportFmt === f ? `1px solid ${f === "json" ? "rgba(96,165,250,0.4)" : "rgba(52,211,153,0.35)"}` : "1px solid var(--border)",
-              color:      exportFmt === f ? (f === "json" ? "#60a5fa" : "#34d399") : "var(--text-muted)",
+              color:      exportFmt === f ? (f === "json" ? "var(--fat)" : "var(--fiber)") : "var(--text-muted)",
             }}>
             {f === "json" ? "📦 JSON" : "📊 CSV"}
           </button>
@@ -151,7 +151,7 @@ export default function ExportPanel() {
               style={{
                 background: from === p.from && to === p.to ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.05)",
                 border:     from === p.from && to === p.to ? "1px solid rgba(96,165,250,0.35)" : "1px solid var(--border)",
-                color:      from === p.from && to === p.to ? "#60a5fa" : "var(--text-muted)",
+                color:      from === p.from && to === p.to ? "var(--fat)" : "var(--text-muted)",
               }}>
               {p.label}
             </button>
@@ -167,7 +167,7 @@ export default function ExportPanel() {
         style={{
           background: done ? "rgba(52,211,153,0.15)" : "linear-gradient(135deg,rgba(96,165,250,0.18),rgba(167,139,250,0.18))",
           border:     done ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(96,165,250,0.35)",
-          color:      done ? "#34d399" : "#60a5fa",
+          color:      done ? "var(--fiber)" : "var(--fat)",
         }}>
         {loading ? (
           <><IconLoader2 size={14} className="animate-spin" /> Préparation du fichier…</>

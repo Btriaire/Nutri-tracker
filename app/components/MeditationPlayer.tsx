@@ -67,7 +67,7 @@ const PROGRAMS: Program[] = [
   {
     id: "express", label: "Pause éclair", durationMin: 3, emoji: "⚡",
     description: "Micro-pause · 3 respirations · retour au calme immédiat",
-    color: "#fbbf24", soundCat: "bowl" as SoundCategory,
+    color: "var(--carbs)", soundCat: "bowl" as SoundCategory,
     steps: [
       { label: "Lâcher prise", durationSec: 90,  instruction: "Fermez les yeux. Déposez tout. Sentez le poids de votre corps." },
       { label: "3 souffles",   durationSec: 90,  instruction: "3 grandes inspirations lentes. À chaque expiration, relâchez une tension. Épaules, mâchoire, front." },
@@ -76,7 +76,7 @@ const PROGRAMS: Program[] = [
   {
     id: "court", label: "Pleine présence", durationMin: 5, emoji: "🌸",
     description: "Ancrage rapide · respiration · calme l'esprit en 5 minutes",
-    color: "#f472b6", soundCat: "bowl" as SoundCategory,
+    color: "var(--weight)", soundCat: "bowl" as SoundCategory,
     steps: [
       { label: "Arrivée",     durationSec: 30,  instruction: "Installez-vous confortablement. Fermez doucement les yeux. Sentez le contact de votre corps avec le sol ou votre siège." },
       { label: "Respiration", durationSec: 120, instruction: "Respirez naturellement. Observez le souffle entrer… et sortir. Sans forcer, sans contrôler. Juste observer." },
@@ -87,7 +87,7 @@ const PROGRAMS: Program[] = [
   {
     id: "moyen", label: "Scan corporel", durationMin: 15, emoji: "🪷",
     description: "Relaxation profonde · libération des tensions · conscience du corps",
-    color: "#34d399", soundCat: "nature" as SoundCategory,
+    color: "var(--fiber)", soundCat: "nature" as SoundCategory,
     steps: [
       { label: "Installation",   durationSec: 60,  instruction: "Allongez-vous ou asseyez-vous. Relâchez les épaules. Laissez la mâchoire se détendre. Fermez les yeux." },
       { label: "Souffle",        durationSec: 120, instruction: "3 grandes respirations. À chaque expiration, sentez le corps s'alourdir, s'enfoncer, se relâcher." },
@@ -101,7 +101,7 @@ const PROGRAMS: Program[] = [
   {
     id: "long", label: "Méditation profonde", durationMin: 30, emoji: "☸️",
     description: "Pleine conscience · visualisation · transformation intérieure",
-    color: "#a78bfa", soundCat: "binaural" as SoundCategory,
+    color: "var(--protein)", soundCat: "binaural" as SoundCategory,
     steps: [
       { label: "Ancrage",       durationSec: 120, instruction: "Sentez le sol, les racines qui descendent profondément dans la terre. Vous êtes en sécurité. Vous êtes ici." },
       { label: "Purification",  durationSec: 180, instruction: "À chaque inspiration, imaginez une lumière blanche pure entrer. À chaque expiration, laissez partir tensions et soucis." },
@@ -161,11 +161,11 @@ function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
         <circle cx="40" cy="40" r="37" stroke={color} strokeWidth="0.5" opacity="0.2"/>
         <circle cx="40" cy="40" r="31" stroke={color} strokeWidth="0.4" opacity="0.15"/>
         {/* Triangle up */}
-        <polygon points="40,8 68,56 12,56" fill={`${color}18`} stroke={color} strokeWidth="1.6"/>
+        <polygon points="40,8 68,56 12,56" fill={`color-mix(in srgb, ${color} 9%, transparent)`} stroke={color} strokeWidth="1.6"/>
         {/* Triangle down */}
-        <polygon points="40,72 12,24 68,24" fill={`${color}0d`} stroke={color} strokeWidth="1.6"/>
+        <polygon points="40,72 12,24 68,24" fill={`color-mix(in srgb, ${color} 5%, transparent)`} stroke={color} strokeWidth="1.6"/>
         {/* Inner hexagon (intersection) */}
-        <polygon points="49,24 59,40 49,56 31,56 21,40 31,24" fill={`${color}22`} stroke={color} strokeWidth="0.9" opacity="0.9"/>
+        <polygon points="49,24 59,40 49,56 31,56 21,40 31,24" fill={`color-mix(in srgb, ${color} 13%, transparent)`} stroke={color} strokeWidth="0.9" opacity="0.9"/>
         {/* Rays from center to each outer tip */}
         {([[40,8],[68,56],[12,56],[40,72],[12,24],[68,24]] as [number,number][]).map(([x,y],i) => (
           <line key={i} x1="40" y1="40" x2={x} y2={y} stroke={color} strokeWidth="0.4" opacity="0.25"/>
@@ -175,7 +175,7 @@ function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
           <circle key={i} cx={x} cy={y} r="3" fill={color} opacity="0.5"/>
         ))}
         {/* Center */}
-        <circle cx="40" cy="40" r="5.5" fill={`${color}30`} stroke={color} strokeWidth="1"/>
+        <circle cx="40" cy="40" r="5.5" fill={`color-mix(in srgb, ${color} 19%, transparent)`} stroke={color} strokeWidth="1"/>
         <circle cx="40" cy="40" r="2.5" fill={color} opacity="0.85"/>
         <circle cx="40" cy="40" r="1" fill="white" opacity="0.6"/>
       </svg>
@@ -191,17 +191,17 @@ function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
         {/* Outer petals */}
         {angles8.map((a) => (
           <ellipse key={a} cx="40" cy="22" rx="7" ry="16"
-            fill={`${color}16`} stroke={color} strokeWidth="1.3"
+            fill={`color-mix(in srgb, ${color} 9%, transparent)`} stroke={color} strokeWidth="1.3"
             transform={`rotate(${a},40,40)`}/>
         ))}
         {/* Inner petals (offset 22.5°, smaller) */}
         {angles8.map((a) => (
           <ellipse key={a} cx="40" cy="29" rx="4.5" ry="9"
-            fill={`${color}25`} stroke={color} strokeWidth="0.8" opacity="0.8"
+            fill={`color-mix(in srgb, ${color} 15%, transparent)`} stroke={color} strokeWidth="0.8" opacity="0.8"
             transform={`rotate(${a + 22.5},40,40)`}/>
         ))}
         {/* Pericarp ring */}
-        <circle cx="40" cy="40" r="10" fill={`${color}28`} stroke={color} strokeWidth="1.4"/>
+        <circle cx="40" cy="40" r="10" fill={`color-mix(in srgb, ${color} 16%, transparent)`} stroke={color} strokeWidth="1.4"/>
         {/* 8-spoked wheel inside */}
         {angles8.map((a) => (
           <line key={a} x1="40" y1="30" x2="40" y2="40"
@@ -244,14 +244,14 @@ function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
         {/* Chakra orbs */}
         {chakras.map(({ y, c, r }, i) => (
           <g key={i}>
-            <circle cx="40" cy={y} r={r + 2.5} fill={`${c}22`}/>
+            <circle cx="40" cy={y} r={r + 2.5} fill={`color-mix(in srgb, ${c} 13%, transparent)`}/>
             <circle cx="40" cy={y} r={r} fill={c} opacity="0.88"/>
             <circle cx="40" cy={y} r={r * 0.45} fill="white" opacity="0.35"/>
           </g>
         ))}
         {/* Wings at heart center */}
-        <path d="M40,40 Q28,32 20,36 Q28,40 40,40" fill={`${color}20`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
-        <path d="M40,40 Q52,32 60,36 Q52,40 40,40" fill={`${color}20`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
+        <path d="M40,40 Q28,32 20,36 Q28,40 40,40" fill={`color-mix(in srgb, ${color} 13%, transparent)`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
+        <path d="M40,40 Q52,32 60,36 Q52,40 40,40" fill={`color-mix(in srgb, ${color} 13%, transparent)`} stroke={color} strokeWidth="0.8" opacity="0.6"/>
       </svg>
     );
   }
@@ -267,25 +267,25 @@ function MeditationSymbol({ id, color }: { id: ProgramId; color: string }) {
         {/* 16-petal outer lotus */}
         {angles16.map((a) => (
           <ellipse key={a} cx="40" cy="11" rx="3" ry="6.5"
-            fill={`${color}14`} stroke={color} strokeWidth="0.7" opacity="0.6"
+            fill={`color-mix(in srgb, ${color} 8%, transparent)`} stroke={color} strokeWidth="0.7" opacity="0.6"
             transform={`rotate(${a},40,40)`}/>
         ))}
         {/* Outer circle */}
         <circle cx="40" cy="40" r="28" fill="none" stroke={color} strokeWidth="0.7" opacity="0.35"/>
         <circle cx="40" cy="40" r="24" fill="none" stroke={color} strokeWidth="0.4" opacity="0.2"/>
         {/* Triangle layer 1 — largest */}
-        <polygon points="40,13 65,55 15,55" fill={`${color}0b`} stroke={color} strokeWidth="1.3"/>
-        <polygon points="40,67 15,25 65,25" fill={`${color}0b`} stroke={color} strokeWidth="1.3"/>
+        <polygon points="40,13 65,55 15,55" fill={`color-mix(in srgb, ${color} 4%, transparent)`} stroke={color} strokeWidth="1.3"/>
+        <polygon points="40,67 15,25 65,25" fill={`color-mix(in srgb, ${color} 4%, transparent)`} stroke={color} strokeWidth="1.3"/>
         {/* Triangle layer 2 */}
-        <polygon points="40,19 60,50 20,50" fill={`${color}0d`} stroke={color} strokeWidth="1.1"/>
-        <polygon points="40,61 20,30 60,30" fill={`${color}0d`} stroke={color} strokeWidth="1.1"/>
+        <polygon points="40,19 60,50 20,50" fill={`color-mix(in srgb, ${color} 5%, transparent)`} stroke={color} strokeWidth="1.1"/>
+        <polygon points="40,61 20,30 60,30" fill={`color-mix(in srgb, ${color} 5%, transparent)`} stroke={color} strokeWidth="1.1"/>
         {/* Triangle layer 3 */}
-        <polygon points="40,25 56,46 24,46" fill={`${color}10`} stroke={color} strokeWidth="1"/>
-        <polygon points="40,55 24,34 56,34" fill={`${color}10`} stroke={color} strokeWidth="1"/>
+        <polygon points="40,25 56,46 24,46" fill={`color-mix(in srgb, ${color} 6%, transparent)`} stroke={color} strokeWidth="1"/>
+        <polygon points="40,55 24,34 56,34" fill={`color-mix(in srgb, ${color} 6%, transparent)`} stroke={color} strokeWidth="1"/>
         {/* Central downward triangle */}
-        <polygon points="40,32 52,51 28,51" fill={`${color}22`} stroke={color} strokeWidth="1.2"/>
+        <polygon points="40,32 52,51 28,51" fill={`color-mix(in srgb, ${color} 13%, transparent)`} stroke={color} strokeWidth="1.2"/>
         {/* Bindu */}
-        <circle cx="40" cy="40" r="5" fill={`${color}35`} stroke={color} strokeWidth="1"/>
+        <circle cx="40" cy="40" r="5" fill={`color-mix(in srgb, ${color} 21%, transparent)`} stroke={color} strokeWidth="1"/>
         <circle cx="40" cy="40" r="2.5" fill={color} opacity="0.9"/>
         <circle cx="40" cy="40" r="1" fill="white" opacity="0.7"/>
       </svg>
@@ -452,7 +452,7 @@ function NowPlaying({
               style={{
                 background: muted ? "rgba(239,68,68,0.15)"  : "rgba(52,211,153,0.12)",
                 border:     muted ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(52,211,153,0.35)",
-                color:      muted ? "#f87171" : "#34d399",
+                color:      muted ? "var(--danger)" : "var(--fiber)",
               }}>
               {muted
                 ? <><IconVolumeOff size={13} stroke={1.5} /><span style={{ fontSize: 11, fontWeight: 600 }}>Muet</span></>
@@ -472,7 +472,7 @@ function NowPlaying({
             style={{
               background: t.id === track.id ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
               border:     `1px solid ${t.id === track.id ? "rgba(52,211,153,0.5)" : "var(--border)"}`,
-              color:      t.id === track.id ? "#34d399" : "var(--text-muted)",
+              color:      t.id === track.id ? "var(--fiber)" : "var(--text-muted)",
             }}
           >
             <span>{t.emoji}</span> {t.label}
@@ -608,7 +608,7 @@ export default function MeditationPlayer() {
       durationMin,
       emoji: track.emoji,
       description: `Séance libre ${durationMin} min · Médit-IA`,
-      color: "#a78bfa",
+      color: "var(--protein)",
       soundCat: "bowl",
       steps: [
         { label: "Méditation libre", durationSec: durationMin * 60, instruction: "Installez-vous confortablement. Laissez la musique vous guider vers la paix intérieure." },
@@ -745,7 +745,7 @@ export default function MeditationPlayer() {
         <div className="h-1 w-full" style={{ background: "rgba(52,211,153,0.1)" }}>
           <motion.div className="h-full rounded-full" animate={{ width: `${progressPct}%` }}
             transition={{ duration: 1, ease: "linear" }}
-            style={{ background: "linear-gradient(90deg, #34d399, #6ee7b7)" }} />
+            style={{ background: "linear-gradient(90deg, var(--fiber), #6ee7b7)" }} />
         </div>
 
         <div className="p-4 space-y-3">
@@ -755,7 +755,7 @@ export default function MeditationPlayer() {
               <span className="text-[24px]">{selected.emoji}</span>
               <div>
                 <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{selected.label}</p>
-                <p className="text-[11px]" style={{ color: "#34d399" }}>{fmtTime(totalElapsed)} / {fmtTime(totalDuration)}</p>
+                <p className="text-[11px]" style={{ color: "var(--fiber)" }}>{fmtTime(totalElapsed)} / {fmtTime(totalDuration)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -763,13 +763,13 @@ export default function MeditationPlayer() {
                 className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(52,211,153,0.12)" }}>
                 {paused
-                  ? <IconPlayerPlay size={14} stroke={1.5} style={{ color: "#34d399" }} />
-                  : <IconPlayerPause size={14} stroke={1.5} style={{ color: "#34d399" }} />}
+                  ? <IconPlayerPlay size={14} stroke={1.5} style={{ color: "var(--fiber)" }} />
+                  : <IconPlayerPause size={14} stroke={1.5} style={{ color: "var(--fiber)" }} />}
               </button>
               <button onClick={stopSession}
                 className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(239,68,68,0.1)" }}>
-                <IconPlayerStop size={14} stroke={1.5} style={{ color: "#f87171" }} />
+                <IconPlayerStop size={14} stroke={1.5} style={{ color: "var(--danger)" }} />
               </button>
             </div>
           </div>
@@ -778,7 +778,7 @@ export default function MeditationPlayer() {
           <div className="flex items-center gap-1">
             {selected.steps.map((_, i) => (
               <motion.div key={i} className="flex-1 h-1 rounded-full"
-                animate={{ background: i < stepIdx ? "#34d399" : i === stepIdx ? selected.color : "rgba(255,255,255,0.08)" }}
+                animate={{ background: i < stepIdx ? "var(--fiber)" : i === stepIdx ? selected.color : "rgba(255,255,255,0.08)" }}
                 transition={{ duration: 0.5 }}
               />
             ))}
@@ -792,7 +792,7 @@ export default function MeditationPlayer() {
               className="px-4 py-4 rounded-2xl"
               style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#34d399" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--fiber)" }}>
                   {currentStep?.label}
                 </p>
                 <span className="text-[11px] tabular-nums" style={{ color: "var(--text-muted)" }}>
@@ -808,7 +808,7 @@ export default function MeditationPlayer() {
           {/* Breathing orb */}
           <div className="flex justify-center py-1">
             <motion.div className="rounded-full"
-              style={{ width: 56, height: 56, background: `radial-gradient(circle, ${selected.color}30 0%, ${selected.color}10 60%, transparent 100%)`, border: `1px solid ${selected.color}40` }}
+              style={{ width: 56, height: 56, background: `radial-gradient(circle, color-mix(in srgb, ${selected.color} 19%, transparent) 0%, color-mix(in srgb, ${selected.color} 6%, transparent) 60%, transparent 100%)`, border: `1px solid color-mix(in srgb, ${selected.color} 25%, transparent)` }}
               animate={{ scale: paused ? 1 : [1, 1.25, 1], opacity: paused ? 0.3 : [0.6, 1, 0.6] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -843,16 +843,16 @@ export default function MeditationPlayer() {
         style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.08) 0%, rgba(16,185,129,0.05) 100%)", border: "1px solid rgba(52,211,153,0.25)" }}>
         <div className="text-[40px] mb-2">{prog.emoji}</div>
         <div className="flex justify-center mb-3">
-          <IconCircleCheck size={32} stroke={1.5} style={{ color: "#34d399" }} />
+          <IconCircleCheck size={32} stroke={1.5} style={{ color: "var(--fiber)" }} />
         </div>
-        <p className="text-[16px] font-semibold mb-1" style={{ color: "#34d399" }}>Séance complète ✨</p>
+        <p className="text-[16px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>Séance complète ✨</p>
         <p className="text-[13px] mb-1" style={{ color: "var(--text-secondary)" }}>{prog.label} · {prog.durationMin} min</p>
         <p className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
           Prenez un moment pour ressentir les bénéfices de cette pratique.
         </p>
         <button onClick={() => { setSelected(null); setCompleted([]); }}
           className="flex items-center gap-2 mx-auto px-4 py-2 rounded-xl text-[13px]"
-          style={{ background: "rgba(52,211,153,0.12)", color: "#34d399", border: "1px solid rgba(52,211,153,0.3)" }}>
+          style={{ background: "rgba(52,211,153,0.12)", color: "var(--fiber)", border: "1px solid rgba(52,211,153,0.3)" }}>
           <IconChevronLeft size={13} stroke={2} /> Retour aux programmes
         </button>
       </motion.div>
@@ -877,8 +877,8 @@ export default function MeditationPlayer() {
         {streak > 0 && (
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full"
             style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)" }}>
-            <IconFlame size={13} stroke={2} style={{ color: "#fbbf24" }} />
-            <span className="text-[12px] font-bold" style={{ color: "#fbbf24" }}>{streak}j</span>
+            <IconFlame size={13} stroke={2} style={{ color: "var(--carbs)" }} />
+            <span className="text-[12px] font-bold" style={{ color: "var(--carbs)" }}>{streak}j</span>
           </div>
         )}
       </div>
@@ -891,7 +891,7 @@ export default function MeditationPlayer() {
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
-            <IconSparkles size={18} stroke={1.5} style={{ color: "#a78bfa" }} />
+            <IconSparkles size={18} stroke={1.5} style={{ color: "var(--protein)" }} />
           </div>
           <div>
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Médit-IA</p>
@@ -910,7 +910,7 @@ export default function MeditationPlayer() {
                   style={{
                     background: aiDuration === d ? "rgba(139,92,246,0.22)" : "rgba(255,255,255,0.04)",
                     border: `1px solid ${aiDuration === d ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
-                    color: aiDuration === d ? "#a78bfa" : "var(--text-muted)",
+                    color: aiDuration === d ? "var(--protein)" : "var(--text-muted)",
                   }}>
                   <IconClock size={10} stroke={2} />
                   {d < 60 ? `${d}m` : "1h"}
@@ -928,7 +928,7 @@ export default function MeditationPlayer() {
                 style={{
                   background: aiTheme === label ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${aiTheme === label ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
-                  color: aiTheme === label ? "#a78bfa" : "var(--text-muted)",
+                  color: aiTheme === label ? "var(--protein)" : "var(--text-muted)",
                 }}>
                 {emoji} {label}
               </button>
@@ -957,7 +957,7 @@ export default function MeditationPlayer() {
               style={{
                 background: aiLoading ? "rgba(139,92,246,0.08)" : "rgba(139,92,246,0.2)",
                 border: "1px solid rgba(139,92,246,0.4)",
-                color: "#a78bfa",
+                color: "var(--protein)",
               }}>
               {aiLoading
                 ? <IconRefresh size={15} stroke={1.5} className="animate-spin" />
@@ -976,9 +976,9 @@ export default function MeditationPlayer() {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{ border: "2px solid rgba(139,92,246,0.3)", borderTopColor: "#a78bfa" }}
+                style={{ border: "2px solid rgba(139,92,246,0.3)", borderTopColor: "var(--protein)" }}
               />
-              <p className="text-[11px]" style={{ color: "#a78bfa" }}>
+              <p className="text-[11px]" style={{ color: "var(--protein)" }}>
                 Recherche en cours · validation des ambiances…
               </p>
             </motion.div>
@@ -988,9 +988,9 @@ export default function MeditationPlayer() {
           {aiError && !aiLoading && (
             <div className="flex items-center justify-between px-3 py-2 rounded-xl"
               style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <p className="text-[11px]" style={{ color: "#f87171" }}>{aiError}</p>
+              <p className="text-[11px]" style={{ color: "var(--danger)" }}>{aiError}</p>
               <button onClick={() => setAiError("")}>
-                <IconX size={12} stroke={2} style={{ color: "#f87171" }} />
+                <IconX size={12} stroke={2} style={{ color: "var(--danger)" }} />
               </button>
             </div>
           )}
@@ -1023,7 +1023,7 @@ export default function MeditationPlayer() {
                       style={{
                         background: "rgba(139,92,246,0.18)",
                         border: "1px solid rgba(139,92,246,0.4)",
-                        color: "#a78bfa",
+                        color: "var(--protein)",
                       }}>
                       <IconPlayerPlay size={11} stroke={2} />
                       {aiDuration} min
@@ -1042,7 +1042,7 @@ export default function MeditationPlayer() {
         <div className="flex justify-between mb-3">
           {last7.map(({ key, label, isToday, hasSess, mins }) => (
             <div key={key} className="flex flex-col items-center gap-1">
-              <span className="text-[11px] uppercase" style={{ color: isToday ? "#34d399" : "var(--text-muted)" }}>{label}</span>
+              <span className="text-[11px] uppercase" style={{ color: isToday ? "var(--fiber)" : "var(--text-muted)" }}>{label}</span>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                 style={{
                   background: hasSess ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
@@ -1053,7 +1053,7 @@ export default function MeditationPlayer() {
                   : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", display: "inline-block" }} />
                 }
               </div>
-              {hasSess && <span className="text-[11px] font-medium" style={{ color: "#34d399" }}>{mins}m</span>}
+              {hasSess && <span className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>{mins}m</span>}
             </div>
           ))}
         </div>
@@ -1065,7 +1065,7 @@ export default function MeditationPlayer() {
             { v: `${totalMin}m`, l: "au total" },
           ].map(({ v, l }) => (
             <div key={l}>
-              <p className="text-[15px] font-bold" style={{ color: "#34d399" }}>{v}</p>
+              <p className="text-[15px] font-bold" style={{ color: "var(--fiber)" }}>{v}</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</p>
             </div>
           ))}
@@ -1088,20 +1088,20 @@ export default function MeditationPlayer() {
               onClick={() => startProgram(program)}
               className="relative flex flex-col items-center pt-5 pb-4 px-3 rounded-2xl overflow-hidden text-left transition-all"
               style={{
-                background: `radial-gradient(ellipse at 50% 30%, ${program.color}22 0%, ${program.color}08 70%)`,
-                border: `1px solid ${program.color}30`,
+                background: `radial-gradient(ellipse at 50% 30%, color-mix(in srgb, ${program.color} 13%, transparent) 0%, color-mix(in srgb, ${program.color} 3%, transparent) 70%)`,
+                border: `1px solid color-mix(in srgb, ${program.color} 19%, transparent)`,
               }}
             >
               {/* Done count badge */}
               {doneSessions > 0 && (
                 <span className="absolute top-2 right-2.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ background: `${program.color}25`, color: program.color }}>
+                  style={{ background: `color-mix(in srgb, ${program.color} 15%, transparent)`, color: program.color }}>
                   {doneSessions}×
                 </span>
               )}
 
               {/* Esoteric symbol */}
-              <div className="mb-3" style={{ filter: `drop-shadow(0 0 6px ${program.color}55)` }}>
+              <div className="mb-3" style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb, ${program.color} 33%, transparent))` }}>
                 <MeditationSymbol id={program.id} color={program.color} />
               </div>
 
@@ -1113,7 +1113,7 @@ export default function MeditationPlayer() {
 
               {/* Duration + last date */}
               <span className="text-[11px] font-medium px-2 py-0.5 rounded-full mb-1"
-                style={{ background: `${program.color}18`, color: program.color }}>
+                style={{ background: `color-mix(in srgb, ${program.color} 9%, transparent)`, color: program.color }}>
                 {program.durationMin} min
               </span>
               {lastDate && (
@@ -1139,7 +1139,7 @@ export default function MeditationPlayer() {
                 Historique
               </span>
               <span className="text-[11px] px-1.5 py-0.5 rounded-md"
-                style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+                style={{ background: "rgba(52,211,153,0.1)", color: "var(--fiber)" }}>
                 {allSessions.length} séances
               </span>
             </div>
@@ -1172,7 +1172,7 @@ export default function MeditationPlayer() {
                         </p>
                       </div>
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg"
-                        style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}>
+                        style={{ background: "rgba(52,211,153,0.1)", color: "var(--fiber)" }}>
                         {s.durationMin} min
                       </span>
                     </div>

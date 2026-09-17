@@ -23,7 +23,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
   const dash = circ * pct;
   const over = value > goal;
   const ringColor = over ? "#ef4444" : levelColor(fraction);
-  const ringGlow  = over ? "rgba(239,68,68,0.3)" : `${ringColor}44`;
+  const ringGlow  = over ? "rgba(239,68,68,0.3)" : `color-mix(in srgb, ${ringColor} 27%, transparent)`;
 
   return (
     <div className="flex flex-col items-center gap-2">

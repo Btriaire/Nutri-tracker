@@ -208,18 +208,18 @@ html.light {
 
   /* Accents nutrition — versions saturées « 600 », lisibles sur blanc
      (les pastels du thème sombre étaient délavés ici) */
-  --calories:        #ea580c;   /* orange profond */
+  --calories:        #c74b0a;   /* orange profond */
   --protein:         #7c3aed;   /* violet riche */
-  --carbs:           #d97706;   /* ambre lisible (vs jaune pâle) */
+  --carbs:        #ad5f05;   /* ambre lisible (vs jaune pâle) */
   --fat:             #2563eb;   /* bleu franc */
-  --fiber:           #059669;   /* émeraude */
-  --weight:          #db2777;   /* rose magenta */
+  --fiber:        #04825b;   /* émeraude */
+  --weight:        #da2475;   /* rose magenta */
 
   /* Fitness — teintes assombries pour rester nettes sur blanc */
-  --fit-blue:        #1a73e8;
+  --fit-blue:        #176fe3;
   --fit-red:         #d93025;
-  --fit-green:       #1e8e3e;
-  --fit-yellow:      #c2820b;   /* le jaune Google illisible en clair */
+  --fit-green:        #1c843a;
+  --fit-yellow:        #9b6809;   /* le jaune Google illisible en clair */
   --fit-indigo:      #3f51b5;
   --steps:           #1a73e8;
 
@@ -419,15 +419,15 @@ body {
   --accent-bg: rgba(167, 139, 250, 0.12);
 }
 html[data-theme="lumiere"], html.light {
-  --ok:        #059669;  --ok-bg:     rgba(5, 150, 105, 0.10);
+  --ok:        #04825b;  --ok-bg:     rgba(5, 150, 105, 0.10);
   --warn:      #b45309;  --warn-bg:   rgba(180, 83, 9, 0.10);
   --danger:    #dc2626;  --danger-bg: rgba(220, 38, 38, 0.10);
   --info:      #2563eb;  --info-bg:   rgba(37, 99, 235, 0.10);
   --accent:    #7c3aed;  --accent-bg: rgba(124, 58, 237, 0.10);
 }
 html[data-theme="mfp"] {
-  --ok:        #00A86B;  --ok-bg:     rgba(0, 168, 107, 0.10);
-  --warn:      #F9A825;  --warn-bg:   rgba(249, 168, 37, 0.12);
+  --ok:        #008354;  --ok-bg:     rgba(0, 168, 107, 0.10);
+  --warn:        #a36704;  --warn-bg:   rgba(249, 168, 37, 0.12);
   --danger:    #D32F2F;  --danger-bg: rgba(211, 47, 47, 0.10);
   --info:      #1565C0;  --info-bg:   rgba(21, 101, 192, 0.10);
   --accent:    #9C27B0;  --accent-bg: rgba(156, 39, 176, 0.10);
@@ -590,18 +590,18 @@ html[data-theme="mfp"] {
   --text-muted:      #9A9A9A;
 
   /* MFP nutrition palette */
-  --calories:        #FF5722;  /* deep orange for calorie budget */
-  --protein:         #00A86B;  /* MFP green */
-  --carbs:           #FF9800;  /* amber orange */
-  --fat:             #F44336;  /* red */
-  --fiber:           #00897B;  /* teal */
+  --calories:        #dc3500;  /* deep orange for calorie budget */
+  --protein:        #008354;  /* MFP green */
+  --carbs:        #a96500;  /* amber orange */
+  --fat:        #e41b0c;  /* red */
+  --fiber:        #008174;  /* teal */
   --weight:          #9C27B0;  /* purple */
 
   /* Fitness accents — keep readable on white */
   --fit-blue:        #1565C0;
   --fit-red:         #D32F2F;
   --fit-green:       #2E7D32;
-  --fit-yellow:      #F9A825;
+  --fit-yellow:        #a36704;
   --fit-indigo:      #3949AB;
   --steps:           #1565C0;
 
@@ -727,7 +727,7 @@ html[data-theme="ocean"] {
   --carbs:           #FFCA28;  /* amber */
   --fat:             #42A5F5;  /* light blue */
   --fiber:           #66BB6A;  /* green */
-  --weight:          #EC407A;  /* pink */
+  --weight:        #ed4b82;  /* pink */
 
   /* Fitness palette */
   --fit-blue:        #29B6F6;

@@ -10,7 +10,7 @@ import { IconChevronDown, IconChartBar } from "@tabler/icons-react";
 import { CATEGORY_META } from "@/app/lib/food-substitution";
 import type { BankFood } from "@/app/api/food/bank/route";
 
-const PALETTE = ["#a78bfa", "#f97316", "#34d399", "#f472b6", "#60a5fa", "#fbbf24", "#818cf8", "#4ade80", "#f87171", "#38bdf8", "#e879f9", "#facc15", "#94a3b8"];
+const PALETTE = ["var(--protein)", "var(--calories)", "var(--fiber)", "var(--weight)", "var(--fat)", "var(--carbs)", "#818cf8", "#4ade80", "var(--danger)", "#38bdf8", "#e879f9", "#facc15", "#94a3b8"];
 
 function colorForIndex(i: number): string {
   return PALETTE[i % PALETTE.length];

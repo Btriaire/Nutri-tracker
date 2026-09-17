@@ -85,7 +85,7 @@ export default function PodcastButton() {
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium transition-all"
             style={{
               background: length === key ? "rgba(249,115,22,0.12)" : "transparent",
-              color:      length === key ? "#f97316" : "var(--text-muted)",
+              color:      length === key ? "var(--calories)" : "var(--text-muted)",
               border:     length === key ? "1px solid rgba(249,115,22,0.35)" : "1px solid transparent",
             }}>
             {key === "long" && <IconSparkles size={11} stroke={2} />}
@@ -104,7 +104,7 @@ export default function PodcastButton() {
                 style={{
                   background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
                   border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
-                  color:      active ? "#f97316" : "var(--text-muted)",
+                  color:      active ? "var(--calories)" : "var(--text-muted)",
                 }}>
                 {p.label}
               </button>
@@ -122,7 +122,7 @@ export default function PodcastButton() {
         style={{
           background: running ? "rgba(148,163,184,0.1)" : "linear-gradient(135deg,rgba(249,115,22,0.18),rgba(251,191,36,0.15))",
           border: running ? "1px solid var(--border)" : "1px solid rgba(249,115,22,0.4)",
-          color: running ? "var(--text-muted)" : "#f97316",
+          color: running ? "var(--text-muted)" : "var(--calories)",
         }}>
         {running
           ? <><IconLoader2 size={14} className="animate-spin" />Génération en cours…</>
@@ -132,7 +132,7 @@ export default function PodcastButton() {
 
       {error && (
         <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-xl text-[11px]"
-          style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
+          style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
           <IconAlertCircle size={12} /> {error}
         </div>
       )}
@@ -146,7 +146,7 @@ export default function PodcastButton() {
               Dernier podcast prêt · {new Date(latest.mtime).toLocaleDateString("fr-FR")}
               {isLongFile(latest.name) && (
                 <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                  style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}>
+                  style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
                   <IconSparkles size={9} stroke={2} />Bilan complet
                 </span>
               )}
@@ -183,7 +183,7 @@ export default function PodcastButton() {
                       {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko
                       {isLongFile(f.name) && (
                         <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                          style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}>
+                          style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
                           <IconSparkles size={9} stroke={2} />Bilan complet
                         </span>
                       )}

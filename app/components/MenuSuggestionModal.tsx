@@ -231,7 +231,7 @@ function SuggestionCard({
                   ? "rgba(167,139,250,0.1)"
                   : "rgba(167,139,250,0.18)",
               border: `1px solid ${added ? "rgba(52,211,153,0.4)" : "rgba(167,139,250,0.4)"}`,
-              color: added ? "#34d399" : "var(--protein)",
+              color: added ? "var(--fiber)" : "var(--protein)",
             }}
           >
             {adding
@@ -404,7 +404,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
                   style={{
                     background: "rgba(139,92,246,0.1)",
                     border: "1px solid rgba(139,92,246,0.25)",
-                    color: "#a78bfa",
+                    color: "var(--protein)",
                     opacity: loading ? 0.5 : 1,
                   }}
                 >
@@ -447,7 +447,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
                   <button
                     onClick={load}
                     className="px-4 py-2 rounded-xl text-[12px] font-medium"
-                    style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)", color: "#a78bfa" }}
+                    style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)", color: "var(--protein)" }}
                   >
                     Réessayer
                   </button>

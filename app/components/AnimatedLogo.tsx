@@ -39,7 +39,7 @@ export default function AnimatedLogo({ size = 96, play = true, orbit = true, cla
       >
         <defs>
           <linearGradient id="nt-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%"   stopColor="#f97316" />
+            <stop offset="0%"   stopColor="var(--calories)" />
             <stop offset="55%"  stopColor="#fb7185" />
             <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>

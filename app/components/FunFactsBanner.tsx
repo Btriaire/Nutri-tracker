@@ -70,8 +70,8 @@ export default function FunFactsBanner() {
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="flex items-start gap-2 relative z-10">
-        <IconBulb size={13} stroke={2} style={{ color: "#fbbf24", flexShrink: 0, marginTop: 2 }} />
-        <p className="text-[11px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "#fbbf24", marginTop: 2 }}>
+        <IconBulb size={13} stroke={2} style={{ color: "var(--carbs)", flexShrink: 0, marginTop: 2 }} />
+        <p className="text-[11px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "var(--carbs)", marginTop: 2 }}>
           Le saviez-vous ?
         </p>
         <AnimatePresence mode="wait" initial={false}>

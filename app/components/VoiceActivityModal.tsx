@@ -62,7 +62,7 @@ function MicOrb({ active }: { active: boolean }) {
       ))}
       <motion.div
         className="rounded-full flex items-center justify-center"
-        style={{ width: 72, height: 72, background: active ? ACCENT : `${ACCENT}22`, boxShadow: active ? `0 0 28px ${ACCENT}66` : "none" }}
+        style={{ width: 72, height: 72, background: active ? ACCENT : `color-mix(in srgb, ${ACCENT} 13%, transparent)`, boxShadow: active ? `0 0 28px color-mix(in srgb, ${ACCENT} 40%, transparent)` : "none" }}
         animate={active ? { scale: [1, 1.08, 1] } : { scale: 1 }}
         transition={{ duration: 1.2, repeat: active ? Infinity : 0, ease: "easeInOut" }}
       >
@@ -234,7 +234,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}22` }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
             <IconSparkles size={16} style={{ color: ACCENT }} />
           </div>
           <div className="flex-1 min-w-0">
@@ -257,7 +257,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 {error && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="mb-4 w-full px-4 py-3 rounded-xl text-[13px]"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--danger)" }}>
                     {error}
                   </motion.div>
                 )}
@@ -289,7 +289,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 onClick={analyze}
                 disabled={!transcript.trim()}
                 className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
-                style={{ background: ACCENT, color: "#fff", boxShadow: transcript.trim() ? `0 4px 20px ${ACCENT}35` : "none" }}>
+                style={{ background: ACCENT, color: "#fff", boxShadow: transcript.trim() ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 <IconSparkles size={16} /> Analyser avec Nutri-IA
               </button>
             </div>
@@ -330,7 +330,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 {error && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="mb-3 px-4 py-3 rounded-xl text-[13px]"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--danger)" }}>
                     {error}
                   </motion.div>
                 )}
@@ -345,7 +345,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                       transition={{ delay: idx * 0.06, duration: 0.25 }}
                       className="rounded-xl p-3"
                       style={{
-                        background: item.selected ? `${ACCENT}0D` : "rgba(255,255,255,0.025)",
+                        background: item.selected ? `color-mix(in srgb, ${ACCENT} 5%, transparent)` : "rgba(255,255,255,0.025)",
                         border: `1px solid ${item.selected ? ACCENT + "35" : "rgba(255,255,255,0.07)"}`,
                         opacity: isSaving ? 0.65 : 1,
                       }}>
@@ -362,7 +362,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                             <span className="mr-1">{emoji}</span>{item.name}
                           </p>
                           {item.caloriesBurned != null && (
-                            <p className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold" style={{ color: "var(--fit-red, #f87171)" }}>
+                            <p className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold" style={{ color: "var(--fit-red, var(--danger))" }}>
                               <IconFlame size={12} /> {item.caloriesBurned} kcal brûlées
                             </p>
                           )}
@@ -400,7 +400,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
               className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
               <button onClick={handleAdd} disabled={phase === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]"
-                style={{ background: phase === "saving" ? `${ACCENT}70` : ACCENT, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px ${ACCENT}35` : "none" }}>
+                style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 {phase === "saving" ? (
                   <><motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span> Ajout en cours…</>
                 ) : (

@@ -32,9 +32,9 @@ export default function QuotaWarningBanner() {
   return (
     <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl mb-4"
       style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.28)" }}>
-      <IconAlertTriangle size={16} stroke={1.8} style={{ color: "#f87171", flexShrink: 0 }} />
+      <IconAlertTriangle size={16} stroke={1.8} style={{ color: "var(--danger)", flexShrink: 0 }} />
       <p className="text-[11.5px] leading-snug" style={{ color: "var(--text-primary)" }}>
-        <span style={{ color: "#f87171", fontWeight: 500 }}>Quota Firestore proche de la limite</span>
+        <span style={{ color: "var(--danger)", fontWeight: 500 }}>Quota Firestore proche de la limite</span>
         {" "}({status.reads.toLocaleString("fr-FR")} / {status.limit.toLocaleString("fr-FR")} lectures estimées aujourd&apos;hui) —
         évitez les actions lourdes (Répartition, historique complet) le reste de la journée.
       </p>

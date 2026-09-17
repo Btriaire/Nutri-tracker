@@ -48,7 +48,7 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
   const circ = 2 * Math.PI * R;
   const fraction = Math.min(1.05, eaten / Math.max(1, goal));
   const over     = fraction > 1;
-  const col      = over ? "#ef4444" : fraction > 0.88 ? "#f97316" : fraction > 0.65 ? "#fbbf24" : "#22c55e";
+  const col      = over ? "#ef4444" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "#22c55e";
   const dashArr  = `${Math.min(fraction, 1) * circ} ${circ}`;
 
   return (
@@ -90,7 +90,7 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
 function CalorieBudgetBar({ eaten, goal, remaining }: { eaten: number; goal: number; remaining: number }) {
   const fraction = Math.min(1.1, eaten / Math.max(1, goal));
   const over     = remaining < 0;
-  const col      = over ? "#ef4444" : fraction > 0.88 ? "#f97316" : fraction > 0.65 ? "#fbbf24" : "#22c55e";
+  const col      = over ? "#ef4444" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "#22c55e";
   const W        = 200; // viewBox width
   const H        = 8;
   const fillW    = Math.min(1, fraction) * W;
@@ -133,8 +133,8 @@ function MacroSVGBars({
 }) {
   const rows = [
     { label: "Prot.",   color: "#3b82f6", ...protein },
-    { label: "Gluc.",   color: "#fbbf24", ...carbs },
-    { label: "Lip.",    color: "#a78bfa", ...fat },
+    { label: "Gluc.",   color: "var(--carbs)", ...carbs },
+    { label: "Lip.",    color: "var(--protein)", ...fat },
   ];
   const W = 200; // viewBox plot width per bar
   const BH = 5;  // bar height
@@ -603,7 +603,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   style={{ overflow: "hidden" }}
                 >
                   <div className="mt-3 pt-3 rounded-xl p-3"
-                    style={{ borderTop: "1px solid rgba(255,255,255,0.08)", background: `${dayQuality.color}0d`, border: `1px solid ${dayQuality.color}33` }}>
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.08)", background: `color-mix(in srgb, ${dayQuality.color} 5%, transparent)`, border: `1px solid color-mix(in srgb, ${dayQuality.color} 20%, transparent)` }}>
                     <p className="text-[11px] font-semibold mb-2" style={{ color: dayQuality.color }}>
                       Qualité nutritionnelle du jour · {dayQuality.label}
                     </p>
@@ -629,7 +629,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 style={{
                   background: unlockConfirming ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${unlockConfirming ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}`,
-                  color: unlockConfirming ? "#f87171" : "var(--text-muted)",
+                  color: unlockConfirming ? "var(--danger)" : "var(--text-muted)",
                 }}
                 title="Déverrouiller pour modifier la journée"
               >
@@ -702,11 +702,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             }}
           >
             <IconStethoscope size={14} stroke={1.7} style={{ color: dietPaused ? "var(--text-muted)"
-              : dietReport?.day.status === "ecarts" ? "#f87171"
+              : dietReport?.day.status === "ecarts" ? "var(--danger)"
               : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)" }} />
             <span className="text-[12px] font-medium flex-1" style={{
               color: dietPaused ? "var(--text-muted)"
-                : dietReport?.day.status === "ecarts" ? "#f87171"
+                : dietReport?.day.status === "ecarts" ? "var(--danger)"
                 : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
             }}>
               {DIET_PROGRAMS[activeDietProgramId].name}
@@ -725,7 +725,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
               style={{
                 background: dietPaused ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
-                color: dietPaused ? "#fbbf24" : "var(--text-muted)",
+                color: dietPaused ? "var(--carbs)" : "var(--text-muted)",
               }}
               aria-label={dietPaused ? "Réactiver le suivi du régime" : "Ne pas suivre le régime aujourd'hui"}
               title={dietPaused ? "Réactiver le suivi aujourd'hui" : "Je ne peux pas suivre le régime aujourd'hui"}

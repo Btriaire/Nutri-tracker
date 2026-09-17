@@ -97,7 +97,7 @@ export default function MealMicronutrientsPanel({ entries, micronutrientData }: 
                               <span
                                 key={m.code}
                                 className="text-[11px] px-2 py-1 rounded-full font-medium"
-                                style={{ background: `${info.color}15`, border: `1px solid ${info.color}33`, color: info.color }}
+                                style={{ background: `color-mix(in srgb, ${info.color} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${info.color} 20%, transparent)`, color: info.color }}
                               >
                                 {info.symbol} {formatMicroAmount(m.amount)}{m.unit}
                               </span>

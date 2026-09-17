@@ -61,7 +61,7 @@ function Stepper({
           type="button"
           onClick={() => onChange(Math.max(min, value - step))}
           className="w-9 h-9 rounded-2xl flex items-center justify-center transition-all active:scale-90"
-          style={{ background: `${color}20`, border: `1px solid ${color}35` }}
+          style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 21%, transparent)` }}
         >
           <IconMinus size={14} style={{ color }} />
         </button>
@@ -78,7 +78,7 @@ function Stepper({
           type="button"
           onClick={() => onChange(value + step)}
           className="w-9 h-9 rounded-2xl flex items-center justify-center transition-all active:scale-90"
-          style={{ background: `${color}20`, border: `1px solid ${color}35` }}
+          style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 21%, transparent)` }}
         >
           <IconPlus size={14} style={{ color }} />
         </button>
@@ -162,15 +162,15 @@ export default function ActivityDetailSheet({
             {/* ── Hero header ─────────────────────────────────────── */}
             <div className="relative overflow-hidden"
               style={{
-                background: `linear-gradient(155deg, ${catColor}22 0%, ${catColor2}14 100%)`,
-                borderBottom: `1px solid ${catColor}20`,
+                background: `linear-gradient(155deg, color-mix(in srgb, ${catColor} 13%, transparent) 0%, color-mix(in srgb, ${catColor2} 8%, transparent) 100%)`,
+                borderBottom: `1px solid color-mix(in srgb, ${catColor} 13%, transparent)`,
               }}
             >
               {/* Decorative glow blobs */}
               <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
-                style={{ background: `${catColor}18`, filter: "blur(24px)" }} />
+                style={{ background: `color-mix(in srgb, ${catColor} 9%, transparent)`, filter: "blur(24px)" }} />
               <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full pointer-events-none"
-                style={{ background: `${catColor2}14`, filter: "blur(20px)" }} />
+                style={{ background: `color-mix(in srgb, ${catColor2} 8%, transparent)`, filter: "blur(20px)" }} />
 
               {/* Drag handle */}
               <div className="flex justify-center pt-3">
@@ -187,9 +187,9 @@ export default function ActivityDetailSheet({
               <div className="flex items-center gap-4 px-6 pt-4 pb-6">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0"
                   style={{
-                    background: `${catColor}18`,
-                    border: `1.5px solid ${catColor}30`,
-                    boxShadow: `0 0 20px ${catColor}20`,
+                    background: `color-mix(in srgb, ${catColor} 9%, transparent)`,
+                    border: `1.5px solid color-mix(in srgb, ${catColor} 19%, transparent)`,
+                    boxShadow: `0 0 20px color-mix(in srgb, ${catColor} 13%, transparent)`,
                   }}>
                   {exercise.emoji}
                 </div>
@@ -275,7 +275,7 @@ export default function ActivityDetailSheet({
                         onClick={() => setDuration(p)}
                         className="px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                         style={{
-                          background:  duration === p ? `${catColor}20` : "rgba(255,255,255,0.05)",
+                          background:  duration === p ? `color-mix(in srgb, ${catColor} 13%, transparent)` : "rgba(255,255,255,0.05)",
                           border:      `1px solid ${duration === p ? catColor + "45" : "rgba(255,255,255,0.08)"}`,
                           color:       duration === p ? catColor : "rgba(255,255,255,0.45)",
                         }}
@@ -319,7 +319,7 @@ export default function ActivityDetailSheet({
                     ? "rgba(255,255,255,0.06)"
                     : `linear-gradient(135deg, ${catColor} 0%, ${catColor2} 100%)`,
                   color:  saving ? "rgba(255,255,255,0.4)" : "#fff",
-                  boxShadow: saving ? "none" : `0 4px 24px ${catColor}40`,
+                  boxShadow: saving ? "none" : `0 4px 24px color-mix(in srgb, ${catColor} 25%, transparent)`,
                 }}
               >
                 {saving

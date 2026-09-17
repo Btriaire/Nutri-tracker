@@ -75,11 +75,11 @@ function fmtSleep(min: number): string {
 
 function hrZoneLabel(bpm: number, maxHr: number): { label: string; color: string } {
   const pct = bpm / maxHr;
-  if (pct < 0.50) return { label: "Repos",        color: "#7986CB" };
-  if (pct < 0.60) return { label: "Échauffement", color: "#4285F4" };
-  if (pct < 0.70) return { label: "Aérobie",      color: "#34A853" };
-  if (pct < 0.85) return { label: "Seuil",        color: "#FBBC04" };
-  return               { label: "Maximal",       color: "#EA4335" };
+  if (pct < 0.50) return { label: "Repos",        color: "var(--fit-indigo)" };
+  if (pct < 0.60) return { label: "Échauffement", color: "var(--fit-blue)" };
+  if (pct < 0.70) return { label: "Aérobie",      color: "var(--fit-green)" };
+  if (pct < 0.85) return { label: "Seuil",        color: "var(--fit-yellow)" };
+  return               { label: "Maximal",       color: "var(--fit-red)" };
 }
 
 // pctColor → levelColorPct from @/app/lib/colors
@@ -380,7 +380,7 @@ export default function DashboardClient({
               style={{
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid var(--border)",
-                color: syncMsg.includes("✓") ? "#34A853" : syncMsg === "!" ? "#EA4335" : "var(--text-muted)",
+                color: syncMsg.includes("✓") ? "var(--fit-green)" : syncMsg === "!" ? "var(--fit-red)" : "var(--text-muted)",
               }}>
               {syncing
                 ? <IconRefresh size={15} stroke={1.5} className="animate-spin" />
@@ -497,14 +497,14 @@ export default function DashboardClient({
                 <IconStethoscope size={17} stroke={1.6} style={{ color: "var(--ok)" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold" style={{ color: "#f87171" }}>
+                <p className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>
                   Tension artérielle
                 </p>
                 <p className="text-[11px]" style={{ color: "rgba(248,113,113,0.75)" }}>
                   {bpWarningMsg}
                 </p>
               </div>
-              <IconChevronRight size={16} stroke={2} style={{ color: "#f87171", flexShrink: 0 }} />
+              <IconChevronRight size={16} stroke={2} style={{ color: "var(--danger)", flexShrink: 0 }} />
             </Link>
           </motion.div>
         )}
@@ -592,8 +592,8 @@ export default function DashboardClient({
                   <RadarChart data={spiderData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
                     <defs>
                       <linearGradient id="spiderFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="#f97316" stopOpacity={0.08} />
+                        <stop offset="0%" stopColor="var(--calories)" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="var(--calories)" stopOpacity={0.08} />
                       </linearGradient>
                     </defs>
                     <PolarGrid stroke="rgba(255,255,255,0.1)" />
@@ -602,7 +602,7 @@ export default function DashboardClient({
                       tick={({ x, y, payload }) => {
                         const d = spiderData.find(s => s.subject === payload.value);
                         const color = !d || d.A === 0 ? "rgba(255,255,255,0.25)"
-                          : d.A >= 5 ? "#34d399" : d.A >= 3 ? "#fbbf24" : "#f87171";
+                          : d.A >= 5 ? "var(--fiber)" : d.A >= 3 ? "var(--carbs)" : "var(--danger)";
                         return (
                           <g>
                             <text x={x} y={y} textAnchor="middle" dominantBaseline="central"
@@ -624,10 +624,10 @@ export default function DashboardClient({
                     />
                     <Radar
                       dataKey="A"
-                      stroke="#f97316"
+                      stroke="var(--calories)"
                       strokeWidth={2}
                       fill="url(#spiderFill)"
-                      dot={{ fill: "#f97316", r: 4, strokeWidth: 0 }}
+                      dot={{ fill: "var(--calories)", r: 4, strokeWidth: 0 }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -885,7 +885,7 @@ export default function DashboardClient({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <IconHeart size={12} stroke={2} style={{ color: "#f87171" }} />
+                <IconHeart size={12} stroke={2} style={{ color: "var(--danger)" }} />
                 <span className="label-xs">FC moy.</span>
               </div>
               <IconChevronRight size={9} stroke={1.5} style={{ color: "var(--text-muted)" }} />
@@ -896,7 +896,7 @@ export default function DashboardClient({
             </span>
             {heartRate && zone ? (
               <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md self-start"
-                style={{ background: `${zone.color}20`, color: zone.color }}>
+                style={{ background: `color-mix(in srgb, ${zone.color} 13%, transparent)`, color: zone.color }}>
                 {zone.label}
               </span>
             ) : (
@@ -917,7 +917,7 @@ export default function DashboardClient({
             }}
           >
             <div className="flex items-center gap-1.5">
-              <IconBolt size={12} stroke={2} style={{ color: "#34d399" }} />
+              <IconBolt size={12} stroke={2} style={{ color: "var(--fiber)" }} />
               <span className="label-xs">Min. actives</span>
             </div>
             <div className="flex items-end gap-1 leading-none">
@@ -1131,7 +1131,7 @@ export default function DashboardClient({
                 <IconFlower size={19} stroke={1.5} style={{ color: "var(--accent)" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold" style={{ color: "#a78bfa" }}>
+                <p className="text-[13px] font-semibold" style={{ color: "var(--protein)" }}>
                   Méditation · {todayMeditationMin} min
                 </p>
                 <p className="text-[11px]" style={{ color: "rgba(167,139,250,0.65)" }}>
@@ -1140,7 +1140,7 @@ export default function DashboardClient({
                     : "Séance complétée aujourd'hui"}
                 </p>
               </div>
-              <IconChevronRight size={16} stroke={2} style={{ color: "#a78bfa", flexShrink: 0 }} />
+              <IconChevronRight size={16} stroke={2} style={{ color: "var(--protein)", flexShrink: 0 }} />
             </Link>
           </motion.div>
         )}
@@ -1195,8 +1195,8 @@ export default function DashboardClient({
               <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dbCalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#f97316" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--calories)" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="var(--calories)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -1212,7 +1212,7 @@ export default function DashboardClient({
                   );
                 }} />
                 <ReferenceLine y={goals.dailyCalories} stroke="rgba(249,115,22,0.35)" strokeDasharray="4 3" />
-                <Area type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={1.5} fill="url(#dbCalGrad)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="calories" stroke="var(--calories)" strokeWidth={1.5} fill="url(#dbCalGrad)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
             {weightChartData.length > 1 && (

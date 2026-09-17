@@ -104,8 +104,8 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                     onClick={() => setActive(c.key)}
                     className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all"
                     style={{
-                      background: active === c.key ? `${c.color}22` : "rgba(255,255,255,0.04)",
-                      border: `1px solid ${active === c.key ? `${c.color}55` : "var(--border)"}`,
+                      background: active === c.key ? `color-mix(in srgb, ${c.color} 13%, transparent)` : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${active === c.key ? `color-mix(in srgb, ${c.color} 33%, transparent)` : "var(--border)"}`,
                     }}
                   >
                     <c.Icon size={14} stroke={1.6} style={{ color: active === c.key ? c.color : "var(--text-muted)" }} />

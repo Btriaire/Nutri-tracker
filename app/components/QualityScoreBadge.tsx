@@ -12,10 +12,10 @@ interface Props {
 
 function bandColor(score: number): string {
   if (score >= 8.5) return "#22c55e";
-  if (score >= 7)   return "#34d399";
-  if (score >= 5)   return "#fbbf24";
+  if (score >= 7)   return "var(--fiber)";
+  if (score >= 5)   return "var(--carbs)";
   if (score >= 3)   return "#fb923c";
-  return "#f87171";
+  return "var(--danger)";
 }
 
 /** Anneau SVG 0-10 — même langage visuel que CalorieArc (Journal), pour un

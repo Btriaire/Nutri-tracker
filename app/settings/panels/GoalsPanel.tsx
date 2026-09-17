@@ -495,7 +495,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     }}>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-semibold"
-                        style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "#fbbf24" : "#34d399" }}>
+                        style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                         {projLive.isUnrealistic ? "❌ Irréaliste" : projLive.isAmbitious ? "⚠️ Ambitieux" : "✅ Réaliste"}
                       </span>
                       <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -534,7 +534,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                       </div>
                     </div>
                     {projLive.isUnrealistic && (
-                      <p className="text-[11px]" style={{ color: "#f87171" }}>
+                      <p className="text-[11px]" style={{ color: "var(--danger)" }}>
                         ⚠️ Date mini réaliste pour {Math.abs(projLive.totalKg).toFixed(1)} kg :{" "}
                         <strong>{projLive.minDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</strong>
                       </p>
@@ -941,7 +941,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     </div>
                     {projLive && (
                       <div className="text-right">
-                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "#fbbf24" : "#34d399" }}>
+                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                           {projLive.isUnrealistic ? "⚠️ Irréaliste" : projLive.isAmbitious ? "⚡ Ambitieux" : "✅ Réaliste"}
                         </p>
                         {targetDate && (
@@ -986,7 +986,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     style={{
                       height: "38px",
                       background: age && height && gender ? "linear-gradient(135deg,rgba(52,211,153,0.3),rgba(16,185,129,0.2))" : "rgba(255,255,255,0.06)",
-                      color: age && height && gender ? "#34d399" : "var(--text-muted)",
+                      color: age && height && gender ? "var(--fiber)" : "var(--text-muted)",
                       border: age && height && gender ? "1px solid rgba(52,211,153,0.4)" : "1px solid var(--border)",
                       opacity: age && height && gender ? 1 : 0.5,
                     }}>
@@ -1095,7 +1095,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     <button
                       onClick={() => setDeductBurned(v => !v)}
                       className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                      style={{ background: deductBurned ? "var(--fit-green, #34d399)" : "rgba(255,255,255,0.12)" }}
+                      style={{ background: deductBurned ? "var(--fit-green, var(--fiber))" : "rgba(255,255,255,0.12)" }}
                     >
                       <span
                         className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"

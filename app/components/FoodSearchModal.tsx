@@ -23,7 +23,7 @@ import { scaleNutrition } from "@/app/lib/nutrition";
 const CATEGORIES = [
   { emoji: "🥩", label: "Viandes",        query: "viande bœuf poulet porc",          g1: "#ef4444", g2: "#9f1239" },
   { emoji: "🐟", label: "Poissons",       query: "poisson saumon thon",              g1: "#0ea5e9", g2: "#0369a1" },
-  { emoji: "🥚", label: "Œufs",           query: "œuf",                              g1: "#fbbf24", g2: "#d97706" },
+  { emoji: "🥚", label: "Œufs",           query: "œuf",                              g1: "var(--carbs)", g2: "#d97706" },
   { emoji: "🧀", label: "Laitages",       query: "lait yaourt fromage",              g1: "#f59e0b", g2: "#b45309" },
   { emoji: "🌾", label: "Céréales",       query: "riz pâtes avoine quinoa",          g1: "#d97706", g2: "#92400e" },
   { emoji: "🥖", label: "Pain",           query: "pain baguette brioche",            g1: "#d97706", g2: "#78350f" },
@@ -31,11 +31,11 @@ const CATEGORIES = [
   { emoji: "🍎", label: "Fruits",         query: "pomme banane fraise raisin",       g1: "#ef4444", g2: "#b91c1c" },
   { emoji: "🫘", label: "Légumineuses",   query: "lentilles pois chiche haricots",   g1: "#d97706", g2: "#92400e" },
   { emoji: "🥜", label: "Oléagineux",     query: "amandes noix noisettes",           g1: "#d97706", g2: "#78350f" },
-  { emoji: "🧈", label: "Corps gras",     query: "beurre huile",                     g1: "#fbbf24", g2: "#ca8a04" },
+  { emoji: "🧈", label: "Corps gras",     query: "beurre huile",                     g1: "var(--carbs)", g2: "#ca8a04" },
   { emoji: "🍫", label: "Sucreries",      query: "chocolat gâteau biscuit",          g1: "#7c3aed", g2: "#3b0764" },
   { emoji: "🥤", label: "Boissons",       query: "jus soda café thé",                g1: "#0ea5e9", g2: "#0284c7" },
   { emoji: "🍿", label: "Snacks",         query: "chips crackers barre céréales",    g1: "#f59e0b", g2: "#d97706" },
-  { emoji: "🫕", label: "Plats cuisinés", query: "plat cuisiné lasagne pizza",       g1: "#f97316", g2: "#9a3412" },
+  { emoji: "🫕", label: "Plats cuisinés", query: "plat cuisiné lasagne pizza",       g1: "var(--calories)", g2: "#9a3412" },
   { emoji: "🌿", label: "Épices",         query: "herbe épice sel ail",              g1: "#4ade80", g2: "#15803d" },
 ];
 
@@ -72,8 +72,8 @@ function getServingOptions(food: FoodSearchResult): ServingOption[] {
 const GROUP_COLORS: Record<string, string> = {
   "Glucides":  "var(--carbs)",
   "Lipides":   "var(--fat)",
-  "Minéraux":  "#34d399",
-  "Vitamines": "#f472b6",
+  "Minéraux":  "var(--fiber)",
+  "Vitamines": "var(--weight)",
   "Divers":    "var(--text-muted)",
 };
 
@@ -274,7 +274,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
 
         {error ? (
           <div className="rounded-xl p-4 text-center space-y-2">
-            <p className="text-[13px]" style={{ color: "#f87171" }}>{error}</p>
+            <p className="text-[13px]" style={{ color: "var(--danger)" }}>{error}</p>
           </div>
         ) : (
           <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: "4/3", background: "#000" }}>
@@ -284,7 +284,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
               <div className="relative"
                 style={{
                   width: "88%", height: 110,
-                  border: `2px solid ${detected ? "#34d399" : "rgba(52,211,153,0.85)"}`,
+                  border: `2px solid ${detected ? "var(--fiber)" : "rgba(52,211,153,0.85)"}`,
                   borderRadius: 12,
                   boxShadow: detected
                     ? "0 0 0 9999px rgba(0,0,0,0.5), 0 0 30px rgba(52,211,153,0.6)"
@@ -312,10 +312,10 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
                       bottom: (pos as { b?: number }).b !== undefined ? -1 : undefined,
                       left: pos.l !== undefined ? -1 : undefined,
                       right: (pos as { r?: number }).r !== undefined ? -1 : undefined,
-                      borderTop:    i < 2 ? `3px solid ${detected ? "#34d399" : "rgba(52,211,153,0.95)"}` : "none",
-                      borderBottom: i >= 2 ? `3px solid ${detected ? "#34d399" : "rgba(52,211,153,0.95)"}` : "none",
-                      borderLeft:   i % 2 === 0 ? `3px solid ${detected ? "#34d399" : "rgba(52,211,153,0.95)"}` : "none",
-                      borderRight:  i % 2 === 1 ? `3px solid ${detected ? "#34d399" : "rgba(52,211,153,0.95)"}` : "none",
+                      borderTop:    i < 2 ? `3px solid ${detected ? "var(--fiber)" : "rgba(52,211,153,0.95)"}` : "none",
+                      borderBottom: i >= 2 ? `3px solid ${detected ? "var(--fiber)" : "rgba(52,211,153,0.95)"}` : "none",
+                      borderLeft:   i % 2 === 0 ? `3px solid ${detected ? "var(--fiber)" : "rgba(52,211,153,0.95)"}` : "none",
+                      borderRight:  i % 2 === 1 ? `3px solid ${detected ? "var(--fiber)" : "rgba(52,211,153,0.95)"}` : "none",
                       borderRadius: i === 0 ? "4px 0 0 0" : i === 1 ? "0 4px 0 0" : i === 2 ? "0 0 0 4px" : "0 0 4px 0",
                     }}
                   />
@@ -334,7 +334,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
           </div>
         )}
 
-        <p className="text-center text-[12px]" style={{ color: detected ? "#34d399" : "rgba(255,255,255,0.55)" }}>{hint}</p>
+        <p className="text-center text-[12px]" style={{ color: detected ? "var(--fiber)" : "rgba(255,255,255,0.55)" }}>{hint}</p>
 
         {/* Manual entry fallback */}
         {!detected && (
@@ -358,7 +358,7 @@ function BarcodeScanner({ onDetect, onClose }: { onDetect: (code: string) => voi
                   onClick={() => { if (manualCode.trim()) onDetect(manualCode.trim()); }}
                   disabled={!manualCode.trim()}
                   className="px-3 py-2 rounded-xl text-[13px] font-semibold"
-                  style={{ background: "rgba(52,211,153,0.2)", color: "#34d399", border: "1px solid rgba(52,211,153,0.4)" }}>
+                  style={{ background: "rgba(52,211,153,0.2)", color: "var(--fiber)", border: "1px solid rgba(52,211,153,0.4)" }}>
                   OK
                 </button>
               </div>
@@ -1002,7 +1002,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                   <button
                     onClick={() => setScanMode(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex-shrink-0"
-                    style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}
+                    style={{ background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.3)", color: "var(--fiber)" }}
                     title="Scanner un code-barre"
                   >
                     <IconBarcode size={13} stroke={1.8} />
@@ -1012,7 +1012,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     onClick={() => photoInputRef.current?.click()}
                     disabled={photoLoading}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex-shrink-0"
-                    style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa" }}
+                    style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", color: "var(--fat)" }}
                     title="Reconnaître des aliments par photo"
                   >
                     {photoLoading ? <IconLoader2 size={13} stroke={2} className="animate-spin" /> : <IconCamera size={13} stroke={1.8} />}
@@ -1025,7 +1025,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoRecognize(f); e.target.value = ""; }}
                   />
-                  {scanError && <p className="text-[11px] flex-1" style={{ color: "#f87171" }}>{scanError}</p>}
+                  {scanError && <p className="text-[11px] flex-1" style={{ color: "var(--danger)" }}>{scanError}</p>}
                 </div>
 
                 {/* AI search pill — always visible when query is non-empty */}
@@ -1105,7 +1105,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[22px] relative overflow-hidden flex-shrink-0"
                               style={{
                                 background: `linear-gradient(145deg, ${cat.g1} 0%, ${cat.g2} 100%)`,
-                                boxShadow: `0 3px 10px ${cat.g1}55, inset 0 1px 0 rgba(255,255,255,0.22)`,
+                                boxShadow: `0 3px 10px color-mix(in srgb, ${cat.g1} 33%, transparent), inset 0 1px 0 rgba(255,255,255,0.22)`,
                               }}>
                               {/* Glass highlight */}
                               <div className="absolute inset-x-0 top-0 h-[48%] pointer-events-none"
@@ -1277,7 +1277,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     {saving
                                       ? <IconLoader2 size={12} stroke={2} className="animate-spin" style={{ color: "var(--text-muted)" }} />
                                       : saved
-                                        ? <IconCheck size={13} stroke={2} style={{ color: "#34d399" }} />
+                                        ? <IconCheck size={13} stroke={2} style={{ color: "var(--fiber)" }} />
                                         : <IconBookmark size={13} stroke={1.5} style={{ color: "var(--text-muted)" }} />
                                     }
                                   </button>
@@ -1343,7 +1343,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           <button onClick={() => handleDeleteMeal(m.id)}
                             disabled={deletingMealId === m.id}
                             className="btn btn-ghost px-2 py-1 text-[11px]"
-                            style={{ height: "24px", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                            style={{ height: "24px", color: "var(--danger)", borderColor: "rgba(248,113,113,0.3)" }}>
                             {deletingMealId === m.id ? <IconLoader2 size={10} stroke={2} className="animate-spin" /> : <IconTrash size={11} stroke={2} />}
                           </button>
                         </div>
@@ -1598,8 +1598,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             title="Supprimer de ma liste"
                           >
                             {deletingMyFoodId === r.id
-                              ? <IconLoader2 size={12} stroke={2} className="animate-spin" style={{ color: "#f87171" }} />
-                              : <IconTrash size={13} stroke={1.5} style={{ color: "#f87171" }} />
+                              ? <IconLoader2 size={12} stroke={2} className="animate-spin" style={{ color: "var(--danger)" }} />
+                              : <IconTrash size={13} stroke={1.5} style={{ color: "var(--danger)" }} />
                             }
                           </button>
                         </motion.div>
@@ -1672,7 +1672,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     </div>
                     {step === "configure" && selected && (
                       <span className="badge flex-shrink-0"
-                        style={{ borderColor: `${SOURCE_BADGE[selected.source]?.color}40`, color: SOURCE_BADGE[selected.source]?.color }}>
+                        style={{ borderColor: `color-mix(in srgb, ${SOURCE_BADGE[selected.source]?.color} 25%, transparent)`, color: SOURCE_BADGE[selected.source]?.color }}>
                         {SOURCE_BADGE[selected.source]?.label ?? selected.source}
                       </span>
                     )}
@@ -1691,8 +1691,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             <p className="label-xs">Portion</p>
                             {selected.weightVerified && (
                               <span className="flex items-center gap-0.5" title="Poids moyen vérifié">
-                                <IconRosetteDiscountCheckFilled size={13} style={{ color: "#34d399" }} />
-                                <span className="text-[11px] font-medium" style={{ color: "#34d399" }}>vérifié</span>
+                                <IconRosetteDiscountCheckFilled size={13} style={{ color: "var(--fiber)" }} />
+                                <span className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>vérifié</span>
                               </span>
                             )}
                           </div>

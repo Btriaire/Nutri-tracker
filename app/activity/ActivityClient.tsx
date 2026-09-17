@@ -78,7 +78,7 @@ function activityEmoji(type: number): string {
 // ─── Activity color palette ───────────────────────────────────────────────────
 function getActivityColor(type: number): string {
   const m: Record<number, string> = {
-    1: "#f97316", 8: "#f97316",    // Running — orange
+    1: "var(--calories)", 8: "var(--calories)",    // Running — orange
     7: "#3b82f6", 2: "#3b82f6",    // Cycling — blue
     17: "#a855f7", 60: "#a855f7",  // Weights — purple
     46: "#22c55e", 79: "#22c55e",  // Walking — green
@@ -90,7 +90,7 @@ function getActivityColor(type: number): string {
     54: "#eab308",                  // Tennis — yellow
     104: "#dc2626",                 // Boxing — crimson
   };
-  return m[type] ?? "#fbbf24";
+  return m[type] ?? "var(--carbs)";
 }
 
 // ─── Activity SVG icons ───────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ function MetricChip({ value, unit, color, icon }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-xl"
-      style={{ background: `${color}12`, border: `1px solid ${color}22` }}>
+      style={{ background: `color-mix(in srgb, ${color} 7%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 13%, transparent)` }}>
       <span style={{ color, opacity: 0.75, display: "flex" }}>{icon}</span>
       <span className="text-[13px] font-bold tabular-nums leading-none" style={{ color }}>{value}</span>
       <span className="text-[11px] leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
@@ -294,7 +294,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
               <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Pas</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f97316" }} />
+              <div className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--calories)" }} />
               <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sport (min)</span>
             </div>
           </div>
@@ -316,7 +316,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{label}</p>
                     {steps > 0 && <p style={{ color: "#63b3ed" }}>👟 {steps.toLocaleString("fr-FR")} pas</p>}
-                    {sport > 0 && <p style={{ color: "#f97316" }}>🏅 {sport} min sport</p>}
+                    {sport > 0 && <p style={{ color: "var(--calories)" }}>🏅 {sport} min sport</p>}
                   </div>
                 );
               }}
@@ -325,7 +325,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
             <Bar yAxisId="steps" dataKey="steps" radius={[3, 3, 0, 0]} maxBarSize={18}
               fill="rgba(99,179,237,0.55)" />
             <Line yAxisId="sport" dataKey="sportMin" type="monotone"
-              stroke="#f97316" strokeWidth={2} dot={{ fill: "#f97316", r: 3, strokeWidth: 0 }}
+              stroke="var(--calories)" strokeWidth={2} dot={{ fill: "var(--calories)", r: 3, strokeWidth: 0 }}
               connectNulls={false} />
           </ComposedChart>
         </ResponsiveContainer>
@@ -378,7 +378,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                       <>
                         <span className="text-[11px]">👟</span>
                         <span className="text-[11px] font-semibold tabular-nums"
-                          style={{ color: stepsOk ? "#34A853" : "var(--text-secondary)" }}>
+                          style={{ color: stepsOk ? "var(--fit-green)" : "var(--text-secondary)" }}>
                           {p.steps >= 1000 ? `${(p.steps / 1000).toFixed(1)}k` : String(p.steps)}
                         </span>
                       </>
@@ -1231,7 +1231,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               />
 
               {saveError && (
-                <p className="text-[12px] mt-2 text-center" style={{ color: "#f87171" }}>
+                <p className="text-[12px] mt-2 text-center" style={{ color: "var(--danger)" }}>
                   {saveErrDetail || "Erreur lors de la sauvegarde — réessaye"}
                 </p>
               )}
@@ -1480,19 +1480,19 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                         { value: String(dispDur), unit: "min", color: actColor, icon: <IconClock size={13} stroke={1.8}/> },
                       ];
                       if (dispCal != null && dispCal > 0)
-                        gfMetrics.push({ value: String(Math.round(dispCal)), unit: "kcal", color: "#f87171", icon: <IconFlame size={13} stroke={1.8}/> });
+                        gfMetrics.push({ value: String(Math.round(dispCal)), unit: "kcal", color: "var(--danger)", icon: <IconFlame size={13} stroke={1.8}/> });
                       if (s.distanceM != null)
                         gfMetrics.push({
                           value: s.distanceM >= 1000 ? (s.distanceM / 1000).toFixed(2) : String(s.distanceM),
                           unit: s.distanceM >= 1000 ? "km" : "m",
-                          color: "#34d399", icon: <IconRuler size={13} stroke={1.8}/>,
+                          color: "var(--fiber)", icon: <IconRuler size={13} stroke={1.8}/>,
                         });
                       if (s.avgSpeedKmh != null)
-                        gfMetrics.push({ value: String(s.avgSpeedKmh), unit: "km/h", color: "#60a5fa", icon: <IconGauge size={13} stroke={1.8}/> });
+                        gfMetrics.push({ value: String(s.avgSpeedKmh), unit: "km/h", color: "var(--fat)", icon: <IconGauge size={13} stroke={1.8}/> });
                       if (s.steps != null && s.steps > 0)
                         gfMetrics.push({ value: s.steps.toLocaleString("fr-FR"), unit: "pas", color: "var(--steps)", icon: <IconShoe size={13} stroke={1.8}/> });
                       if (s.heartRateAvg != null)
-                        gfMetrics.push({ value: String(s.heartRateAvg), unit: "bpm moy.", color: "#f87171", icon: <IconHeart size={13} stroke={1.8}/> });
+                        gfMetrics.push({ value: String(s.heartRateAvg), unit: "bpm moy.", color: "var(--danger)", icon: <IconHeart size={13} stroke={1.8}/> });
                       if (s.heartRateMax != null)
                         gfMetrics.push({ value: String(s.heartRateMax), unit: "bpm max", color: "#dc2626", icon: <IconHeart size={13} stroke={2.2}/> });
 
@@ -1503,14 +1503,14 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                         >
                           {/* Card */}
                           <div className="rounded-2xl overflow-hidden" style={{
-                            background: `linear-gradient(135deg, ${actColor}18 0%, ${actColor}06 70%)`,
-                            border: `1px solid ${actColor}30`,
+                            background: `linear-gradient(135deg, color-mix(in srgb, ${actColor} 9%, transparent) 0%, color-mix(in srgb, ${actColor} 2%, transparent) 70%)`,
+                            border: `1px solid color-mix(in srgb, ${actColor} 19%, transparent)`,
                           }}>
                             <div className="p-3.5">
                               {/* Header */}
                               <div className="flex items-start gap-3 mb-3">
                                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                                  style={{ background: `${actColor}22`, border: `1px solid ${actColor}38` }}>
+                                  style={{ background: `color-mix(in srgb, ${actColor} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${actColor} 22%, transparent)` }}>
                                   <ActivitySVGIcon type={s.activityType} color={actColor} size={26}/>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -1520,7 +1520,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   </p>
                                   <div className="flex items-center gap-2">
                                     <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                                      style={{ background: "rgba(251,191,36,0.15)", color: "#fbbf24" }}>GFIT</span>
+                                      style={{ background: "rgba(251,191,36,0.15)", color: "var(--carbs)" }}>GFIT</span>
                                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                                       {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                                     </span>
@@ -1530,7 +1530,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   {hasGps && (
                                     <button onClick={() => setOpenRouteId(showRoute ? null : s.id)}
                                       className="btn-icon w-8 h-8" title="Carte GPS"
-                                      style={{ color: showRoute ? "#f97316" : "var(--text-muted)" }}>
+                                      style={{ color: showRoute ? "var(--calories)" : "var(--text-muted)" }}>
                                       <IconMap size={14}/>
                                     </button>
                                   )}
@@ -1623,7 +1623,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                       mMetrics.push({ value: String(a.durationMin), unit: "min", color: actColor, icon: <IconClock size={13} stroke={1.8}/> });
                     }
                     if (a.caloriesBurned)
-                      mMetrics.push({ value: String(a.caloriesBurned), unit: "kcal", color: "#f87171", icon: <IconFlame size={13} stroke={1.8}/> });
+                      mMetrics.push({ value: String(a.caloriesBurned), unit: "kcal", color: "var(--danger)", icon: <IconFlame size={13} stroke={1.8}/> });
 
                     return (
                       <motion.div key={`manual-${a.id}`}
@@ -1632,8 +1632,8 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                       >
                         {/* Card */}
                         <div className="rounded-2xl overflow-hidden" style={{
-                          background: `linear-gradient(135deg, ${actColor}18 0%, ${actColor}06 70%)`,
-                          border: `1px solid ${actColor}30`,
+                          background: `linear-gradient(135deg, color-mix(in srgb, ${actColor} 9%, transparent) 0%, color-mix(in srgb, ${actColor} 2%, transparent) 70%)`,
+                          border: `1px solid color-mix(in srgb, ${actColor} 19%, transparent)`,
                         }}>
                           <div className="p-3.5">
                             {/* Header */}
@@ -1644,7 +1644,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   else { setPhotoForActivityId(a.id); actPhotoInputRef.current?.click(); }
                                 }}
                                 className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden relative group"
-                                style={{ background: `${actColor}22`, border: `1px solid ${actColor}38` }}
+                                style={{ background: `color-mix(in srgb, ${actColor} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${actColor} 22%, transparent)` }}
                                 title={a.photoDataUrl ? "Agrandir" : "Ajouter photo"}>
                                 {a.photoDataUrl
                                   ? <img src={a.photoDataUrl} className="w-12 h-12 object-cover" alt=""/>
@@ -1662,7 +1662,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   {a.name}
                                 </p>
                                 <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                                  style={{ background: "rgba(99,179,237,0.15)", color: "#60a5fa" }}>MANUEL</span>
+                                  style={{ background: "rgba(99,179,237,0.15)", color: "var(--fat)" }}>MANUEL</span>
                               </div>
                               <div className="flex items-center gap-0.5 flex-shrink-0">
                                 <button
@@ -1680,7 +1680,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   style={{ color: editingActivityId === a.id ? "var(--protein)" : "var(--text-muted)" }}>
                                   <IconPencil size={13}/>
                                 </button>
-                                <button onClick={() => handleDelete(a.id)} className="btn-icon w-8 h-8" style={{ color: "#f87171" }}>
+                                <button onClick={() => handleDelete(a.id)} className="btn-icon w-8 h-8" style={{ color: "var(--danger)" }}>
                                   <IconTrash size={13}/>
                                 </button>
                               </div>
@@ -1817,7 +1817,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               transform: "translateX(-50%)",
               background: toast.ok ? "rgba(52,211,153,0.18)" : "rgba(239,68,68,0.18)",
               border: `1px solid ${toast.ok ? "rgba(52,211,153,0.4)" : "rgba(239,68,68,0.4)"}`,
-              color: toast.ok ? "rgba(52,211,153,0.95)" : "#f87171",
+              color: toast.ok ? "rgba(52,211,153,0.95)" : "var(--danger)",
               backdropFilter: "blur(12px)",
             }}
           >
@@ -2133,7 +2133,7 @@ function ActivityFormBody({
                   style={{
                     background: form.variableWeight ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
                     border: `1px solid ${form.variableWeight ? "rgba(251,191,36,0.5)" : "var(--border)"}`,
-                    color: form.variableWeight ? "#fbbf24" : "var(--text-muted)",
+                    color: form.variableWeight ? "var(--carbs)" : "var(--text-muted)",
                   }}
                 >
                   Var.

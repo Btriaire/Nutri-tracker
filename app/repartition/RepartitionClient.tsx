@@ -55,8 +55,8 @@ const GROUP_COLORS: Record<string, string> = {
 
 function microColor(pct: number) {
   if (pct >= 90) return "#4ade80";
-  if (pct >= 60) return "#fbbf24";
-  return "#f87171";
+  if (pct >= 60) return "var(--carbs)";
+  return "var(--danger)";
 }
 
 function MicroGauge({ m }: { m: MicroRow }) {
@@ -80,7 +80,7 @@ function MicroGauge({ m }: { m: MicroRow }) {
 
 function InsightList({ title, items, tone }: { title: string; items: Insight[]; tone: "danger" | "success" }) {
   if (!items.length) return null;
-  const color = tone === "danger" ? "#f87171" : "#4ade80";
+  const color = tone === "danger" ? "var(--danger)" : "#4ade80";
   const bg    = tone === "danger" ? "rgba(248,113,113,0.06)" : "rgba(74,222,128,0.06)";
   const Icon  = tone === "danger" ? IconAlertTriangle : IconCircleCheck;
   return (
@@ -92,7 +92,7 @@ function InsightList({ title, items, tone }: { title: string; items: Insight[]; 
         {items.map((it, i) => (
           <div key={i} className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
-              style={{ background: `${color}22`, color }}>
+              style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }}>
               {i + 1}
             </span>
             <span className="text-[12.5px] flex-1" style={{ color: "var(--text-primary)" }}>{it.label}</span>

@@ -255,7 +255,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
       style={{
         background: copied === k ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
         border: `1px solid ${copied === k ? "rgba(52,211,153,0.3)" : "var(--border)"}`,
-        color: copied === k ? "#34d399" : "var(--text-secondary)",
+        color: copied === k ? "var(--fiber)" : "var(--text-secondary)",
       }}>
       {copied === k ? <IconCheck size={11} stroke={2} /> : <IconCopy size={11} stroke={1.5} />}
       {copied === k ? "Copié !" : label}
@@ -279,7 +279,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           </div>
         </div>
         {connected
-          ? <IconCircleCheck size={18} stroke={1.5} style={{ color: "#34d399", flexShrink: 0 }} />
+          ? <IconCircleCheck size={18} stroke={1.5} style={{ color: "var(--fiber)", flexShrink: 0 }} />
           : <IconCircleX    size={18} stroke={1.5} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
         }
       </div>
@@ -454,7 +454,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             {parseState === "sent" && (
               <motion.div key="sent" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center gap-2 py-6">
-                <IconCircleCheck size={36} stroke={1.5} style={{ color: "#34d399" }} />
+                <IconCircleCheck size={36} stroke={1.5} style={{ color: "var(--fiber)" }} />
                 <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
                   {parsedDays.length} jours importés !
                 </p>
@@ -468,8 +468,8 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           {parseError && (
             <div className="flex items-center gap-2 p-3 rounded-xl"
               style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
-              <IconAlertCircle size={14} stroke={1.5} style={{ color: "#f87171" }} />
-              <p className="text-[11px]" style={{ color: "#f87171" }}>{parseError}</p>
+              <IconAlertCircle size={14} stroke={1.5} style={{ color: "var(--danger)" }} />
+              <p className="text-[11px]" style={{ color: "var(--danger)" }}>{parseError}</p>
             </div>
           )}
         </div>

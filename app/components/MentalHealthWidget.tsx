@@ -11,11 +11,11 @@ interface Props { date: string }
 
 // ── Mood color ────────────────────────────────────────────────────────────────
 function moodColor(v: number) {
-  if (v >= 5) return "#34d399";
+  if (v >= 5) return "var(--fiber)";
   if (v >= 4) return "#86efac";
-  if (v >= 3) return "#fbbf24";
-  if (v >= 2) return "#f97316";
-  return "#f87171";
+  if (v >= 3) return "var(--carbs)";
+  if (v >= 2) return "var(--calories)";
+  return "var(--danger)";
 }
 
 // ── SVG Mood Face ─────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ function MoodFace({ val, size = 38, active = false }: { val: number; size?: numb
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
       {/* Head circle */}
       <circle cx={cx} cy={cx} r={r}
-        fill={active ? `${c}18` : "rgba(255,255,255,0.04)"}
+        fill={active ? `color-mix(in srgb, ${c} 9%, transparent)` : "rgba(255,255,255,0.04)"}
         stroke={active ? c : "rgba(255,255,255,0.13)"}
         strokeWidth={active ? 1.5 : 1}
       />
@@ -99,8 +99,8 @@ function MoodFace({ val, size = 38, active = false }: { val: number; size?: numb
       {/* Rosy cheeks for mood 5 */}
       {val === 5 && (
         <>
-          <ellipse cx={size * 0.225} cy={mouthY - size * 0.02} rx={size * 0.065} ry={size * 0.038} fill={`${c}3a`} />
-          <ellipse cx={size * 0.775} cy={mouthY - size * 0.02} rx={size * 0.065} ry={size * 0.038} fill={`${c}3a`} />
+          <ellipse cx={size * 0.225} cy={mouthY - size * 0.02} rx={size * 0.065} ry={size * 0.038} fill={`color-mix(in srgb, ${c} 23%, transparent)`} />
+          <ellipse cx={size * 0.775} cy={mouthY - size * 0.02} rx={size * 0.065} ry={size * 0.038} fill={`color-mix(in srgb, ${c} 23%, transparent)`} />
         </>
       )}
     </svg>
@@ -360,7 +360,7 @@ export default function MentalHealthWidget({ date }: Props) {
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{
-            background: moodEntry ? `${moodColor(moodEntry)}14` : "rgba(129,140,248,0.12)",
+            background: moodEntry ? `color-mix(in srgb, ${moodColor(moodEntry)} 8%, transparent)` : "rgba(129,140,248,0.12)",
             border: `1px solid ${moodEntry ? moodColor(moodEntry) + "30" : "rgba(129,140,248,0.2)"}`,
           }}
         >

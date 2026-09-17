@@ -58,7 +58,7 @@ export default function HistoryClient() {
               style={{
                 background: "linear-gradient(135deg,rgba(249,115,22,0.18),rgba(251,191,36,0.15))",
                 border: "1px solid rgba(249,115,22,0.4)",
-                color: "#f97316",
+                color: "var(--calories)",
               }}>
               {generating === p ? <IconLoader2 size={14} className="animate-spin" /> : <IconRefresh size={14} />}
               Générer {p === "7d" ? "7 jours" : "30 jours"}
@@ -68,7 +68,7 @@ export default function HistoryClient() {
 
         {error && (
           <div className="px-4 py-3 rounded-xl text-[12px] mb-4"
-            style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "#f87171" }}>
+            style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
             Erreur lors de la génération ou du chargement.
           </div>
         )}
@@ -84,7 +84,7 @@ export default function HistoryClient() {
                 <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <IconFileTypePdf size={18} style={{ color: "#f97316" }} />
+                    <IconFileTypePdf size={18} style={{ color: "var(--calories)" }} />
                     <div>
                       <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                         Rapport {r.period === "7d" ? "7 jours" : "30 jours"} — {format(new Date(r.to), "d MMM yyyy", { locale: fr })}

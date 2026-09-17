@@ -15,8 +15,8 @@ interface SoundDef {
 }
 
 const SOUNDS: SoundDef[] = [
-  { id: "rain",     emoji: "🌧️", name: "Pluie douce",    desc: "Bruissement de pluie légère",       color: "#60a5fa" },
-  { id: "ocean",    emoji: "🌊", name: "Vagues",          desc: "Vagues rythmiques de l'océan",      color: "#34d399" },
+  { id: "rain",     emoji: "🌧️", name: "Pluie douce",    desc: "Bruissement de pluie légère",       color: "var(--fat)" },
+  { id: "ocean",    emoji: "🌊", name: "Vagues",          desc: "Vagues rythmiques de l'océan",      color: "var(--fiber)" },
   { id: "forest",   emoji: "🌲", name: "Forêt",           desc: "Oiseaux et feuillages frémissants", color: "#86efac" },
   { id: "fire",     emoji: "🔥", name: "Feu de cheminée", desc: "Crépitement chaleureux du bois",    color: "#fb923c" },
   { id: "tibetan",  emoji: "🎵", name: "Bol tibétain",    desc: "432 Hz · vibrations méditatives",   color: "#c084fc" },
@@ -375,7 +375,7 @@ export default function RelaxationPlayer() {
               whileTap={{ scale: 0.97 }}
               className="flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all"
               style={{
-                background: active ? `${s.color}18` : "rgba(255,255,255,0.03)",
+                background: active ? `color-mix(in srgb, ${s.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
                 border:     `1px solid ${active ? s.color + "55" : "var(--border)"}`,
               }}
             >

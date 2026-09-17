@@ -113,7 +113,7 @@ export default function SupplementsProgressSection() {
             const expectedPerDay = FREQUENCY_PER_DAY[product.frequency] ?? 1;
             const daysTaken = dateRange.filter(d => adherenceByDate.get(d)?.has(product.id)).length;
             const pct = Math.round((daysTaken / days) * 100);
-            const color = pct >= 80 ? "#34d399" : pct >= 50 ? "#fbbf24" : "#f87171";
+            const color = pct >= 80 ? "var(--fiber)" : pct >= 50 ? "var(--carbs)" : "var(--danger)";
 
             return (
               <div key={product.id}>
@@ -180,7 +180,7 @@ export default function SupplementsProgressSection() {
                         {info.symbol}
                       </span>
                     </div>
-                    <span className="text-[11px] font-bold tabular-nums" style={{ color: isOk ? "#34d399" : "#f87171" }}>
+                    <span className="text-[11px] font-bold tabular-nums" style={{ color: isOk ? "var(--fiber)" : "var(--danger)" }}>
                       {avgVal}{info.unit} moy.
                     </span>
                   </div>

@@ -195,7 +195,7 @@ export default function CustomFoodForm({ existing, onSaved, onCancel }: Props) {
         )}
       </div>
 
-      {error && <p className="text-[12px]" style={{ color: "#f87171" }}>{error}</p>}
+      {error && <p className="text-[12px]" style={{ color: "var(--danger)" }}>{error}</p>}
 
       {/* Actions */}
       <div className="flex gap-2 pt-1">

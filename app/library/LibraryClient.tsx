@@ -353,7 +353,7 @@ export default function LibraryClient() {
                       </div>
                       <span
                         className="badge flex-shrink-0 mt-0.5"
-                        style={{ color: SOURCE_COLOR[selected.source], borderColor: `${SOURCE_COLOR[selected.source]}40` }}
+                        style={{ color: SOURCE_COLOR[selected.source], borderColor: `color-mix(in srgb, ${SOURCE_COLOR[selected.source]} 25%, transparent)` }}
                       >
                         {SOURCE_LABEL[selected.source]}
                       </span>

@@ -52,7 +52,7 @@ function StatPill({ icon, label, value, color, pct }: {
     <div className="flex items-center gap-3 p-3 rounded-xl"
       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: `${color}18` }}>
+        style={{ background: `color-mix(in srgb, ${color} 9%, transparent)` }}>
         <span style={{ color }}>{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
@@ -228,7 +228,7 @@ export default function DashboardClientDesktop({
             <div className="grid grid-cols-2 gap-3">
               <StatPill icon={<IconShoe size={16} />}  label="Pas"                 value={steps != null ? steps.toLocaleString("fr-FR") : "—"}  color="var(--protein)" pct={stepsPct} />
               <StatPill icon={<IconBolt size={16} />}  label="Activité"            value={activeMinutes != null ? `${activeMinutes} min` : "—"}  color="var(--carbs)"   pct={activePct} />
-              <StatPill icon={<IconMoon size={16} />}  label="Sommeil"             value={sleepH != null ? `${sleepH} h` : "—"}                  color="#a78bfa"        pct={sleepPct} />
+              <StatPill icon={<IconMoon size={16} />}  label="Sommeil"             value={sleepH != null ? `${sleepH} h` : "—"}                  color="var(--protein)"        pct={sleepPct} />
               <StatPill icon={<IconHeart size={16} />} label="Fréquence cardiaque" value={heartRate != null ? `${heartRate} bpm` : "—"}           color="#f43f5e" />
             </div>
 

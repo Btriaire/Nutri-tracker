@@ -18,7 +18,7 @@ const STAGE_Y: Record<Stage, number> = { awake: 4, rem: 3, light: 2, deep: 1 };
 const STAGE_CFG: Record<Stage, { label: string; color: string; bg: string }> = {
   awake: { label: "Éveillé",  color: "#94a3b8", bg: "rgba(148,163,184,0.18)" },
   rem:   { label: "REM",      color: "#c084fc", bg: "rgba(192,132,252,0.20)" },
-  light: { label: "Léger",    color: "#60a5fa", bg: "rgba(96,165,250,0.22)"  },
+  light: { label: "Léger",    color: "var(--fat)", bg: "rgba(96,165,250,0.22)"  },
   deep:  { label: "Profond",  color: "#1d4ed8", bg: "rgba(29,78,216,0.30)"   },
 };
 
@@ -174,7 +174,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Cycles de sommeil</p>
         <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-          style={{ background: "rgba(96,165,250,0.1)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.25)" }}>
+          style={{ background: "rgba(96,165,250,0.1)", color: "var(--fat)", border: "1px solid rgba(96,165,250,0.25)" }}>
           Simulation · {Math.round(sleepMinutes / 60 * 10) / 10}h
         </span>
       </div>
@@ -214,7 +214,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
           ))}
 
           {/* Step line */}
-          <path d={linePath} fill="none" stroke="#60a5fa" strokeWidth={1.8} strokeLinejoin="round" />
+          <path d={linePath} fill="none" stroke="var(--fat)" strokeWidth={1.8} strokeLinejoin="round" />
 
           {/* Y axis labels */}
           {(["awake", "rem", "light", "deep"] as Stage[]).map(s => {
@@ -255,7 +255,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
           const pct = Math.round(mins / sleepMinutes * 100);
           return (
             <div key={s} className="flex flex-col items-center gap-0.5 rounded-lg py-2"
-              style={{ background: cfg.bg, border: `1px solid ${cfg.color}30` }}>
+              style={{ background: cfg.bg, border: `1px solid color-mix(in srgb, ${cfg.color} 19%, transparent)` }}>
               <span className="text-[13px] font-bold tabular-nums" style={{ color: cfg.color }}>
                 {fmtMin(mins)}
               </span>

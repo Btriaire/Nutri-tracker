@@ -198,7 +198,7 @@ export default function TrackedNutrientsPanel() {
                   <span className="text-base">{cfg.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{cfg.label}</p>
-                    <p className="text-[11px]" style={{ color: isMax ? "#f87171" : "#a78bfa" }}>
+                    <p className="text-[11px]" style={{ color: isMax ? "var(--danger)" : "var(--protein)" }}>
                       {isMax ? "MAX recommandé" : "MIN recommandé"}
                     </p>
                   </div>
@@ -232,13 +232,13 @@ export default function TrackedNutrientsPanel() {
                                 onClick={() => setGoals(prev => ({ ...prev, [cfg.field]: val }))}
                                 className="flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-all"
                                 style={{
-                                  background: isSelected ? `${cfg.color}18` : "rgba(255,255,255,0.03)",
+                                  background: isSelected ? `color-mix(in srgb, ${cfg.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
                                   border: `1px solid ${isSelected ? cfg.color : "var(--border)"}`,
                                 }}>
                                 <div className="flex items-center gap-2">
                                   <span className="text-[11px] font-bold px-1.5 py-0.5 rounded"
                                     style={{
-                                      background: isSelected ? `${cfg.color}25` : "rgba(255,255,255,0.06)",
+                                      background: isSelected ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : "rgba(255,255,255,0.06)",
                                       color: isSelected ? cfg.color : "var(--text-muted)",
                                       border: `1px solid ${isSelected ? cfg.color : "var(--border)"}`,
                                       minWidth: "44px",

@@ -304,7 +304,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               <IconChevronLeft size={16} />
             </button>
           ) : (
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}22` }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
               <IconBarbell size={16} style={{ color: ACCENT }} />
             </div>
           )}
@@ -361,7 +361,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                       {MUSCLE_LABELS[ex.primary]} · {EQUIPMENT_LABELS[ex.equipment]}
                     </p>
                   </div>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}22` }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
                     <IconPlus size={14} style={{ color: ACCENT }} />
                   </div>
                 </button>
@@ -393,7 +393,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               {NAME_PRESETS.map((p) => (
                 <button key={p} onClick={() => setName(p)}
                   className="px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap"
-                  style={{ background: name === p ? `${ACCENT}22` : "rgba(255,255,255,0.04)", color: name === p ? ACCENT : "var(--text-muted)" }}>
+                  style={{ background: name === p ? `color-mix(in srgb, ${ACCENT} 13%, transparent)` : "rgba(255,255,255,0.04)", color: name === p ? ACCENT : "var(--text-muted)" }}>
                   {p}
                 </button>
               ))}
@@ -411,7 +411,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                     <div key={p.id} className="flex items-center gap-2 p-2.5 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       <button onClick={() => launchProgram(p)} className="flex-1 flex items-center gap-2.5 min-w-0 text-left active:scale-[0.99] transition-transform">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}1A`, color: ACCENT }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 10%, transparent)`, color: ACCENT }}>
                           <IconPlayerPlay size={15} stroke={2.5} />
                         </div>
                         <div className="min-w-0">
@@ -421,7 +421,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                       </button>
                       <button onClick={() => deleteProgram(p.id)} aria-label="Supprimer le programme"
                         className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}><IconTrash size={13} /></button>
+                        style={{ background: "rgba(239,68,68,0.1)", color: "var(--danger)" }}><IconTrash size={13} /></button>
                     </div>
                   ))}
                 </div>
@@ -434,7 +434,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                 <MuscleBodyMap primary={primaryMuscles} secondary={secondaryMuscles} accent={ACCENT} size={180} />
                 <div className="flex justify-center gap-4 mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} /> Principal</span>
-                  <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: `${ACCENT}66` }} /> Secondaire</span>
+                  <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: `color-mix(in srgb, ${ACCENT} 40%, transparent)` }} /> Secondaire</span>
                 </div>
               </div>
             )}
@@ -456,9 +456,9 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                     </div>
                     <button onClick={() => openCamera(i)} aria-label="Photo de l'appareil"
                       className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${ACCENT}1A`, color: ACCENT }}><IconCamera size={13} /></button>
+                      style={{ background: `color-mix(in srgb, ${ACCENT} 10%, transparent)`, color: ACCENT }}><IconCamera size={13} /></button>
                     <button onClick={() => removeExercise(i)} className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}><IconTrash size={13} /></button>
+                      style={{ background: "rgba(239,68,68,0.1)", color: "var(--danger)" }}><IconTrash size={13} /></button>
                   </div>
 
                   {/* sets */}
@@ -506,7 +506,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             {/* add exercise */}
             <button onClick={() => setView("picker")}
               className="w-full mt-3 py-3 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-              style={{ background: `${ACCENT}14`, border: `1px dashed ${ACCENT}55`, color: ACCENT }}>
+              style={{ background: `color-mix(in srgb, ${ACCENT} 8%, transparent)`, border: `1px dashed color-mix(in srgb, ${ACCENT} 33%, transparent)`, color: ACCENT }}>
               <IconPlus size={16} /> Ajouter un exercice
             </button>
 
@@ -524,7 +524,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             )}
 
             {error && (
-              <p className="mt-3 text-center text-[12px]" style={{ color: "#f87171" }}>{error}</p>
+              <p className="mt-3 text-center text-[12px]" style={{ color: "var(--danger)" }}>{error}</p>
             )}
           </div>
         )}
@@ -537,7 +537,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
           {restSec !== null && (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
               className="flex-shrink-0 mx-5 mb-2 px-4 py-2.5 rounded-xl flex items-center gap-3"
-              style={{ background: `${ACCENT}1A`, border: `1px solid ${ACCENT}44` }}>
+              style={{ background: `color-mix(in srgb, ${ACCENT} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${ACCENT} 27%, transparent)` }}>
               <IconClock size={16} style={{ color: ACCENT }} />
               <span className="text-[13px] font-semibold tabular-nums" style={{ color: ACCENT }}>
                 Repos {Math.floor(restSec / 60)}:{String(restSec % 60).padStart(2, "0")}
@@ -556,7 +556,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
           <div className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
             <button onClick={save} disabled={saving || exercises.length === 0}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
-              style={{ background: ACCENT, color: "#fff", boxShadow: exercises.length > 0 ? `0 4px 20px ${ACCENT}35` : "none" }}>
+              style={{ background: ACCENT, color: "#fff", boxShadow: exercises.length > 0 ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
               {saving ? (
                 <><motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span> Enregistrement…</>
               ) : (

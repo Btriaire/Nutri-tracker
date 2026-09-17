@@ -79,7 +79,7 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
         background: t.bg,
         border: selected ? `2px solid ${t.accent}` : "2px solid transparent",
         height: 90,
-        boxShadow: selected ? `0 0 0 3px ${t.accent}28` : "none",
+        boxShadow: selected ? `0 0 0 3px color-mix(in srgb, ${t.accent} 16%, transparent)` : "none",
         transition: "border-color 0.2s, box-shadow 0.2s",
       }}
     >
@@ -102,7 +102,7 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
                 style={{
                   flex: 1,
                   height: `${h * 100}%`,
-                  background: i === 3 ? t.accent : `${t.accent}50`,
+                  background: i === 3 ? t.accent : `color-mix(in srgb, ${t.accent} 31%, transparent)`,
                   borderRadius: "2px 2px 0 0",
                 }}
               />

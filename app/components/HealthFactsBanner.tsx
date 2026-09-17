@@ -65,14 +65,14 @@ export default function HealthFactsBanner() {
     >
       {/* Background leaf glow */}
       <div className="absolute inset-0 opacity-[0.04]"
-        style={{ background: "radial-gradient(ellipse at 10% 50%, #34d399 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(ellipse at 10% 50%, var(--fiber) 0%, transparent 70%)" }} />
 
       <div className="flex items-start gap-3 relative z-10">
         <div className="flex-shrink-0 mt-0.5">
-          <IconLeaf size={14} stroke={2} style={{ color: "#34d399" }} />
+          <IconLeaf size={14} stroke={2} style={{ color: "var(--fiber)" }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "#34d399" }}>
+          <p className="text-[11px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--fiber)" }}>
             Nutrition &amp; Santé
           </p>
           <AnimatePresence mode="wait" initial={false}>
@@ -100,7 +100,7 @@ export default function HealthFactsBanner() {
               style={{
                 width:      i === dotIdx ? "12px" : "4px",
                 height:     "4px",
-                background: i === dotIdx ? "#34d399" : "rgba(52,211,153,0.2)",
+                background: i === dotIdx ? "var(--fiber)" : "rgba(52,211,153,0.2)",
               }} />
           );
         })}

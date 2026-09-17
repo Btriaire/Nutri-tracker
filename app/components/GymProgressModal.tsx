@@ -104,7 +104,7 @@ export default function GymProgressModal({ onClose }: Props) {
         </div>
 
         <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${ACCENT}22` }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
             <IconTrendingUp size={16} style={{ color: ACCENT }} />
           </div>
           <div className="flex-1 min-w-0">

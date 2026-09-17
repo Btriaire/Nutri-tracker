@@ -63,7 +63,7 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
   const nearest = nearestMoodWord(pos.x, pos.y);
   const label = nearest?.label ?? MOOD_CENTER_LABEL;
   const moodVal = moodValueFromPosition(pos.x);
-  const ballColor = moodVal >= 5 ? "#34d399" : moodVal >= 4 ? "#86efac" : moodVal >= 3 ? "#fbbf24" : moodVal >= 2 ? "#f97316" : "#f87171";
+  const ballColor = moodVal >= 5 ? "var(--fiber)" : moodVal >= 4 ? "#86efac" : moodVal >= 3 ? "var(--carbs)" : moodVal >= 2 ? "var(--calories)" : "var(--danger)";
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -147,7 +147,7 @@ export default function MoodCircle({ initialX = 0, initialY = 0, onChange }: Moo
             left: RADIUS + pos.x * RADIUS,
             top: RADIUS + pos.y * RADIUS,
             background: ballColor,
-            boxShadow: `0 0 14px ${ballColor}66`,
+            boxShadow: `0 0 14px color-mix(in srgb, ${ballColor} 40%, transparent)`,
             transition: dragging ? "none" : "left 0.25s ease, top 0.25s ease, background 0.2s ease",
           }}
           className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"

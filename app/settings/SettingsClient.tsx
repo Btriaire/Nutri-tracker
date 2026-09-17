@@ -210,7 +210,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               style={{
                 background: "linear-gradient(135deg,rgba(249,115,22,0.12),rgba(251,191,36,0.10))",
                 border: "1px solid rgba(249,115,22,0.35)",
-                color: "#f97316",
+                color: "var(--calories)",
               }}>
               <IconFileTypePdf size={15} />
               Rapport PDF
@@ -300,7 +300,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         >
           <button className="w-full flex items-center gap-3" onClick={() => setFitOpen(v => !v)}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #4285f4 0%, #34a853 50%, #ea4335 100%)" }}>
+              style={{ background: "linear-gradient(135deg, var(--fit-blue) 0%, var(--fit-green) 50%, var(--fit-red) 100%)" }}>
               <IconBolt size={18} color="white" />
             </div>
             <div className="flex-1 min-w-0 text-left">
@@ -362,7 +362,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 </button>
                 <button onClick={handleDisconnect} disabled={disconnecting}
                   className="btn btn-ghost text-[12px] px-3"
-                  style={{ color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                  style={{ color: "var(--danger)", borderColor: "rgba(248,113,113,0.3)" }}>
                   {disconnecting ? <IconLoader2 size={12} className="animate-spin" /> : "Déconnecter"}
                 </button>
               </div>
@@ -423,7 +423,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                                 <div className="w-3 h-3 flex-shrink-0 flex items-center justify-center">
                                   {p.status === "running" && <IconLoader2 size={11} className="animate-spin" style={{ color: "var(--accent)" }} />}
                                   {p.status === "done"    && <IconCircleCheck size={11} style={{ color: "var(--fiber)" }} />}
-                                  {p.status === "error"   && <IconCircleX     size={11} style={{ color: "#f87171" }} />}
+                                  {p.status === "error"   && <IconCircleX     size={11} style={{ color: "var(--danger)" }} />}
                                   {p.status === "pending" && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--border)" }} />}
                                 </div>
                                 <span className="text-[11px] flex-1" style={{
@@ -551,7 +551,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 </button>
                 <button onClick={handleWithingsDisconnect} disabled={wDisconnecting}
                   className="btn btn-ghost text-[12px] px-3"
-                  style={{ color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                  style={{ color: "var(--danger)", borderColor: "rgba(248,113,113,0.3)" }}>
                   {wDisconnecting ? <IconLoader2 size={12} className="animate-spin" /> : "Déconnecter"}
                 </button>
               </div>
@@ -559,7 +559,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               {/* Debug button */}
               <button onClick={handleWithingsDebug} disabled={wDebug}
                 className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-medium transition-all"
-                style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24" }}>
+                style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", color: "var(--carbs)" }}>
                 {wDebug
                   ? <><IconLoader2 size={11} className="animate-spin" /> Diagnostic en cours…</>
                   : <>🔍 Diagnostic Withings — voir ce que l&apos;API renvoie</>}
@@ -569,7 +569,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 <div className="rounded-xl p-3 overflow-x-auto"
                   style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(251,191,36,0.2)" }}>
                   <pre className="text-[11px] leading-relaxed whitespace-pre-wrap"
-                    style={{ color: "#fbbf24", fontFamily: "monospace" }}>
+                    style={{ color: "var(--carbs)", fontFamily: "monospace" }}>
                     {wDebugRes}
                   </pre>
                 </div>
@@ -613,7 +613,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             style={{
               background: "rgba(248,113,113,0.06)",
               border: "1px solid rgba(248,113,113,0.2)",
-              color: "#f87171",
+              color: "var(--danger)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.12)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.06)")}

@@ -226,10 +226,10 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
     { label: "Potassium",    value: n.potassiumMg,     unit: "mg" },
     { label: "Calcium",      value: n.calciumMg,       unit: "mg", color: "#94a3b8" },
     { label: "Magnésium",    value: n.magneziumMg,     unit: "mg" },
-    { label: "Fer",          value: n.ironMg,          unit: "mg", color: "#f87171" },
+    { label: "Fer",          value: n.ironMg,          unit: "mg", color: "var(--danger)" },
     { label: "Zinc",         value: n.zincMg,          unit: "mg" },
     { label: "Vit. C",       value: n.vitaminCMg,      unit: "mg", color: "#fb923c" },
-    { label: "Vit. D",       value: n.vitaminDUg,      unit: "µg", color: "#fbbf24" },
+    { label: "Vit. D",       value: n.vitaminDUg,      unit: "µg", color: "var(--carbs)" },
     { label: "Vit. B12",     value: n.vitaminB12Ug,    unit: "µg" },
     { label: "Folate (B9)",  value: n.vitaminB9Ug,     unit: "µg" },
     { label: "Alcool",       value: n.alcoholG,        unit: "g" },
@@ -259,7 +259,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
           <button
             onClick={handleDelete}
             className="flex flex-col items-center gap-0.5"
-            style={{ color: "#f87171" }}
+            style={{ color: "var(--danger)" }}
           >
             <IconTrash size={18} stroke={2} />
             <span className="text-[11px] font-semibold">Supprimer</span>
@@ -331,7 +331,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               <p className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                 {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`}
                 {entry.weightVerified && (
-                  <IconRosetteDiscountCheckFilled size={12} style={{ color: "#34d399", flexShrink: 0 }} title="Poids moyen vérifié" />
+                  <IconRosetteDiscountCheckFilled size={12} style={{ color: "var(--fiber)", flexShrink: 0 }} title="Poids moyen vérifié" />
                 )}
               </p>
             </button>
@@ -354,7 +354,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 onClick={handleDelete}
                 className="p-1.5 rounded-lg transition-colors"
                 style={{ color: "var(--text-muted)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                 aria-label="Supprimer"
               >
@@ -466,7 +466,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
                   <IconExclamationCircle size={14} stroke={2} style={{ color: "#ef4444", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium" style={{ color: "#f87171" }}>Hors régime</p>
+                    <p className="text-[11px] font-medium" style={{ color: "var(--danger)" }}>Hors régime</p>
                     <ul className="text-[11px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
                       {dietViolations.map((v, i) => <li key={i}>{v.reason}</li>)}
                     </ul>
@@ -492,7 +492,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   ...(n.fiberG ? [{ label: "Fibres", value: n.fiberG, color: "var(--fiber)" }] : []),
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
-                    style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+                    style={{ background: `color-mix(in srgb, ${color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 19%, transparent)` }}>
                     <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[11px] ml-0.5">g</span></span>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                   </div>

@@ -130,7 +130,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
                   <IconLoader2 size={11} className="animate-spin" /> Sauvegarde…
                 </span>
               ) : saved ? (
-                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "#34d399" }}>
+                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--fiber)" }}>
                   <IconCircleCheck size={12} /> Sauvegardée ✓
                 </span>
               ) : (

@@ -278,7 +278,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                         </div>
                         <button onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
                           className="btn-icon w-7 h-7 flex-shrink-0"
-                          style={{ color: "#f87171" }}>
+                          style={{ color: "var(--danger)" }}>
                           <IconTrash size={13} stroke={2} />
                         </button>
                       </div>

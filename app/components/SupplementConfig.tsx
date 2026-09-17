@@ -437,8 +437,8 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   style={{ background: isPaused ? "rgba(52,211,153,0.1)" : "rgba(251,191,36,0.1)" }}
                 >
                   {isPaused
-                    ? <IconPlayerPlay size={14} style={{ color: "#34d399" }} />
-                    : <IconPlayerPause size={14} style={{ color: "#fbbf24" }} />
+                    ? <IconPlayerPlay size={14} style={{ color: "var(--fiber)" }} />
+                    : <IconPlayerPause size={14} style={{ color: "var(--carbs)" }} />
                   }
                 </button>
                 <button

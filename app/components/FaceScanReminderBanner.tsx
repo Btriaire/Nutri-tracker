@@ -49,11 +49,11 @@ export default function FaceScanReminderBanner() {
   return (
     <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl mb-4"
       style={{ background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.28)" }}>
-      <IconFaceId size={16} stroke={1.8} style={{ color: "#60a5fa", flexShrink: 0 }} />
+      <IconFaceId size={16} stroke={1.8} style={{ color: "var(--fat)", flexShrink: 0 }} />
       <p className="text-[11.5px] leading-snug flex-1" style={{ color: "var(--text-primary)" }}>
-        <span style={{ color: "#60a5fa", fontWeight: 500 }}>{label}</span>
+        <span style={{ color: "var(--fat)", fontWeight: 500 }}>{label}</span>
         {" "}— objectif : au moins 1× tous les 3 jours.{" "}
-        <Link href="/health/face-scan" className="underline underline-offset-2" style={{ color: "#60a5fa" }}>
+        <Link href="/health/face-scan" className="underline underline-offset-2" style={{ color: "var(--fat)" }}>
           Scanner maintenant
         </Link>
       </p>

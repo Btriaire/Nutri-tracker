@@ -17,10 +17,10 @@ const PAD_T  = 6;  // top padding
 const MEALS = ["breakfast", "lunch", "dinner", "snacks"] as const;
 
 const MEAL_META: Record<string, { emoji: string; label: string; color: string }> = {
-  breakfast: { emoji: "🌅", label: "Petit-déj", color: "#fbbf24" },
-  lunch:     { emoji: "🥗", label: "Déjeuner",  color: "#34d399" },
-  dinner:    { emoji: "🍽️", label: "Dîner",     color: "#a78bfa" },
-  snacks:    { emoji: "🍎", label: "Collation", color: "#f97316" },
+  breakfast: { emoji: "🌅", label: "Petit-déj", color: "var(--carbs)" },
+  lunch:     { emoji: "🥗", label: "Déjeuner",  color: "var(--fiber)" },
+  dinner:    { emoji: "🍽️", label: "Dîner",     color: "var(--protein)" },
+  snacks:    { emoji: "🍎", label: "Collation", color: "var(--calories)" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -115,8 +115,8 @@ function MealTimingSVG({ stats }: { stats: MealTimingStats[] }) {
               <rect
                 x={sdLeft} y={cy - 5}
                 width={sdW} height={10} rx={5}
-                fill={`${meta.color}22`}
-                stroke={`${meta.color}50`} strokeWidth={0.75}
+                fill={`color-mix(in srgb, ${meta.color} 13%, transparent)`}
+                stroke={`color-mix(in srgb, ${meta.color} 31%, transparent)`} strokeWidth={0.75}
               />
             )}
 

@@ -171,11 +171,11 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
         fontSize: 11, color: "rgba(255,255,255,0.5)",
       }}>
         <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#34d399", display: "inline-block" }} />
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fiber)", display: "inline-block" }} />
           départ
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f87171", display: "inline-block" }} />
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--danger)", display: "inline-block" }} />
           arrivée
         </span>
       </div>

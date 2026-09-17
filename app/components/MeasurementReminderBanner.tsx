@@ -48,11 +48,11 @@ export default function MeasurementReminderBanner() {
   return (
     <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl mb-4"
       style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.28)" }}>
-      <IconRuler size={16} stroke={1.8} style={{ color: "#a78bfa", flexShrink: 0 }} />
+      <IconRuler size={16} stroke={1.8} style={{ color: "var(--protein)", flexShrink: 0 }} />
       <p className="text-[11.5px] leading-snug flex-1" style={{ color: "var(--text-primary)" }}>
-        <span style={{ color: "#a78bfa", fontWeight: 500 }}>{label}</span>
+        <span style={{ color: "var(--protein)", fontWeight: 500 }}>{label}</span>
         {" "}— objectif : au moins 1× par semaine.{" "}
-        <Link href="/health" className="underline underline-offset-2" style={{ color: "#a78bfa" }}>
+        <Link href="/health" className="underline underline-offset-2" style={{ color: "var(--protein)" }}>
           Saisir maintenant
         </Link>
       </p>

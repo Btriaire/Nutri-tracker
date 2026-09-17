@@ -104,10 +104,10 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
           >
             <div className="flex items-center justify-center w-6 h-6 rounded-lg flex-shrink-0"
               style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2))" }}>
-              <IconSparkles size={12} stroke={2} style={{ color: "#a78bfa" }} />
+              <IconSparkles size={12} stroke={2} style={{ color: "var(--protein)" }} />
             </div>
             <span className="text-[11px] font-semibold tracking-wide uppercase"
-              style={{ color: "#a78bfa", letterSpacing: "0.06em" }}>
+              style={{ color: "var(--protein)", letterSpacing: "0.06em" }}>
               IA
             </span>
             <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
@@ -139,7 +139,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               <IconRefresh
                 size={11}
                 stroke={2}
-                style={{ color: "#a78bfa" }}
+                style={{ color: "var(--protein)" }}
                 className={loading ? "animate-spin" : ""}
               />
             </button>
@@ -154,7 +154,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
             style={{
               background: "rgba(139,92,246,0.08)",
               border: "1px solid rgba(139,92,246,0.2)",
-              color: "#a78bfa",
+              color: "var(--protein)",
             }}
           >
             <IconSparkles size={11} stroke={2} />
@@ -236,7 +236,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               </p>
               {loading && (
                 <span className="inline-block w-2 h-2 rounded-full ml-1 animate-pulse"
-                  style={{ background: "#a78bfa", verticalAlign: "middle" }} />
+                  style={{ background: "var(--protein)", verticalAlign: "middle" }} />
               )}
             </motion.div>
           )}

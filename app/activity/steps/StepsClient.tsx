@@ -175,9 +175,9 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         <motion.div {...fade(0.08)} className="grid grid-cols-4 gap-2.5 mb-4">
           {[
             { label: "Moyenne", value: avgSteps > 0 ? avgSteps.toLocaleString("fr-FR") : "—", icon: <IconShoe size={13} style={{ color: "var(--steps)" }} />, color: "var(--steps)" },
-            { label: "Record",  value: bestDay  > 0 ? bestDay.toLocaleString("fr-FR")  : "—", icon: <IconTrophy size={13} style={{ color: "#FBBC04" }} />, color: "#FBBC04" },
-            { label: "Jours obj.", value: `${goalDays}j`, icon: <IconTarget size={13} style={{ color: "#34A853" }} />, color: "#34A853" },
-            { label: "Streak", value: streak > 0 ? `${streak}j` : "—", icon: <IconFlame size={13} style={{ color: "#f97316" }} />, color: "#f97316" },
+            { label: "Record",  value: bestDay  > 0 ? bestDay.toLocaleString("fr-FR")  : "—", icon: <IconTrophy size={13} style={{ color: "var(--fit-yellow)" }} />, color: "var(--fit-yellow)" },
+            { label: "Jours obj.", value: `${goalDays}j`, icon: <IconTarget size={13} style={{ color: "var(--fit-green)" }} />, color: "var(--fit-green)" },
+            { label: "Streak", value: streak > 0 ? `${streak}j` : "—", icon: <IconFlame size={13} style={{ color: "var(--calories)" }} />, color: "var(--calories)" },
           ].map(({ label, value, icon, color }) => (
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2.5">
               <div className="flex items-center gap-1">{icon}</div>
@@ -190,7 +190,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {/* Secondary stats */}
         <motion.div {...fade(0.09)} className="grid grid-cols-3 gap-2.5 mb-4">
           {[
-            { label: "Taux objectif", value: `${goalRate}%`, icon: <IconCircleCheck size={12} style={{ color: goalRate >= 70 ? "#34A853" : "#FBBC04" }} />, color: goalRate >= 70 ? "#34A853" : "#FBBC04" },
+            { label: "Taux objectif", value: `${goalRate}%`, icon: <IconCircleCheck size={12} style={{ color: goalRate >= 70 ? "var(--fit-green)" : "var(--fit-yellow)" }} />, color: goalRate >= 70 ? "var(--fit-green)" : "var(--fit-yellow)" },
             { label: "Min. actives", value: avgActive > 0 ? `${avgActive} min` : "—", icon: <IconBolt size={12} style={{ color: "var(--fit-green)" }} />, color: "var(--fit-green)" },
             { label: "Kcal actives", value: totalCal > 0 ? `${Math.round(totalCal).toLocaleString("fr-FR")}` : "—", icon: <IconFlame size={12} style={{ color: "var(--calories)" }} />, color: "var(--calories)" },
           ].map(({ label, value, icon, color }) => (
@@ -209,7 +209,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta > 0
                 ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>+<strong style={{ color: "var(--fit-green)" }}>{weekDelta.toLocaleString("fr-FR")}</strong> pas/j en moyenne cette semaine</span></>
-                : <><IconArrowDown size={15} style={{ color: "#fbbf24" }} /><span style={{ color: "var(--text-secondary)" }}><strong style={{ color: "#fbbf24" }}>{Math.abs(weekDelta).toLocaleString("fr-FR")}</strong> pas/j de moins cette semaine</span></>
+                : <><IconArrowDown size={15} style={{ color: "var(--carbs)" }} /><span style={{ color: "var(--text-secondary)" }}><strong style={{ color: "var(--carbs)" }}>{Math.abs(weekDelta).toLocaleString("fr-FR")}</strong> pas/j de moins cette semaine</span></>
             }
           </motion.div>
         )}
@@ -218,10 +218,10 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {bestDate && bestDay > 0 && (
           <motion.div {...fade(0.11)} className="flex items-center gap-2.5 px-3 py-2 rounded-xl mb-4"
             style={{ background: "rgba(251,188,4,0.06)", border: "1px solid rgba(251,188,4,0.2)" }}>
-            <IconTrophy size={18} style={{ color: "#FBBC04" }} />
+            <IconTrophy size={18} style={{ color: "var(--fit-yellow)" }} />
             <div>
               <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                Record sur {rangeDays} jours : <strong style={{ color: "#FBBC04" }}>{bestDay.toLocaleString("fr-FR")} pas</strong>
+                Record sur {rangeDays} jours : <strong style={{ color: "var(--fit-yellow)" }}>{bestDay.toLocaleString("fr-FR")} pas</strong>
               </p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {format(parseISO(bestDate), "EEEE d MMMM", { locale: fr })}
@@ -293,8 +293,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
           {/* Color legend */}
           <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
             {[
-              { label: "Objectif atteint ≥ 100%", color: "#34A853" },
-              { label: "Presque  ≥ 70%",          color: "#FBBC04" },
+              { label: "Objectif atteint ≥ 100%", color: "var(--fit-green)" },
+              { label: "Presque  ≥ 70%",          color: "var(--fit-yellow)" },
               { label: "< 70%",                   color: "var(--fit-red)" },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
@@ -318,8 +318,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="actGrad2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#34A853" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#34A853" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--fit-green)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--fit-green)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -335,7 +335,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   );
                 }} />
                 <ReferenceLine y={30} stroke="rgba(52,168,83,0.3)" strokeDasharray="4 3" />
-                <Area type="monotone" dataKey="activeMinutes" stroke="#34A853" strokeWidth={1.5} fill="url(#actGrad2)" dot={false} connectNulls />
+                <Area type="monotone" dataKey="activeMinutes" stroke="var(--fit-green)" strokeWidth={1.5} fill="url(#actGrad2)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
             <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = recommandation OMS 30 min</p>
@@ -350,8 +350,8 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <AreaChart data={chartData} margin={{ top: 2, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="calBurnGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#f97316" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="var(--calories)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--calories)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -409,7 +409,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     )}
                     {/* Goal badge */}
                     {p.steps >= stepsGoal && (
-                      <IconCircleCheck size={14} style={{ color: "#34A853", flexShrink: 0 }} />
+                      <IconCircleCheck size={14} style={{ color: "var(--fit-green)", flexShrink: 0 }} />
                     )}
                   </div>
                   {/* Mini progress bar */}

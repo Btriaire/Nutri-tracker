@@ -12,8 +12,8 @@ const DAY_TYPES: {
   color: string;
   bg: string;
 }[] = [
-  { key: "work",   label: "Travail",      Icon: IconBriefcase,    color: "#60a5fa", bg: "rgba(96,165,250,0.12)"  },
-  { key: "rest",   label: "Repos",        Icon: IconSofa,         color: "#34d399", bg: "rgba(52,211,153,0.12)"  },
+  { key: "work",   label: "Travail",      Icon: IconBriefcase,    color: "var(--fat)", bg: "rgba(96,165,250,0.12)"  },
+  { key: "rest",   label: "Repos",        Icon: IconSofa,         color: "var(--fiber)", bg: "rgba(52,211,153,0.12)"  },
   { key: "travel", label: "Déplacement",  Icon: IconPlaneInflight, color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
 ];
 
@@ -86,7 +86,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all active:scale-95 flex-shrink-0"
             style={{
               background: active ? bg  : "rgba(255,255,255,0.04)",
-              border:     `1px solid ${active ? `${color}55` : "var(--border)"}`,
+              border:     `1px solid ${active ? `color-mix(in srgb, ${color} 33%, transparent)` : "var(--border)"}`,
               color:      active ? color : "var(--text-muted)",
             }}
           >
@@ -95,7 +95,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             {showAutoBadge && (
               <span
                 className="ml-0.5 flex items-center gap-0.5 px-1 rounded text-[11px] font-semibold"
-                style={{ background: `${color}22`, color }}
+                style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }}
               >
                 <IconSparkles size={8} />
                 auto
@@ -120,13 +120,13 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             style={{
               background: jetlag ? "rgba(239,68,68,0.12)"  : "rgba(255,255,255,0.04)",
               border:     `1px solid ${jetlag ? "rgba(239,68,68,0.4)" : "var(--border)"}`,
-              color:      jetlag ? "#f87171" : "var(--text-muted)",
+              color:      jetlag ? "var(--danger)" : "var(--text-muted)",
             }}
           >
             <span style={{ fontSize: 11 }}>⏱</span>
             Jet lag
             <span className="ml-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ background: jetlag ? "#f87171" : "rgba(255,255,255,0.15)" }} />
+              style={{ background: jetlag ? "var(--danger)" : "rgba(255,255,255,0.15)" }} />
           </motion.button>
         )}
       </AnimatePresence>

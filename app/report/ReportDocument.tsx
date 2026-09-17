@@ -63,9 +63,9 @@ function MacroDonut({ p, c, f }: { p: number; c: number; f: number }) {
   const circumference = 2 * Math.PI * R;
 
   const segments = [
-    { pct: pPct, color: "#a78bfa", label: "P" },
-    { pct: cPct, color: "#fbbf24", label: "G" },
-    { pct: fPct, color: "#60a5fa", label: "L" },
+    { pct: pPct, color: "var(--protein)", label: "P" },
+    { pct: cPct, color: "var(--carbs)", label: "G" },
+    { pct: fPct, color: "var(--fat)", label: "L" },
   ];
 
   let offset = 0;
@@ -265,10 +265,10 @@ function TrendChartCard({
 // ─── Score badge ─────────────────────────────────────────────────────────────
 
 export function score(pct: number) {
-  if (pct >= 90) return { label: "Excellent", color: "#34d399", bg: "rgba(52,211,153,0.12)", border: "rgba(52,211,153,0.3)" };
-  if (pct >= 70) return { label: "Bon",        color: "#60a5fa", bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)" };
-  if (pct >= 50) return { label: "Passable",   color: "#fbbf24", bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.3)" };
-  return               { label: "À améliorer", color: "#f87171", bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.3)" };
+  if (pct >= 90) return { label: "Excellent", color: "var(--fiber)", bg: "rgba(52,211,153,0.12)", border: "rgba(52,211,153,0.3)" };
+  if (pct >= 70) return { label: "Bon",        color: "var(--fat)", bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.3)" };
+  if (pct >= 50) return { label: "Passable",   color: "var(--carbs)", bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.3)" };
+  return               { label: "À améliorer", color: "var(--danger)", bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.3)" };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -286,15 +286,15 @@ function fmtN(n: number | null, unit = "", dec = 0) {
 function SectionTitle({ icon, title, color }: { icon: string; title: string; color: string }) {
   return (
     <div className="flex items-center gap-3 mb-4 pb-3 report-section-title"
-      style={{ borderBottom: `2px solid ${color}33` }}>
+      style={{ borderBottom: `2px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
       <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: `${color}18` }}>
+        style={{ background: `color-mix(in srgb, ${color} 9%, transparent)` }}>
         <span className="text-[15px]">{icon}</span>
       </div>
       <h2 className="text-[15px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
         {title}
       </h2>
-      <div className="flex-1 h-px ml-2" style={{ background: `${color}20` }} />
+      <div className="flex-1 h-px ml-2" style={{ background: `color-mix(in srgb, ${color} 13%, transparent)` }} />
     </div>
   );
 }
@@ -308,7 +308,7 @@ function KpiCard({
   return (
     <div className="glass p-3.5 flex items-start gap-3 report-card">
       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: `${color}18` }}>
+        style={{ background: `color-mix(in srgb, ${color} 9%, transparent)` }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -336,17 +336,17 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         style={{ background: "linear-gradient(135deg,rgba(249,115,22,0.12),rgba(167,139,250,0.12),rgba(96,165,250,0.08))", border: "1px solid var(--border)" }}>
 
         {/* Top accent bar */}
-        <div style={{ height: 4, background: "linear-gradient(90deg,#f97316,#a78bfa,#60a5fa)" }} />
+        <div style={{ height: 4, background: "linear-gradient(90deg,var(--calories),var(--protein),var(--fat))" }} />
 
         <div className="p-6 md:p-8">
           {/* Logo + title */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg,#f97316,#fb923c)" }}>
+              style={{ background: "linear-gradient(135deg,var(--calories),#fb923c)" }}>
               <span className="text-[18px]">🥦</span>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#f97316" }}>NutriTracker</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--calories)" }}>NutriTracker</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Rapport de santé personnel</p>
             </div>
           </div>
@@ -360,7 +360,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             ) : (
               <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(249,115,22,0.15)", border: "2px solid rgba(249,115,22,0.3)" }}>
-                <IconUser size={28} style={{ color: "#f97316" }} />
+                <IconUser size={28} style={{ color: "var(--calories)" }} />
               </div>
             )}
             <div>
@@ -398,58 +398,58 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           RÉSUMÉ EXÉCUTIF
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5 report-page-break">
-        <SectionTitle icon="📋" title="Résumé exécutif" color="#f97316" />
+        <SectionTitle icon="📋" title="Résumé exécutif" color="var(--calories)" />
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <KpiCard
-            icon={<IconFlame size={14} style={{ color: "#f97316" }} />}
+            icon={<IconFlame size={14} style={{ color: "var(--calories)" }} />}
             label="Calories moy / jour"
             value={fmtN(data.nutrition.avgCalories)}
             unit="kcal"
             sub={`Objectif : ${data.profile.goals.dailyCalories} kcal`}
-            color="#f97316"
+            color="var(--calories)"
             pct={data.nutrition.pctCalGoal}
           />
           <KpiCard
-            icon={<IconLeaf size={14} style={{ color: "#a78bfa" }} />}
+            icon={<IconLeaf size={14} style={{ color: "var(--protein)" }} />}
             label="Protéines moy / jour"
             value={fmtN(data.nutrition.avgProteinG)}
             unit="g"
             sub={`Objectif : ${data.profile.goals.proteinGrams} g`}
-            color="#a78bfa"
+            color="var(--protein)"
             pct={data.profile.goals.proteinGrams ? Math.round(data.nutrition.avgProteinG / data.profile.goals.proteinGrams * 100) : 0}
           />
           <KpiCard
-            icon={<IconShoe size={14} style={{ color: "#4285F4" }} />}
+            icon={<IconShoe size={14} style={{ color: "var(--fit-blue)" }} />}
             label="Pas moy / jour"
             value={data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—"}
             sub={`Objectif : ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`}
-            color="#4285F4"
+            color="var(--fit-blue)"
             pct={data.activity.pctStepsGoal}
           />
           <KpiCard
-            icon={<IconMoon size={14} style={{ color: "#7986CB" }} />}
+            icon={<IconMoon size={14} style={{ color: "var(--fit-indigo)" }} />}
             label="Sommeil moy / nuit"
             value={fmtN(data.activity.avgSleepH, "h", 1)}
             sub={`Objectif : ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`}
-            color="#7986CB"
+            color="var(--fit-indigo)"
             pct={data.activity.pctSleepGoal}
           />
           <KpiCard
-            icon={<IconHeart size={14} style={{ color: "#EA4335" }} />}
+            icon={<IconHeart size={14} style={{ color: "var(--fit-red)" }} />}
             label="FC moyenne"
             value={fmtN(data.health.avgHR)}
             unit="bpm"
             sub={data.health.avgSys ? `Tension : ${data.health.avgSys}/${data.health.avgDia} mmHg` : "Pas de mesure"}
-            color="#EA4335"
+            color="var(--fit-red)"
           />
           <KpiCard
-            icon={<IconDroplet size={14} style={{ color: "#60a5fa" }} />}
+            icon={<IconDroplet size={14} style={{ color: "var(--fat)" }} />}
             label="Hydratation moy"
             value={fmtN(data.nutrition.avgWaterMl)}
             unit="mL"
             sub={`Objectif : ${data.profile.goals.waterMl} mL`}
-            color="#60a5fa"
+            color="var(--fat)"
             pct={data.nutrition.pctWaterGoal}
           />
         </div>
@@ -478,7 +478,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           NUTRITION
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5">
-        <SectionTitle icon="🍽️" title="Nutrition" color="#f97316" />
+        <SectionTitle icon="🍽️" title="Nutrition" color="var(--calories)" />
 
         <div className="grid grid-cols-2 gap-4 mb-5">
           {/* Macro donut */}
@@ -490,10 +490,10 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             />
             <div className="space-y-1.5">
               {[
-                { label: "Protéines", val: data.nutrition.avgProteinG, goal: data.profile.goals.proteinGrams, color: "#a78bfa", unit: "g" },
-                { label: "Glucides",  val: data.nutrition.avgCarbsG,   goal: data.profile.goals.carbsGrams,   color: "#fbbf24", unit: "g" },
-                { label: "Lipides",   val: data.nutrition.avgFatG,     goal: data.profile.goals.fatGrams,     color: "#60a5fa", unit: "g" },
-                { label: "Fibres",    val: data.nutrition.avgFiberG,   goal: data.profile.goals.fiberGrams,   color: "#34d399", unit: "g" },
+                { label: "Protéines", val: data.nutrition.avgProteinG, goal: data.profile.goals.proteinGrams, color: "var(--protein)", unit: "g" },
+                { label: "Glucides",  val: data.nutrition.avgCarbsG,   goal: data.profile.goals.carbsGrams,   color: "var(--carbs)", unit: "g" },
+                { label: "Lipides",   val: data.nutrition.avgFatG,     goal: data.profile.goals.fatGrams,     color: "var(--fat)", unit: "g" },
+                { label: "Fibres",    val: data.nutrition.avgFiberG,   goal: data.profile.goals.fiberGrams,   color: "var(--fiber)", unit: "g" },
               ].map(({ label, val, goal, color, unit }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
@@ -508,9 +508,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           {/* Water + fiber stats */}
           <div className="space-y-2">
             {[
-              { icon: "💧", label: "Eau / jour",     val: data.nutrition.avgWaterMl,  goal: data.profile.goals.waterMl,   unit: " mL",  color: "#60a5fa" },
-              { icon: "🌿", label: "Fibres / jour",  val: data.nutrition.avgFiberG,   goal: data.profile.goals.fiberGrams, unit: " g",  color: "#34d399" },
-              { icon: "📅", label: "Jours loggés",   val: data.nutrition.daysLogged,  goal: data.meta.totalDays,          unit: " j",  color: "#f97316" },
+              { icon: "💧", label: "Eau / jour",     val: data.nutrition.avgWaterMl,  goal: data.profile.goals.waterMl,   unit: " mL",  color: "var(--fat)" },
+              { icon: "🌿", label: "Fibres / jour",  val: data.nutrition.avgFiberG,   goal: data.profile.goals.fiberGrams, unit: " g",  color: "var(--fiber)" },
+              { icon: "📅", label: "Jours loggés",   val: data.nutrition.daysLogged,  goal: data.meta.totalDays,          unit: " j",  color: "var(--calories)" },
             ].map(({ icon, label, val, goal, unit, color }) => (
               <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
@@ -535,7 +535,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               </p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-2 rounded" style={{ background: "#f97316" }} />
+                  <div className="w-3 h-2 rounded" style={{ background: "var(--calories)" }} />
                   <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Calories</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -552,7 +552,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 70, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
                     <MiniBarChart
                       data={(data.nutrition.daily as DayNutrition[]).map(d => ({ val: d.calories, label: d.date }))}
-                      color="#f97316"
+                      color="var(--calories)"
                       height={70}
                       maxOverride={calMax}
                     />
@@ -587,7 +587,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               {data.reportSynthesis.bonnesHabitudes.length > 0 && (
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
                   <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>👍 Bonnes habitudes</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--fiber)" }}>👍 Bonnes habitudes</p>
                   </div>
                   <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
                     {data.reportSynthesis.bonnesHabitudes.map((h, i) => (
@@ -599,7 +599,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               {data.reportSynthesis.mauvaisesHabitudes.length > 0 && (
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
                   <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>👎 À corriger</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--danger)" }}>👎 À corriger</p>
                   </div>
                   <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
                     {data.reportSynthesis.mauvaisesHabitudes.map((h, i) => (
@@ -613,7 +613,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.reportSynthesis.alimentsAFavoriser.length > 0 && (
               <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>✅ Aliments à favoriser</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--fiber)" }}>✅ Aliments à favoriser</p>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
                   {data.reportSynthesis.alimentsAFavoriser.map((f, i) => (
@@ -629,7 +629,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.reportSynthesis.alimentsAEviter.length > 0 && (
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>⛔ Aliments à limiter / éviter</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--danger)" }}>⛔ Aliments à limiter / éviter</p>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
                   {data.reportSynthesis.alimentsAEviter.map((f, i) => (
@@ -653,14 +653,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           ACTIVITÉ PHYSIQUE
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5 report-page-break">
-        <SectionTitle icon="🏃" title="Activité physique" color="#34A853" />
+        <SectionTitle icon="🏃" title="Activité physique" color="var(--fit-green)" />
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[
-            { icon: <IconShoe size={13} style={{ color: "#4285F4" }} />, label: "Pas / jour", val: data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—", sub: `/ ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`, color: "#4285F4", pct: data.activity.pctStepsGoal },
-            { icon: <IconMoon size={13} style={{ color: "#7986CB" }} />,       label: "Sommeil",   val: fmtN(data.activity.avgSleepH, "h", 1),                                          sub: `/ ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`,    color: "#7986CB", pct: data.activity.pctSleepGoal },
-            { icon: <IconFlame size={13} style={{ color: "#EA4335" }} />,       label: "Cal. brûlées", val: fmtN(data.activity.avgCaloriesBurned, " kcal"),                              sub: "moyenne / jour",                                             color: "#EA4335" },
-            { icon: <IconBarbell size={13} style={{ color: "#34A853" }} />,    label: "Séances",   val: String(data.activity.totalSessions),                                            sub: "sur la période",                                             color: "#34A853" },
+            { icon: <IconShoe size={13} style={{ color: "var(--fit-blue)" }} />, label: "Pas / jour", val: data.activity.avgSteps ? data.activity.avgSteps.toLocaleString("fr-FR") : "—", sub: `/ ${data.profile.goals.stepsGoal.toLocaleString("fr-FR")}`, color: "var(--fit-blue)", pct: data.activity.pctStepsGoal },
+            { icon: <IconMoon size={13} style={{ color: "var(--fit-indigo)" }} />,       label: "Sommeil",   val: fmtN(data.activity.avgSleepH, "h", 1),                                          sub: `/ ${(data.profile.goals.sleepGoalMin / 60).toFixed(1)}h`,    color: "var(--fit-indigo)", pct: data.activity.pctSleepGoal },
+            { icon: <IconFlame size={13} style={{ color: "var(--fit-red)" }} />,       label: "Cal. brûlées", val: fmtN(data.activity.avgCaloriesBurned, " kcal"),                              sub: "moyenne / jour",                                             color: "var(--fit-red)" },
+            { icon: <IconBarbell size={13} style={{ color: "var(--fit-green)" }} />,    label: "Séances",   val: String(data.activity.totalSessions),                                            sub: "sur la période",                                             color: "var(--fit-green)" },
           ].map(({ icon, label, val, sub, color, pct }) => (
             <KpiCard key={label} icon={icon} label={label} value={val} sub={sub} color={color} pct={pct} />
           ))}
@@ -677,7 +677,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <div className="rounded-xl overflow-hidden flex-1" style={{ height: 60, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
                   <MiniBarChart
                     data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.steps, label: d.date }))}
-                    color="#4285F4"
+                    color="var(--fit-blue)"
                     height={60}
                     maxOverride={stepsMax}
                   />
@@ -696,7 +696,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               <div className="rounded-xl overflow-hidden flex-1" style={{ height: 50, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
                 <MiniBarChart
                   data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.sleepMin ? d.sleepMin / 60 : null, label: d.date }))}
-                  color="#7986CB"
+                  color="var(--fit-indigo)"
                   height={50}
                   maxOverride={12}
                 />
@@ -714,17 +714,17 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           MICRONUTRIMENTS & SUPPLÉMENTS
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5 report-page-break">
-        <SectionTitle icon="💊" title="Micronutriments & Suppléments" color="#a78bfa" />
+        <SectionTitle icon="💊" title="Micronutriments & Suppléments" color="var(--protein)" />
 
         {/* KPIs */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           {[
             { label: "Observance globale", val: `${data.supplements.overallAdherencePct}%`, color: score(data.supplements.overallAdherencePct).color },
-            { label: "Produits suivis",     val: String(data.supplements.productsCount),      color: "#a78bfa" },
-            { label: "Prises enregistrées", val: String(data.supplements.totalIntakes),        color: "#a78bfa" },
+            { label: "Produits suivis",     val: String(data.supplements.productsCount),      color: "var(--protein)" },
+            { label: "Prises enregistrées", val: String(data.supplements.totalIntakes),        color: "var(--protein)" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-xl"
-              style={{ background: `${color}14`, border: `1px solid ${color}40` }}>
+              style={{ background: `color-mix(in srgb, ${color} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 25%, transparent)` }}>
               <p className="text-[11px] font-medium uppercase tracking-wider text-center px-1" style={{ color }}>{label}</p>
               <p className="text-[16px] font-bold" style={{ color }}>{val}</p>
             </div>
@@ -786,7 +786,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               Répartition des apports (% AJR)
             </p>
             {data.micronutrients.perNutrient.map(n => {
-              const barColor = n.status === "carence" ? "#f87171" : n.status === "exces" ? "#fbbf24" : "#34d399";
+              const barColor = n.status === "carence" ? "var(--danger)" : n.status === "exces" ? "var(--carbs)" : "var(--fiber)";
               return (
                 <HBarRow key={n.code}
                   label={n.label}
@@ -813,9 +813,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             <div className="divide-y" style={{ borderColor: "var(--border)" }}>
               {data.micronutrients.perNutrient.map(n => {
                 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-                  carence: { label: "Carence",  color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)" },
-                  ok:      { label: "OK",       color: "#34d399", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.3)" },
-                  exces:   { label: "Excès",    color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)" },
+                  carence: { label: "Carence",  color: "var(--danger)", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)" },
+                  ok:      { label: "OK",       color: "var(--fiber)", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.3)" },
+                  exces:   { label: "Excès",    color: "var(--carbs)", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)" },
                   inconnu: { label: "—",        color: "var(--text-muted)", bg: "rgba(255,255,255,0.03)", border: "var(--border)" },
                 };
                 const cfg = STATUS_CFG[n.status];
@@ -847,8 +847,8 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {data.micronutrients.deficiencies.length > 0 && (
           <div className="mt-4 flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
             style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
-            <IconAlertCircle size={14} style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
-            <p className="text-[11px] leading-relaxed" style={{ color: "#f87171" }}>
+            <IconAlertCircle size={14} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 2 }} />
+            <p className="text-[11px] leading-relaxed" style={{ color: "var(--danger)" }}>
               Carences potentielles détectées sur : {data.micronutrients.deficiencies.map(d => d.label).join(", ")}.
             </p>
           </div>
@@ -859,7 +859,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           SANTÉ & VITAUX
       ═══════════════════════════════════════════════════════════ */}
       <div className="glass p-5 mb-5">
-        <SectionTitle icon="❤️" title="Santé & Constantes vitales" color="#EA4335" />
+        <SectionTitle icon="❤️" title="Santé & Constantes vitales" color="var(--fit-red)" />
 
         {/* Weight */}
         {(data.health.weightStart || data.health.weightEnd) && (
@@ -882,11 +882,11 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                       background: data.health.weightDelta < 0 ? "rgba(52,211,153,0.1)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.05)",
                       border: `1px solid ${data.health.weightDelta < 0 ? "rgba(52,211,153,0.3)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.3)" : "var(--border)"}`,
                     }}>
-                    {data.health.weightDelta < 0 ? <IconArrowDown size={11} style={{ color: "#34d399" }} /> :
-                     data.health.weightDelta > 0 ? <IconArrowUp size={11} style={{ color: "#f87171" }} /> :
+                    {data.health.weightDelta < 0 ? <IconArrowDown size={11} style={{ color: "var(--fiber)" }} /> :
+                     data.health.weightDelta > 0 ? <IconArrowUp size={11} style={{ color: "var(--danger)" }} /> :
                      <IconMinus size={11} style={{ color: "var(--text-muted)" }} />}
                     <span className="text-[11px] font-semibold"
-                      style={{ color: data.health.weightDelta < 0 ? "#34d399" : data.health.weightDelta > 0 ? "#f87171" : "var(--text-muted)" }}>
+                      style={{ color: data.health.weightDelta < 0 ? "var(--fiber)" : data.health.weightDelta > 0 ? "var(--danger)" : "var(--text-muted)" }}>
                       {data.health.weightDelta > 0 ? "+" : ""}{data.health.weightDelta} kg
                     </span>
                   </div>
@@ -912,7 +912,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                     unit="kg"
                     from={weightPoints[0].date}
                     to={weightPoints[weightPoints.length - 1].date}
-                    series={[{ points: weightPoints, color: "#f472b6", label: "Poids" }]}
+                    series={[{ points: weightPoints, color: "var(--weight)", label: "Poids" }]}
                   />
                 </div>
               );
@@ -920,7 +920,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.profile.goals.targetWeightKg && (
               <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--border)" }}>
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Objectif</span>
-                <span className="text-[12px] font-semibold" style={{ color: "#f472b6" }}>
+                <span className="text-[12px] font-semibold" style={{ color: "var(--weight)" }}>
                   {data.profile.goals.targetWeightKg} kg
                   {data.health.weightEnd && (
                     <span className="text-[11px] font-normal ml-1.5" style={{ color: "var(--text-muted)" }}>
@@ -956,7 +956,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                     <span className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
                       {latestVal} cm
                       {delta != null && delta !== 0 && (
-                        <span className="text-[11px] font-medium" style={{ color: delta < 0 ? "#34d399" : "#f87171" }}>
+                        <span className="text-[11px] font-medium" style={{ color: delta < 0 ? "var(--fiber)" : "var(--danger)" }}>
                           ({delta > 0 ? "+" : ""}{delta})
                         </span>
                       )}
@@ -971,9 +971,9 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Vitals grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[
-            { icon: "❤️", label: "FC moyenne",   val: fmtN(data.health.avgHR, " bpm"),   color: "#EA4335" },
-            { icon: "🩸", label: "Tension moy",  val: data.health.avgSys ? `${data.health.avgSys}/${data.health.avgDia}` : "—", unit: "mmHg", color: "#f87171" },
-            { icon: "💨", label: "SpO₂",         val: fmtN(data.health.latestSpO2, "%"),  color: "#60a5fa" },
+            { icon: "❤️", label: "FC moyenne",   val: fmtN(data.health.avgHR, " bpm"),   color: "var(--fit-red)" },
+            { icon: "🩸", label: "Tension moy",  val: data.health.avgSys ? `${data.health.avgSys}/${data.health.avgDia}` : "—", unit: "mmHg", color: "var(--danger)" },
+            { icon: "💨", label: "SpO₂",         val: fmtN(data.health.latestSpO2, "%"),  color: "var(--fat)" },
           ].filter(v => v.val !== "—").map(({ icon, label, val, unit, color }) => (
             <div key={label} className="glass px-3 py-2.5 rounded-xl flex items-center gap-3">
               <span className="text-[14px]">{icon}</span>
@@ -998,8 +998,8 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               from={sysPoints[0].date}
               to={sysPoints[sysPoints.length - 1].date}
               series={[
-                { points: sysPoints, color: "#f87171", label: "Systolique" },
-                ...(diaPoints.length > 1 ? [{ points: diaPoints, color: "#fbbf24", label: "Diastolique" }] : []),
+                { points: sysPoints, color: "var(--danger)", label: "Systolique" },
+                ...(diaPoints.length > 1 ? [{ points: diaPoints, color: "var(--carbs)", label: "Diastolique" }] : []),
               ]}
             />
           );
@@ -1015,7 +1015,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               unit=" bpm"
               from={hrPoints[0].date}
               to={hrPoints[hrPoints.length - 1].date}
-              series={[{ points: hrPoints, color: "#EA4335", label: "FC" }]}
+              series={[{ points: hrPoints, color: "var(--fit-red)", label: "FC" }]}
             />
           );
         })()}
@@ -1072,20 +1072,20 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           <div className="space-y-4">
             {data.health.symptomHistory.map(day => {
               const SCAT_COLOR: Record<string, string> = {
-                douleur: "#f87171", digestif: "#fb923c", respiratoire: "#60a5fa",
-                general: "#fbbf24", neurologique: "#a78bfa", cutane: "#34d399",
+                douleur: "var(--danger)", digestif: "#fb923c", respiratoire: "var(--fat)",
+                general: "var(--carbs)", neurologique: "var(--protein)", cutane: "var(--fiber)",
               };
               const SCAT_ICON: Record<string, string> = {
                 douleur: "🤕", digestif: "🫃", respiratoire: "🫁",
                 general: "🌡️", neurologique: "🧠", cutane: "🩹",
               };
               const SEV_COLOR: Record<string, string> = {
-                "léger": "#34d399", "modéré": "#fbbf24", "sévère": "#f87171",
+                "léger": "var(--fiber)", "modéré": "var(--carbs)", "sévère": "var(--danger)",
               };
               const ALERT_CFG: Record<string, { color: string; dot: string }> = {
-                vert:   { color: "#34d399", dot: "🟢" },
-                orange: { color: "#fbbf24", dot: "🟡" },
-                rouge:  { color: "#f87171", dot: "🔴" },
+                vert:   { color: "var(--fiber)", dot: "🟢" },
+                orange: { color: "var(--carbs)", dot: "🟡" },
+                rouge:  { color: "var(--danger)", dot: "🔴" },
               };
               return (
                 <div key={day.date} className="report-card">
@@ -1109,7 +1109,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                       return (
                         <span key={i}
                           className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                          style={{ background: `${sevColor}14`, border: `1px solid ${sevColor}44`, color: sevColor }}>
+                          style={{ background: `color-mix(in srgb, ${sevColor} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${sevColor} 27%, transparent)`, color: sevColor }}>
                           <span>{SCAT_ICON[s.category] ?? "🩺"}</span>
                           {s.name}
                           {s.severity && <span style={{ opacity: 0.7 }}>· {s.severity}</span>}
@@ -1124,7 +1124,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                     const cfg = ALERT_CFG[day.synthesis.alertLevel] ?? ALERT_CFG.vert;
                     return (
                       <div className="flex items-start gap-2 pl-3.5 py-1.5 rounded-lg"
-                        style={{ background: `${cfg.color}0d`, border: `1px solid ${cfg.color}30` }}>
+                        style={{ background: `color-mix(in srgb, ${cfg.color} 5%, transparent)`, border: `1px solid color-mix(in srgb, ${cfg.color} 19%, transparent)` }}>
                         <span className="text-[11px] flex-shrink-0">{cfg.dot}</span>
                         <div>
                           <p className="text-[11px] font-semibold" style={{ color: cfg.color }}>
@@ -1161,7 +1161,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               <div className="flex items-center gap-2">
                 {Object.entries(data.faceScan.delta).map(([axis, delta]) => (
                   <span key={axis} className="flex items-center gap-0.5 text-[11px] font-semibold"
-                    style={{ color: delta < 0 ? "#34d399" : delta > 0 ? "#f87171" : "var(--text-muted)" }}>
+                    style={{ color: delta < 0 ? "var(--fiber)" : delta > 0 ? "var(--danger)" : "var(--text-muted)" }}>
                     {delta < 0 ? <IconArrowDown size={10} /> : delta > 0 ? <IconArrowUp size={10} /> : <IconMinus size={10} />}
                     {AXIS_LABEL[axis]?.slice(0, 4) ?? axis}
                   </span>
@@ -1181,14 +1181,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       {data.latestSynthesis && (() => {
         const s = data.latestSynthesis;
         const ALERT_CFG: Record<string, { color: string; bg: string; border: string; dot: string }> = {
-          vert:   { color: "#34d399", bg: "rgba(52,211,153,0.10)",  border: "rgba(52,211,153,0.3)",  dot: "🟢" },
-          orange: { color: "#fbbf24", bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.3)",  dot: "🟡" },
-          rouge:  { color: "#f87171", bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.3)", dot: "🔴" },
+          vert:   { color: "var(--fiber)", bg: "rgba(52,211,153,0.10)",  border: "rgba(52,211,153,0.3)",  dot: "🟢" },
+          orange: { color: "var(--carbs)", bg: "rgba(251,191,36,0.10)",  border: "rgba(251,191,36,0.3)",  dot: "🟡" },
+          rouge:  { color: "var(--danger)", bg: "rgba(248,113,113,0.10)", border: "rgba(248,113,113,0.3)", dot: "🔴" },
         };
         const cfg = ALERT_CFG[s.alertLevel] ?? ALERT_CFG.vert;
         return (
           <div className="glass p-5 mb-5">
-            <SectionTitle icon="🤖" title="Synthèse Nutri-IA-Med" color="#a78bfa" />
+            <SectionTitle icon="🤖" title="Synthèse Nutri-IA-Med" color="var(--protein)" />
 
             {/* Alert badge */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4"
@@ -1230,14 +1230,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {s.recommandations?.length > 0 && (
               <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
                 <div className="px-3 py-2" style={{ background: "rgba(167,139,250,0.08)", borderBottom: "1px solid rgba(167,139,250,0.15)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#a78bfa" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--protein)" }}>
                     💡 Recommandations
                   </p>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(167,139,250,0.15)" }}>
                   {s.recommandations.map((r, i) => (
                     <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
-                      <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#a78bfa" }}>{i + 1}</span>
+                      <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "var(--protein)" }}>{i + 1}</span>
                       <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{r}</p>
                     </div>
                   ))}
@@ -1248,8 +1248,8 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {s.consulter && (
               <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
                 style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)" }}>
-                <IconAlertCircle size={14} style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
-                <p className="text-[12px] leading-relaxed" style={{ color: "#f87171" }}>{s.consulter}</p>
+                <IconAlertCircle size={14} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 2 }} />
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--danger)" }}>{s.consulter}</p>
               </div>
             )}
           </div>
@@ -1261,7 +1261,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       ═══════════════════════════════════════════════════════════ */}
       {data.reportSynthesis && (
         <div className="glass p-5 mb-5 report-page-break">
-          <SectionTitle icon="📝" title="Synthèse & plan d'action" color="#34d399" />
+          <SectionTitle icon="📝" title="Synthèse & plan d'action" color="var(--fiber)" />
 
           <p className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
             {data.reportSynthesis.resume}
@@ -1289,14 +1289,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           {data.reportSynthesis.defis.length > 0 && (
             <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(248,113,113,0.25)" }}>
               <div className="px-3 py-2" style={{ background: "rgba(248,113,113,0.08)", borderBottom: "1px solid rgba(248,113,113,0.15)" }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#f87171" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--danger)" }}>
                   ⚠️ Défis identifiés
                 </p>
               </div>
               <div className="divide-y" style={{ borderColor: "rgba(248,113,113,0.15)" }}>
                 {data.reportSynthesis.defis.map((d, i) => (
                   <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
-                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#f87171" }}>{i + 1}</span>
+                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "var(--danger)" }}>{i + 1}</span>
                     <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{d}</p>
                   </div>
                 ))}
@@ -1307,14 +1307,14 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           {data.reportSynthesis.propositions.length > 0 && (
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,211,153,0.25)" }}>
               <div className="px-3 py-2" style={{ background: "rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.15)" }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#34d399" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--fiber)" }}>
                   💡 Propositions pour la prochaine période
                 </p>
               </div>
               <div className="divide-y" style={{ borderColor: "rgba(52,211,153,0.15)" }}>
                 {data.reportSynthesis.propositions.map((p, i) => (
                   <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
-                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "#34d399" }}>{i + 1}</span>
+                    <span className="text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ color: "var(--fiber)" }}>{i + 1}</span>
                     <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{p}</p>
                   </div>
                 ))}

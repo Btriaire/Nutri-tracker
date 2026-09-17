@@ -106,7 +106,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
           </mask>
         </defs>
         <rect x="0" y="0" width="100" height="130" fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
-        <ellipse cx="50" cy="55" rx="27" ry="37" fill="none" stroke="#34d399" strokeWidth="0.6" strokeDasharray="2.5 2" opacity="0.9" />
+        <ellipse cx="50" cy="55" rx="27" ry="37" fill="none" stroke="var(--fiber)" strokeWidth="0.6" strokeDasharray="2.5 2" opacity="0.9" />
       </svg>
 
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-4" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>

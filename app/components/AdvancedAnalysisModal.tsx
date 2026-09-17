@@ -124,7 +124,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center"
               style={{ background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.4)" }}>
-              <IconBrain size={16} style={{ color: "#a78bfa" }} />
+              <IconBrain size={16} style={{ color: "var(--protein)" }} />
             </div>
             <div>
               <h2 className="text-[17px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -148,7 +148,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
               style={{
                 background: period === p.key ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.05)",
                 border: `1px solid ${period === p.key ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
-                color: period === p.key ? "#a78bfa" : "var(--text-secondary)",
+                color: period === p.key ? "var(--protein)" : "var(--text-secondary)",
               }}>
               {p.label}
             </button>
@@ -160,7 +160,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
             style={{
               background: loading ? "rgba(139,92,246,0.1)" : "rgba(139,92,246,0.2)",
               border: "1px solid rgba(139,92,246,0.5)",
-              color: "#a78bfa",
+              color: "var(--protein)",
               opacity: loading ? 0.7 : 1,
             }}
           >
@@ -199,7 +199,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
                 <div className="absolute inset-0 rounded-2xl animate-pulse"
                   style={{ background: "rgba(139,92,246,0.15)" }} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <IconBrain size={28} style={{ color: "#a78bfa" }} />
+                  <IconBrain size={28} style={{ color: "var(--protein)" }} />
                 </div>
               </div>
               <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
