@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, subDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Legend,
+  ComposedChart, AreaChart, Area, BarChart, Bar, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from "recharts";
 import {
   IconArrowDown, IconArrowUp, IconMinus, IconBolt, IconScale, IconChartBar, IconChartLine,
@@ -16,7 +16,7 @@ import {
   IconChevronDown, IconChevronUp, IconFileTypePdf, IconPalette,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients, IntermittentFasting } from "@/app/lib/types";
+import type { DayTrendPoint, NutritionGoals, NutritionPlan, TrackedNutrients } from "@/app/lib/types";
 import type { FastingSession } from "@/app/api/fasting/route";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import MealTimingWidget from "@/app/components/MealTimingWidget";
@@ -25,6 +25,8 @@ import AlbumModal from "@/app/components/AlbumModal";
 import AdvancedAnalysisModal from "@/app/components/AdvancedAnalysisModal";
 import SupplementsProgressSection from "@/app/components/SupplementsProgressSection";
 import QuotaWarningBanner from "@/app/components/QuotaWarningBanner";
+import FastingTracker from "@/app/components/FastingTracker";
+import AlcoolWeekWidget from "@/app/components/AlcoolWeekWidget";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
 type CalChart = "area" | "bar";
@@ -2282,262 +2284,3 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
   );
 }
 
-// ── Fasting Tracker (compact) ─────────────────────────────────────────────────
-function FastingTracker({
-  sessions,
-  config,
-}: {
-  sessions: FastingSession[];
-  config:   IntermittentFasting | undefined;
-}) {
-  if (!config?.enabled || sessions.length === 0) return null;
-
-  const durationH = config.durationH;
-  const targetMs  = durationH * 3_600_000;
-
-  // Only sessions that were actually started, most recent last, max 14
-  const recent = [...sessions]
-    .filter(s => s.startedAtMs != null)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-14);
-
-  if (recent.length === 0) return null;
-
-  // Build chart points
-  const chartData = recent.map(s => {
-    const endMs    = s.active ? Date.now() : (s.completedAtMs ?? (s.startedAtMs! + targetMs));
-    const elapsedH = Math.min((endMs - s.startedAtMs!) / 3_600_000, durationH);
-    const pct      = elapsedH / durationH;
-    return {
-      label:   format(parseISO(s.date), "d/M"),
-      hours:   Math.round(elapsedH * 10) / 10,
-      pct,
-      active:  !!s.active,
-    };
-  });
-
-  // Stats
-  const withEnd   = sessions.filter(s => s.startedAtMs != null && (s.completedAtMs != null || s.active));
-  const fullDone  = withEnd.filter(s => {
-    const endMs = s.active ? Date.now() : (s.completedAtMs ?? 0);
-    return (endMs - (s.startedAtMs ?? 0)) >= targetMs * 0.99;
-  });
-  const avgH = withEnd.length
-    ? withEnd.reduce((sum, s) => {
-        const endMs = s.active ? Date.now() : (s.completedAtMs ?? (s.startedAtMs! + targetMs));
-        return sum + Math.min((endMs - s.startedAtMs!) / 3_600_000, durationH);
-      }, 0) / withEnd.length
-    : 0;
-
-  // Streak — consecutive fully-completed sessions on scheduled days from today back
-  let streak = 0;
-  {
-    const completedDates = new Set(
-      sessions
-        .filter(s => s.startedAtMs != null && s.completedAtMs != null &&
-          ((s.completedAtMs - s.startedAtMs!) >= targetMs * 0.99))
-        .map(s => s.date),
-    );
-    for (let i = 0; i < 60; i++) {
-      const d   = format(subDays(new Date(), i), "yyyy-MM-dd");
-      const dow = parseISO(d).getDay();
-      if (!config.days.includes(dow)) continue;  // not a scheduled day, skip
-      if (completedDates.has(d)) streak++;
-      else break;
-    }
-  }
-
-  function barFill(pct: number, active: boolean): string {
-    if (active)    return "var(--calories)";
-    if (pct >= 1)  return "var(--ok)";
-    if (pct >= 0.75) return "#86efac";
-    if (pct >= 0.5)  return "var(--carbs)";
-    return "#a855f7";
-  }
-
-  // Custom bar label (hours value)
-  const CustomLabel = ({ x, y, width, value }: { x?: number; y?: number; width?: number; value?: number }) => {
-    if (!value || !width || width < 16) return null;
-    return (
-      <text x={(x ?? 0) + (width ?? 0) / 2} y={(y ?? 0) - 3}
-        textAnchor="middle" fontSize={8} fill="rgba(250,250,250,0.45)" fontFamily="inherit">
-        {value}h
-      </text>
-    );
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut", delay: 0.18 }}
-      className="mb-4 glass px-4 pt-4 pb-3"
-    >
-      {/* Header + stats */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span style={{ fontSize: 13 }}>🌿</span>
-          <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-            Jeûne Intermittent · {durationH}h
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {streak > 0 && (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(34,197,94,0.15)", color: "var(--ok)", border: "1px solid rgba(34,197,94,0.3)" }}>
-              {streak}🔥
-            </span>
-          )}
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(129,140,248,0.12)", color: "var(--fit-indigo)", border: "1px solid rgba(129,140,248,0.25)" }}>
-            {withEnd.length} / {fullDone.length} ✓
-          </span>
-          {avgH > 0 && (
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(251,191,36,0.1)", color: "var(--carbs)", border: "1px solid rgba(251,191,36,0.25)" }}>
-              ⌀ {avgH.toFixed(1)}h
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Bar chart — one bar per session */}
-      <ResponsiveContainer width="100%" height={88}>
-        <BarChart data={chartData} margin={{ top: 14, right: 2, left: -28, bottom: 0 }} barCategoryGap="22%">
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 11, fill: "rgba(250,250,250,0.3)" }}
-            axisLine={false} tickLine={false}
-          />
-          <YAxis domain={[0, durationH + durationH * 0.1]} hide />
-          <ReferenceLine
-            y={durationH}
-            stroke="rgba(34,197,94,0.35)"
-            strokeDasharray="4 3"
-            label={{ value: `${durationH}h`, position: "insideTopRight", fontSize: 11, fill: "rgba(34,197,94,0.6)" }}
-          />
-          <Bar dataKey="hours" radius={[4, 4, 2, 2]} label={<CustomLabel />}>
-            {chartData.map((d, i) => (
-              <Cell key={i} fill={barFill(d.pct, d.active)} fillOpacity={0.85} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-
-      {/* Legend */}
-      <div className="flex items-center gap-3 mt-1">
-        {[
-          { c: "#a855f7", label: "< 50%" },
-          { c: "var(--carbs)", label: "50-74%" },
-          { c: "#86efac", label: "75-99%" },
-          { c: "var(--ok)", label: "100% ✓" },
-        ].map(l => (
-          <div key={l.label} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-sm" style={{ background: l.c }} />
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ── Alcohol weekly widget ─────────────────────────────────────────────────────
-function AlcoolWeekWidget({
-  pts,
-  weeklyGoal,
-}: {
-  pts:         { date: string; alcoolUnits: number; label: string }[];
-  weeklyGoal:  number;
-}) {
-  const weeklyTotal  = Math.round(pts.reduce((s, p) => s + p.alcoolUnits, 0) * 10) / 10;
-  const dailyLimit   = Math.round(weeklyGoal / 7 * 10) / 10;
-  const pctWeek      = weeklyGoal > 0 ? Math.min(1, weeklyTotal / weeklyGoal) : 0;
-  const overWeek     = weeklyTotal > weeklyGoal;
-
-  function barColor(units: number): string {
-    if (units === 0)            return "rgba(192,132,252,0.15)";
-    if (units > dailyLimit)     return "var(--danger)";
-    if (units > dailyLimit * 0.8) return "var(--carbs)";
-    return "#c084fc";
-  }
-
-  if (pts.length === 0) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.05 }}
-      className="mb-4 glass px-4 pt-4 pb-3"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {/* Wine glass SVG */}
-          <svg width={16} height={16} viewBox="0 0 24 28" fill="none">
-            <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="#c084fc" strokeWidth="1.8" strokeLinejoin="round" fill="#c084fc" fillOpacity="0.2" />
-            <line x1="12" y1="14" x2="12" y2="22" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M7 22 Q12 25 17 22" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-          </svg>
-          <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-            Alcool — 7 derniers jours
-          </p>
-        </div>
-        <div className="text-right">
-          <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "var(--danger)" : "#c084fc" }}>
-            {weeklyTotal.toFixed(1)}
-          </span>
-          <span className="text-[11px] ml-0.5" style={{ color: "var(--text-muted)" }}>
-            / {weeklyGoal}u sem.
-          </span>
-        </div>
-      </div>
-
-      {/* Weekly progress bar */}
-      <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: overWeek ? "var(--danger)" : "linear-gradient(90deg,#a855f7,#c084fc)" }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pctWeek * 100}%` }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        />
-      </div>
-
-      {/* Daily bars */}
-      <div className="flex items-end justify-between gap-1" style={{ height: "52px" }}>
-        {pts.map(p => {
-          const pct  = dailyLimit > 0 ? Math.min(1.3, p.alcoolUnits / dailyLimit) : 0;
-          const h    = Math.round(pct * 40); // max height 40px (+ 30% overflow shown in red)
-          const col  = barColor(p.alcoolUnits);
-          return (
-            <div key={p.date} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[11px] tabular-nums" style={{ color: p.alcoolUnits > 0 ? col : "transparent" }}>
-                {p.alcoolUnits > 0 ? p.alcoolUnits.toFixed(1) : "·"}
-              </span>
-              <div className="w-full flex items-end justify-center" style={{ height: "40px" }}>
-                <motion.div
-                  className="w-full rounded-t-sm"
-                  style={{ background: col, minHeight: p.alcoolUnits === 0 ? 2 : undefined }}
-                  initial={{ height: 0 }}
-                  animate={{ height: Math.max(2, h) }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-                />
-              </div>
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.label}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Daily limit reference */}
-      <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
-        Seuil jour : {dailyLimit}u · OMS ≤ {weeklyGoal}u/sem.
-        {overWeek && (
-          <span style={{ color: "var(--danger)" }}> · +{(weeklyTotal - weeklyGoal).toFixed(1)}u au-dessus</span>
-        )}
-      </p>
-    </motion.div>
-  );
-}
