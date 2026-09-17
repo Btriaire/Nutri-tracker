@@ -169,7 +169,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                 type="button"
                 onClick={() => setShowCreate(true)}
                 className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] font-medium transition-all hover:opacity-80"
-                style={{ background: "rgba(232,121,249,0.1)", border: "1px dashed rgba(232,121,249,0.4)", color: "#e879f9" }}
+                style={{ background: "rgba(232,121,249,0.1)", border: "1px dashed rgba(232,121,249,0.4)", color: "var(--weight)" }}
               >
                 <IconSparkles size={12} />
                 Créer un nutriment personnalisé

@@ -60,7 +60,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
     const built = codes.map((code) => {
       // Falls back gracefully if this is a custom nutrient whose definition hasn't
       // finished loading yet (useCustomNutrients merges it in asynchronously).
-      const info = MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "#94a3b8" };
+      const info = MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "var(--text-secondary)" };
       const amount = intakes.filter(i => i.code === code).reduce((sum, i) => sum + i.amount, 0);
       const rda = info.recommendedDailyIntake || 0;
       const pct = rda > 0 ? (amount / rda) * 100 : 0;

@@ -84,7 +84,7 @@ function TimeEditor({
         style={{
           background:  "rgba(129,140,248,0.12)",
           border:      "1px solid rgba(129,140,248,0.35)",
-          color:       "#818cf8",
+          color:       "var(--fit-indigo)",
           fontFamily:  "monospace",
           minWidth:    0,
         }}
@@ -255,7 +255,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
             style={{
               background: "rgba(129,140,248,0.15)",
               border:     "1px solid rgba(129,140,248,0.35)",
-              color:      "#818cf8",
+              color:      "var(--fit-indigo)",
             }}
           >
             {starting ? "…" : "Démarrer →"}

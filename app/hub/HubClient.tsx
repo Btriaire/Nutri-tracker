@@ -269,7 +269,7 @@ const CARDS = [
     label:   "SANTÉ",
     sub:     "Vitaux & bien-être",
     SVG:     SanteSVG,
-    color:   "#f43f5e",
+    color:   "var(--danger)",
     glow:    "rgba(244,63,94,0.18)",
     border:  "rgba(244,63,94,0.25)",
     bg:      "rgba(244,63,94,0.07)",

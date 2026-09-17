@@ -355,7 +355,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5"
-                  style={{ background: "rgba(255,45,85,0.15)", color: "#ff2d55" }}>{i + 1}</span>
+                  style={{ background: "rgba(255,45,85,0.15)", color: "var(--danger)" }}>{i + 1}</span>
                 <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{step}</p>
               </div>
             ))}
@@ -380,7 +380,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
         <div className="space-y-4">
           <div className="rounded-xl p-3 space-y-1"
             style={{ background: "rgba(255,149,0,0.06)", border: "1px solid rgba(255,149,0,0.2)" }}>
-            <p className="text-[12px] font-medium" style={{ color: "#ff9500" }}>Comment exporter ?</p>
+            <p className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>Comment exporter ?</p>
             {[
               "Ouvre l'app Santé → ton profil (en haut à droite)",
               "\"Exporter toutes les données de santé\" → partage le .zip",
@@ -402,7 +402,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                 <button onClick={() => fileRef.current?.click()}
                   disabled={parseState !== "idle"}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-xl transition-all text-[13px] font-medium"
-                  style={{ background: "rgba(255,149,0,0.08)", border: "2px dashed rgba(255,149,0,0.35)", color: "#ff9500" }}>
+                  style={{ background: "rgba(255,149,0,0.08)", border: "2px dashed rgba(255,149,0,0.35)", color: "var(--calories)" }}>
                   {parseState === "idle"
                     ? <><IconUpload size={16} stroke={1.5} /> Sélectionner export.xml ou .zip</>
                     : <><IconLoader2 size={14} stroke={1.5} className="animate-spin" />

@@ -16,10 +16,10 @@ interface Segment {
 const STAGE_Y: Record<Stage, number> = { awake: 4, rem: 3, light: 2, deep: 1 };
 
 const STAGE_CFG: Record<Stage, { label: string; color: string; bg: string }> = {
-  awake: { label: "Éveillé",  color: "#94a3b8", bg: "rgba(148,163,184,0.18)" },
+  awake: { label: "Éveillé",  color: "var(--text-secondary)", bg: "rgba(148,163,184,0.18)" },
   rem:   { label: "REM",      color: "var(--accent)", bg: "rgba(192,132,252,0.20)" },
   light: { label: "Léger",    color: "var(--fat)", bg: "rgba(96,165,250,0.22)"  },
-  deep:  { label: "Profond",  color: "#1d4ed8", bg: "rgba(29,78,216,0.30)"   },
+  deep:  { label: "Profond",  color: "var(--sleep-deep)", bg: "rgba(29,78,216,0.30)"   },
 };
 
 // ─── Sleep architecture model ─────────────────────────────────────────────────

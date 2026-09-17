@@ -1892,7 +1892,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   className="mb-4 overflow-hidden"
                   style={{
                     borderRadius: "18px",
-                    background: "linear-gradient(150deg, rgba(88,28,135,0.09) 0%, rgba(15,10,30,0.0) 100%)",
+                    background: "linear-gradient(150deg, rgba(26,12,48,0.95) 0%, rgba(15,10,30,0.88) 100%)",
                     border: "1px solid rgba(139,92,246,0.14)",
                   }}
                 >
@@ -1904,7 +1904,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <span className="text-[18px] select-none"
                           style={{ filter: "drop-shadow(0 0 8px rgba(167,139,250,0.5))" }}>☸️</span>
                         <p className="text-[11px] font-light tracking-[0.15em] uppercase"
-                          style={{ color: "rgba(196,181,253,0.6)" }}>méditation</p>
+                          style={{ color: "rgba(196,181,253,0.65)" }}>méditation</p>
                       </div>
                       {streak > 0 && (
                         <span className="text-[11px] font-light px-2.5 py-0.5 rounded-full"
@@ -1922,8 +1922,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <div className="flex items-baseline gap-1 mb-3">
                       <span className="text-[28px] font-extralight tabular-nums leading-none"
                         style={{ color: "#ede9fe" }}>{totalMin}</span>
-                      <span className="text-[11px] font-light" style={{ color: "rgba(196,181,253,0.45)" }}>min</span>
-                      <span className="ml-2 text-[11px] font-light" style={{ color: "rgba(196,181,253,0.35)" }}>
+                      <span className="text-[11px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>min</span>
+                      <span className="ml-2 text-[11px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>
                         · {totalSessions} séances · moy. {avgMin} min
                       </span>
                     </div>
@@ -1941,7 +1941,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           active && payload?.length ? (
                             <div className="px-2 py-1 rounded-lg text-[11px]"
                               style={{ background: "rgba(30,10,60,0.92)", border: "1px solid rgba(139,92,246,0.3)", color: "#ede9fe" }}>
-                              <p style={{ color: "rgba(196,181,253,0.5)" }}>{lbl}</p>
+                              <p style={{ color: "rgba(196,181,253,0.65)" }}>{lbl}</p>
                               <p>{payload[0].value} min</p>
                             </div>
                           ) : null

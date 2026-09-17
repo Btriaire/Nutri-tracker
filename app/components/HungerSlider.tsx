@@ -6,7 +6,7 @@ import type { HungerLevel } from "@/app/lib/types";
 
 export const HUNGER_CFG: Record<HungerLevel, { emoji: string; label: string; color: string }> = {
   1: { emoji: "😌", label: "Pas faim",  color: "var(--ok)" },
-  2: { emoji: "🙂", label: "Peu faim",  color: "#84cc16" },
+  2: { emoji: "🙂", label: "Peu faim",  color: "var(--hunger-mild)" },
   3: { emoji: "😐", label: "Modéré",   color: "var(--warn)" },
   4: { emoji: "😤", label: "Faim",      color: "var(--calories)" },
   5: { emoji: "🤤", label: "Très faim", color: "var(--danger)" },

@@ -224,7 +224,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
     { label: "Cholestérol",  value: n.cholesterolMg,   unit: "mg" },
     { label: "Sodium",       value: n.sodiumMg,        unit: "mg" },
     { label: "Potassium",    value: n.potassiumMg,     unit: "mg" },
-    { label: "Calcium",      value: n.calciumMg,       unit: "mg", color: "#94a3b8" },
+    { label: "Calcium",      value: n.calciumMg,       unit: "mg", color: "var(--text-secondary)" },
     { label: "Magnésium",    value: n.magneziumMg,     unit: "mg" },
     { label: "Fer",          value: n.ironMg,          unit: "mg", color: "var(--danger)" },
     { label: "Zinc",         value: n.zincMg,          unit: "mg" },

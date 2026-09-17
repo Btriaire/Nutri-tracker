@@ -49,7 +49,7 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     Icon:  IconHeartbeat,
     metrics: [
       { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "var(--danger)" },
-      { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "#fb7185" },
+      { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "var(--weight)" },
       { key: "restingHR",   label: "FC repos",     unit: "bpm", color: "var(--weight)" },
     ],
   },
@@ -59,8 +59,8 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     Icon:  IconMoon,
     metrics: [
       { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "var(--fit-indigo)", decimals: 1 },
-      { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "#4f46e5", decimals: 1 },
-      { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "#7c3aed", decimals: 1 },
+      { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "var(--fit-blue)", decimals: 1 },
+      { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "var(--protein)", decimals: 1 },
       { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "var(--fiber)" },
     ],
   },
@@ -98,7 +98,7 @@ function movingAverage(data: BodyCompPoint[], key: keyof BodyCompPoint, window: 
 function bpClass(sys: number, dia: number): { label: string; color: string; bg: string } {
   if (sys < 90 || dia < 60)      return { label: "Hypotension",     color: "var(--fat)", bg: "rgba(96,165,250,0.08)"  };
   if (sys < 120 && dia < 80)     return { label: "Optimal",         color: "var(--fiber)", bg: "rgba(52,211,153,0.08)"  };
-  if (sys < 130 && dia < 80)     return { label: "Normal élevé",    color: "#a3e635", bg: "rgba(163,230,53,0.08)"  };
+  if (sys < 130 && dia < 80)     return { label: "Normal élevé",    color: "var(--warn)", bg: "rgba(163,230,53,0.08)"  };
   if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "var(--calories)", bg: "rgba(251,146,60,0.08)"  };
   if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "var(--danger)", bg: "rgba(248,113,113,0.08)" };
   return                                  { label: "HTA grade 3",     color: "var(--danger)", bg: "rgba(239,68,68,0.1)"   };

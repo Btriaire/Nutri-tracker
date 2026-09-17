@@ -44,7 +44,7 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   off:         { label: "Open Food Facts", color: "var(--steps)"   },
   usda:        { label: "USDA",            color: "var(--carbs)"   },
   edamam:      { label: "Edamam",          color: "var(--warn)"        },
-  nutritionix: { label: "Nutritionix",     color: "#10b981"        },
+  nutritionix: { label: "Nutritionix",     color: "var(--fiber)"        },
   fatsecret:   { label: "FatSecret",       color: "var(--info)"        },
   custom:      { label: "Personnel",       color: "var(--protein)" },
   recipe:      { label: "Recette",         color: "var(--calories)" },
@@ -1047,7 +1047,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           style={{
                             background:  aiSearching ? "rgba(168,85,247,0.18)" : "rgba(168,85,247,0.1)",
                             border:      "1px solid rgba(168,85,247,0.35)",
-                            color:       "#a855f7",
+                            color:       "var(--accent)",
                             boxShadow:   aiSearching ? "0 0 12px rgba(168,85,247,0.25)" : "none",
                           }}
                         >

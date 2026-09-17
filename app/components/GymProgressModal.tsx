@@ -159,7 +159,7 @@ export default function GymProgressModal({ onClose }: Props) {
                   <div className="flex items-center justify-between mb-2 px-1">
                     <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{EXERCISE_BY_ID[exId] ? MUSCLE_LABELS[EXERCISE_BY_ID[exId].primary] : ""}</p>
                     {pr > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(250,204,21,0.12)", color: "#facc15" }}>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(250,204,21,0.12)", color: "var(--warn)" }}>
                         <IconTrophy size={12} /> Record {pr} kg
                       </span>
                     )}

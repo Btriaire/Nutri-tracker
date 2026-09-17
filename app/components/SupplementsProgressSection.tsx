@@ -15,7 +15,7 @@ import type { SupplementsProgressResponse } from "@/app/api/supplements-progress
 import AIInsightBox from "@/app/components/AIInsightBox";
 
 function microInfo(code: MicronutrientCode) {
-  return MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "#94a3b8" };
+  return MICRONUTRIENT_DB[code] ?? { code, label: code, symbol: code.slice(0, 3).toUpperCase(), unit: "", color: "var(--text-secondary)" };
 }
 
 const FREQUENCY_PER_DAY: Record<SupplementProduct["frequency"], number> = {
