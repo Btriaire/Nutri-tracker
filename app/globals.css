@@ -40,6 +40,13 @@
      "Analyser" du scan visage : rgba(0,0,0,0)). Alias vers --fit-indigo,
      deja correctement teinte par theme, plutot que de toucher les 7 fichiers. */
   --indigo:          var(--fit-indigo);
+  /* Meme defaut, trouve par le meme balayage : --error (4 usages, boutons
+     supprimer) et --card/--glass-bg (1 usage chacun, infobulle de graphique
+     et fond de modale) n'etaient pas plus definis que --indigo — memes
+     proprietes invalidees silencieusement. */
+  --error:           var(--danger);
+  --card:            var(--bg-subtle);
+  --glass-bg:        var(--bg-subtle);
 
   /* Glow orbs (used in pseudo-elements) */
   --glow-orange:     rgba(249, 115, 22, 0.12);
