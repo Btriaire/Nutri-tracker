@@ -36,6 +36,11 @@ interface SpeechRecognitionLike {
 }
 
 const ACCENT = "#38bdf8"; // Activity sky-blue
+// Variante assombrie de ACCENT, pour les boutons pleins a texte blanc : #38bdf8
+// lui-meme echoue le contraste AA avec du blanc (ratio 2.0-2.1 sur les themes
+// clairs). Reservee aux fonds pleins avec texte fixe ; les usages decoratifs
+// (icones, bordures, traits de graphique) gardent ACCENT tel quel.
+const ACCENT_SOLID = "#067baf";
 
 // Emoji by Google Fit activity code (fallback 🏅)
 const TYPE_EMOJI: Record<number, string> = {
@@ -62,7 +67,7 @@ function MicOrb({ active }: { active: boolean }) {
       ))}
       <motion.div
         className="rounded-full flex items-center justify-center"
-        style={{ width: 72, height: 72, background: active ? ACCENT : `color-mix(in srgb, ${ACCENT} 13%, transparent)`, boxShadow: active ? `0 0 28px color-mix(in srgb, ${ACCENT} 40%, transparent)` : "none" }}
+        style={{ width: 72, height: 72, background: active ? ACCENT_SOLID : `color-mix(in srgb, ${ACCENT} 13%, transparent)`, boxShadow: active ? `0 0 28px color-mix(in srgb, ${ACCENT} 40%, transparent)` : "none" }}
         animate={active ? { scale: [1, 1.08, 1] } : { scale: 1 }}
         transition={{ duration: 1.2, repeat: active ? Infinity : 0, ease: "easeInOut" }}
       >
@@ -289,7 +294,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 onClick={analyze}
                 disabled={!transcript.trim()}
                 className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
-                style={{ background: ACCENT, color: "#fff", boxShadow: transcript.trim() ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
+                style={{ background: ACCENT_SOLID, color: "#fff", boxShadow: transcript.trim() ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 <IconSparkles size={16} /> Analyser avec Nutri-IA
               </button>
             </div>
@@ -400,7 +405,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
               className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
               <button onClick={handleAdd} disabled={phase === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]"
-                style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
+                style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT_SOLID, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 {phase === "saving" ? (
                   <><motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span> Ajout en cours…</>
                 ) : (

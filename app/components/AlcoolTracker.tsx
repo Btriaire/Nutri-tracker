@@ -32,7 +32,7 @@ const PRESETS = [
 
 // ─── Drink SVG Icons ──────────────────────────────────────────────────────────
 
-function DrinkIcon({ type, color = "#c084fc" }: { type: string; color?: string }) {
+function DrinkIcon({ type, color = "var(--violet)" }: { type: string; color?: string }) {
   const s = 26;
   const c = color;
 
@@ -104,7 +104,7 @@ function DrinkIcon({ type, color = "#c084fc" }: { type: string; color?: string }
 function WineGlassSVG({ units, dailyGoal }: { units: number; dailyGoal: number }) {
   const pct  = dailyGoal > 0 ? Math.min(1, units / dailyGoal) : Math.min(1, units / 3);
   const over = dailyGoal > 0 && units > dailyGoal;
-  const liquidColor = over ? "var(--danger)" : units === 0 ? "rgba(255,255,255,0.10)" : "#c084fc";
+  const liquidColor = over ? "var(--danger)" : units === 0 ? "rgba(255,255,255,0.10)" : "var(--violet)";
 
   // Bowl geometry: trapezoid top(10,8)→(70,8), narrowing to stem at (37,66)→(43,66)
   const W = 80, bowlT = 8, bowlB = 66, bowlH = bowlB - bowlT;
@@ -314,7 +314,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="flex gap-2 mb-2.5">
             <div className="flex flex-col">
               <span className="text-[20px] font-bold tabular-nums leading-none"
-                style={{ color: over ? "var(--danger)" : "#c084fc" }}>
+                style={{ color: over ? "var(--danger)" : "var(--violet)" }}>
                 {totalUnits.toFixed(1)}
               </span>
               <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
@@ -334,7 +334,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="h-1.5 rounded-full overflow-hidden mb-1"
             style={{ background: "rgba(255,255,255,0.06)" }}>
             <motion.div className="h-full rounded-full"
-              style={{ background: over ? "var(--danger)" : "#c084fc" }}
+              style={{ background: over ? "var(--danger)" : "var(--violet)" }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
@@ -379,7 +379,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
             <button key={p.type} onClick={() => addPreset(p)} disabled={loading}
               className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all active:scale-95"
               style={{ background: "rgba(192,132,252,0.07)", border: "1px solid rgba(192,132,252,0.18)" }}>
-              <DrinkIcon type={p.type} color="#c084fc" />
+              <DrinkIcon type={p.type} color="var(--violet)" />
               <span className="text-[11px] text-center leading-tight w-full px-0.5 truncate"
                 style={{ color: "var(--text-muted)" }}>
                 {p.type.replace(" 25cl", "").replace(" 33cl", " 33")}
@@ -398,7 +398,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
         style={{
           background: showCustom ? "rgba(192,132,252,0.10)" : "rgba(255,255,255,0.03)",
           border: `1px solid ${showCustom ? "rgba(192,132,252,0.3)" : "var(--border)"}`,
-          color: showCustom ? "#c084fc" : "var(--text-muted)",
+          color: showCustom ? "var(--violet)" : "var(--text-muted)",
         }}>
         <IconPlus size={11} stroke={2.5} />
         Boisson personnalisée
@@ -481,10 +481,13 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 </span>
               </div>
 
-              {/* Add button */}
+              {/* Add button — violet assombri fixe : var(--violet) est clair en
+                  cosmos/ocean (pense pour du texte, pas pour porter du texte
+                  blanc), le bouton reste lisible dans les 4 themes avec cette
+                  valeur independante du theme. */}
               <button onClick={addCustom} disabled={loading}
                 className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.98] disabled:opacity-60"
-                style={{ background: "#c084fc", color: "#fff" }}>
+                style={{ background: "#9c3efa", color: "#fff" }}>
                 Ajouter cette boisson
               </button>
             </div>

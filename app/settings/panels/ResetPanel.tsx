@@ -133,7 +133,7 @@ export default function ResetPanel() {
             </button>
             <button onClick={handleReset} disabled={resetting}
               className="flex-1 btn gap-1.5 text-[12px]"
-              style={{ height: "36px", background: "var(--danger)", color: "#fff", border: "none" }}>
+              style={{ height: "36px", background: "var(--danger)", color: "var(--bg)", border: "none" }}>
               {resetting ? <><IconLoader2 size={12} className="animate-spin" /> Suppression…</> : <><IconTrash size={12} /> Confirmer</>}
             </button>
           </div>

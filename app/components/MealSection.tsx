@@ -588,7 +588,7 @@ function SaveMealModal({ defaultName, entries, onClose }: {
                   onClick={handleSave}
                   disabled={!name.trim() || saving}
                   className="flex-1 py-2.5 rounded-xl text-[12.5px] font-medium disabled:opacity-50"
-                  style={{ background: "var(--protein)", color: "#fff" }}
+                  style={{ background: "var(--protein)", color: "var(--bg)" }}
                 >
                   {saving ? "..." : "Enregistrer"}
                 </button>

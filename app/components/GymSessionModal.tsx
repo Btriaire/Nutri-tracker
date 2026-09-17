@@ -16,6 +16,11 @@ import {
 import type { GymProgram, GymSession } from "@/app/lib/types";
 
 const ACCENT = "#38bdf8";
+// Variante assombrie de ACCENT, pour les boutons pleins a texte blanc : #38bdf8
+// lui-meme echoue le contraste AA avec du blanc (ratio 2.0-2.1 sur les themes
+// clairs). Reservee aux fonds pleins avec texte fixe ; les usages decoratifs
+// (icones, bordures, traits de graphique) gardent ACCENT tel quel.
+const ACCENT_SOLID = "#067baf";
 
 interface DraftSet { reps: number; weightKg: number; done: boolean }
 interface DraftExercise {
@@ -556,7 +561,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
           <div className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
             <button onClick={save} disabled={saving || exercises.length === 0}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
-              style={{ background: ACCENT, color: "#fff", boxShadow: exercises.length > 0 ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
+              style={{ background: ACCENT_SOLID, color: "#fff", boxShadow: exercises.length > 0 ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
               {saving ? (
                 <><motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span> Enregistrement…</>
               ) : (

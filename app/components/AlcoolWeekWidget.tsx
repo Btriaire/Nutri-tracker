@@ -19,7 +19,7 @@ export default function AlcoolWeekWidget({
     if (units === 0)            return "rgba(192,132,252,0.15)";
     if (units > dailyLimit)     return "var(--danger)";
     if (units > dailyLimit * 0.8) return "var(--carbs)";
-    return "#c084fc";
+    return "var(--violet)";
   }
 
   if (pts.length === 0) return null;
@@ -36,16 +36,16 @@ export default function AlcoolWeekWidget({
         <div className="flex items-center gap-2">
           {/* Wine glass SVG */}
           <svg width={16} height={16} viewBox="0 0 24 28" fill="none">
-            <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="#c084fc" strokeWidth="1.8" strokeLinejoin="round" fill="#c084fc" fillOpacity="0.2" />
-            <line x1="12" y1="14" x2="12" y2="22" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M7 22 Q12 25 17 22" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="var(--violet)" strokeWidth="1.8" strokeLinejoin="round" fill="var(--violet)" fillOpacity="0.2" />
+            <line x1="12" y1="14" x2="12" y2="22" stroke="var(--violet)" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M7 22 Q12 25 17 22" stroke="var(--violet)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
           </svg>
           <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
             Alcool — 7 derniers jours
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "var(--danger)" : "#c084fc" }}>
+          <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "var(--danger)" : "var(--violet)" }}>
             {weeklyTotal.toFixed(1)}
           </span>
           <span className="text-[11px] ml-0.5" style={{ color: "var(--text-muted)" }}>
@@ -58,7 +58,7 @@ export default function AlcoolWeekWidget({
       <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
         <motion.div
           className="h-full rounded-full"
-          style={{ background: overWeek ? "var(--danger)" : "linear-gradient(90deg,#a855f7,#c084fc)" }}
+          style={{ background: overWeek ? "var(--danger)" : "linear-gradient(90deg,#a855f7,var(--violet))" }}
           initial={{ width: 0 }}
           animate={{ width: `${pctWeek * 100}%` }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}

@@ -413,7 +413,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   onClick={handleSaveEdit}
                   disabled={editSaving}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
-                  style={{ background: "var(--protein)", color: "#fff" }}>
+                  style={{ background: "var(--protein)", color: "var(--bg)" }}>
                   {editSaving ? <IconLoader2 size={10} stroke={2} className="animate-spin" /> : <IconCheck size={11} stroke={2} />}
                 </button>
                 <button

@@ -45,10 +45,10 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
             style={{ background: "rgba(192,132,252,0.12)", border: "1px solid rgba(192,132,252,0.22)" }}>
             {/* Wine glass SVG icon */}
             <svg width={open ? 20 : 16} height={open ? 20 : 16} viewBox="0 0 24 28" fill="none">
-              <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="#c084fc" strokeWidth="1.7" strokeLinejoin="round" fill="#c084fc" fillOpacity="0.2" />
-              <line x1="12" y1="14" x2="12" y2="22" stroke="#c084fc" strokeWidth="1.7" strokeLinecap="round" />
-              <path d="M7 22 Q12 25 17 22" stroke="#c084fc" strokeWidth="1.7" strokeLinecap="round" fill="none" />
-              <circle cx="11" cy="9" r="1.2" fill="#c084fc" fillOpacity="0.5" />
+              <path d="M5 3 L19 3 L15.5 14 L8.5 14 Z" stroke="var(--violet)" strokeWidth="1.7" strokeLinejoin="round" fill="var(--violet)" fillOpacity="0.2" />
+              <line x1="12" y1="14" x2="12" y2="22" stroke="var(--violet)" strokeWidth="1.7" strokeLinecap="round" />
+              <path d="M7 22 Q12 25 17 22" stroke="var(--violet)" strokeWidth="1.7" strokeLinecap="round" fill="none" />
+              <circle cx="11" cy="9" r="1.2" fill="var(--violet)" fillOpacity="0.5" />
             </svg>
           </div>
           <div className="text-left">
@@ -63,7 +63,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
           <button
             onClick={e => { e.stopPropagation(); setEnabled(v => !v); }}
             className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-            style={{ background: enabled ? "#c084fc" : "rgba(255,255,255,0.12)" }}
+            style={{ background: enabled ? "var(--violet)" : "rgba(255,255,255,0.12)" }}
           >
             <span
               className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
@@ -103,7 +103,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                 <button
                   onClick={() => setEnabled(v => !v)}
                   className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                  style={{ background: enabled ? "#c084fc" : "rgba(255,255,255,0.12)" }}
+                  style={{ background: enabled ? "var(--violet)" : "rgba(255,255,255,0.12)" }}
                 >
                   <span
                     className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"

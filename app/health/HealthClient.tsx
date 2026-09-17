@@ -1256,7 +1256,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       style={{ background: m.taken ? "rgba(192,132,252,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.taken ? "rgba(192,132,252,0.3)" : "var(--border)"}` }}>
                       <button onClick={() => handleToggleMed(m.id)}
                         className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
-                        style={{ background: m.taken ? "#c084fc" : "rgba(255,255,255,0.06)", border: `1.5px solid ${m.taken ? "#c084fc" : "var(--border)"}` }}>
+                        style={{ background: m.taken ? "var(--violet)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${m.taken ? "var(--violet)" : "var(--border)"}` }}>
                         {m.taken && <IconCheck size={11} color="#fff" />}
                       </button>
                       <div className="flex-1 min-w-0">
@@ -1836,7 +1836,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <button onClick={handleAddMed} disabled={medSaving || !medName.trim()}
                 className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px",
-                  background: "#c084fc", border: "none" }}>
+                  background: "var(--violet)", border: "none" }}>
                 {medSaving
                   ? <><IconLoader2 size={13} className="animate-spin" /> Enregistrement…</>
                   : <><IconPlus size={14} /> Ajouter</>
@@ -1908,7 +1908,7 @@ function VitalCard({
           <div className="flex gap-1.5">
             <button onClick={onSave} disabled={saving}
               className="flex-1 btn gap-1 text-[11px]"
-              style={{ height: "28px", background: "var(--fiber)", color: "#fff", border: "none" }}>
+              style={{ height: "28px", background: "var(--fiber)", color: "var(--bg)", border: "none" }}>
               {saving ? <IconLoader2 size={10} className="animate-spin" /> : "OK"}
             </button>
             <button onClick={onCancel}

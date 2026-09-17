@@ -149,7 +149,7 @@ export default function DashboardClientDesktop({
           </div>
           <Link href="/desktop/log"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold hover:opacity-90 active:scale-95 transition-all"
-            style={{ background: "var(--calories)", color: "#fff" }}>
+            style={{ background: "var(--calories)", color: "var(--bg)" }}>
             + Journal du jour
           </Link>
         </div>

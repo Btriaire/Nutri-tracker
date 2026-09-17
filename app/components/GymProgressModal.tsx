@@ -11,6 +11,11 @@ import { EXERCISE_BY_ID, MUSCLE_LABELS, type Muscle } from "@/app/lib/exercises"
 import type { GymSession } from "@/app/lib/types";
 
 const ACCENT = "#38bdf8";
+// Variante assombrie de ACCENT, pour les boutons pleins a texte blanc : #38bdf8
+// lui-meme echoue le contraste AA avec du blanc (ratio 2.0-2.1 sur les themes
+// clairs). Reservee aux fonds pleins avec texte fixe ; les usages decoratifs
+// (icones, bordures, traits de graphique) gardent ACCENT tel quel.
+const ACCENT_SOLID = "#067baf";
 
 interface Props { onClose: () => void }
 
@@ -148,7 +153,7 @@ export default function GymProgressModal({ onClose }: Props) {
                 {exerciseList.map((e) => (
                   <button key={e.id} onClick={() => setExId(e.id)}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all"
-                    style={{ background: exId === e.id ? ACCENT : "rgba(255,255,255,0.05)", color: exId === e.id ? "#fff" : "var(--text-muted)" }}>
+                    style={{ background: exId === e.id ? ACCENT_SOLID : "rgba(255,255,255,0.05)", color: exId === e.id ? "#fff" : "var(--text-muted)" }}>
                     {e.name}
                   </button>
                 ))}

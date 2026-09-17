@@ -446,15 +446,19 @@ html[data-theme="ocean"] {
   --accent:    #26C6DA;  --accent-bg: rgba(38, 198, 218, 0.12);
 }
 
-/* Deux couleurs a usage unique (sommeil profond, niveau de faim 2) qui ne
-   rentraient dans aucun jeton existant sans perdre leur distinction visuelle
-   des teintes voisines — meme logique que les jetons ci-dessus. */
+/* Trois couleurs a usage unique (sommeil profond, niveau de faim 2, accent
+   violet) qui ne rentraient dans aucun jeton existant sans perdre leur
+   distinction visuelle des teintes voisines — meme logique que les jetons
+   ci-dessus. --violet etait fige en #c084fc dans 6 fichiers (suivi alcool
+   ET badges "medicament pris"), correct sur fond sombre (ratio 7.24) mais
+   illisible sur fond clair (2.60) une fois verifie. */
 :root {
   --sleep-deep:  #4f77e7;   /* base #1d4ed8 eclairci : trop sombre sur cosmos */
   --hunger-mild: #84cc16;
+  --violet:      #c084fc;
 }
-html[data-theme="lumiere"], html.light { --sleep-deep: #1d4ed8; --hunger-mild: #527f0e; }
-html[data-theme="mfp"]                 { --sleep-deep: #1d4ed8; --hunger-mild: #527f0e; }
+html[data-theme="lumiere"], html.light { --sleep-deep: #1d4ed8; --hunger-mild: #527f0e; --violet: #9b3cfa; }
+html[data-theme="mfp"]                 { --sleep-deep: #1d4ed8; --hunger-mild: #527f0e; --violet: #9d40fa; }
 html[data-theme="ocean"]               { --sleep-deep: #5d82e9; }
 
 .t-ok     { color: var(--ok); }

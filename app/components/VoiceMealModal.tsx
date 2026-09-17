@@ -358,14 +358,14 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
                 placeholder="Votre repas apparaît ici — vous pouvez corriger le texte…"
                 rows={3}
                 className="w-full mt-4 px-3 py-2.5 rounded-xl text-[13px] outline-none resize-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${listening ? ACCENT + "55" : "var(--border)"}`, color: "var(--text-primary)" }}
+                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${listening ? `color-mix(in srgb, ${ACCENT} 33%, transparent)` : "var(--border)"}`, color: "var(--text-primary)" }}
               />
 
               <button
                 onClick={analyze}
                 disabled={!transcript.trim()}
                 className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
-                style={{ background: ACCENT, color: "#fff", boxShadow: transcript.trim() ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
+                style={{ background: ACCENT, color: "var(--bg)", boxShadow: transcript.trim() ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 <IconSparkles size={16} /> Analyser avec Nutri-IA
               </button>
             </div>
@@ -423,7 +423,7 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
                       className="rounded-xl p-3"
                       style={{
                         background: item.selected ? `color-mix(in srgb, ${ACCENT} 5%, transparent)` : "rgba(255,255,255,0.025)",
-                        border: `1px solid ${item.selected ? ACCENT + "35" : "rgba(255,255,255,0.07)"}`,
+                        border: `1px solid ${item.selected ? `color-mix(in srgb, ${ACCENT} 21%, transparent)` : "rgba(255,255,255,0.07)"}`,
                         opacity: isSaving ? 0.65 : 1,
                       }}>
                       <div className="flex items-start gap-3">
@@ -482,7 +482,7 @@ export default function VoiceMealModal({ date, onAdded, onClose }: Props) {
               className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
               <button onClick={handleAdd} disabled={phase === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]"
-                style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
+                style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT, color: "var(--bg)", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>
                 {phase === "saving" ? (
                   <><motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>⏳</motion.span> Ajout en cours…</>
                 ) : (
