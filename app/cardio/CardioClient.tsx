@@ -135,7 +135,7 @@ export default function CardioClient({ points, age }: Props) {
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium"
                   style={{
-                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
+                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "color-mix(in srgb, var(--fit-green) 12%, transparent)" : "color-mix(in srgb, var(--fit-red) 12%, transparent)",
                     color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
                   {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
