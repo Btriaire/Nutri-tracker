@@ -186,12 +186,20 @@ export default function ActivityCategoryPicker({
           const CatSvg = CAT_SVGS[cat.id];
 
           return (
-            <motion.button
+            <motion.div
               key={cat.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setCatOpen(cat.id)}
+              onKeyDown={ev => {
+                if (ev.key === "Enter" || ev.key === " ") {
+                  ev.preventDefault();
+                  setCatOpen(cat.id);
+                }
+              }}
               whileTap={{ scale: 0.96 }}
               transition={{ duration: 0.12 }}
-              className="relative overflow-hidden text-left rounded-2xl"
+              className="relative overflow-hidden text-left rounded-2xl cursor-pointer"
               style={{
                 background: `linear-gradient(140deg, color-mix(in srgb, ${cat.c1} 9%, transparent) 0%, color-mix(in srgb, ${cat.c2} 5%, transparent) 100%)`,
                 border: `1px solid color-mix(in srgb, ${cat.c1} 16%, transparent)`,
@@ -257,7 +265,7 @@ export default function ActivityCategoryPicker({
                   </p>
                 )}
               </div>
-            </motion.button>
+            </motion.div>
           );
         })}
       </div>
@@ -388,11 +396,18 @@ export default function ActivityCategoryPicker({
                   const isFav = actFavorites.includes(e.id);
                   const kcal  = Math.round(e.met * userWeightKg * 0.5);
                   return (
-                    <button
+                    <div
                       key={e.id}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleSelect(e)}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all"
+                      onKeyDown={ev => {
+                        if (ev.key === "Enter" || ev.key === " ") {
+                          ev.preventDefault();
+                          handleSelect(e);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all cursor-pointer"
                       style={{
                         borderBottom: idx < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       }}
@@ -432,7 +447,7 @@ export default function ActivityCategoryPicker({
                       >
                         <span className="text-[15px] leading-none">{isFav ? "⭐" : "☆"}</span>
                       </button>
-                    </button>
+                    </div>
                   );
                 })}
 
