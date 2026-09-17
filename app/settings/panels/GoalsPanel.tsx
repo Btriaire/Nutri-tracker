@@ -495,7 +495,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     }}>
                     <div className="flex items-center justify-between">
                       <span className="text-[12px] font-semibold"
-                        style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
+                        style={{ color: projLive.isUnrealistic ? "var(--danger)" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                         {projLive.isUnrealistic ? "❌ Irréaliste" : projLive.isAmbitious ? "⚠️ Ambitieux" : "✅ Réaliste"}
                       </span>
                       <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -506,7 +506,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                       <div>
                         <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par semaine</p>
                         <p className="text-[16px] font-bold tabular-nums leading-none"
-                          style={{ color: projLive.isUnrealistic ? "#ef4444" : "var(--text-primary)" }}>
+                          style={{ color: projLive.isUnrealistic ? "var(--danger)" : "var(--text-primary)" }}>
                           {projLive.totalKg > 0 ? "−" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
                           <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
                         </p>
@@ -798,7 +798,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                         style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)" }}>
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>Dr.C</span>
+                            style={{ background: "rgba(34,197,94,0.15)", color: "var(--ok)" }}>Dr.C</span>
                           <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                             Méthode Dr Jean-Michel Cohen · calories fixes
                           </p>
@@ -814,12 +814,12 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                   border: `1px solid ${active ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.15)"}`,
                                 }}>
                                 <span className="text-base mb-1">{prog.emoji}</span>
-                                <p className="text-[11px] font-semibold leading-tight" style={{ color: active ? "#22c55e" : "var(--text-primary)" }}>
+                                <p className="text-[11px] font-semibold leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-primary)" }}>
                                   {prog.label}
                                 </p>
                                 <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
                                 {prog.tip && (
-                                  <p className="text-[11px] mt-1 leading-tight" style={{ color: active ? "#22c55e" : "var(--text-muted)", opacity: 0.8 }}>{prog.tip}</p>
+                                  <p className="text-[11px] mt-1 leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-muted)", opacity: 0.8 }}>{prog.tip}</p>
                                 )}
                               </button>
                             );
@@ -941,7 +941,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     </div>
                     {projLive && (
                       <div className="text-right">
-                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "#ef4444" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
+                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "var(--danger)" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                           {projLive.isUnrealistic ? "⚠️ Irréaliste" : projLive.isAmbitious ? "⚡ Ambitieux" : "✅ Réaliste"}
                         </p>
                         {targetDate && (
@@ -957,7 +957,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     <div className="flex gap-3 text-center">
                       <div className="flex-1">
                         <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par sem.</p>
-                        <p className="text-[14px] font-bold tabular-nums" style={{ color: projLive.isUnrealistic ? "#ef4444" : "var(--text-primary)" }}>
+                        <p className="text-[14px] font-bold tabular-nums" style={{ color: projLive.isUnrealistic ? "var(--danger)" : "var(--text-primary)" }}>
                           {projLive.totalKg > 0 ? "-" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
                           <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
                         </p>
@@ -1145,7 +1145,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: "rgba(239,68,68,0.12)" }}>
-                  <IconAlertCircle size={20} style={{ color: "#ef4444" }} />
+                  <IconAlertCircle size={20} style={{ color: "var(--danger)" }} />
                 </div>
                 <div>
                   <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>
@@ -1178,7 +1178,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     height: "36px",
                     background: "rgba(239,68,68,0.15)",
                     border: "1px solid rgba(239,68,68,0.4)",
-                    color: "#ef4444",
+                    color: "var(--danger)",
                   }}>
                   Confirmer
                 </button>

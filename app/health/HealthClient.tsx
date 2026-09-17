@@ -41,7 +41,7 @@ const SYMPTOM_CATEGORIES = [
     symptoms: ["Maux de tête", "Migraine", "Douleur musculaire", "Douleur articulaire", "Douleur abdominale", "Douleur thoracique", "Douleur de dos", "Douleur cervicale"],
   },
   {
-    key: "digestif", label: "Digestif", icon: IconMoodSick, color: "#fb923c",
+    key: "digestif", label: "Digestif", icon: IconMoodSick, color: "var(--calories)",
     symptoms: ["Nausée", "Vomissement", "Diarrhée", "Constipation", "Ballonnements", "Reflux gastrique", "Perte d'appétit", "Crampes abdominales"],
   },
   {
@@ -79,7 +79,7 @@ function bpCategory(sys: number, dia: number) {
   if (sys < 130 && dia < 85)   return { label: "Normal",        color: "var(--fit-blue)", bg: "rgba(66,133,244,0.12)" };
   if (sys < 140 && dia < 90)   return { label: "Normal Haute",  color: "var(--fit-yellow)", bg: "rgba(251,188,4,0.12)" };
   if (sys < 160 && dia < 100)  return { label: "HTA Grade 1",   color: "var(--calories)", bg: "rgba(249,115,22,0.12)" };
-  if (sys < 180 && dia < 110)  return { label: "HTA Grade 2",   color: "#f43f5e", bg: "rgba(244,63,94,0.12)" };
+  if (sys < 180 && dia < 110)  return { label: "HTA Grade 2",   color: "var(--danger)", bg: "rgba(244,63,94,0.12)" };
   return                               { label: "HTA Sévère",   color: "var(--fit-red)", bg: "rgba(234,67,53,0.18)" };
 }
 
@@ -571,7 +571,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
           {([
             {
               id: "synthese", label: "Synthèse",
-              color: "#c084fc",
+              color: "var(--accent)",
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   {/* Clipboard with pulse */}
@@ -604,7 +604,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             },
             {
               id: "bienetre", label: "Bien-être",
-              color: "#818cf8",
+              color: "var(--fit-indigo)",
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   {/* Cerveau stylisé */}
@@ -699,7 +699,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {[
                       { label: "Poids",          value: latestW?.weightKg     ?? null, unit: "kg",  color: "var(--fat)", fmt: (v: number) => v.toFixed(1) },
-                      { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "#fb923c", fmt: (v: number) => v.toFixed(1) },
+                      { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "var(--calories)", fmt: (v: number) => v.toFixed(1) },
                       { label: "Masse musculaire",value: latestM?.muscleMassKg ?? null, unit: "kg",  color: "var(--fiber)", fmt: (v: number) => v.toFixed(1) },
                       { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "var(--danger)", fmt: (v: number) => v.toFixed(1) },
                     ].map(({ label, value, unit, color, fmt }) => (
@@ -913,10 +913,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         <div className="w-3 h-0.5 rounded" style={{ background: "var(--fit-indigo)" }} />
                         Diastolique
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(251,188,4,0.7)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--fit-yellow)" }}>
                         — 120
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(249,115,22,0.7)" }}>
+                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--calories)" }}>
                         — 140
                       </div>
                     </div>
@@ -987,7 +987,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(129,140,248,0.18)" }}>
-                        <IconMoon size={15} style={{ color: "#818cf8" }} />
+                        <IconMoon size={15} style={{ color: "var(--fit-indigo)" }} />
                       </div>
                       <div>
                         <p className="text-[14px] font-semibold">Sommeil</p>
@@ -1245,19 +1245,19 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <IconPill size={14} style={{ color: "#c084fc" }} />
+                  <IconPill size={14} style={{ color: "var(--accent)" }} />
                   <p className="label-xs">Médicaments du jour</p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {meds.length > 0 && (
                     <span className="text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(192,132,252,0.12)", color: "#c084fc", border: "1px solid rgba(192,132,252,0.3)" }}>
+                      style={{ background: "rgba(192,132,252,0.12)", color: "var(--accent)", border: "1px solid rgba(192,132,252,0.3)" }}>
                       {meds.filter(m => m.taken).length}/{meds.length} pris
                     </span>
                   )}
                   <button onClick={() => { setMedTime(nowHHMM()); setMedOpen(true); }}
                     className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                    style={{ background: "rgba(192,132,252,0.1)", border: "1px solid rgba(192,132,252,0.3)", color: "#c084fc" }}>
+                    style={{ background: "rgba(192,132,252,0.1)", border: "1px solid rgba(192,132,252,0.3)", color: "var(--accent)" }}>
                     <IconPlus size={12} />
                   </button>
                 </div>
@@ -1314,19 +1314,19 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <IconStethoscope size={14} style={{ color: "#fb923c" }} />
+                  <IconStethoscope size={14} style={{ color: "var(--calories)" }} />
                   <p className="label-xs">Symptômes du jour</p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {symptoms.length > 0 && (
                     <span className="text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.3)" }}>
+                      style={{ background: "rgba(251,146,60,0.12)", color: "var(--calories)", border: "1px solid rgba(251,146,60,0.3)" }}>
                       {symptoms.length} symptôme{symptoms.length > 1 ? "s" : ""}
                     </span>
                   )}
                   <button onClick={() => setSymptomOpen(v => !v)}
                     className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                    style={{ background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.3)", color: "#fb923c" }}>
+                    style={{ background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.3)", color: "var(--calories)" }}>
                     <IconPlus size={12} />
                   </button>
                 </div>
@@ -1547,10 +1547,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <IconClipboardList size={14} style={{ color: "#fb923c" }} />
+                    <IconClipboardList size={14} style={{ color: "var(--calories)" }} />
                     <p className="label-xs">Historique des symptômes</p>
                     <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(251,146,60,0.1)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.25)" }}>
+                      style={{ background: "rgba(251,146,60,0.1)", color: "var(--calories)", border: "1px solid rgba(251,146,60,0.25)" }}>
                       {history.length} jour{history.length > 1 ? "s" : ""}
                     </span>
                   </div>
@@ -1722,7 +1722,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   {[
                     { label: "BPM",       color: "var(--fit-red)" },
-                    { label: "Calories",  color: "#06b6d4" },
+                    { label: "Calories",  color: "var(--info)" },
                     { label: "Activité",  color: "var(--fit-green)" },
                     { label: "Sommeil",   color: "var(--fit-indigo)" },
                   ].map(({ label, color }) => (
@@ -1768,7 +1768,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Calories — bar */}
-                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "#06b6d4" }}>Calories actives (kcal)</p>
+                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "var(--info)" }}>Calories actives (kcal)</p>
                 <ResponsiveContainer width="100%" height={52}>
                   <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
                     <XAxis dataKey="label" hide />
@@ -1778,7 +1778,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       return (
                         <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
-                          <p className="font-bold" style={{ color: "#06b6d4" }}>{payload[0]?.value} kcal</p>
+                          <p className="font-bold" style={{ color: "var(--info)" }}>{payload[0]?.value} kcal</p>
                         </div>
                       );
                     }} />
@@ -2016,7 +2016,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
             >
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <IconPill size={16} style={{ color: "#c084fc" }} />
+                  <IconPill size={16} style={{ color: "var(--accent)" }} />
                   <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
                     Nouveau médicament
                   </p>
@@ -2043,7 +2043,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       style={{
                         background: medAiLoading ? "rgba(192,132,252,0.15)" : "rgba(192,132,252,0.1)",
                         border: "1px solid rgba(192,132,252,0.35)",
-                        color: "#c084fc",
+                        color: "var(--accent)",
                         opacity: medName.trim() ? 1 : 0.4,
                       }}>
                       {medAiLoading
@@ -2065,9 +2065,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       className="rounded-xl p-3 space-y-1.5 overflow-hidden"
                       style={{ background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.25)" }}>
                       <div className="flex items-start gap-2">
-                        <IconSparkles size={13} stroke={2} style={{ color: "#c084fc" }} />
+                        <IconSparkles size={13} stroke={2} style={{ color: "var(--accent)" }} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold" style={{ color: "#c084fc" }}>
+                          <p className="text-[11px] font-semibold" style={{ color: "var(--accent)" }}>
                             {medAiInfo.class}
                           </p>
                           <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>

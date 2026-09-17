@@ -281,7 +281,7 @@ export default function MentalHealthWidget({ date }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
                 Émotions du jour
                 {tags.length > 0 && (
-                  <span className="ml-2 normal-case font-normal" style={{ color: "#818cf8" }}>
+                  <span className="ml-2 normal-case font-normal" style={{ color: "var(--fit-indigo)" }}>
                     {tags.length} sélectionné{tags.length > 1 ? "s" : ""}
                   </span>
                 )}

@@ -68,7 +68,7 @@ export default function DietProgramInfoModal({ onClose, programId = "tl" }: Prop
                     {MEAL_ORDER.map((meal) => (
                       <div key={meal} className="px-3 py-2 rounded-lg"
                         style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                        <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#22c55e" }}>{MEAL_LABEL[meal]}</p>
+                        <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--ok)" }}>{MEAL_LABEL[meal]}</p>
                         <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
                       </div>
                     ))}

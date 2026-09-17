@@ -14,7 +14,7 @@ export default function WeightWidget({ weight, previous }: Props) {
   const trend = delta != null ? (delta < -0.05 ? "↓" : delta > 0.05 ? "↑" : "→") : null;
   const trendColor = delta != null
     ? delta < -0.05 ? "var(--fiber)"   // losing = green
-    : delta > 0.05  ? "#ef4444"         // gaining = red
+    : delta > 0.05  ? "var(--danger)"   // gaining = red
     : "var(--text-muted)"
     : "var(--text-muted)";
 

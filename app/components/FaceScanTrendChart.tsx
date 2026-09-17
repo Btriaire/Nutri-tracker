@@ -10,10 +10,10 @@ interface Props {
 }
 
 const AXES: { key: keyof FaceScanEntry["analysis"]["scorecard"]; label: string; color: string }[] = [
-  { key: "amaigrissement", label: "Amaigrissement visage", color: "#6366f1" },
-  { key: "fatigue",        label: "Fatigue",               color: "#f59e0b" },
-  { key: "teint",          label: "Teint",                 color: "#f43f5e" },
-  { key: "hydratation",    label: "Hydratation",           color: "#06b6d4" },
+  { key: "amaigrissement", label: "Amaigrissement visage", color: "var(--fit-indigo)" },
+  { key: "fatigue",        label: "Fatigue",               color: "var(--warn)" },
+  { key: "teint",          label: "Teint",                 color: "var(--danger)" },
+  { key: "hydratation",    label: "Hydratation",           color: "var(--info)" },
 ];
 
 export default function FaceScanTrendChart({ scans }: Props) {

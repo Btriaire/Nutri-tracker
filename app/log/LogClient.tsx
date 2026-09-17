@@ -48,7 +48,7 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
   const circ = 2 * Math.PI * R;
   const fraction = Math.min(1.05, eaten / Math.max(1, goal));
   const over     = fraction > 1;
-  const col      = over ? "#ef4444" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "#22c55e";
+  const col      = over ? "var(--danger)" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "var(--ok)";
   const dashArr  = `${Math.min(fraction, 1) * circ} ${circ}`;
 
   return (
@@ -90,7 +90,7 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
 function CalorieBudgetBar({ eaten, goal, remaining }: { eaten: number; goal: number; remaining: number }) {
   const fraction = Math.min(1.1, eaten / Math.max(1, goal));
   const over     = remaining < 0;
-  const col      = over ? "#ef4444" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "#22c55e";
+  const col      = over ? "var(--danger)" : fraction > 0.88 ? "var(--calories)" : fraction > 0.65 ? "var(--carbs)" : "var(--ok)";
   const W        = 200; // viewBox width
   const H        = 8;
   const fillW    = Math.min(1, fraction) * W;
@@ -132,7 +132,7 @@ function MacroSVGBars({
   fat:     { val: number; goal: number };
 }) {
   const rows = [
-    { label: "Prot.",   color: "#3b82f6", ...protein },
+    { label: "Prot.",   color: "var(--info)", ...protein },
     { label: "Gluc.",   color: "var(--carbs)", ...carbs },
     { label: "Lip.",    color: "var(--protein)", ...fat },
   ];
@@ -145,7 +145,7 @@ function MacroSVGBars({
       {rows.map(({ label, color, val, goal }) => {
         const fraction = goal > 0 ? Math.min(1, val / goal) : 0;
         const fillW    = fraction * W;
-        const col      = fraction > 1 ? "#ef4444" : color;
+        const col      = fraction > 1 ? "var(--danger)" : color;
         return (
           <div key={label}>
             <div className="flex justify-between items-baseline mb-1">
@@ -187,7 +187,7 @@ function TrackedNutrientPill({
       <div className="flex items-center gap-1 mb-1">
         <Icon size={12} stroke={1.6} style={{ color, flexShrink: 0 }} />
         <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
-        <span className="ml-auto text-[11px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
+        <span className="ml-auto text-[11px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "var(--danger)" : levelColor(fraction) }}>
           {value}<span className="font-normal text-[11px]">{unit}</span>
         </span>
       </div>
@@ -569,7 +569,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   Objectif {goals.dailyCalories} kcal
                 </span>
                 <span className="text-[11px] font-semibold tabular-nums"
-                  style={{ color: remaining >= 0 ? "var(--text-secondary)" : "#ef4444" }}>
+                  style={{ color: remaining >= 0 ? "var(--text-secondary)" : "var(--danger)" }}>
                   {remaining >= 0 ? `−${remaining}` : `+${Math.abs(remaining)}`} kcal
                 </span>
               </div>
@@ -619,8 +619,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <div className="mt-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl"
               style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
               <div className="flex items-center gap-2">
-                <IconLock size={13} style={{ color: "#22c55e" }} />
-                <span className="text-[12px] font-medium" style={{ color: "#22c55e" }}>Journée validée</span>
+                <IconLock size={13} style={{ color: "var(--ok)" }} />
+                <span className="text-[12px] font-medium" style={{ color: "var(--ok)" }}>Journée validée</span>
               </div>
               {/* Unlock button — explicit label, 2nd tap confirms (auto-cancels after 3s) */}
               <button
@@ -703,11 +703,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <IconStethoscope size={14} stroke={1.7} style={{ color: dietPaused ? "var(--text-muted)"
               : dietReport?.day.status === "ecarts" ? "var(--danger)"
-              : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)" }} />
+              : dietReport?.day.status === "conforme" ? "var(--ok)" : "var(--text-muted)" }} />
             <span className="text-[12px] font-medium flex-1" style={{
               color: dietPaused ? "var(--text-muted)"
                 : dietReport?.day.status === "ecarts" ? "var(--danger)"
-                : dietReport?.day.status === "conforme" ? "#22c55e" : "var(--text-muted)",
+                : dietReport?.day.status === "conforme" ? "var(--ok)" : "var(--text-muted)",
             }}>
               {DIET_PROGRAMS[activeDietProgramId].name}
               {" — "}
@@ -773,8 +773,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   border: "1px solid rgba(34,197,94,0.2)",
                 }}
               >
-                <IconLock size={14} style={{ color: "#22c55e", flexShrink: 0 }} />
-                <span className="text-[12px] font-medium flex-1" style={{ color: "#22c55e" }}>
+                <IconLock size={14} style={{ color: "var(--ok)", flexShrink: 0 }} />
+                <span className="text-[12px] font-medium flex-1" style={{ color: "var(--ok)" }}>
                   Journée verrouillée
                 </span>
                 <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>

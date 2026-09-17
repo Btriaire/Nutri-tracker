@@ -174,28 +174,28 @@ export default function AppleHealthPanel() {
                   <p className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>Configurer Health Auto Export (~5 min) :</p>
 
                   <div>
-                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>1. Choisir les métriques à exporter</p>
+                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--danger)" }}>1. Choisir les métriques à exporter</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                       Dans l&apos;app → onglet <strong>Export</strong> → sélectionne au minimum <strong>Sleep Analysis</strong> (pour le sommeil), plus pas/FC/poids si tu veux le reste.
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>2. Activer l&apos;agrégation du sommeil</p>
+                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--danger)" }}>2. Activer l&apos;agrégation du sommeil</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                       Réglages de l&apos;app → cherche <strong>&quot;Aggregate Sleep Data&quot;</strong> → active-la. <strong style={{ color: "var(--danger)" }}>Sans ça, le détail léger/profond/paradoxal n&apos;est pas envoyé</strong>, seulement la durée totale.
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>3. Créer l&apos;automatisation</p>
+                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--danger)" }}>3. Créer l&apos;automatisation</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                       Onglet <strong>Automations</strong> → <strong>+</strong> → type <strong>REST API</strong> → colle l&apos;URL ci-dessus dans le champ URL → Méthode <strong>POST</strong> → programme-la (ex: tous les jours à 8h, ou &quot;à l&apos;ouverture de l&apos;app&quot;).
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#ff375f" }}>4. Tester</p>
+                    <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--danger)" }}>4. Tester</p>
                     <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                       Lance l&apos;automatisation manuellement une fois → vérifie dans Nutri-Tracker (page Sommeil) que le détail des phases apparaît le lendemain.
                     </p>

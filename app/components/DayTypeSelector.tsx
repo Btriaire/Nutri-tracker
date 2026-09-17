@@ -14,7 +14,7 @@ const DAY_TYPES: {
 }[] = [
   { key: "work",   label: "Travail",      Icon: IconBriefcase,    color: "var(--fat)", bg: "rgba(96,165,250,0.12)"  },
   { key: "rest",   label: "Repos",        Icon: IconSofa,         color: "var(--fiber)", bg: "rgba(52,211,153,0.12)"  },
-  { key: "travel", label: "Déplacement",  Icon: IconPlaneInflight, color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  { key: "travel", label: "Déplacement",  Icon: IconPlaneInflight, color: "var(--warn)", bg: "rgba(245,158,11,0.12)" },
 ];
 
 /** Derive work/rest from the date string "YYYY-MM-DD" (local time, avoids UTC shift) */

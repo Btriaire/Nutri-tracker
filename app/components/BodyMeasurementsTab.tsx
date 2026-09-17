@@ -24,7 +24,7 @@ const FIELDS: { key: MeasurementKey; label: string; Icon: typeof IconRuler; colo
   { key: "waistCm",  label: "Tour de taille", Icon: IconRulerMeasure,         color: "var(--fiber)", slug: "abs"         },
   { key: "hipsCm",   label: "Hanches",        Icon: IconAdjustmentsHorizontal, color: "var(--weight)", slug: "gluteal"     },
   { key: "thighsCm", label: "Cuisse",         Icon: IconRun,                  color: "var(--carbs)", slug: "quadriceps"  },
-  { key: "calfsCm",  label: "Mollet",         Icon: IconWalk,                 color: "#fb923c", slug: "calves"      },
+  { key: "calfsCm",  label: "Mollet",         Icon: IconWalk,                 color: "var(--calories)", slug: "calves"      },
 ];
 
 const SLUG_TO_FIELD = new Map(FIELDS.map(f => [f.slug, f.key]));

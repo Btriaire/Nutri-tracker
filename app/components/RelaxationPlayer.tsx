@@ -18,8 +18,8 @@ const SOUNDS: SoundDef[] = [
   { id: "rain",     emoji: "🌧️", name: "Pluie douce",    desc: "Bruissement de pluie légère",       color: "var(--fat)" },
   { id: "ocean",    emoji: "🌊", name: "Vagues",          desc: "Vagues rythmiques de l'océan",      color: "var(--fiber)" },
   { id: "forest",   emoji: "🌲", name: "Forêt",           desc: "Oiseaux et feuillages frémissants", color: "#86efac" },
-  { id: "fire",     emoji: "🔥", name: "Feu de cheminée", desc: "Crépitement chaleureux du bois",    color: "#fb923c" },
-  { id: "tibetan",  emoji: "🎵", name: "Bol tibétain",    desc: "432 Hz · vibrations méditatives",   color: "#c084fc" },
+  { id: "fire",     emoji: "🔥", name: "Feu de cheminée", desc: "Crépitement chaleureux du bois",    color: "var(--calories)" },
+  { id: "tibetan",  emoji: "🎵", name: "Bol tibétain",    desc: "432 Hz · vibrations méditatives",   color: "var(--accent)" },
   { id: "wind",     emoji: "🍃", name: "Brise zen",       desc: "Vent doux et apaisant",             color: "#a3e635" },
   { id: "binaural", emoji: "🧘", name: "Ondes alpha",     desc: "Binaural 10 Hz · relaxation profonde (casque)", color: "#f9a8d4" },
 ];

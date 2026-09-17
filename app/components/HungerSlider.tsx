@@ -5,11 +5,11 @@ import type { HungerLevel } from "@/app/lib/types";
 // ─── Config ────────────────────────────────────────────────────────────────────
 
 export const HUNGER_CFG: Record<HungerLevel, { emoji: string; label: string; color: string }> = {
-  1: { emoji: "😌", label: "Pas faim",  color: "#22c55e" },
+  1: { emoji: "😌", label: "Pas faim",  color: "var(--ok)" },
   2: { emoji: "🙂", label: "Peu faim",  color: "#84cc16" },
-  3: { emoji: "😐", label: "Modéré",   color: "#f59e0b" },
+  3: { emoji: "😐", label: "Modéré",   color: "var(--warn)" },
   4: { emoji: "😤", label: "Faim",      color: "var(--calories)" },
-  5: { emoji: "🤤", label: "Très faim", color: "#ef4444" },
+  5: { emoji: "🤤", label: "Très faim", color: "var(--danger)" },
 };
 
 interface Props {

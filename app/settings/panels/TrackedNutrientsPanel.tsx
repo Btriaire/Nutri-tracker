@@ -28,7 +28,7 @@ const NUTRIENT_REFS = {
     unit: "mg",
     label: "Sel / Sodium",
     emoji: "🧂",
-    color: "#f59e0b",
+    color: "var(--warn)",
     field: "sodiumMg" as const,
     refs: [
       { label: "OMS",   value: 2000, per_kg: false, desc: "2 000 mg/j = 5 g de sel — recommandation forte" },
@@ -44,7 +44,7 @@ const NUTRIENT_REFS = {
     unit: "g",
     label: "Sucres",
     emoji: "🍬",
-    color: "#ec4899",
+    color: "var(--weight)",
     field: "sugarGrams" as const,
     refs: [
       { label: "OMS strict", value: 25, per_kg: false, desc: "<25 g/j — idéal (<5% énergie sur 2000 kcal)" },
@@ -290,7 +290,7 @@ export default function TrackedNutrientsPanel() {
                         <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                           <div className="h-full rounded-full transition-all" style={{
                             width: `${Math.min(currentVal / (maxRef * 1.3) * 100, 100)}%`,
-                            background: isMax && currentVal > maxRef ? "#ef4444" : cfg.color,
+                            background: isMax && currentVal > maxRef ? "var(--danger)" : cfg.color,
                           }} />
                         </div>
                         <div className="flex justify-between text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
@@ -315,7 +315,7 @@ export default function TrackedNutrientsPanel() {
             style={{
               background: saved ? "rgba(34,197,94,0.12)" : "linear-gradient(135deg,rgba(236,72,153,0.15),rgba(168,85,247,0.12))",
               border: `1px solid ${saved ? "rgba(34,197,94,0.4)" : "rgba(236,72,153,0.3)"}`,
-              color: saved ? "#22c55e" : "#ec4899",
+              color: saved ? "var(--ok)" : "var(--weight)",
             }}
           >
             {saving ? <IconLoader2 size={13} className="animate-spin" /> : saved ? <IconCircleCheck size={13} /> : <IconDeviceFloppy size={13} />}

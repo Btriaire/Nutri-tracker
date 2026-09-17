@@ -81,13 +81,13 @@ function MacroRow({ label, value, goal, color }: {
     <div>
       <div className="flex justify-between text-[12px] mb-1">
         <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-        <span className="tabular-nums" style={{ color: over ? "#ef4444" : color }}>
+        <span className="tabular-nums" style={{ color: over ? "var(--danger)" : color }}>
           {value}g <span style={{ color: "var(--text-muted)" }}>/ {goal}g</span>
         </span>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
         <motion.div className="h-full rounded-full"
-          style={{ background: over ? "#ef4444" : color, width: `${p}%` }}
+          style={{ background: over ? "var(--danger)" : color, width: `${p}%` }}
           initial={{ width: 0 }}
           animate={{ width: `${p}%` }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }} />
@@ -171,7 +171,7 @@ export default function DashboardClientDesktop({
                 size={220}
               />
               <p className="text-[13px] text-center"
-                style={{ color: remaining >= 0 ? "var(--text-muted)" : "#ef4444" }}>
+                style={{ color: remaining >= 0 ? "var(--text-muted)" : "var(--danger)" }}>
                 {remaining >= 0 ? (
                   <><span className="font-bold text-[17px]" style={{ color: "var(--text-primary)" }}>{remaining}</span> kcal restantes</>
                 ) : (

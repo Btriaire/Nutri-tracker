@@ -140,9 +140,9 @@ function SuggestionCard({
               background: suggestion.difficulty === "facile" ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
               border: `1px solid ${suggestion.difficulty === "facile" ? "rgba(34,197,94,0.2)" : "rgba(249,115,22,0.2)"}`,
             }}>
-            <IconChefHat size={11} style={{ color: suggestion.difficulty === "facile" ? "#22c55e" : "var(--calories)" }} />
+            <IconChefHat size={11} style={{ color: suggestion.difficulty === "facile" ? "var(--ok)" : "var(--calories)" }} />
             <span className="text-[11px] capitalize"
-              style={{ color: suggestion.difficulty === "facile" ? "#22c55e" : "var(--calories)" }}>
+              style={{ color: suggestion.difficulty === "facile" ? "var(--ok)" : "var(--calories)" }}>
               {suggestion.difficulty}
             </span>
           </div>

@@ -23,7 +23,7 @@ import type { DietMealReport, DietViolation } from "@/app/lib/diet-program";
 
 const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
   breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "var(--carbs)", color2: "var(--calories)" },
-  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "#fb923c", color2: "var(--calories)" },
+  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "var(--calories)", color2: "var(--calories)" },
   dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat,     color: "var(--danger)", color2: "#f43f5e" },
   snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple,    color: "var(--fiber)", color2: "#22d3ee" },
 };
@@ -178,7 +178,7 @@ export default function MealSection({
             <span
               className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
               style={{
-                color: dietMealReport.status === "ecarts" ? "var(--danger)" : "#22c55e",
+                color: dietMealReport.status === "ecarts" ? "var(--danger)" : "var(--ok)",
                 background: dietMealReport.status === "ecarts" ? "#ef444418" : "#22c55e18",
               }}
               title={dietMealReport.status === "ecarts" ? dietMealReport.violations.map(v => v.reason).join(", ") : "Aucun écart détecté"}

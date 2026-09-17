@@ -403,7 +403,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                   {/* Kcal */}
                   {(p.activeKcal > 0 || p.sportKcal > 0) && (
                     <span className="text-[11px] font-medium flex-shrink-0 tabular-nums"
-                      style={{ color: "rgba(52,211,153,0.8)" }}>
+                      style={{ color: "var(--fiber)" }}>
                       {Math.round(Math.max(p.activeKcal, p.sportKcal))} kcal
                     </span>
                   )}
@@ -437,7 +437,7 @@ function ActivityHistory({ history, stepsGoal }: { history: ActivityHistoryPoint
                               style={{ color: "var(--text-muted)" }}>{s.durationMin} min</span>
                             {s.calories && (
                               <span className="text-[11px] tabular-nums flex-shrink-0"
-                                style={{ color: "rgba(52,211,153,0.75)" }}>{Math.round(s.calories)} kcal</span>
+                                style={{ color: "var(--fiber)" }}>{Math.round(s.calories)} kcal</span>
                             )}
                           </div>
                         ))}
@@ -1092,7 +1092,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                 width: 38, height: 38,
                 background: "rgba(56,189,248,0.12)",
                 border: "1px solid rgba(56,189,248,0.4)",
-                color: "#38bdf8",
+                color: "var(--info)",
               }}
             >
               <IconMicrophone size={17} />
@@ -1104,7 +1104,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               style={{
                 background: "rgba(56,189,248,0.12)",
                 border: "1px solid rgba(56,189,248,0.4)",
-                color: "#38bdf8",
+                color: "var(--info)",
               }}
             >
               <IconBarbell size={15} /> Salle
@@ -1117,7 +1117,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                 width: 38, height: 38,
                 background: "rgba(56,189,248,0.12)",
                 border: "1px solid rgba(56,189,248,0.4)",
-                color: "#38bdf8",
+                color: "var(--info)",
               }}
             >
               <IconTrendingUp size={17} />
@@ -1774,7 +1774,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}
             className="card flex items-center gap-3 mb-4"
           >
-            <IconMoon size={16} style={{ color: "#818cf8" }} />
+            <IconMoon size={16} style={{ color: "var(--fit-indigo)" }} />
             <div>
               <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                 {Math.floor(gf.sleepMinutes / 60)}h{String(gf.sleepMinutes % 60).padStart(2, "0")} de sommeil
@@ -1815,9 +1815,9 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             className="fixed bottom-24 left-1/2 z-50 max-w-xs w-[90vw] px-4 py-3 rounded-2xl text-[13px] font-medium text-center"
             style={{
               transform: "translateX(-50%)",
-              background: toast.ok ? "rgba(52,211,153,0.18)" : "rgba(239,68,68,0.18)",
-              border: `1px solid ${toast.ok ? "rgba(52,211,153,0.4)" : "rgba(239,68,68,0.4)"}`,
-              color: toast.ok ? "rgba(52,211,153,0.95)" : "var(--danger)",
+              background: toast.ok ? "var(--ok-bg)" : "var(--danger-bg)",
+              border: `1px solid ${toast.ok ? "color-mix(in srgb, var(--ok) 40%, transparent)" : "color-mix(in srgb, var(--danger) 40%, transparent)"}`,
+              color: toast.ok ? "var(--ok)" : "var(--danger)",
               backdropFilter: "blur(12px)",
             }}
           >

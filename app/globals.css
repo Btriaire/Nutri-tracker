@@ -208,7 +208,7 @@ html.light {
 
   /* Accents nutrition — versions saturées « 600 », lisibles sur blanc
      (les pastels du thème sombre étaient délavés ici) */
-  --calories:        #c74b0a;   /* orange profond */
+  --calories:        #bd470a;   /* orange profond */
   --protein:         #7c3aed;   /* violet riche */
   --carbs:        #ad5f05;   /* ambre lisible (vs jaune pâle) */
   --fat:             #2563eb;   /* bleu franc */

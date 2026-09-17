@@ -55,7 +55,7 @@ function CustomTooltip({ active, payload, label }: {
       }}
     >
       <p className="font-medium mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
-      {mood   != null && <p style={{ color: "#a855f7" }}>😊 Humeur&nbsp;&nbsp;<span className="font-bold">{mood}/5</span></p>}
+      {mood   != null && <p style={{ color: "var(--accent)" }}>😊 Humeur&nbsp;&nbsp;<span className="font-bold">{mood}/5</span></p>}
       {stress != null && <p style={{ color: "var(--danger)" }}>😰 Stress&nbsp;&nbsp;&nbsp;<span className="font-bold">{stress}/5</span></p>}
       {energy != null && <p style={{ color: "var(--carbs)" }}>⚡ Énergie&nbsp;<span className="font-bold">{energy}/5</span></p>}
     </div>

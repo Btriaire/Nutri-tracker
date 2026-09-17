@@ -25,8 +25,8 @@ interface Props { points: SleepPoint[]; sleepGoalMin: number }
 
 const STAGES = [
   { key: "light", label: "Léger",     color: "var(--fit-indigo)", desc: "Endormissement · rêverie" },
-  { key: "deep",  label: "Profond",   color: "#3B82F6", desc: "Récupération physique" },
-  { key: "rem",   label: "Paradoxal", color: "#8B5CF6", desc: "Mémoire · créativité" },
+  { key: "deep",  label: "Profond",   color: "var(--info)", desc: "Récupération physique" },
+  { key: "rem",   label: "Paradoxal", color: "var(--protein)", desc: "Mémoire · créativité" },
 ] as const;
 
 // ─── Real hypnogram (actual stage timeline from the tracker) ─────────────────
@@ -388,7 +388,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
         )}
         {sleepScore != null && (
           <span className="text-[11px] px-1.5 py-0.5 rounded-full"
-            style={{ background: "rgba(99,102,241,0.08)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}>
+            style={{ background: "rgba(99,102,241,0.08)", color: "var(--fit-indigo)", border: "1px solid rgba(99,102,241,0.2)" }}>
             Score {sleepScore}/100
           </span>
         )}
@@ -562,7 +562,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
               {current && (
                 <button onClick={remove} disabled={deleting}
                   className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                  style={{ background: "rgba(239,68,68,0.1)", color: "var(--danger)" }}>
                   {deleting ? <IconLoader2 size={13} className="animate-spin" /> : <IconTrash size={13} />}
                 </button>
               )}
@@ -775,7 +775,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
             </div>
             {avgP7 > 0 && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-                style={{ background: trendDiff >= 0 ? "rgba(52,168,83,0.1)" : "rgba(239,68,68,0.1)", color: trendDiff >= 0 ? "var(--fit-green)" : "#ef4444" }}>
+                style={{ background: trendDiff >= 0 ? "var(--ok-bg)" : "var(--danger-bg)", color: trendDiff >= 0 ? "var(--fit-green)" : "var(--danger)" }}>
                 {trendDiff >= 0 ? <IconArrowUp size={11} /> : <IconArrowDown size={11} />}
                 {fmtSleep(Math.abs(trendDiff))} vs sem. préc.
               </div>
@@ -832,7 +832,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
           <div className="glass p-4 flex flex-col gap-1">
             <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Tendance 7j</span>
             <div className="flex items-center gap-1.5">
-              {avg7 && avgP7 ? (trendDiff > 0 ? <IconArrowUp size={12} style={{ color: "var(--fit-green)" }} /> : trendDiff < 0 ? <IconArrowDown size={12} style={{ color: "#ef4444" }} /> : <IconMinus size={12} style={{ color: "var(--text-muted)" }} />) : null}
+              {avg7 && avgP7 ? (trendDiff > 0 ? <IconArrowUp size={12} style={{ color: "var(--fit-green)" }} /> : trendDiff < 0 ? <IconArrowDown size={12} style={{ color: "var(--danger)" }} /> : <IconMinus size={12} style={{ color: "var(--text-muted)" }} />) : null}
               <span className="text-[18px] font-bold">{avg7 ? fmtSleep(avg7) : "—"}</span>
             </div>
             <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -897,7 +897,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               { label: `≥ ${goalH}h`, color: "var(--fit-green)" },
               { label: `≥ ${Math.round(goalH * 0.8 * 10)/10}h`, color: "var(--fit-indigo)" },
               { label: `≥ ${Math.round(goalH * 0.6 * 10)/10}h`, color: "var(--fit-yellow)" },
-              { label: "Insuffisant", color: "#ef4444" },
+              { label: "Insuffisant", color: "var(--danger)" },
             ].map(l => (
               <div key={l.label} className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
@@ -962,7 +962,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 <div className="rounded-xl p-2.5 text-center"
                   style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
                   <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Score</p>
-                  <p className="text-[16px] font-bold leading-none" style={{ color: "#818cf8" }}>
+                  <p className="text-[16px] font-bold leading-none" style={{ color: "var(--fit-indigo)" }}>
                     {selectedNightData.sleepScore}<span className="text-[11px] font-normal">/100</span>
                   </p>
                 </div>

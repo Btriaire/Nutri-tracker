@@ -11,7 +11,7 @@ interface Props {
 }
 
 function bandColor(score: number): string {
-  if (score >= 8.5) return "#22c55e";
+  if (score >= 8.5) return "var(--ok)";
   if (score >= 7)   return "var(--fiber)";
   if (score >= 5)   return "var(--carbs)";
   if (score >= 3)   return "#fb923c";

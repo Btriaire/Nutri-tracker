@@ -358,7 +358,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               style={{ background: "rgba(192,132,252,0.10)", border: "1px solid rgba(192,132,252,0.25)" }}>
               <span>{d.emoji}</span>
               <span style={{ color: "var(--text-secondary)" }}>{d.type}</span>
-              <span className="font-semibold tabular-nums" style={{ color: "#c084fc" }}>
+              <span className="font-semibold tabular-nums" style={{ color: "var(--accent)" }}>
                 {d.units.toFixed(1)}u
               </span>
               <button onClick={() => removeDrink(d.id)} disabled={loading}
@@ -384,7 +384,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 style={{ color: "var(--text-muted)" }}>
                 {p.type.replace(" 25cl", "").replace(" 33cl", " 33")}
               </span>
-              <span className="text-[11px] font-bold tabular-nums" style={{ color: "#c084fc" }}>
+              <span className="text-[11px] font-bold tabular-nums" style={{ color: "var(--accent)" }}>
                 {u.toFixed(1)}u
               </span>
             </button>
@@ -476,7 +476,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                   {customType.trim() || "Boisson"} · {customMl} ml · {customAbv}%
                 </span>
-                <span className="text-[11px] font-bold" style={{ color: "#c084fc" }}>
+                <span className="text-[11px] font-bold" style={{ color: "var(--accent)" }}>
                   {calcUnits(customMl, customAbv).toFixed(1)}u · {calcKcal(customMl, customAbv)} kcal
                 </span>
               </div>

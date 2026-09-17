@@ -757,7 +757,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 style={{
                   background: "rgba(245,158,11,0.1)",
                   border: "1px solid rgba(245,158,11,0.3)",
-                  color: "#f59e0b",
+                  color: "var(--warn)",
                 }}
               >
                 <IconPhoto size={13} />
@@ -1009,7 +1009,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           { label: "Protéines", val: todayPoint.proteinG, goal: goals.proteinGrams, color: "var(--protein)", unit: "g" },
                           { label: "Glucides",  val: todayPoint.carbsG,   goal: goals.carbsGrams,   color: "var(--carbs)",   unit: "g" },
                           { label: "Lipides",   val: todayPoint.fatG,     goal: goals.fatGrams,     color: "var(--fat)",     unit: "g" },
-                          { label: "Eau",       val: Math.round((todayPoint.waterMl ?? 0) / 100) / 10, goal: (goals.waterMl ?? 2000) / 1000, color: "#38bdf8", unit: "L" },
+                          { label: "Eau",       val: Math.round((todayPoint.waterMl ?? 0) / 100) / 10, goal: (goals.waterMl ?? 2000) / 1000, color: "var(--info)", unit: "L" },
                         ].map(({ label, val, goal, color, unit }) => (
                           <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl"
                             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
@@ -1075,9 +1075,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <IconDroplet size={24} stroke={1.5} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                      <IconDroplet size={24} stroke={1.5} style={{ color: "var(--info)", flexShrink: 0 }} />
                       <div>
-                        <p className="text-[20px] font-bold leading-tight" style={{ color: "#38bdf8" }}>
+                        <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--info)" }}>
                           {todayPoint?.waterMl ? `${(todayPoint.waterMl / 1000).toFixed(1)}L` : "—"}
                         </p>
                         <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Hydratation</p>
@@ -1264,7 +1264,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     </div>
                     {weightDelta !== null && (
                       <span className="flex items-center gap-1 text-[12px] font-medium"
-                        style={{ color: weightDelta < -0.1 ? "#4ade80" : weightDelta > 0.1 ? "var(--danger)" : "var(--text-muted)" }}>
+                        style={{ color: weightDelta < -0.1 ? "var(--ok)" : weightDelta > 0.1 ? "var(--danger)" : "var(--text-muted)" }}>
                         {weightDelta < -0.1 ? <IconArrowDown size={11} stroke={2} /> : weightDelta > 0.1 ? <IconArrowUp size={11} stroke={2} /> : <IconMinus size={11} stroke={2} />}
                         {Math.abs(weightDelta).toFixed(1)} kg sur la période
                       </span>
@@ -1311,10 +1311,10 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 <div className="flex gap-2 mb-3">
                   {[
                     { label: "Actuel",   value: effectiveCurrentWeight ? `${effectiveCurrentWeight.toFixed(1)} kg` : "—", color: "var(--protein)" },
-                    { label: "Objectif", value: targetWeightKg   ? `${targetWeightKg.toFixed(1)} kg`  : "—", color: "#4ade80" },
+                    { label: "Objectif", value: targetWeightKg   ? `${targetWeightKg.toFixed(1)} kg`  : "—", color: "var(--ok)" },
                     { label: "Écart",
                       value: (effectiveCurrentWeight && targetWeightKg) ? `${Math.abs(effectiveCurrentWeight - targetWeightKg).toFixed(1)} kg` : "—",
-                      color: (effectiveCurrentWeight && targetWeightKg && effectiveCurrentWeight > targetWeightKg) ? "var(--danger)" : "#4ade80" },
+                      color: (effectiveCurrentWeight && targetWeightKg && effectiveCurrentWeight > targetWeightKg) ? "var(--danger)" : "var(--ok)" },
                     { label: "Date cible",
                       value: targetDate ? format(new Date(targetDate + "T00:00:00"), "dd/MM/yy") : "—",
                       color: "var(--calories)" },
@@ -1344,7 +1344,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       if (delta === null) return null;
                       const loss = delta < -0.05;
                       const gain = delta >  0.05;
-                      const color = loss ? "#4ade80" : gain ? "var(--danger)" : "var(--text-muted)";
+                      const color = loss ? "var(--ok)" : gain ? "var(--danger)" : "var(--text-muted)";
                       return (
                         <div key={label} className="flex-1 min-w-[64px] flex flex-col items-center p-2 rounded-xl gap-0.5"
                           style={{ background: loss ? "rgba(74,222,128,0.07)" : gain ? "rgba(248,113,113,0.07)" : "rgba(255,255,255,0.03)", border: `1px solid ${loss ? "rgba(74,222,128,0.2)" : gain ? "rgba(248,113,113,0.2)" : "var(--border)"}` }}>
@@ -1409,8 +1409,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             <stop offset="95%" stopColor="var(--protein)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%"  stopColor="#4ade80" stopOpacity={0.08} />
-                            <stop offset="95%" stopColor="#4ade80" stopOpacity={0.02} />
+                            <stop offset="5%"  stopColor="var(--ok)" stopOpacity={0.08} />
+                            <stop offset="95%" stopColor="var(--ok)" stopOpacity={0.02} />
                           </linearGradient>
                           <linearGradient id="gapGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%"  stopColor="var(--danger)" stopOpacity={0.16} />
@@ -1452,13 +1452,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                 style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                 {entries.map((p, i) => (
-                                  <p key={i} className="font-semibold" style={{ color: p.dataKey === "actual" ? "var(--protein)" : p.dataKey === "projected" ? "#4ade80" : "var(--calories)" }}>
+                                  <p key={i} className="font-semibold" style={{ color: p.dataKey === "actual" ? "var(--protein)" : p.dataKey === "projected" ? "var(--ok)" : "var(--calories)" }}>
                                     {p.dataKey === "actual" ? "● Mesuré" : p.dataKey === "projected" ? "- Simulé" : "Calories"} :{" "}
                                     {p.dataKey === "calories" ? `${p.value} kcal` : `${(p.value as number).toFixed(1)} kg`}
                                   </p>
                                 ))}
                                 {gap != null && (
-                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "#4ade80" : "var(--danger)" }}>
+                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "var(--ok)" : "var(--danger)" }}>
                                     Écart : {gap > 0 ? "+" : ""}{gap.toFixed(1)} kg {gap > 0 ? "sous objectif" : "au-dessus"}
                                   </p>
                                 )}
@@ -1470,7 +1470,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {targetWeightKg && (
                           <ReferenceLine yAxisId="w" y={targetWeightKg}
                             stroke="rgba(74,222,128,0.3)" strokeWidth={1} strokeDasharray="4 3"
-                            label={{ value: `🎯 ${targetWeightKg}kg`, fontSize: 11, fill: "#4ade80", position: "insideTopRight" }} />
+                            label={{ value: `Objectif ${targetWeightKg}kg`, fontSize: 11, fill: "var(--ok)", position: "insideTopRight" }} />
                         )}
                         {/* Today line */}
                         <ReferenceLine yAxisId="w" x="Auj."
@@ -1497,15 +1497,15 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           dot={false} activeDot={false} connectNulls={false} legendType="none" />
                         {/* Projected weight (dashed line, always shown) — drawn BEFORE actual so actual is on top */}
                         <Line yAxisId="w" type="monotone" dataKey="projected" name="projected"
-                          stroke="#4ade80" strokeWidth={1.25} strokeDasharray="5 3"
+                          stroke="var(--ok)" strokeWidth={1.25} strokeDasharray="5 3"
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           dot={(props: any) => {
                             const { cx, cy, payload } = props as { cx: number; cy: number; payload: WeightChartPoint };
                             if (payload.projected == null) return <g key={`p-${payload.date}`} />;
                             if (!payload.isFuture) return <g key={`p-${payload.date}`} />;
-                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={1.8} fill="#4ade80" stroke="var(--bg)" strokeWidth={1} />;
+                            return <circle key={`p-${payload.date}`} cx={cx} cy={cy} r={1.8} fill="var(--ok)" stroke="var(--bg)" strokeWidth={1} />;
                           }}
-                          activeDot={{ r: 3, fill: "#4ade80" }} connectNulls />
+                          activeDot={{ r: 3, fill: "var(--ok)" }} connectNulls />
                         {/* Actual weight — either a single line (default) or split into
                             weekly blue/red segments showing adequacy vs the plan */}
                         {showAdequacyColoring ? (
@@ -1561,7 +1561,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <div className="w-6 h-0" style={{ borderTop: "2px dashed #4ade80" }} />
+                        <div className="w-6 h-0" style={{ borderTop: "2px dashed var(--ok)" }} />
                         <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -1595,7 +1595,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                           À ce rythme ({avgCalories} kcal/j) →
                         </p>
-                        <p className="text-[12px] font-semibold" style={{ color: "#4ade80" }}>
+                        <p className="text-[12px] font-semibold" style={{ color: "var(--ok)" }}>
                           🎯 {projectionDate}
                         </p>
                       </div>
@@ -1626,9 +1626,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               const avgFatV     = avg(caloriePoints.map(p => p.fatG));
 
               const REF = {
-                fiberG:        { refLine: 25,   unit: "g",  label: "Fibres",        color: "#4ade80", note: "≥ 25 g/j"    },
+                fiberG:        { refLine: 25,   unit: "g",  label: "Fibres",        color: "var(--ok)", note: "≥ 25 g/j"    },
                 sugarG:        { refLine: 25,   unit: "g",  label: "Sucres libres", color: "var(--weight)", note: "< 25 g/j"    },
-                sodiumMg:      { refLine: 2000, unit: "mg", label: "Sodium",        color: "#fb923c", note: "< 2000 mg/j" },
+                sodiumMg:      { refLine: 2000, unit: "mg", label: "Sodium",        color: "var(--calories)", note: "< 2000 mg/j" },
                 saturatedFatG: { refLine: 22,   unit: "g",  label: "Lipides sat.",  color: "var(--calories)", note: "< 22 g/j"    },
               } as const;
               type MicroKey = keyof typeof REF;
@@ -2349,7 +2349,7 @@ function FastingTracker({
 
   function barFill(pct: number, active: boolean): string {
     if (active)    return "var(--calories)";
-    if (pct >= 1)  return "#22c55e";
+    if (pct >= 1)  return "var(--ok)";
     if (pct >= 0.75) return "#86efac";
     if (pct >= 0.5)  return "var(--carbs)";
     return "#a855f7";
@@ -2384,12 +2384,12 @@ function FastingTracker({
         <div className="flex items-center gap-1.5">
           {streak > 0 && (
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}>
+              style={{ background: "rgba(34,197,94,0.15)", color: "var(--ok)", border: "1px solid rgba(34,197,94,0.3)" }}>
               {streak}🔥
             </span>
           )}
           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(129,140,248,0.12)", color: "#818cf8", border: "1px solid rgba(129,140,248,0.25)" }}>
+            style={{ background: "rgba(129,140,248,0.12)", color: "var(--fit-indigo)", border: "1px solid rgba(129,140,248,0.25)" }}>
             {withEnd.length} / {fullDone.length} ✓
           </span>
           {avgH > 0 && (
@@ -2430,7 +2430,7 @@ function FastingTracker({
           { c: "#a855f7", label: "< 50%" },
           { c: "var(--carbs)", label: "50-74%" },
           { c: "#86efac", label: "75-99%" },
-          { c: "#22c55e", label: "100% ✓" },
+          { c: "var(--ok)", label: "100% ✓" },
         ].map(l => (
           <div key={l.label} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-sm" style={{ background: l.c }} />

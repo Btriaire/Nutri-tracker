@@ -16,7 +16,7 @@ interface Props {
 
 // ── Ring colours ──────────────────────────────────────────────────────────────
 const C_CONSUMED = "var(--calories)";           // orange
-const C_CONSUMED_OVER = "#ef4444";              // red if over goal
+const C_CONSUMED_OVER = "var(--danger)";        // red if over goal
 const C_BURNED   = "rgba(52,211,153,0.85)";     // green
 const C_STEPS    = "rgba(129,140,248,0.85)";    // indigo
 const C_STEPS_DONE = "rgba(167,139,250,0.9)";  // violet when goal reached

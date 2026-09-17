@@ -43,12 +43,12 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
   ciqual:      { label: "Ciqual ANSES",    color: "var(--fiber)"   },
   off:         { label: "Open Food Facts", color: "var(--steps)"   },
   usda:        { label: "USDA",            color: "var(--carbs)"   },
-  edamam:      { label: "Edamam",          color: "#f59e0b"        },
+  edamam:      { label: "Edamam",          color: "var(--warn)"        },
   nutritionix: { label: "Nutritionix",     color: "#10b981"        },
-  fatsecret:   { label: "FatSecret",       color: "#3b82f6"        },
+  fatsecret:   { label: "FatSecret",       color: "var(--info)"        },
   custom:      { label: "Personnel",       color: "var(--protein)" },
   recipe:      { label: "Recette",         color: "var(--calories)" },
-  ai:     { label: "Nutri-AI",         color: "#a855f7" },
+  ai:     { label: "Nutri-AI",         color: "var(--accent)" },
 };
 
 
@@ -1132,8 +1132,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                   {myFoodsMatching.length > 0 && (
                     <div className="mb-3">
                       <div className="flex items-center gap-1.5 mb-2">
-                        <IconStarFilled size={11} style={{ color: "#f59e0b" }} />
-                        <p className="label-xs" style={{ color: "#f59e0b" }}>Ma liste personnelle</p>
+                        <IconStarFilled size={11} style={{ color: "var(--warn)" }} />
+                        <p className="label-xs" style={{ color: "var(--warn)" }}>Ma liste personnelle</p>
                       </div>
                       <div className="space-y-1">
                         {myFoodsMatching.map((r) => {
@@ -1162,8 +1162,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 style={{ background: isAdding ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.10)", borderLeft: "1px solid rgba(245,158,11,0.18)" }}
                               >
                                 {isAdding
-                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#f59e0b" }} />
-                                  : <IconPlus size={16} stroke={2} style={{ color: "#f59e0b" }} />
+                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "var(--warn)" }} />
+                                  : <IconPlus size={16} stroke={2} style={{ color: "var(--warn)" }} />
                                 }
                               </button>
                             </motion.div>
@@ -1222,7 +1222,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     <div className="mb-3 mt-3">
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[11px]">✨</span>
-                        <p className="label-xs" style={{ color: "#a855f7" }}>Résultats Nutri-AI</p>
+                        <p className="label-xs" style={{ color: "var(--accent)" }}>Résultats Nutri-AI</p>
                         <p className="text-[11px] ml-1" style={{ color: "var(--text-muted)" }}>— valeurs estimées</p>
                       </div>
                       <div className="space-y-1">
@@ -1243,7 +1243,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1.5 mt-0.5 mb-1.5">
-                                    <span className="text-[11px]" style={{ color: "#a855f7" }}>Nutri-AI</span>
+                                    <span className="text-[11px]" style={{ color: "var(--accent)" }}>Nutri-AI</span>
                                   </div>
                                   <MacroPills n={r.nutrition} />
                                 </div>
@@ -1255,8 +1255,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 style={{ background: isAdding ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.1)", borderLeft: "1px solid rgba(168,85,247,0.2)" }}
                               >
                                   {isAdding
-                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#a855f7" }} />
-                                  : <IconPlus size={16} stroke={2} style={{ color: "#a855f7" }} />
+                                  ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "var(--accent)" }} />
+                                  : <IconPlus size={16} stroke={2} style={{ color: "var(--accent)" }} />
                                 }
                               </button>
                               {/* Save to custom foods */}
@@ -1534,7 +1534,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {tab === "mes-aliments" && (
                 <div className="px-4 py-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <IconStarFilled size={13} style={{ color: "#f59e0b" }} />
+                    <IconStarFilled size={13} style={{ color: "var(--warn)" }} />
                     <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                       Ma liste personnelle
                     </p>
@@ -1586,8 +1586,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             style={{ background: isAdding ? "rgba(245,158,11,0.15)" : "rgba(245,158,11,0.10)", borderLeft: "1px solid rgba(245,158,11,0.18)" }}
                           >
                             {isAdding
-                              ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "#f59e0b" }} />
-                              : <IconPlus size={16} stroke={2} style={{ color: "#f59e0b" }} />
+                              ? <IconLoader2 size={14} stroke={2} className="animate-spin" style={{ color: "var(--warn)" }} />
+                              : <IconPlus size={16} stroke={2} style={{ color: "var(--warn)" }} />
                             }
                           </button>
                           <button

@@ -531,10 +531,10 @@ export default function DashboardClient({
                 <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
                 <path d="M9 8.5C7.8 8.8 7 9.8 7 11" /><path d="M15 8.5c1.2.3 2 1.3 2 2.5" /><path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
               </svg>
-              <p className="text-[11px] font-medium flex-1" style={{ color: "#818cf8" }}>
+              <p className="text-[11px] font-medium flex-1" style={{ color: "var(--fit-indigo)" }}>
                 Bien-être non rempli · humeur, énergie, stress
               </p>
-              <IconChevronRight size={12} stroke={2} style={{ color: "#818cf8", flexShrink: 0, opacity: 0.7 }} />
+              <IconChevronRight size={12} stroke={2} style={{ color: "var(--fit-indigo)", flexShrink: 0, opacity: 0.7 }} />
             </Link>
           </motion.div>
         )}
@@ -700,7 +700,7 @@ export default function DashboardClient({
                         <div key={label} className="flex flex-col gap-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] font-medium" style={{ color }}>{label}</span>
-                            <span className="text-[11px] tabular-nums" style={{ color: over ? "#ef4444" : levelColor(fraction) }}>
+                            <span className="text-[11px] tabular-nums" style={{ color: over ? "var(--danger)" : levelColor(fraction) }}>
                               {Math.round(value)}g
                             </span>
                           </div>
@@ -850,7 +850,7 @@ export default function DashboardClient({
             }}
           >
             <div className="flex items-center gap-1.5">
-              <IconMoon size={12} stroke={2} style={{ color: "#818cf8" }} />
+              <IconMoon size={12} stroke={2} style={{ color: "var(--fit-indigo)" }} />
               <span className="label-xs">Sommeil</span>
             </div>
             <div className="flex items-end gap-1 leading-none">
@@ -1149,8 +1149,8 @@ export default function DashboardClient({
         {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (() => {
           const rows: { key: keyof TrackedNutrients; Icon: typeof IconBarbell; label: string; unit: string; value: number; goal: number; color: string; invertAlert?: boolean }[] = [];
           if (trackedNutrients.protein)      rows.push({ key: "protein",      Icon: IconBarbell, label: "Protéines",     unit: "g",  value: Math.round(consumed.proteinG),       goal: goals.proteinGrams,         color: "var(--protein)"  });
-          if (trackedNutrients.sodium)       rows.push({ key: "sodium",       Icon: IconSalt, label: "Sel",           unit: "mg", value: Math.round(consumed.sodiumMg ?? 0),   goal: goals.sodiumMg ?? 2000,     color: "#f59e0b", invertAlert: true });
-          if (trackedNutrients.sugar)        rows.push({ key: "sugar",        Icon: IconCandy, label: "Sucres",        unit: "g",  value: Math.round(consumed.sugarG ?? 0),     goal: goals.sugarGrams ?? 50,     color: "#ec4899", invertAlert: true });
+          if (trackedNutrients.sodium)       rows.push({ key: "sodium",       Icon: IconSalt, label: "Sel",           unit: "mg", value: Math.round(consumed.sodiumMg ?? 0),   goal: goals.sodiumMg ?? 2000,     color: "var(--warn)", invertAlert: true });
+          if (trackedNutrients.sugar)        rows.push({ key: "sugar",        Icon: IconCandy, label: "Sucres",        unit: "g",  value: Math.round(consumed.sugarG ?? 0),     goal: goals.sugarGrams ?? 50,     color: "var(--weight)", invertAlert: true });
           if (trackedNutrients.saturatedFat) rows.push({ key: "saturatedFat", Icon: IconDroplet, label: "Lip. saturés",  unit: "g",  value: Math.round(consumed.saturatedFatG ?? 0), goal: goals.saturatedFatGrams ?? 20, color: "var(--fat)", invertAlert: true });
           return (
             <motion.div {...fade(0.185)} className="glass px-4 py-3 mb-4">
@@ -1173,7 +1173,7 @@ export default function DashboardClient({
                         />
                       </div>
                       <span className="text-[11px] font-semibold tabular-nums flex-shrink-0 w-[48px] text-right"
-                        style={{ color: over && invertAlert ? "#ef4444" : levelColor(fraction) }}>
+                        style={{ color: over && invertAlert ? "var(--danger)" : levelColor(fraction) }}>
                         {value}<span className="font-normal opacity-60">/{goal}{unit}</span>
                       </span>
                     </div>

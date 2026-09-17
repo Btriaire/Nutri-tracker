@@ -30,7 +30,7 @@ function CalorieDonut({ eaten, goal, size = 120 }: { eaten: number; goal: number
   const cx = size / 2, R = cx - 8, circ = 2 * Math.PI * R;
   const frac = Math.min(1.05, eaten / Math.max(1, goal));
   const over = frac > 1;
-  const col  = over ? "#ef4444" : frac > 0.88 ? "var(--calories)" : frac > 0.65 ? "var(--carbs)" : "#22c55e";
+  const col  = over ? "var(--danger)" : frac > 0.88 ? "var(--calories)" : frac > 0.65 ? "var(--carbs)" : "var(--ok)";
   const dash = `${Math.min(frac, 1) * circ} ${circ}`;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
@@ -60,13 +60,13 @@ function MacroBar({ value, goal, color, label }: {
     <div>
       <div className="flex justify-between text-[11px] mb-1">
         <span style={{ color: "var(--text-muted)" }}>{label}</span>
-        <span className="tabular-nums" style={{ color: over ? "#ef4444" : color }}>
+        <span className="tabular-nums" style={{ color: over ? "var(--danger)" : color }}>
           {value}g <span style={{ color: "var(--text-muted)" }}>/ {goal}g</span>
         </span>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
         <motion.div className="h-full rounded-full"
-          style={{ background: over ? "#ef4444" : color, width: `${p}%` }}
+          style={{ background: over ? "var(--danger)" : color, width: `${p}%` }}
           initial={{ width: 0 }}
           animate={{ width: `${p}%` }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} />
@@ -142,7 +142,7 @@ export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" 
           {/* Donut calorie */}
           <div className="flex flex-col items-center gap-2 py-2">
             <CalorieDonut eaten={Math.round(totals.calories)} goal={goals.dailyCalories} size={120} />
-            <p className="text-[12px]" style={{ color: remaining >= 0 ? "var(--text-muted)" : "#ef4444" }}>
+            <p className="text-[12px]" style={{ color: remaining >= 0 ? "var(--text-muted)" : "var(--danger)" }}>
               {remaining >= 0
                 ? `${remaining} kcal restantes`
                 : `+${Math.abs(remaining)} kcal dépassées`}

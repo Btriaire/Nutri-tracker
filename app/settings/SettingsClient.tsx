@@ -308,7 +308,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Pas · Calories · Sommeil · Poids · Séances</p>
             </div>
             {fit === "connected"    && <IconCircleCheck size={18} style={{ color: "var(--fiber)",    flexShrink: 0 }} />}
-            {fit === "needs_reauth" && <IconAlertCircle  size={18} style={{ color: "#f59e0b",       flexShrink: 0 }} />}
+            {fit === "needs_reauth" && <IconAlertCircle  size={18} style={{ color: "var(--warn)",       flexShrink: 0 }} />}
             {fit === "disconnected" && <IconCircleX      size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
             {fitOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
@@ -323,9 +323,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               {fit === "needs_reauth" ? (
                 <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
                   style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.35)" }}>
-                  <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+                  <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
                   <div>
-                    <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
+                    <p className="text-[12px] font-semibold" style={{ color: "var(--warn)" }}>Reconnexion requise</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "rgba(245,158,11,0.75)" }}>
                       Le token a expiré. Reconnectez Google Fit pour rétablir la sync.
                     </p>
@@ -500,7 +500,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Poids · % graisse · Masse musculaire</p>
             </div>
             {withings === "connected"    && <IconCircleCheck  size={18} style={{ color: "var(--fiber)",      flexShrink: 0 }} />}
-            {withings === "needs_reauth" && <IconAlertCircle size={18} style={{ color: "#f59e0b",           flexShrink: 0 }} />}
+            {withings === "needs_reauth" && <IconAlertCircle size={18} style={{ color: "var(--warn)",           flexShrink: 0 }} />}
             {withings === "disconnected" && <IconCircleX     size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
             {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
@@ -515,14 +515,14 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               {withings === "needs_reauth" ? (
                 <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
                   style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.35)" }}>
-                  <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+                  <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold" style={{ color: "#f59e0b" }}>Reconnexion requise</p>
+                    <p className="text-[12px] font-semibold" style={{ color: "var(--warn)" }}>Reconnexion requise</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
                   </div>
                   <button type="button" onClick={openWithingsAuth}
                     className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                    style={{ background: "rgba(245,158,11,0.20)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.40)" }}>
+                    style={{ background: "rgba(245,158,11,0.20)", color: "var(--warn)", border: "1px solid rgba(245,158,11,0.40)" }}>
                     Reconnecter
                   </button>
                 </div>

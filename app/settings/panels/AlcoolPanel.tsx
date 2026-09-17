@@ -125,7 +125,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                   >
                     <div className="rounded-2xl p-4 space-y-3"
                       style={{ background: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.18)" }}>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#c084fc" }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent)" }}>
                         Objectif hebdomadaire
                       </p>
                       <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                           style={{
                             background: "rgba(192,132,252,0.08)",
                             border: "1px solid rgba(192,132,252,0.30)",
-                            color: "#c084fc", padding: "7px 4px",
+                            color: "var(--accent)", padding: "7px 4px",
                           }}
                         />
                         <button

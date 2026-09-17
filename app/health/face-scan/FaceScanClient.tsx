@@ -39,10 +39,10 @@ const CONFIDENCE_COLOR: Record<FaceScanConfidence, string> = {
 };
 
 const SCORE_AXES: { key: keyof FaceScanScorecard; label: string; color: string }[] = [
-  { key: "amaigrissement", label: "Amaigrissement visage", color: "#6366f1" },
-  { key: "fatigue",        label: "Fatigue",               color: "#f59e0b" },
-  { key: "teint",          label: "Teint",                 color: "#f43f5e" },
-  { key: "hydratation",    label: "Hydratation",           color: "#06b6d4" },
+  { key: "amaigrissement", label: "Amaigrissement visage", color: "var(--fit-indigo)" },
+  { key: "fatigue",        label: "Fatigue",               color: "var(--warn)" },
+  { key: "teint",          label: "Teint",                 color: "var(--danger)" },
+  { key: "hydratation",    label: "Hydratation",           color: "var(--info)" },
 ];
 
 function StarRow({ score, color }: { score: number; color: string }) {
@@ -216,8 +216,8 @@ export default function FaceScanClient() {
       )}
 
       <div className="flex items-start gap-2 rounded-lg p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
-        <IconAlertCircle size={14} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
-        <p className="text-[11px] leading-relaxed" style={{ color: "#f59e0b" }}>{scan.analysis.disclaimer}</p>
+        <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
+        <p className="text-[11px] leading-relaxed" style={{ color: "var(--warn)" }}>{scan.analysis.disclaimer}</p>
       </div>
     </div>
   );

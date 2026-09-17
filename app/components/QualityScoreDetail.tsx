@@ -19,7 +19,7 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
         {ROWS.map(({ key, label, max }) => {
           const val = quality.breakdown[key];
           const pct = Math.round((val / max) * 100);
-          const barColor = pct >= 85 ? "#22c55e" : pct >= 60 ? "var(--carbs)" : "var(--danger)";
+          const barColor = pct >= 85 ? "var(--ok)" : pct >= 60 ? "var(--carbs)" : "var(--danger)";
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-0.5">

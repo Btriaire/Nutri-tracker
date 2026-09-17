@@ -98,7 +98,7 @@ export default function DietProgramPanel() {
           </div>
 
           {saved && (
-            <p className="text-[11px] flex items-center gap-1.5 px-1" style={{ color: "#22c55e" }}>
+            <p className="text-[11px] flex items-center gap-1.5 px-1" style={{ color: "var(--ok)" }}>
               <IconCircleCheck size={13} /> Enregistré
             </p>
           )}

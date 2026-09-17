@@ -22,7 +22,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
   const pct = Math.min(fraction, 1);
   const dash = circ * pct;
   const over = value > goal;
-  const ringColor = over ? "#ef4444" : levelColor(fraction);
+  const ringColor = over ? "var(--danger)" : levelColor(fraction);
   const ringGlow  = over ? "rgba(239,68,68,0.3)" : `color-mix(in srgb, ${ringColor} 27%, transparent)`;
 
   return (

@@ -49,7 +49,7 @@ function hhmmToMs(dateStr: string, time: string): number {
 }
 
 function ringColor(pct: number): string {
-  if (pct >= 0.9) return "#22c55e";
+  if (pct >= 0.9) return "var(--ok)";
   if (pct >= 0.6) return "var(--carbs)";
   if (pct >= 0.3) return "var(--calories)";
   return "#818cf8";
@@ -281,7 +281,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           ✅
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold" style={{ color: "#22c55e" }}>
+          <p className="text-[13px] font-semibold" style={{ color: "var(--ok)" }}>
             Jeûne {durationH}h accompli !
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>

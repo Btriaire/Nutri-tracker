@@ -216,7 +216,7 @@ export default function ActivityCategoryPicker({
                 </div>
 
                 <p className="text-[13px] font-semibold leading-tight"
-                  style={{ color: cat.c1 }}>
+                  style={{ color: "var(--text-primary)" }}>
                   {cat.label}
                 </p>
                 <p className="text-[11px] mt-0.5 mb-auto"
@@ -238,7 +238,7 @@ export default function ActivityCategoryPicker({
                           padding: "2px 6px",
                           background: `color-mix(in srgb, ${cat.c1} 10%, transparent)`,
                           border: `1px solid color-mix(in srgb, ${cat.c1} 19%, transparent)`,
-                          color: cat.c1,
+                          color: "var(--text-primary)",
                         }}
                       >
                         <span className="flex-shrink-0">{e.emoji}</span>

@@ -14,11 +14,11 @@ import { playNavSound } from "@/app/lib/sounds";
 
 const TABS = [
   { href: "/hub",       Icon: IconLayoutDashboard, label: "Accueil",  color: "var(--calories)", bg: "rgba(249,115,22,0.14)" },
-  { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "#3b82f6", bg: "rgba(59,130,246,0.14)" },
-  { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "#f43f5e", bg: "rgba(244,63,94,0.14)"  },
+  { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "var(--info)", bg: "rgba(59,130,246,0.14)" },
+  { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "var(--danger)", bg: "rgba(244,63,94,0.14)"  },
   { href: "/activity",  Icon: IconFlame,           label: "Activité", color: "var(--fiber)", bg: "rgba(52,211,153,0.14)" },
   { href: "/progress",  Icon: IconTrendingUp,      label: "Progrès",  color: "var(--protein)", bg: "rgba(167,139,250,0.14)"},
-  { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "#94a3b8", bg: "rgba(148,163,184,0.12)"},
+  { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "var(--text-secondary)", bg: "rgba(148,163,184,0.12)"},
 ] as const;
 
 // La barre du haut affichait le logo sur les 48px les plus precieux de

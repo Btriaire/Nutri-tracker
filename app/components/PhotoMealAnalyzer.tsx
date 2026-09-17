@@ -629,7 +629,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       {/* Legend */}
                       <div className="flex items-center gap-4 mt-2">
                         {[
-                          { label: "Prot.", color: "#3b82f6", val: Math.round(totals.proteinG) },
+                          { label: "Prot.", color: "var(--info)", val: Math.round(totals.proteinG) },
                           { label: "Gluc.", color: "var(--carbs)", val: Math.round(totals.carbsG) },
                           { label: "Lip.",  color: "var(--protein)", val: Math.round(totals.fatG) },
                         ].map(({ label, color, val }) => (
@@ -649,7 +649,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                     <div className="px-3 py-2.5 grid grid-cols-3 gap-3"
                       style={{ background: "rgba(255,255,255,0.02)" }}>
                       {[
-                        { label: "Protéines", color: "#3b82f6", val: totals.proteinG, goal: 50 },
+                        { label: "Protéines", color: "var(--info)", val: totals.proteinG, goal: 50 },
                         { label: "Glucides",  color: "var(--carbs)", val: totals.carbsG,   goal: 150 },
                         { label: "Lipides",   color: "var(--protein)", val: totals.fatG,     goal: 60 },
                       ].map(({ label, color, val, goal }) => (

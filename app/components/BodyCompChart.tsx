@@ -39,8 +39,8 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     Icon:  IconScale,
     metrics: [
       { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "var(--calories)" },
-      { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "#8b5cf6", decimals: 1 },
-      { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "#ef4444", decimals: 1 },
+      { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "var(--protein)", decimals: 1 },
+      { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "var(--danger)", decimals: 1 },
     ],
   },
   {
@@ -48,9 +48,9 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     label: "Vitaux",
     Icon:  IconHeartbeat,
     metrics: [
-      { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "#f43f5e" },
+      { key: "systolicBP",  label: "Systolique",  unit: "mmHg", color: "var(--danger)" },
       { key: "diastolicBP", label: "Diastolique", unit: "mmHg", color: "#fb7185" },
-      { key: "restingHR",   label: "FC repos",     unit: "bpm", color: "#ec4899" },
+      { key: "restingHR",   label: "FC repos",     unit: "bpm", color: "var(--weight)" },
     ],
   },
   {
@@ -58,7 +58,7 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
     label: "Sommeil",
     Icon:  IconMoon,
     metrics: [
-      { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "#6366f1", decimals: 1 },
+      { key: "totalSleepH", label: "Sommeil total",   unit: "h",    color: "var(--fit-indigo)", decimals: 1 },
       { key: "deepSleepH",  label: "Sommeil profond", unit: "h",    color: "#4f46e5", decimals: 1 },
       { key: "remSleepH",   label: "Sommeil REM",     unit: "h",    color: "#7c3aed", decimals: 1 },
       { key: "sleepScore",  label: "Score sommeil",   unit: "/100", color: "var(--fiber)" },
@@ -99,9 +99,9 @@ function bpClass(sys: number, dia: number): { label: string; color: string; bg: 
   if (sys < 90 || dia < 60)      return { label: "Hypotension",     color: "var(--fat)", bg: "rgba(96,165,250,0.08)"  };
   if (sys < 120 && dia < 80)     return { label: "Optimal",         color: "var(--fiber)", bg: "rgba(52,211,153,0.08)"  };
   if (sys < 130 && dia < 80)     return { label: "Normal élevé",    color: "#a3e635", bg: "rgba(163,230,53,0.08)"  };
-  if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "#fb923c", bg: "rgba(251,146,60,0.08)"  };
+  if (sys < 140 || dia < 90)     return { label: "HTA grade 1",     color: "var(--calories)", bg: "rgba(251,146,60,0.08)"  };
   if (sys < 180 || dia < 110)    return { label: "HTA grade 2",     color: "var(--danger)", bg: "rgba(248,113,113,0.08)" };
-  return                                  { label: "HTA grade 3",     color: "#ef4444", bg: "rgba(239,68,68,0.1)"   };
+  return                                  { label: "HTA grade 3",     color: "var(--danger)", bg: "rgba(239,68,68,0.1)"   };
 }
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
@@ -398,8 +398,8 @@ export default function BodyCompChart({
             const vaiStatus = latestV.estimatedVAI
               ? latestV.estimatedVAI < 1.0 ? { label: "Faible risque", color: "var(--fiber)", bg: "rgba(52,211,153,0.08)" }
               : latestV.estimatedVAI < 1.5 ? { label: "Risque modéré", color: "var(--carbs)", bg: "rgba(251,191,36,0.08)" }
-              : latestV.estimatedVAI < 2.0 ? { label: "Risque élevé", color: "#fb923c", bg: "rgba(251,146,60,0.08)" }
-              :             { label: "Risque très élevé", color: "#ef4444", bg: "rgba(239,68,68,0.1)" }
+              : latestV.estimatedVAI < 2.0 ? { label: "Risque élevé", color: "var(--calories)", bg: "rgba(251,146,60,0.08)" }
+              :             { label: "Risque très élevé", color: "var(--danger)", bg: "rgba(239,68,68,0.1)" }
               : null;
 
             const latestWc = waistCmForDate(latestV.date, waistHistory);
@@ -506,7 +506,7 @@ export default function BodyCompChart({
                         axisLine={false}
                         width={36}
                       />
-                      <Tooltip content={<CustomTooltip metrics={[{ key: "estimatedVAI" as keyof BodyCompPoint, label: "VAI", unit: "", color: "#8b5cf6" }]} />} />
+                      <Tooltip content={<CustomTooltip metrics={[{ key: "estimatedVAI" as keyof BodyCompPoint, label: "VAI", unit: "", color: "var(--protein)" }]} />} />
                       <ReferenceLine y={1.0} stroke="rgba(52,211,153,0.3)" strokeDasharray="4 4" />
                       <ReferenceLine y={1.5} stroke="rgba(251,146,60,0.3)" strokeDasharray="4 4" />
                       <Line
@@ -749,17 +749,17 @@ export default function BodyCompChart({
                       className="w-full flex items-center justify-between px-3 py-2.5 transition-colors"
                       style={{ background: "rgba(244,63,94,0.05)" }}>
                       <div className="flex items-center gap-1.5">
-                        <IconHeartbeat size={12} stroke={1.8} style={{ color: "#f43f5e" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: "#f43f5e" }}>
+                        <IconHeartbeat size={12} stroke={1.8} style={{ color: "var(--danger)" }} />
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--danger)" }}>
                           Historique tensions
                         </span>
                         <span className="text-[11px] px-1.5 py-0.5 rounded-full tabular-nums"
-                          style={{ background: "rgba(244,63,94,0.12)", color: "#f43f5e" }}>
+                          style={{ background: "rgba(244,63,94,0.12)", color: "var(--danger)" }}>
                           {bpPoints.length} mesures
                         </span>
                       </div>
                       <motion.div animate={{ rotate: bpListOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                        <IconChevronDown size={14} style={{ color: "#f43f5e" }} />
+                        <IconChevronDown size={14} style={{ color: "var(--danger)" }} />
                       </motion.div>
                     </button>
 

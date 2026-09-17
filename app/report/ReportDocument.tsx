@@ -581,7 +581,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         (data.reportSynthesis.bonnesHabitudes.length > 0 || data.reportSynthesis.mauvaisesHabitudes.length > 0
           || data.reportSynthesis.alimentsAFavoriser.length > 0 || data.reportSynthesis.alimentsAEviter.length > 0) && (
           <div className="glass p-5 mb-5 report-page-break">
-            <SectionTitle icon="🍎" title="Habitudes alimentaires" color="#22c55e" />
+            <SectionTitle icon="🍎" title="Habitudes alimentaires" color="var(--ok)" />
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               {data.reportSynthesis.bonnesHabitudes.length > 0 && (
@@ -933,7 +933,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             {data.health.bodyFatEnd && (
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>% masse grasse</span>
-                <span className="text-[12px] font-semibold" style={{ color: "#fb923c" }}>{data.health.bodyFatEnd}%</span>
+                <span className="text-[12px] font-semibold" style={{ color: "var(--calories)" }}>{data.health.bodyFatEnd}%</span>
               </div>
             )}
           </div>
@@ -1028,7 +1028,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 🩺 Symptômes enregistrés
               </p>
               <span className="text-[11px] px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(251,146,60,0.12)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.3)" }}>
+                style={{ background: "rgba(251,146,60,0.12)", color: "var(--calories)", border: "1px solid rgba(251,146,60,0.3)" }}>
                 {data.health.symptomsTotal} occurrences
               </span>
             </div>
@@ -1040,7 +1040,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                     <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.category}</p>
                   </div>
                   <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(251,146,60,0.08)", color: "#fb923c" }}>
+                    style={{ background: "rgba(251,146,60,0.08)", color: "var(--calories)" }}>
                     ×{s.count}
                   </span>
                 </div>
@@ -1057,7 +1057,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               <span className="text-[14px]">💊</span>
               <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Médicaments enregistrés</p>
             </div>
-            <p className="text-[13px] font-semibold" style={{ color: "#c084fc" }}>{data.health.medicationsTotal} prises</p>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>{data.health.medicationsTotal} prises</p>
           </div>
         )}
       </div>
@@ -1067,7 +1067,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       ═══════════════════════════════════════════════════════════ */}
       {data.health.symptomHistory.length > 0 && (
         <div className="glass p-5 mb-5 report-page-break">
-          <SectionTitle icon="🩺" title="Historique des symptômes" color="#fb923c" />
+          <SectionTitle icon="🩺" title="Historique des symptômes" color="var(--calories)" />
 
           <div className="space-y-4">
             {data.health.symptomHistory.map(day => {

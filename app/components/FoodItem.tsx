@@ -228,7 +228,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
     { label: "Magnésium",    value: n.magneziumMg,     unit: "mg" },
     { label: "Fer",          value: n.ironMg,          unit: "mg", color: "var(--danger)" },
     { label: "Zinc",         value: n.zincMg,          unit: "mg" },
-    { label: "Vit. C",       value: n.vitaminCMg,      unit: "mg", color: "#fb923c" },
+    { label: "Vit. C",       value: n.vitaminCMg,      unit: "mg", color: "var(--calories)" },
     { label: "Vit. D",       value: n.vitaminDUg,      unit: "µg", color: "var(--carbs)" },
     { label: "Vit. B12",     value: n.vitaminB12Ug,    unit: "µg" },
     { label: "Folate (B9)",  value: n.vitaminB9Ug,     unit: "µg" },
@@ -312,7 +312,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 {dietViolations && dietViolations.length > 0 && (
                   <span
                     className="flex-shrink-0"
-                    style={{ color: "#ef4444" }}
+                    style={{ color: "var(--danger)" }}
                     title="Hors régime — toucher pour le détail"
                   >
                     <IconExclamationCircle size={13} stroke={2} />
@@ -464,7 +464,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               {dietViolations && dietViolations.length > 0 && (
                 <div className="flex items-start gap-2 px-2.5 py-2 rounded-lg mb-2"
                   style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                  <IconExclamationCircle size={14} stroke={2} style={{ color: "#ef4444", flexShrink: 0, marginTop: 1 }} />
+                  <IconExclamationCircle size={14} stroke={2} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-medium" style={{ color: "var(--danger)" }}>Hors régime</p>
                     <ul className="text-[11px] mt-0.5" style={{ color: "var(--text-secondary)" }}>

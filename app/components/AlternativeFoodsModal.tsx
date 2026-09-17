@@ -28,7 +28,7 @@ interface Props {
 }
 
 const MATCH_STYLE: Record<Exclude<MatchLevel, "na">, { color: string; bg: string; border: string; label: string }> = {
-  close:  { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.3)",  label: "Proche"  },
+  close:  { color: "var(--ok)", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.3)",  label: "Proche"  },
   medium: { color: "var(--carbs)", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)",  label: "Modéré"  },
   far:    { color: "var(--danger)", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)", label: "Éloigné" },
 };
@@ -428,7 +428,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
 
             {/* Slot B */}
             <div>
-              <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "#4ade80" }}>
+              <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--ok)" }}>
                 {target ? "B · Substitut" : "Ou recherchez un autre aliment"}
               </p>
               {target
@@ -464,7 +464,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                   </div>
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <div className="min-w-0">
-                      <p className="text-[12px] font-semibold truncate" style={{ color: "#4ade80" }}>{result.targetGrams} g · {target.name}</p>
+                      <p className="text-[12px] font-semibold truncate" style={{ color: "var(--ok)" }}>{result.targetGrams} g · {target.name}</p>
                       <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                         {Math.round(target.per100g.calories)} kcal/100g
                       </p>
