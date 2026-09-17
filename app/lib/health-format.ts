@@ -12,7 +12,7 @@ export function hrZone(bpm: number, maxHr: number): { label: string; color: stri
   return                 { label: "Maximal",      color: "var(--fit-red)",    desc: "Zone 4 · >85%" };
 }
 
-export function fmtSleep(min: number | null): string {
+export function fmtSleep(min: number | null | undefined): string {
   if (!min) return "—";
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
