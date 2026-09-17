@@ -295,7 +295,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
             <>
               {[
                 { label: "Durée", val: fmtH(displayMin), color: qualColor },
-                { label: "Au lit", val: inBedMin ? fmtH(inBedMin) : "—", color: "rgba(255,255,255,0.5)" },
+                { label: "Au lit", val: inBedMin ? fmtH(inBedMin) : "—", color: "var(--text-secondary)" },
                 { label: "Objectif", val: fmtH(goalMin), color: "var(--text-muted)" },
               ].map(({ label, val, color }) => (
                 <motion.div key={label}
@@ -339,8 +339,8 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
           </div>
           <div className="flex gap-2">
             <div className="flex flex-col justify-between text-right flex-shrink-0" style={{ width: 32 }}>
-              <span className="text-[11px]" style={{ color: "rgba(121,134,203,0.55)" }}>Léger</span>
-              <span className="text-[11px]" style={{ color: "rgba(59,130,246,0.55)" }}>Profond</span>
+              <span className="text-[11px]" style={{ color: "var(--fit-indigo)" }}>Léger</span>
+              <span className="text-[11px]" style={{ color: "var(--info)" }}>Profond</span>
             </div>
             <svg width="100%" height={H + 6} viewBox={`0 0 ${W} ${H + 6}`} preserveAspectRatio="none">
               <defs>
@@ -541,7 +541,7 @@ function SleepEntryModal({ date, current, onClose, onSaved }: ModalProps) {
         className="fixed inset-0 z-50 flex items-end justify-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={handleClose}
-        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+        style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" }}
       >
         <motion.div
           className="w-full max-w-md rounded-t-2xl p-6"
@@ -970,7 +970,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 <div className="rounded-xl p-2.5 text-center"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Au lit</p>
-                  <p className="text-[16px] font-bold leading-none" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <p className="text-[16px] font-bold leading-none" style={{ color: "var(--text-secondary)" }}>
                     {selectedNightData.timeInBedMinutes ? fmtSleep(selectedNightData.timeInBedMinutes) : "—"}
                   </p>
                 </div>

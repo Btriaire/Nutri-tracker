@@ -2093,8 +2093,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         ))}
                       </div>
                       <div className="flex justify-between w-full px-0.5">
-                        <span style={{ fontSize: 11, color: "rgba(250,250,250,0.25)" }}>rassasié</span>
-                        <span style={{ fontSize: 11, color: "rgba(250,250,250,0.25)" }}>très faim</span>
+                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>rassasié</span>
+                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>très faim</span>
                       </div>
                     </div>
                   </div>
@@ -2243,7 +2243,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             ))}
                           </div>
                           {/* Level label */}
-                          <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
                             {HUNGER_LABEL[Math.round(avg)] ?? "—"}
                           </p>
                         </div>

@@ -559,7 +559,7 @@ export default function BodyCompChart({
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
                       {latestBP.systolicBP}
                     </span>
-                    <span className="text-[12px] font-normal" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
+                    <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>/</span>
                     <span className="text-[18px] font-bold tabular-nums" style={{ color: cls.color }}>
                       {latestBP.diastolicBP}
                     </span>

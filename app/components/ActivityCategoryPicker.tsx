@@ -416,7 +416,7 @@ export default function ActivityCategoryPicker({
 
                       {/* Kcal estimate */}
                       <span className="text-[11px] tabular-nums flex-shrink-0 font-medium"
-                        style={{ color: "rgba(52,211,153,0.75)" }}>
+                        style={{ color: "var(--ok)" }}>
                         ~{kcal}&thinsp;kcal
                       </span>
 

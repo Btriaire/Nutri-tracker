@@ -134,7 +134,7 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
     height,
     borderRadius: 12,
     overflow: "hidden",
-    background: "rgba(0,0,0,0.25)",
+    background: "rgba(0,0,0,0.90)",
     border: "1px solid rgba(249,115,22,0.15)",
     display: "flex",
     alignItems: "center",
@@ -145,7 +145,7 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
   if (loading) {
     return (
       <div style={containerStyle}>
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Chargement tracé…</span>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>Chargement tracé…</span>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
   if (error || (pts && pts.length < 2)) {
     return (
       <div style={containerStyle}>
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Aucun tracé GPS disponible</span>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>Aucun tracé GPS disponible</span>
       </div>
     );
   }
@@ -168,7 +168,7 @@ export default function RouteMap({ startMs, endMs, points: initialPoints, width,
       <div style={{
         position: "absolute", bottom: 6, right: 8,
         display: "flex", gap: 8, alignItems: "center",
-        fontSize: 11, color: "rgba(255,255,255,0.5)",
+        fontSize: 11, color: "rgba(255,255,255,0.6)",
       }}>
         <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fiber)", display: "inline-block" }} />

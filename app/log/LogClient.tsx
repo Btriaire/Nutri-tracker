@@ -777,7 +777,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <span className="text-[12px] font-medium flex-1" style={{ color: "var(--ok)" }}>
                   Journée verrouillée
                 </span>
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                   Bouton Modifier ci-dessus
                 </span>
               </motion.div>

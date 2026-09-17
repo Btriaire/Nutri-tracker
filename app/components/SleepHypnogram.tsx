@@ -260,13 +260,13 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
                 {fmtMin(mins)}
               </span>
               <span className="text-[11px] font-medium" style={{ color: cfg.color }}>{cfg.label}</span>
-              <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{pct}%</span>
+              <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{pct}%</span>
             </div>
           );
         })}
       </div>
 
-      <p className="text-[11px] mt-2 text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
+      <p className="text-[11px] mt-2 text-center" style={{ color: "var(--text-muted)" }}>
         Architecture simulée basée sur les cycles typiques · données réelles non disponibles
       </p>
     </div>

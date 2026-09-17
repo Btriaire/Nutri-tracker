@@ -317,7 +317,7 @@ function HubCard({ card, index }: { card: typeof CARDS[number]; index: number })
         <p className="text-[17px] font-black tracking-widest" style={{ color: card.color }}>
           {card.label}
         </p>
-        <p className="text-[11px] font-medium mt-0.5" style={{ color: "rgba(255,255,255,0.42)" }}>
+        <p className="text-[11px] font-medium mt-0.5" style={{ color: "var(--text-secondary)" }}>
           {card.sub}
         </p>
       </div>

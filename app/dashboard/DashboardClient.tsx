@@ -500,7 +500,7 @@ export default function DashboardClient({
                 <p className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>
                   Tension artérielle
                 </p>
-                <p className="text-[11px]" style={{ color: "rgba(248,113,113,0.75)" }}>
+                <p className="text-[11px]" style={{ color: "var(--danger)" }}>
                   {bpWarningMsg}
                 </p>
               </div>
@@ -1005,7 +1005,7 @@ export default function DashboardClient({
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                         style={{ background: "rgba(52,211,153,0.12)" }}>
-                        <IconFlame size={14} stroke={1.5} style={{ color: "rgba(52,211,153,0.9)" }} />
+                        <IconFlame size={14} stroke={1.5} style={{ color: "var(--ok)" }} />
                       </div>
                       <div>
                         <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -1025,7 +1025,7 @@ export default function DashboardClient({
                   <div className="rounded-xl px-4 py-3 mb-4 flex items-center justify-between"
                     style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }}>
                     <span className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Total actif</span>
-                    <span className="text-[22px] font-bold tabular-nums" style={{ color: "rgba(52,211,153,0.9)" }}>
+                    <span className="text-[22px] font-bold tabular-nums" style={{ color: "var(--ok)" }}>
                       −{Math.round(burned)} kcal
                     </span>
                   </div>
@@ -1047,7 +1047,7 @@ export default function DashboardClient({
                             <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>≈ 0.04 kcal/pas</p>
                           </div>
                           <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
-                            style={{ color: "rgba(52,211,153,0.8)" }}>~{stepKcal} kcal</span>
+                            style={{ color: "var(--ok)" }}>~{stepKcal} kcal</span>
                         </div>
                       );
                     })()}
@@ -1134,7 +1134,7 @@ export default function DashboardClient({
                 <p className="text-[13px] font-semibold" style={{ color: "var(--protein)" }}>
                   Méditation · {todayMeditationMin} min
                 </p>
-                <p className="text-[11px]" style={{ color: "rgba(167,139,250,0.65)" }}>
+                <p className="text-[11px]" style={{ color: "var(--accent)" }}>
                   {todayMeditationSessions > 1
                     ? `${todayMeditationSessions} séances aujourd'hui`
                     : "Séance complétée aujourd'hui"}

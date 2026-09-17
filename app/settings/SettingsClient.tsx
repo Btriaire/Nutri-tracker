@@ -326,7 +326,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
                   <div>
                     <p className="text-[12px] font-semibold" style={{ color: "var(--warn)" }}>Reconnexion requise</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "rgba(245,158,11,0.75)" }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--warn)" }}>
                       Le token a expiré. Reconnectez Google Fit pour rétablir la sync.
                     </p>
                     <Link href="/api/google-fit/auth"
