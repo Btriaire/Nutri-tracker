@@ -34,6 +34,12 @@
   --fit-yellow:      #FBBC04;   /* énergie */
   --fit-indigo:      #7986CB;   /* sommeil */
   --steps:           #4285F4;   /* alias → fit-blue */
+  /* --indigo n'a jamais ete defini : 21 usages dans 7 fichiers referencaient
+     un jeton inexistant, invalidant silencieusement la propriete CSS qui le
+     portait (fond transparent au lieu d'indigo — verifie sur le bouton
+     "Analyser" du scan visage : rgba(0,0,0,0)). Alias vers --fit-indigo,
+     deja correctement teinte par theme, plutot que de toucher les 7 fichiers. */
+  --indigo:          var(--fit-indigo);
 
   /* Glow orbs (used in pseudo-elements) */
   --glow-orange:     rgba(249, 115, 22, 0.12);
