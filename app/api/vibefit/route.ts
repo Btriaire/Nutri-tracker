@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { syncDay, isConnected } from "@/app/lib/google-fit";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
@@ -42,10 +43,36 @@ interface ActivityPush {
   caloriesBurned?: number;
 }
 
+interface GoogleFitSyncPush {
+  type: "googlefit-sync";
+  days?: number; // 1-3 derniers jours à resynchroniser (défaut 2 : aujourd'hui + hier)
+  date?: string;
+}
+
 interface DailyPhotoPush {
   type: "daily-photo";
   date?: string;
   dataUrl: string; // small base64 JPEG data URL — VibeFit already compresses to ~320px before sending
+}
+
+// Sommeil : Google Fit n'en reçoit plus quand la montre/l'appli ne l'y écrit plus. On retombe
+// sur les autres sources déjà collectées (saisie manuelle > Apple Santé > Withings) et on
+// dit d'où vient la valeur.
+interface SleepSources {
+  manualSleep?: { sleepMinutes?: number | null };
+  appleHealth?: { sleepMinutes?: number | null };
+  withingsSleep?: { totalSleepSec?: number | null };
+}
+
+function pickSleep(day: SleepSources, gf: { sleepMinutes?: number | null }): { sleepMinutes: number | null; sleepSource: string | null } {
+  const manual = day.manualSleep?.sleepMinutes;
+  if (manual != null) return { sleepMinutes: manual, sleepSource: "manual" };
+  if (gf.sleepMinutes != null) return { sleepMinutes: gf.sleepMinutes, sleepSource: "googlefit" };
+  const apple = day.appleHealth?.sleepMinutes;
+  if (apple != null) return { sleepMinutes: apple, sleepSource: "apple-health" };
+  const withings = day.withingsSleep?.totalSleepSec;
+  if (withings != null) return { sleepMinutes: Math.round(withings / 60), sleepSource: "withings" };
+  return { sleepMinutes: null, sleepSource: null };
 }
 
 // GET ?type=googlefit&days=N — last N days of Google Fit summaries already
@@ -71,7 +98,8 @@ async function getGoogleFitRange(req: NextRequest) {
       activeCaloriesBurned: gf.activeCaloriesBurned ?? 0,
       activeMinutes: gf.activeMinutes ?? 0,
       heartRateAvg: gf.heartRateAvg ?? null,
-      sleepMinutes: gf.sleepMinutes ?? null,
+      ...pickSleep(snap.data()!, gf),
+      syncedAtMs: gf.syncedAt?.toMillis?.() ?? null,
       sessions: gf.sessions ?? [],
     });
   }
@@ -367,9 +395,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as WeightPush | FoodPush | ActivityPush | DailyPhotoPush;
+  const body = (await req.json()) as WeightPush | FoodPush | ActivityPush | DailyPhotoPush | GoogleFitSyncPush;
   const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : format(new Date(), "yyyy-MM-dd");
   const db = getAdminFirestore();
+
+  // Resynchronise Google Fit à la demande (VibeFit n'a pas d'OAuth Google : il demande à
+  // NutriTracker de tirer les données fraîches, au lieu d'attendre le cron de 5 h).
+  if (body.type === "googlefit-sync") {
+    if (!(await isConnected(USER))) return NextResponse.json({ ok: false, reason: "not-connected" });
+    const n = Math.min(3, Math.max(1, Math.round(Number(body.days) || 2)));
+    const dates = Array.from({ length: n }, (_, i) => format(subDays(new Date(), i), "yyyy-MM-dd"));
+    const results = await Promise.allSettled(dates.map((d) => syncDay(USER, d)));
+    const synced = dates.filter((_, i) => results[i].status === "fulfilled" && (results[i] as PromiseFulfilledResult<boolean>).value);
+    return NextResponse.json({ ok: synced.length > 0, synced, failed: dates.filter((d) => !synced.includes(d)) });
+  }
 
   if (body.type === "weight") {
     const weightKg = Number(body.weightKg);
