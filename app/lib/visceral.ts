@@ -27,13 +27,13 @@ export interface RealVisceralInputs {
   hdl?: number | null; // HDL reel (Blood Doctor), en mg/dL
 }
 
-/** Dernier tour de taille connu (mensurations) a une date donnee ou avant — les mensurations
- *  sont saisies au mois, donc on prend la plus recente entree <= au mois du point. */
-export function waistCmForDate(date: string, history: { month: string; waistCm: number | null }[]): number | null {
-  const month = date.slice(0, 7);
+/** Dernier tour de taille connu (mensurations) a une date donnee ou avant — `history` doit etre
+ *  trie par date croissante (une entree par saisie). */
+export function waistCmForDate(date: string, history: { date: string; waistCm: number | null }[]): number | null {
   let best: number | null = null;
   for (const h of history) {
-    if (h.waistCm != null && h.month <= month) best = h.waistCm;
+    if (h.date > date) break;
+    if (h.waistCm != null) best = h.waistCm;
   }
   return best;
 }

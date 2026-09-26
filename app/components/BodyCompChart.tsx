@@ -182,7 +182,7 @@ export default function BodyCompChart({
   const [loading,    setLoading]   = useState(false);
   const [hidden,     setHidden]    = useState<Set<string>>(new Set());
   const [bpListOpen, setBpListOpen] = useState(false);
-  const [waistHistory, setWaistHistory] = useState<{ month: string; waistCm: number | null }[]>([]);
+  const [waistHistory, setWaistHistory] = useState<{ date: string; waistCm: number | null }[]>([]);
   const [lipidHistory, setLipidHistory] = useState<LipidReading[]>([]);
 
   useEffect(() => {
@@ -201,7 +201,7 @@ export default function BodyCompChart({
     fetch("/api/measurements?months=24")
       .then(r => r.json())
       .then((d: { entries?: MeasurementEntry[] }) => {
-        setWaistHistory((d.entries ?? []).map(e => ({ month: e.month, waistCm: e.waistCm })));
+        setWaistHistory((d.entries ?? []).map(e => ({ date: e.date, waistCm: e.waistCm })));
       })
       .catch(() => {});
     fetch("/api/blood-doctor/lipids")

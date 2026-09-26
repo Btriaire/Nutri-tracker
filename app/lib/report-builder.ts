@@ -217,7 +217,7 @@ export async function buildReportData(userId: string, from: string, to: string):
     // Mensurations : mensuelles et rares, on prend tout l'historique dispo (pas borné à
     // from/to) pour toujours pouvoir montrer l'évolution "depuis le début", même sur un
     // rapport courte période.
-    db.collection(`users/${userId}/measurements`).orderBy("month", "asc").limit(24).get(),
+    db.collection(`users/${userId}/measurements`).orderBy("month", "asc").limit(800).get(),
   ]);
 
   // User-defined nutrients (see /api/custom-nutrients) — merged so the micronutrient
@@ -497,7 +497,7 @@ export async function buildReportData(userId: string, from: string, to: string):
   const measurementEntries: MeasurementEntry[] = measurementsSnap.docs.map(d => {
     const raw = d.data() as MeasurementEntry & { loggedAt: { seconds: number } };
     return { ...raw, loggedAt: { seconds: raw.loggedAt?.seconds ?? 0, nanoseconds: 0 } };
-  });
+  }).sort((a, b) => a.loggedAt.seconds - b.loggedAt.seconds);
   const measurementsFirst  = measurementEntries[0] ?? null;
   const measurementsLatest = measurementEntries[measurementEntries.length - 1] ?? null;
   const measurementsDelta = (measurementsFirst && measurementsLatest && measurementsFirst !== measurementsLatest)

@@ -78,8 +78,8 @@ export default function BodyMeasurementsTab() {
   const [saved, setSaved]               = useState(false);
   const [mounted, setMounted]           = useState(false);
 
-  const currentMonth = format(new Date(), "yyyy-MM");
-  const displayMonth = format(new Date(), "MMMM yyyy", { locale: fr });
+  const today = format(new Date(), "yyyy-MM-dd");
+  const displayMonth = format(new Date(), "d MMMM yyyy", { locale: fr });
 
   // Form state
   const [form, setForm] = useState<Partial<Record<MeasurementKey, string>>>({});
@@ -96,11 +96,12 @@ export default function BodyMeasurementsTab() {
       .finally(() => setLoading(false));
   }, []);
 
-  const currentEntry = entries.find(e => e.month === currentMonth);
+  const todayEntry = entries.find(e => e.date === today);
+  const latestEntry = entries.length > 0 ? entries[entries.length - 1] : null;
   const previousEntry = entries.length > 1 ? entries[entries.length - 2] : null;
 
-  const currentValues: Partial<Record<MeasurementKey, number | null>> = currentEntry
-    ? Object.fromEntries(FIELDS.map(f => [f.key, currentEntry[f.key]]))
+  const currentValues: Partial<Record<MeasurementKey, number | null>> = latestEntry
+    ? Object.fromEntries(FIELDS.map(f => [f.key, latestEntry[f.key]]))
     : {};
 
   const previousValues: Partial<Record<MeasurementKey, number | null>> = previousEntry
@@ -132,11 +133,11 @@ export default function BodyMeasurementsTab() {
   };
 
   const openForm = () => {
-    // Prefill from current month if exists
-    if (currentEntry) {
+    // Prefill only from today's entry (a new day = a new data point)
+    if (todayEntry) {
       const prefill: Partial<Record<MeasurementKey, string>> = {};
       for (const { key } of FIELDS) {
-        const v = currentEntry[key];
+        const v = todayEntry[key];
         if (v != null) prefill[key] = String(v);
       }
       setForm(prefill);
@@ -148,7 +149,7 @@ export default function BodyMeasurementsTab() {
 
   // Chart data
   const chartData = entries.map(e => ({
-    label: format(parseISO(e.month + "-01"), "MMM yy", { locale: fr }),
+    label: format(parseISO(e.date), "d MMM", { locale: fr }),
     ...Object.fromEntries(FIELDS.map(f => [f.key, e[f.key] ?? null])),
   }));
 
@@ -159,12 +160,12 @@ export default function BodyMeasurementsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="label-xs mb-0.5">Suivi mensuel</p>
+          <p className="label-xs mb-0.5">Suivi des mensurations</p>
           <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
             Mensurations corporelles
           </p>
           <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-            📅 {displayMonth} {currentEntry ? "· Saisie effectuée ✓" : "· Pas encore saisi ce mois"}
+            📅 {latestEntry ? `Dernière saisie : ${format(parseISO(latestEntry.date), "d MMM yyyy", { locale: fr })}` : "Aucune saisie"} · {entries.length} mesure{entries.length > 1 ? "s" : ""}
           </p>
         </div>
         <button
@@ -177,7 +178,7 @@ export default function BodyMeasurementsTab() {
           }}
         >
           <IconRuler size={13} stroke={2} />
-          {currentEntry ? "Modifier" : "Saisir"}
+          {todayEntry ? "Modifier" : "Saisir"}
         </button>
       </div>
 
@@ -249,7 +250,7 @@ export default function BodyMeasurementsTab() {
           </div>
         </div>
         <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
-          💡 Mesurez toujours au même moment · Maximum 1 saisie / mois recommandée
+          💡 Mesurez toujours au même moment · Une saisie par jour, chacune reste dans l&apos;historique
         </p>
       </div>
 

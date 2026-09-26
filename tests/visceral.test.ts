@@ -81,14 +81,20 @@ describe("calculateVisceralsForPoint", () => {
 
 describe("waistCmForDate", () => {
   const histo = [
-    { month: "2026-05", waistCm: 95 },
-    { month: "2026-07", waistCm: 92 },
-    { month: "2026-09", waistCm: 90 },
+    { date: "2026-05-10", waistCm: 95 },
+    { date: "2026-07-03", waistCm: 92 },
+    { date: "2026-09-01", waistCm: 90 },
   ];
 
-  it("prend le dernier releve connu AVANT ou pendant le mois demande", () => {
+  it("prend le dernier releve connu AVANT ou le jour demande", () => {
     expect(waistCmForDate("2026-08-15", histo)).toBe(92);
     expect(waistCmForDate("2026-09-20", histo)).toBe(90);
+  });
+
+  it("distingue deux saisies du meme mois", () => {
+    const h = [{ date: "2026-09-01", waistCm: 90 }, { date: "2026-09-15", waistCm: 89 }];
+    expect(waistCmForDate("2026-09-10", h)).toBe(90);
+    expect(waistCmForDate("2026-09-16", h)).toBe(89);
   });
 
   it("ne remonte jamais un releve futur", () => {
@@ -96,7 +102,7 @@ describe("waistCmForDate", () => {
   });
 
   it("ignore les mois sans mesure", () => {
-    expect(waistCmForDate("2026-08-15", [{ month: "2026-06", waistCm: null }, { month: "2026-05", waistCm: 95 }])).toBe(95);
+    expect(waistCmForDate("2026-08-15", [{ date: "2026-05-10", waistCm: 95 }, { date: "2026-06-10", waistCm: null }])).toBe(95);
   });
 });
 
