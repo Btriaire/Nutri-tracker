@@ -43,32 +43,6 @@ const THEME_DEFS: {
     fat: "#2563eb",
     radius: "10px",
   },
-  {
-    id: "mfp",
-    name: "MFP Style",
-    desc: "MyFitnessPal",
-    bg: "#F2F2F2",
-    surface: "#FFFFFF",
-    accent: "#00A86B",
-    nav: "#FFFFFF",
-    protein: "#00A86B",
-    carbs: "#FF9800",
-    fat: "#F44336",
-    radius: "5px",
-  },
-  {
-    id: "ocean",
-    name: "Océan",
-    desc: "Marine & cyan",
-    bg: "#0A1628",
-    surface: "#0f2040",
-    accent: "#00BCD4",
-    nav: "#0A1628",
-    protein: "#26C6DA",
-    carbs: "#FFCA28",
-    fat: "#42A5F5",
-    radius: "10px",
-  },
 ];
 
 function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected: boolean }) {

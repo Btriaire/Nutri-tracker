@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 
-export type Theme = "cosmos" | "lumiere" | "mfp" | "ocean";
+export type Theme = "cosmos" | "lumiere";
 
 const ThemeContext = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
   theme: "cosmos",
@@ -23,10 +23,12 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setThemeState] = useState<Theme>("cosmos");
 
   useEffect(() => {
-    const stored = localStorage.getItem("nutri-theme") as Theme | null;
+    // Les anciens themes supprimes (mfp = clair, ocean = sombre) migrent vers leur equivalent.
+    const raw = localStorage.getItem("nutri-theme");
+    const stored = (raw === "mfp" ? "lumiere" : raw === "ocean" ? "cosmos" : raw) as Theme | null;
     // Support legacy "light"/"dark" values from old storage key
     const legacy = localStorage.getItem("theme");
-    const validThemes: Theme[] = ["cosmos", "lumiere", "mfp", "ocean"];
+    const validThemes: Theme[] = ["cosmos", "lumiere"];
     const initial: Theme =
       stored && validThemes.includes(stored) ? stored
       : legacy === "light" ? "lumiere"
