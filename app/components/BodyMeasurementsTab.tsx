@@ -2,10 +2,10 @@
 
 import { alpha } from "@/app/lib/color";
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import Sheet from "@/app/components/Sheet";
 import {
-  IconRuler, IconCheck, IconX, IconChartLine,
+  IconRuler, IconCheck, IconChartLine,
   IconStretching, IconLungs, IconBarbell, IconRulerMeasure, IconAdjustmentsHorizontal, IconRun, IconWalk,
 } from "@tabler/icons-react";
 import { format, parseISO } from "date-fns";
@@ -77,15 +77,12 @@ export default function BodyMeasurementsTab() {
   const [highlighted, setHighlighted]   = useState<MeasurementKey | null>(null);
   const [activeChart, setActiveChart]   = useState<MeasurementKey>("waistCm");
   const [saved, setSaved]               = useState(false);
-  const [mounted, setMounted]           = useState(false);
 
   const today = format(new Date(), "yyyy-MM-dd");
   const displayMonth = format(new Date(), "d MMMM yyyy", { locale: fr });
 
   // Form state
   const [form, setForm] = useState<Partial<Record<MeasurementKey, string>>>({});
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetch("/api/measurements?months=12")
@@ -320,93 +317,57 @@ export default function BodyMeasurementsTab() {
         </div>
       )}
 
-      {/* Entry form modal — portaled to <body> so its z-index isn't capped by
-          this page's own z-10 stacking-context wrapper (which otherwise sits
-          below the fixed bottom nav's z-50 no matter how high a z-index is
-          set here — that's what made "Enregistrer" unreachable). */}
-      {showForm && mounted && createPortal(
-      <AnimatePresence>
-          <>
-            <motion.div key="bmt-backdrop" className="fixed inset-0 z-[200]"
-              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowForm(false)} />
-            <motion.div
-              key="bmt-sheet"
-              className="fixed bottom-0 left-0 right-0 z-[200] max-w-md mx-auto"
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 40 }}
-            >
-              <div className="rounded-t-2xl p-5 pb-10"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", borderBottom: "none", maxHeight: "80vh", overflowY: "auto" }}>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Saisir mes mensurations</p>
-                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{displayMonth}</p>
-                  </div>
-                  <button onClick={() => setShowForm(false)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: "var(--layer-2)" }}>
-                    <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
-                  </button>
-                </div>
-
-                {/* Fields */}
-                <div className="space-y-3 mb-5">
-                  {FIELDS.map(({ key, label, Icon, color }) => (
-                    <div key={key} className="flex items-center gap-3">
-                      <div className="w-7 flex-shrink-0 flex items-center justify-center">
-                        <Icon size={17} stroke={1.75} style={{ color }} />
-                      </div>
-                      <label className="flex-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>{label}</label>
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number" step="0.1" min="0" max="300"
-                          value={form[key] ?? ""}
-                          onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                          placeholder="—"
-                          className="w-20 px-2 py-1.5 rounded-xl text-[13px] text-right tabular-nums outline-none"
-                          style={{
-                            background: "var(--layer-2)",
-                            border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`,
-                            color: form[key] ? color : "var(--text-muted)",
-                          }}
-                        />
-                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>cm</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="text-[12px] mb-4" style={{ color: "var(--text-muted)" }}>
-                  💡 Mesurez à jeun, le matin, toujours au même endroit.
-                  Tour de taille : au nombril. Bras : à mi-chemin entre coude et épaule.
-                </p>
-
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full py-3 rounded-xl text-[14px] font-semibold flex items-center justify-center gap-2"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(139,92,246,0.8), rgba(59,130,246,0.8))",
-                    color: "white",
-                    opacity: saving ? 0.7 : 1,
-                  }}
-                >
-                  {saving ? (
-                    <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  ) : (
-                    <IconCheck size={16} stroke={1.5} />
-                  )}
-                  Enregistrer
-                </button>
+      <Sheet open={showForm} onClose={() => setShowForm(false)} title={`Mensurations · ${displayMonth}`}>
+        {/* Fields */}
+        <div className="space-y-3 mb-5">
+          {FIELDS.map(({ key, label, Icon, color }) => (
+            <div key={key} className="flex items-center gap-3">
+              <div className="w-7 flex-shrink-0 flex items-center justify-center">
+                <Icon size={17} stroke={1.75} style={{ color }} />
               </div>
-            </motion.div>
-          </>
-      </AnimatePresence>,
-      document.body,
-      )}
+              <label className="flex-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>{label}</label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number" step="0.1" min="0" max="300"
+                  value={form[key] ?? ""}
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  placeholder="—"
+                  className="w-24 min-h-[44px] px-2 rounded-xl text-[16px] text-right tabular-nums outline-none"
+                  style={{
+                    background: "var(--layer-2)",
+                    border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`,
+                    color: form[key] ? color : "var(--text-muted)",
+                  }}
+                />
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>cm</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[12px] mb-4" style={{ color: "var(--text-muted)" }}>
+          💡 Mesurez à jeun, le matin, toujours au même endroit.
+          Tour de taille : au nombril. Bras : à mi-chemin entre coude et épaule.
+        </p>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full min-h-[48px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2"
+          style={{
+            background: "linear-gradient(135deg, var(--protein), var(--steps))",
+            color: "var(--bg)",
+            opacity: saving ? 0.7 : 1,
+          }}
+        >
+          {saving ? (
+            <div className="w-4 h-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+          ) : (
+            <IconCheck size={16} stroke={1.5} />
+          )}
+          Enregistrer
+        </button>
+      </Sheet>
     </div>
   );
 }

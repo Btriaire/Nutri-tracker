@@ -1,10 +1,10 @@
 "use client";
 
+import Sheet from "@/app/components/Sheet";
 import { alpha } from "@/app/lib/color";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createPortal } from "react-dom";
 import { format, addDays, subDays, isToday, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -1613,241 +1613,186 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
       </div>
 
       {/* ── BP Add Modal ── */}
-      {bpOpen && typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          <motion.div
-            key="bp-overlay"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-            onClick={e => { if (e.target === e.currentTarget) setBpOpen(false); }}
-          >
-            <motion.div
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="w-full max-w-md glass-strong rounded-t-2xl p-6 pb-10"
-              style={{ maxHeight: "90vh", overflowY: "auto" }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <IconDroplet size={16} style={{ color: "var(--fit-red)" }} />
-                  <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
-                    Nouvelle mesure
-                  </p>
-                </div>
-                <button onClick={() => setBpOpen(false)} className="btn-icon">
-                  <IconX size={14} />
+            <Sheet open={bpOpen} onClose={() => setBpOpen(false)} title="Nouvelle mesure">
+
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex flex-col items-center gap-1">
+              <input
+                type="number" value={bpSys} onChange={e => setBpSys(e.target.value)}
+                className="w-28 text-center text-[40px] font-bold tabular-nums rounded-2xl outline-none"
+                style={{ background: "rgba(234,67,53,0.08)", border: "2px solid rgba(234,67,53,0.35)", color: "var(--fit-red)", padding: "12px 8px" }}
+                min={50} max={300}
+              />
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Systolique</span>
+            </div>
+            <span className="text-[36px] font-light mb-5" style={{ color: "var(--text-muted)" }}>/</span>
+            <div className="flex flex-col items-center gap-1">
+              <input
+                type="number" value={bpDia} onChange={e => setBpDia(e.target.value)}
+                className="w-28 text-center text-[40px] font-bold tabular-nums rounded-2xl outline-none"
+                style={{ background: "rgba(121,134,203,0.08)", border: "2px solid rgba(121,134,203,0.35)", color: "var(--fit-indigo)", padding: "12px 8px" }}
+                min={30} max={200}
+              />
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Diastolique</span>
+            </div>
+          </div>
+
+          {bpSys && bpDia && !isNaN(parseInt(bpSys)) && !isNaN(parseInt(bpDia)) && (() => {
+            const cat = bpCategory(parseInt(bpSys), parseInt(bpDia));
+            return (
+              <div className="flex justify-center mb-5">
+                <span className="px-3 py-1 rounded-full text-[12px] font-semibold"
+                  style={{ background: cat.bg, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 25%, transparent)` }}>
+                  ● {cat.label}
+                </span>
+              </div>
+            );
+          })()}
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Pouls (optionnel)</p>
+              <div className="relative">
+                <input type="number" value={bpPulse} onChange={e => setBpPulse(e.target.value)}
+                  placeholder="72" className="input pr-10" min={30} max={250} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px]" style={{ color: "var(--text-muted)" }}>bpm</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
+              <input type="time" value={bpTime} onChange={e => setBpTime(e.target.value)} className="input" />
+            </div>
+          </div>
+
+          <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Moment</p>
+          <div className="flex gap-2 mb-6">
+            {(["morning", "evening", "other"] as BPMoment[]).map(m => (
+              <button key={m} onClick={() => setBpMoment(m)}
+                className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
+                style={{
+                  background: bpMoment === m ? "rgba(234,67,53,0.1)" : "var(--layer-1)",
+                  border: `1px solid ${bpMoment === m ? "rgba(234,67,53,0.4)" : "var(--border)"}`,
+                  color: bpMoment === m ? "var(--fit-red)" : "var(--text-secondary)",
+                }}>
+                {(() => { const { Icon, label } = MOMENT_META[m]; return <><Icon size={13} stroke={1.8} />{label}</>; })()}
+              </button>
+            ))}
+          </div>
+
+          {bpError && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-[12px]"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
+              <IconAlertCircle size={14} />
+              <span>{bpError}</span>
+            </div>
+          )}
+
+          <button onClick={handleAddBP} disabled={bpSaving || !bpSys || !bpDia}
+            className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px" }}>
+            {bpSaving
+              ? <><IconLoader2 size={13} className="animate-spin" /> Enregistrement…</>
+              : <><IconPlus size={14} /> Enregistrer la mesure</>
+            }
+          </button>
+      </Sheet>
+      {/* ── Medication Add Modal ── */}
+            <Sheet open={medOpen} onClose={() => setMedOpen(false)} title="Nouveau médicament">
+
+          <div className="space-y-3 mb-5">
+            {/* Nom + Nutri-AI-Med button */}
+            <div>
+              <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
+              <div className="flex gap-2">
+                <input
+                  autoFocus type="text" value={medName}
+                  onChange={e => { setMedName(e.target.value); setMedAiInfo(null); }}
+                  onKeyDown={e => e.key === "Enter" && handleAddMed()}
+                  placeholder="Paracétamol, Doliprane…"
+                  className="input text-[14px] flex-1"
+                />
+                <button
+                  onClick={handleAiMedLookup}
+                  disabled={medAiLoading || !medName.trim()}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium flex-shrink-0 transition-all"
+                  style={{
+                    background: medAiLoading ? "rgba(192,132,252,0.15)" : "rgba(192,132,252,0.1)",
+                    border: "1px solid rgba(192,132,252,0.35)",
+                    color: "var(--accent)",
+                    opacity: medName.trim() ? 1 : 0.4,
+                  }}>
+                  {medAiLoading
+                    ? <IconLoader2 size={11} className="animate-spin" />
+                    : <IconSparkles size={11} stroke={2} />
+                  }
+                  <span>Nutri-AI-Med</span>
                 </button>
               </div>
+            </div>
 
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <div className="flex flex-col items-center gap-1">
-                  <input
-                    type="number" value={bpSys} onChange={e => setBpSys(e.target.value)}
-                    className="w-28 text-center text-[40px] font-bold tabular-nums rounded-2xl outline-none"
-                    style={{ background: "rgba(234,67,53,0.08)", border: "2px solid rgba(234,67,53,0.35)", color: "var(--fit-red)", padding: "12px 8px" }}
-                    min={50} max={300}
-                  />
-                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Systolique</span>
-                </div>
-                <span className="text-[36px] font-light mb-5" style={{ color: "var(--text-muted)" }}>/</span>
-                <div className="flex flex-col items-center gap-1">
-                  <input
-                    type="number" value={bpDia} onChange={e => setBpDia(e.target.value)}
-                    className="w-28 text-center text-[40px] font-bold tabular-nums rounded-2xl outline-none"
-                    style={{ background: "rgba(121,134,203,0.08)", border: "2px solid rgba(121,134,203,0.35)", color: "var(--fit-indigo)", padding: "12px 8px" }}
-                    min={30} max={200}
-                  />
-                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Diastolique</span>
-                </div>
-              </div>
-
-              {bpSys && bpDia && !isNaN(parseInt(bpSys)) && !isNaN(parseInt(bpDia)) && (() => {
-                const cat = bpCategory(parseInt(bpSys), parseInt(bpDia));
-                return (
-                  <div className="flex justify-center mb-5">
-                    <span className="px-3 py-1 rounded-full text-[12px] font-semibold"
-                      style={{ background: cat.bg, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 25%, transparent)` }}>
-                      ● {cat.label}
-                    </span>
+            {/* AI Info Card */}
+            <AnimatePresence>
+              {medAiInfo && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="rounded-xl p-3 space-y-1.5 overflow-hidden"
+                  style={{ background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.25)" }}>
+                  <div className="flex items-start gap-2">
+                    <IconSparkles size={13} stroke={2} style={{ color: "var(--accent)" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
+                        {medAiInfo.class}
+                      </p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                        {medAiInfo.description}
+                      </p>
+                      <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
+                        <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Indication :</span> {medAiInfo.indication}
+                      </p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Dose :</span> {medAiInfo.dose}
+                      </p>
+                      {medAiInfo.warning && (
+                        <p className="text-[12px] mt-1.5 flex items-start gap-1" style={{ color: "var(--carbs)" }}>
+                          <IconAlertCircle size={11} className="mt-0.5 flex-shrink-0" />
+                          {medAiInfo.warning}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                );
-              })()}
-
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Pouls (optionnel)</p>
-                  <div className="relative">
-                    <input type="number" value={bpPulse} onChange={e => setBpPulse(e.target.value)}
-                      placeholder="72" className="input pr-10" min={30} max={250} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px]" style={{ color: "var(--text-muted)" }}>bpm</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
-                  <input type="time" value={bpTime} onChange={e => setBpTime(e.target.value)} className="input" />
-                </div>
-              </div>
-
-              <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Moment</p>
-              <div className="flex gap-2 mb-6">
-                {(["morning", "evening", "other"] as BPMoment[]).map(m => (
-                  <button key={m} onClick={() => setBpMoment(m)}
-                    className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
-                    style={{
-                      background: bpMoment === m ? "rgba(234,67,53,0.1)" : "var(--layer-1)",
-                      border: `1px solid ${bpMoment === m ? "rgba(234,67,53,0.4)" : "var(--border)"}`,
-                      color: bpMoment === m ? "var(--fit-red)" : "var(--text-secondary)",
-                    }}>
-                    {(() => { const { Icon, label } = MOMENT_META[m]; return <><Icon size={13} stroke={1.8} />{label}</>; })()}
-                  </button>
-                ))}
-              </div>
-
-              {bpError && (
-                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-[12px]"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "var(--danger)" }}>
-                  <IconAlertCircle size={14} />
-                  <span>{bpError}</span>
-                </div>
+                </motion.div>
               )}
+            </AnimatePresence>
 
-              <button onClick={handleAddBP} disabled={bpSaving || !bpSys || !bpDia}
-                className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px" }}>
-                {bpSaving
-                  ? <><IconLoader2 size={13} className="animate-spin" /> Enregistrement…</>
-                  : <><IconPlus size={14} /> Enregistrer la mesure</>
-                }
-              </button>
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
-      {/* ── Medication Add Modal ── */}
-      {medOpen && typeof document !== "undefined" && createPortal(
-        <AnimatePresence>
-          <motion.div
-            key="med-overlay"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-            onClick={e => { if (e.target === e.currentTarget) setMedOpen(false); }}
-          >
-            <motion.div
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="w-full max-w-md glass-strong rounded-t-2xl p-6 pb-10"
-            >
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <IconPill size={16} style={{ color: "var(--accent)" }} />
-                  <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
-                    Nouveau médicament
-                  </p>
-                </div>
-                <button onClick={() => setMedOpen(false)} className="btn-icon"><IconX size={14} /></button>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>
+                <input type="text" value={medDose}
+                  onChange={e => setMedDose(e.target.value)}
+                  placeholder="500 mg, 1 cp…"
+                  className="input text-[13px]"
+                />
               </div>
-
-              <div className="space-y-3 mb-5">
-                {/* Nom + Nutri-AI-Med button */}
-                <div>
-                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
-                  <div className="flex gap-2">
-                    <input
-                      autoFocus type="text" value={medName}
-                      onChange={e => { setMedName(e.target.value); setMedAiInfo(null); }}
-                      onKeyDown={e => e.key === "Enter" && handleAddMed()}
-                      placeholder="Paracétamol, Doliprane…"
-                      className="input text-[14px] flex-1"
-                    />
-                    <button
-                      onClick={handleAiMedLookup}
-                      disabled={medAiLoading || !medName.trim()}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium flex-shrink-0 transition-all"
-                      style={{
-                        background: medAiLoading ? "rgba(192,132,252,0.15)" : "rgba(192,132,252,0.1)",
-                        border: "1px solid rgba(192,132,252,0.35)",
-                        color: "var(--accent)",
-                        opacity: medName.trim() ? 1 : 0.4,
-                      }}>
-                      {medAiLoading
-                        ? <IconLoader2 size={11} className="animate-spin" />
-                        : <IconSparkles size={11} stroke={2} />
-                      }
-                      <span>Nutri-AI-Med</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* AI Info Card */}
-                <AnimatePresence>
-                  {medAiInfo && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="rounded-xl p-3 space-y-1.5 overflow-hidden"
-                      style={{ background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.25)" }}>
-                      <div className="flex items-start gap-2">
-                        <IconSparkles size={13} stroke={2} style={{ color: "var(--accent)" }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
-                            {medAiInfo.class}
-                          </p>
-                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                            {medAiInfo.description}
-                          </p>
-                          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-                            <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Indication :</span> {medAiInfo.indication}
-                          </p>
-                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                            <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Dose :</span> {medAiInfo.dose}
-                          </p>
-                          {medAiInfo.warning && (
-                            <p className="text-[12px] mt-1.5 flex items-start gap-1" style={{ color: "var(--carbs)" }}>
-                              <IconAlertCircle size={11} className="mt-0.5 flex-shrink-0" />
-                              {medAiInfo.warning}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>
-                    <input type="text" value={medDose}
-                      onChange={e => setMedDose(e.target.value)}
-                      placeholder="500 mg, 1 cp…"
-                      className="input text-[13px]"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
-                    <input type="time" value={medTime}
-                      onChange={e => setMedTime(e.target.value)}
-                      className="input text-[13px]"
-                    />
-                  </div>
-                </div>
+              <div>
+                <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
+                <input type="time" value={medTime}
+                  onChange={e => setMedTime(e.target.value)}
+                  className="input text-[13px]"
+                />
               </div>
+            </div>
+          </div>
 
-              <button onClick={handleAddMed} disabled={medSaving || !medName.trim()}
-                className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px",
-                  background: "var(--violet)", border: "none" }}>
-                {medSaving
-                  ? <><IconLoader2 size={13} className="animate-spin" /> Enregistrement…</>
-                  : <><IconPlus size={14} /> Ajouter</>
-                }
-              </button>
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
+          <button onClick={handleAddMed} disabled={medSaving || !medName.trim()}
+            className="btn btn-primary w-full gap-2 text-[13.5px]" style={{ height: "44px",
+              background: "var(--violet)", border: "none" }}>
+            {medSaving
+              ? <><IconLoader2 size={13} className="animate-spin" /> Enregistrement…</>
+              : <><IconPlus size={14} /> Ajouter</>
+            }
+          </button>
+      </Sheet>
     </div>
   );
 }
