@@ -10,6 +10,7 @@ import { IconChevronRight, IconMoon, IconHeart, IconBolt, IconClock, IconTrendin
   IconBarbell, IconSalt, IconCandy, IconDroplet, IconStethoscope, IconTarget, IconRun, IconNotebook, IconSun, IconSunset, IconSunLow,
   IconFlower } from "@tabler/icons-react";
 import CalorieBudgetRing from "@/app/components/CalorieBudgetRing";
+import TodayVerdict from "@/app/components/TodayVerdict";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import WeightWidget from "@/app/components/WeightWidget";
 import WaterTracker from "@/app/components/WaterTracker";
@@ -788,6 +789,16 @@ export default function DashboardClient({
             ))}
           </div>
         </motion.div>
+
+        <TodayVerdict
+          caloriesGoal={goals.dailyCalories}
+          caloriesConsumed={consumed.calories}
+          caloriesBurned={deductBurned ? burned : null}
+          proteinGoal={goals.proteinGrams}
+          proteinConsumed={consumed.proteinG}
+          waterMl={waterMl}
+          waterGoalMl={goals.waterMl ?? 2000}
+        />
 
         {/* ── AI Insight ── */}
         <motion.div {...fade(0.09)} className="mb-4">

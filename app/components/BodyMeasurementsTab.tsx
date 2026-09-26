@@ -254,7 +254,17 @@ export default function BodyMeasurementsTab() {
         </p>
       </div>
 
-      {/* Trend chart */}
+      {/* Trend chart — etats vides pedagogiques : 0 / 1 point n'ont pas de courbe */}
+      {!loading && entries.length < 2 && (
+        <div className="glass p-4 flex items-start gap-3">
+          <IconChartLine size={20} stroke={1.75} style={{ color: "var(--protein)", flexShrink: 0 }} />
+          <p className="text-[13px] leading-snug" style={{ color: "var(--text-secondary)" }}>
+            {entries.length === 0
+              ? "Aucune mesure pour l'instant. Saisis-en une pour poser ton point de départ."
+              : "Point de départ enregistré. Une deuxième mesure fera apparaître la courbe d'évolution."}
+          </p>
+        </div>
+      )}
       {entries.length > 1 && (
         <div className="glass p-4">
           <div className="flex items-center justify-between mb-3">
@@ -279,6 +289,11 @@ export default function BodyMeasurementsTab() {
               </button>
             ))}
           </div>
+          {entries.length < 5 && (
+            <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>
+              Tendance fiable à partir de 5 mesures ({entries.length} pour l&apos;instant).
+            </p>
+          )}
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
