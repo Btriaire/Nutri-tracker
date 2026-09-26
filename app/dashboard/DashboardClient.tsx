@@ -791,7 +791,7 @@ export default function DashboardClient({
 
         {/* ── AI Insight ── */}
         <motion.div {...fade(0.09)} className="mb-4">
-          <AIInsightBox type="dashboard" data={dashboardInsightData} delay={1000} />
+          <AIInsightBox type="dashboard" data={dashboardInsightData} delay={0} />
         </motion.div>
 
         {/* ── Steps + Weight ── */}

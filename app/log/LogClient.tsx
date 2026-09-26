@@ -1,5 +1,6 @@
 "use client";
 
+import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -823,6 +824,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
               Regroupés et repliés par défaut : ce sont des compléments au journal
               de repas, pas l'action principale de cette page. */}
+          <QuickAddChips date={date} waterMl={waterMl} goalMl={goals.waterMl ?? 2000} onWaterUpdate={setWaterMl} />
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

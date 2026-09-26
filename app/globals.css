@@ -129,7 +129,7 @@ html, body {
   border-radius: var(--radius-sm);
   padding: 9px 13px;
   color: var(--text-primary);
-  font-size: 13.5px;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
   font-family: inherit;
@@ -149,7 +149,7 @@ html, body {
   gap: 6px;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s, background 0.15s;
@@ -381,7 +381,7 @@ html, body, .glass, .card, .card-sm, .input, .btn, .btn-primary, .btn-ghost, .bt
    Échelle à 8 crans, plancher à 11px. Les composants s'y réfèrent via les
    classes .fs-* ou via les tailles Tailwind arbitraires alignées dessus.      */
 :root {
-  --fs-caption: 11px;   /* plancher : légendes, unités, axes             */
+  --fs-caption: 12px;   /* plancher : légendes, unités, axes             */
   --fs-sm:      13px;   /* texte secondaire                              */
   --fs-body:    15px;   /* corps                                         */
   --fs-md:      18px;   /* titres de carte, libellés importants          */
@@ -852,4 +852,13 @@ html:not([data-theme="lumiere"]):not([data-theme="mfp"]):not([data-theme="ocean"
     radial-gradient(600px 360px at 105% 8%, rgba(31, 203, 255, 0.14), transparent 65%),
     var(--bg);
   background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { MotionConfig } from "framer-motion";
 
 export type Theme = "cosmos" | "lumiere" | "mfp" | "ocean";
 
@@ -42,7 +43,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </ThemeContext.Provider>
   );
 }
