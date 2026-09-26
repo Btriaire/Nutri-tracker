@@ -2,6 +2,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { installWriteGuard } from "./write-guard";
 
 function getAdminApp() {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID?.trim();
@@ -26,6 +27,7 @@ export function getAdminAuth() {
 }
 
 export function getAdminFirestore() {
+  installWriteGuard();
   return getFirestore(getAdminApp());
 }
 
