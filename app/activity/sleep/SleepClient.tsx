@@ -59,7 +59,7 @@ function SleepHypnogram({ segments }: { segments: { startMs: number; endMs: numb
   const awakeMin   = Math.round(segments.filter(s => s.stage === "awake").reduce((s, seg) => s + (seg.endMs - seg.startMs), 0) / 60_000);
 
   return (
-    <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
       <div className="flex items-center justify-between mb-2">
         <p className="text-[12px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme · relevé réel</p>
         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
@@ -83,7 +83,7 @@ function SleepHypnogram({ segments }: { segments: { startMs: number; endMs: numb
           {/* Row guides */}
           {(Object.keys(STAGE_ROW) as SleepStage[]).map(stage => (
             <line key={stage} x1={0} x2={W} y1={yTop(stage) + BAR_H / 2} y2={yTop(stage) + BAR_H / 2}
-              stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
+              stroke="var(--layer-1)" strokeWidth={1} />
           ))}
           {/* Connectors between consecutive segments */}
           {segments.slice(0, -1).map((seg, i) => {
@@ -230,7 +230,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
         <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
           {/* Track */}
           <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0 }}>
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={SW} />
+            <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--layer-2)" strokeWidth={SW} />
           </svg>
           {/* Glow */}
           <svg width={SIZE} height={SIZE} style={{ position: "absolute", inset: 0, filter: "blur(7px)" }}>
@@ -284,7 +284,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{a.desc}</span>
                 <span className="text-[12px] font-medium" style={{ color: a.color }}>{a.pct}%</span>
               </div>
-              <div className="mt-1.5 h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <div className="mt-1.5 h-0.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                 <motion.div className="h-full rounded-full" style={{ background: a.color }}
                   initial={{ width: 0 }} animate={{ width: `${a.pct}%` }}
                   transition={{ duration: 0.8, delay: 0.5 + i * 0.08, ease: [0.16, 1, 0.3, 1] }} />
@@ -302,7 +302,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
                   initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.35, delay: 0.3 }}
                   className="px-2.5 py-2.5 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                   <p className="text-[12px] mb-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
                   <p className="text-[16px] font-bold leading-none tabular-nums" style={{ color }}>{val}</p>
                 </motion.div>
@@ -325,7 +325,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
       {segments && segments.length > 0 ? (
         <SleepHypnogram segments={segments} />
       ) : hasPhases && wavePath && (
-        <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[12px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Hypnogramme · cycles estimés</p>
             <div className="flex items-center gap-2.5">
@@ -378,7 +378,7 @@ function SleepCycleRing({ light, deep, rem, totalMin, inBedMin, goalMin = 420, s
       <div className="flex items-center gap-2 flex-wrap">
         {source && (
           <span className="flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded-full"
-            style={{ background: source === "withings" ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.05)", color: source === "withings" ? "var(--fiber)" : "var(--text-muted)", border: `1px solid ${source === "withings" ? "rgba(52,211,153,0.2)" : "var(--border)"}` }}>
+            style={{ background: source === "withings" ? "rgba(52,211,153,0.08)" : "var(--layer-2)", color: source === "withings" ? "var(--fiber)" : "var(--text-muted)", border: `1px solid ${source === "withings" ? "rgba(52,211,153,0.2)" : "var(--border)"}` }}>
             {source === "withings" ? <IconDeviceWatch size={10} stroke={1.8} />
               : source === "applehealth" ? <IconBrandApple size={10} stroke={1.8} />
               : source === "googlefit" ? <IconActivity size={10} stroke={1.8} />
@@ -419,7 +419,7 @@ const fade = (delay = 0) => ({
 });
 
 function sleepColor(min: number | null, goal: number): string {
-  if (!min) return "rgba(255,255,255,0.12)";
+  if (!min) return "var(--layer-3)";
   return levelColor(min / goal);
 }
 
@@ -781,9 +781,9 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               </div>
             )}
           </div>
-          <div className="w-full h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div className="w-full h-2.5 rounded-full overflow-hidden mb-2" style={{ background: "var(--layer-2)" }}>
             <motion.div className="h-full rounded-full w-full"
-              style={{ background: avgMin ? levelBarBg(avgMin / sleepGoalMin) : "rgba(255,255,255,0.06)" }}
+              style={{ background: avgMin ? levelBarBg(avgMin / sleepGoalMin) : "var(--layer-2)" }}
               initial={{ clipPath: "inset(0 100% 0 0)" }}
               animate={{ clipPath: levelBarClip(avgMin ? avgMin / sleepGoalMin : 0) }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -869,7 +869,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 width={24} tickCount={5} tickFormatter={v => `${v}h`} />
               <ReferenceLine y={goalH} stroke="rgba(121,134,203,0.4)" strokeDasharray="4 4" />
               <Tooltip
-                cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                cursor={{ fill: "var(--layer-1)" }}
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null;
                   const v = payload[0]?.payload?.sleepMin as number | null;
@@ -932,7 +932,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                       onClick={() => setSelectedNight(p.date)}
                       className="flex-shrink-0 flex flex-col items-center px-2.5 py-1.5 rounded-xl transition-all"
                       style={{
-                        background: active ? "rgba(121,134,203,0.18)" : "rgba(255,255,255,0.03)",
+                        background: active ? "rgba(121,134,203,0.18)" : "var(--layer-1)",
                         border: `1px solid ${active ? "rgba(121,134,203,0.5)" : "var(--border)"}`,
                       }}>
                       <span className="text-[12px] font-medium" style={{ color: active ? "var(--fit-indigo)" : "var(--text-muted)" }}>
@@ -951,7 +951,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
             <div className="grid grid-cols-3 gap-2">
               {/* Sleep total */}
               <div className="rounded-xl p-2.5 text-center"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                 <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Endormi</p>
                 <p className="text-[16px] font-bold leading-none" style={{ color: "var(--fit-indigo)" }}>
                   {selectedNightData.sleepMinutes ? fmtSleep(selectedNightData.sleepMinutes) : "—"}
@@ -968,7 +968,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                 </div>
               ) : (
                 <div className="rounded-xl p-2.5 text-center"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                   <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Au lit</p>
                   <p className="text-[16px] font-bold leading-none" style={{ color: "var(--text-secondary)" }}>
                     {selectedNightData.timeInBedMinutes ? fmtSleep(selectedNightData.timeInBedMinutes) : "—"}
@@ -977,7 +977,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
               )}
               {/* Efficiency */}
               <div className="rounded-xl p-2.5 text-center"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                 <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Efficacité</p>
                 <p className="text-[16px] font-bold leading-none" style={{ color: "var(--fiber)" }}>
                   {selectedNightData.timeInBedMinutes && selectedNightData.sleepMinutes
@@ -1016,7 +1016,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                   <button key={p.date}
                     onClick={() => setModal({ date: p.date, current: min ?? null })}
                     className="w-full flex items-center gap-3 py-2 transition-opacity active:opacity-60"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    style={{ borderBottom: "1px solid var(--layer-1)" }}>
                     <span className="text-[12px] w-[52px] flex-shrink-0 text-left" style={{ color: "var(--text-muted)" }}>
                       {format(parseISO(p.date), "dd MMM", { locale: fr })}
                     </span>
@@ -1026,7 +1026,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                         : <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>— saisir</span>
                       }
                     </div>
-                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                       {min ? <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} /> : null}
                     </div>
                     <div className="flex items-center gap-1.5 w-[56px] justify-end flex-shrink-0">

@@ -102,13 +102,13 @@ export default function GymProgressModal({ onClose }: Props) {
       <motion.div initial={{ opacity: 0, y: 44 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 44 }}
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
         className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl flex flex-col mx-auto"
-        style={{ background: "rgba(11,11,17,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderBottom: "none", backdropFilter: "blur(28px)", maxHeight: "92vh", maxWidth: "34rem" }}>
+        style={{ background: "rgba(11,11,17,0.98)", border: "1px solid var(--layer-3)", borderBottom: "none", backdropFilter: "blur(28px)", maxHeight: "92vh", maxWidth: "34rem" }}>
 
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
         </div>
 
-        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--layer-2)" }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
             <IconTrendingUp size={16} style={{ color: ACCENT }} />
           </div>
@@ -117,7 +117,7 @@ export default function GymProgressModal({ onClose }: Props) {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>90 derniers jours</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconX size={15} /></button>
+            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconX size={15} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -132,18 +132,18 @@ export default function GymProgressModal({ onClose }: Props) {
             <>
               {/* Stats */}
               <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="rounded-xl p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                   <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{totalSessions}</p>
                   <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>séances</p>
                 </div>
-                <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="rounded-xl p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                   <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{Math.round(totalVolume / 1000)}t</p>
                   <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>volume total soulevé</p>
                 </div>
               </div>
 
               {/* Muscle heatmap */}
-              <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid var(--layer-2)" }}>
                 <p className="text-center text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Muscles les plus travaillés</p>
                 <MuscleBodyMap primary={hotMuscles} secondary={warmMuscles} accent={ACCENT} size={180} />
               </div>
@@ -153,14 +153,14 @@ export default function GymProgressModal({ onClose }: Props) {
                 {exerciseList.map((e) => (
                   <button key={e.id} onClick={() => setExId(e.id)}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all"
-                    style={{ background: exId === e.id ? ACCENT_SOLID : "rgba(255,255,255,0.05)", color: exId === e.id ? "#fff" : "var(--text-muted)" }}>
+                    style={{ background: exId === e.id ? ACCENT_SOLID : "var(--layer-2)", color: exId === e.id ? "#fff" : "var(--text-muted)" }}>
                     {e.name}
                   </button>
                 ))}
               </div>
 
               {exId && (
-                <div className="rounded-2xl p-3 pt-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="rounded-2xl p-3 pt-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid var(--layer-2)" }}>
                   <div className="flex items-center justify-between mb-2 px-1">
                     <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{EXERCISE_BY_ID[exId] ? MUSCLE_LABELS[EXERCISE_BY_ID[exId].primary] : ""}</p>
                     {pr > 0 && (
@@ -172,11 +172,11 @@ export default function GymProgressModal({ onClose }: Props) {
                   {chartData.length >= 2 ? (
                     <ResponsiveContainer width="100%" height={180}>
                       <LineChart data={chartData} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-2)" vertical={false} />
                         <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                         <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} width={36} />
                         <Tooltip
-                          contentStyle={{ background: "rgba(20,20,28,0.96)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, fontSize: 12 }}
+                          contentStyle={{ background: "rgba(20,20,28,0.96)", border: "1px solid var(--layer-3)", borderRadius: 10, fontSize: 12 }}
                           labelStyle={{ color: "var(--text-muted)" }}
                           formatter={(v) => [`${v} kg`, "Charge max"]} />
                         <Line type="linear" dataKey="maxKg" stroke={ACCENT} strokeWidth={2.5}

@@ -97,7 +97,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {/* Header */}
         <motion.div {...fade(0)} className="flex items-center gap-3 mb-6">
           <Link href="/dashboard" className="p-2 rounded-xl transition-opacity active:opacity-60"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
             <IconChevronLeft size={16} style={{ color: "var(--text-secondary)" }} />
           </Link>
           <div>
@@ -137,7 +137,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <div className="flex flex-col items-end gap-1 ml-3">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium"
                   style={{
-                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta > 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
+                    background: delta === 0 ? "var(--layer-2)" : delta > 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
                     color: delta === 0 ? "var(--text-muted)" : delta > 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
                   {delta > 0 ? <IconArrowUp size={12} /> : delta < 0 ? <IconArrowDown size={12} /> : <IconMinus size={12} />}
@@ -150,7 +150,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
           {/* Progress bar */}
           {todaySteps > 0 && (
             <div className="mt-4">
-              <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+              <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                 <motion.div
                   className="h-full rounded-full w-full"
                   style={{ background: levelBarBg(pctToday / 100) }}
@@ -204,7 +204,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
         {/* Weekly trend */}
         {weekDelta !== null && (
           <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
             {weekDelta === 0
               ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta > 0
@@ -237,7 +237,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               onClick={() => setRangeDays(days as 7 | 14 | 30)}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
               style={{
-                background: rangeDays === days ? "var(--surface-active)" : "rgba(255,255,255,0.04)",
+                background: rangeDays === days ? "var(--surface-active)" : "var(--layer-1)",
                 color:      rangeDays === days ? "var(--text-primary)"   : "var(--text-muted)",
                 border:     rangeDays === days ? "1px solid var(--border-strong)" : "1px solid transparent",
               }}>
@@ -259,7 +259,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
           {withSteps.length > 0 ? (
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-1)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                   tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
@@ -280,7 +280,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   label={{ value: `${(stepsGoal / 1000).toFixed(0)}k`, fill: "rgba(56,189,248,0.7)", fontSize: 11, position: "right" }} />
                 <Bar dataKey="steps" radius={[3, 3, 0, 0]}>
                   {chartData.map((p, i) => (
-                    <Cell key={i} fill={p.steps > 0 ? stepsColor(p.steps, stepsGoal) : "rgba(255,255,255,0.08)"} fillOpacity={0.85} />
+                    <Cell key={i} fill={p.steps > 0 ? stepsColor(p.steps, stepsGoal) : "var(--layer-3)"} fillOpacity={0.85} />
                   ))}
                 </Bar>
               </BarChart>
@@ -381,7 +381,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               const pct   = p.steps > 0 ? Math.min(p.steps / stepsGoal * 100, 100) : 0;
               return (
                 <div key={p.date} className="py-2"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  style={{ borderBottom: "1px solid var(--layer-1)" }}>
                   <div className="flex items-center gap-3 mb-1.5">
                     <span className="text-[12px] w-[56px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                       {format(parseISO(p.date), "dd MMM", { locale: fr })}
@@ -414,7 +414,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   </div>
                   {/* Mini progress bar */}
                   {p.steps > 0 && (
-                    <div className="h-1 rounded-full overflow-hidden ml-[68px]" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-1 rounded-full overflow-hidden ml-[68px]" style={{ background: "var(--layer-2)" }}>
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color, opacity: 0.7 }} />
                     </div>
                   )}

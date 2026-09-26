@@ -97,7 +97,7 @@ export default function ExportPanel() {
             onClick={() => setExportFmt(f)}
             className="flex-1 py-2.5 rounded-xl text-[12px] font-semibold uppercase tracking-wide transition-all"
             style={{
-              background: exportFmt === f ? (f === "json" ? "rgba(96,165,250,0.15)" : "rgba(52,211,153,0.12)") : "rgba(255,255,255,0.04)",
+              background: exportFmt === f ? (f === "json" ? "rgba(96,165,250,0.15)" : "rgba(52,211,153,0.12)") : "var(--layer-1)",
               border:     exportFmt === f ? `1px solid ${f === "json" ? "rgba(96,165,250,0.4)" : "rgba(52,211,153,0.35)"}` : "1px solid var(--border)",
               color:      exportFmt === f ? (f === "json" ? "var(--fat)" : "var(--fiber)") : "var(--text-muted)",
             }}>
@@ -108,7 +108,7 @@ export default function ExportPanel() {
 
       {/* What's included */}
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-        <div className="px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
+        <div className="px-3 py-2" style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--border)" }}>
           <p className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
             {exportFmt === "json" ? "Contenu du fichier JSON" : "Contenu du fichier CSV"}
           </p>
@@ -149,7 +149,7 @@ export default function ExportPanel() {
               onClick={() => { setFrom(p.from); setTo(p.to); }}
               className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-all"
               style={{
-                background: from === p.from && to === p.to ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.05)",
+                background: from === p.from && to === p.to ? "rgba(96,165,250,0.12)" : "var(--layer-2)",
                 border:     from === p.from && to === p.to ? "1px solid rgba(96,165,250,0.35)" : "1px solid var(--border)",
                 color:      from === p.from && to === p.to ? "var(--fat)" : "var(--text-muted)",
               }}>

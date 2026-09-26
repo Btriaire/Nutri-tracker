@@ -62,7 +62,7 @@ function per100g(food: FoodSearchResult): FoodNutrition {
 
 function NutritionRow({ label, value, unit, color }: { label: string; value: number; unit: string; color?: string }) {
   return (
-    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+    <div className="flex justify-between items-center py-1.5 border-b" style={{ borderColor: "var(--layer-1)" }}>
       <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
       <span className="text-[12px] font-medium tabular-nums" style={{ color: color ?? "var(--text-primary)" }}>
         {value}{unit}
@@ -214,10 +214,10 @@ export default function LibraryClient() {
                         style={{
                           background: activeCat === cat.id
                             ? "rgba(167,139,250,0.12)"
-                            : "rgba(255,255,255,0.03)",
+                            : "var(--layer-1)",
                           border: `1px solid ${activeCat === cat.id ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                         }}
-                        whileHover={{ scale: 1.03, background: "rgba(255,255,255,0.06)" }}
+                        whileHover={{ scale: 1.03, background: "var(--layer-2)" }}
                         whileTap={{ scale: 0.97 }}
                       >
                         <span className="text-[26px] leading-none">{cat.emoji}</span>
@@ -280,7 +280,7 @@ export default function LibraryClient() {
                           style={{
                             background: isSelected
                               ? "rgba(167,139,250,0.1)"
-                              : "rgba(255,255,255,0.03)",
+                              : "var(--layer-1)",
                             border: `1px solid ${isSelected ? "rgba(167,139,250,0.35)" : "var(--border)"}`,
                           }}
                           whileHover={{ background: isSelected ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.055)" }}
@@ -338,7 +338,7 @@ export default function LibraryClient() {
               >
                 <div
                   className="rounded-2xl overflow-hidden"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-strong)" }}
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--border-strong)" }}
                 >
                   {/* Food header */}
                   <div className="p-4 border-b" style={{ borderColor: "var(--border)" }}>
@@ -370,7 +370,7 @@ export default function LibraryClient() {
                           onClick={() => setServingUnit(opt)}
                           className="px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
                           style={{
-                            background: servingUnit.label === opt.label ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                            background: servingUnit.label === opt.label ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
                             border: `1px solid ${servingUnit.label === opt.label ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                             color: servingUnit.label === opt.label ? "var(--protein)" : "var(--text-secondary)",
                           }}
@@ -478,7 +478,7 @@ export default function LibraryClient() {
                                 onClick={() => setMeal(m)}
                                 className="py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                                 style={{
-                                  background: meal === m ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
+                                  background: meal === m ? "rgba(249,115,22,0.15)" : "var(--layer-1)",
                                   border: `1px solid ${meal === m ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
                                   color: meal === m ? "var(--calories)" : "var(--text-secondary)",
                                 }}

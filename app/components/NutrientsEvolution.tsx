@@ -76,7 +76,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                   {/* ── Tabs ─────────────────────────────────────────────── */}
                   <div className="flex justify-end mb-4">
                     <div className="flex gap-1 p-0.5 rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       {([["macros", "Macros"], ["micros", "Micros"]] as const).map(([key, lbl]) => (
                         <button key={key} onClick={() => setNutriTab(key)}
                           className="px-3 py-1 rounded-md text-[12px] font-medium transition-all"
@@ -108,7 +108,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                       </div>
                       <ResponsiveContainer key={range} width="100%" height={140}>
                         <ComposedChart data={macroChartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+                          <CartesianGrid vertical={false} stroke="var(--layer-1)" />
                           <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
                             interval={caloriePoints.length > 20 ? Math.floor(caloriePoints.length / 8) : 0} />
                           <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
@@ -134,7 +134,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                         </ComposedChart>
                       </ResponsiveContainer>
                       {/* Average summary */}
-                      <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: "1px solid var(--layer-2)" }}>
                         {[
                           { label: "Protéines", val: avgProteinV, goal: goals.proteinGrams, cssVar: "var(--protein)" },
                           { label: "Glucides",  val: avgCarbsV,   goal: goals.carbsGrams,   cssVar: "var(--carbs)"   },

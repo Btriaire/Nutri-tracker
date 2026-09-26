@@ -86,7 +86,7 @@ export default function ActivityFormBody({
           <button key={opt.type} onClick={() => onTypeChange(opt.type)}
             className="flex flex-col items-center gap-1 p-2 rounded-xl text-center transition-all"
             style={{
-              background: form.actType === opt.type ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.03)",
+              background: form.actType === opt.type ? "rgba(167,139,250,0.12)" : "var(--layer-1)",
               border: `1px solid ${form.actType === opt.type ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
             }}>
             <span className="text-[18px]">{opt.emoji}</span>
@@ -171,7 +171,7 @@ export default function ActivityFormBody({
                   className="flex-shrink-0 px-2 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
                   title="Poids variable par série"
                   style={{
-                    background: form.variableWeight ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
+                    background: form.variableWeight ? "rgba(251,191,36,0.15)" : "var(--layer-2)",
                     border: `1px solid ${form.variableWeight ? "rgba(251,191,36,0.5)" : "var(--border)"}`,
                     color: form.variableWeight ? "var(--carbs)" : "var(--text-muted)",
                   }}

@@ -90,7 +90,7 @@ export default function AlbumModal({ open, onClose }: Props) {
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-safe-top pt-4 pb-3 flex-shrink-0"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          style={{ borderBottom: "1px solid var(--layer-3)" }}>
           <div>
             <h2 className="text-[17px] font-semibold" style={{ color: "var(--text-primary)" }}>
               📸 Album
@@ -110,7 +110,7 @@ export default function AlbumModal({ open, onClose }: Props) {
             <button key={p.key} onClick={() => setPeriod(p.key)}
               className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
               style={{
-                background: period === p.key ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.05)",
+                background: period === p.key ? "rgba(249,115,22,0.15)" : "var(--layer-2)",
                 border: `1px solid ${period === p.key ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
                 color: period === p.key ? "var(--calories)" : "var(--text-secondary)",
               }}>
@@ -143,7 +143,7 @@ export default function AlbumModal({ open, onClose }: Props) {
                   <motion.div key={day.date}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     className="rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}
                   >
                     {/* Day header */}
                     <button
@@ -224,7 +224,7 @@ export default function AlbumModal({ open, onClose }: Props) {
                                         return (
                                           <>
                                             <span className="flex items-center justify-center w-4 h-4 rounded-sm flex-shrink-0"
-                                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}>
+                                              style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}>
                                               <m.Icon size={10} />
                                             </span>
                                             <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>

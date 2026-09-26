@@ -31,7 +31,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
         <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
           <circle
             cx={size / 2} cy={size / 2} r={r}
-            fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeW}
+            fill="none" stroke="var(--layer-2)" strokeWidth={strokeW}
           />
           {/* Glow */}
           {pct > 0.05 && (

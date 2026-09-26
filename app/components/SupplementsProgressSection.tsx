@@ -87,7 +87,7 @@ export default function SupplementsProgressSection() {
           <p className="label-xs">Suppléments & Vitamines</p>
         </div>
         <div className="flex gap-1 p-0.5 rounded-lg"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           {([7, 14, 30] as const).map(d => (
             <button key={d} onClick={() => setDays(d)}
               className="px-2.5 py-1 rounded-md text-[12px] font-medium transition-all"
@@ -137,7 +137,7 @@ export default function SupplementsProgressSection() {
                         style={{
                           width: days > 14 ? 6 : 10,
                           height: days > 14 ? 6 : 10,
-                          background: taken ? color : "rgba(255,255,255,0.07)",
+                          background: taken ? color : "var(--layer-2)",
                         }}
                       />
                     );
@@ -151,7 +151,7 @@ export default function SupplementsProgressSection() {
 
       {/* ── Micronutrient trends ────────────────────────────────────── */}
       {trackedCodes.length > 0 && (
-        <div className="pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="pt-4" style={{ borderTop: "1px solid var(--layer-2)" }}>
           <div className="flex items-center gap-1.5 mb-3">
             <IconFlask size={13} style={{ color: "var(--text-muted)" }} />
             <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
@@ -223,7 +223,7 @@ export default function SupplementsProgressSection() {
       )}
 
       {aiNutrients.length > 0 && (
-        <div className="pt-4 mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="pt-4 mt-4" style={{ borderTop: "1px solid var(--layer-2)" }}>
           <AIInsightBox
             key={days}
             type="micronutrients"

@@ -142,7 +142,7 @@ function MiniStat({ label, value, unit, color, trend }: {
   if (value == null) return null;
   return (
     <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
       <div className="flex items-baseline gap-0.5">
         <span className="text-[18px] font-bold tabular-nums" style={{ color }}>
@@ -310,7 +310,7 @@ export default function BodyCompChart({
       {/* Tab bar */}
       <div className="px-4 pb-3">
         <div className="flex gap-1 p-1 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => { setTab(t.id); setHidden(new Set()); }}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
@@ -434,7 +434,7 @@ export default function BodyCompChart({
                   </div>
 
                   {/* Detail metrics */}
-                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       WC (cm) {latestCalc.wcMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
@@ -443,7 +443,7 @@ export default function BodyCompChart({
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       TG (mg/dL) {latestCalc.tgMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
@@ -452,7 +452,7 @@ export default function BodyCompChart({
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <div className="flex flex-col gap-0.5 p-2.5 rounded-xl flex-1" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       HDL (mg/dL) {latestCalc.hdlMeasured && <span style={{ color: "var(--fiber)" }}>· mesuré</span>}
                     </span>
@@ -490,7 +490,7 @@ export default function BodyCompChart({
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={visceralsData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-2)" vertical={false} />
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 11, fill: "var(--text-muted)" }}
@@ -585,7 +585,7 @@ export default function BodyCompChart({
                 <button key={m.label} onClick={() => toggleMetric(m.label)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium transition-all"
                   style={{
-                    background: isHidden ? "rgba(255,255,255,0.03)" : `color-mix(in srgb, ${m.color} 9%, transparent)`,
+                    background: isHidden ? "var(--layer-1)" : `color-mix(in srgb, ${m.color} 9%, transparent)`,
                     border: `1px solid ${isHidden ? "var(--border)" : `color-mix(in srgb, ${m.color} 33%, transparent)`}`,
                     color: isHidden ? "var(--text-muted)" : m.color,
                     opacity: isHidden ? 0.5 : 1,
@@ -608,7 +608,7 @@ export default function BodyCompChart({
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartDataWithAvg as BodyCompPoint[]} margin={{ top: 8, right: tab === "vitaux" ? 36 : 12, left: -18, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-2)" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 11, fill: "var(--text-muted)" }}
@@ -721,7 +721,7 @@ export default function BodyCompChart({
                   const meta = SOURCE_META[s];
                   return (
                     <span key={s} className="flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded-full"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                       {meta ? <><meta.Icon size={9} stroke={1.8} />{meta.label}</> : s}
                     </span>
                   );
@@ -778,7 +778,7 @@ export default function BodyCompChart({
                               return (
                                 <div key={p.date}
                                   className="flex items-center gap-3 px-3 py-2"
-                                  style={{ borderTop: i === 0 ? "1px solid var(--border)" : "1px solid rgba(255,255,255,0.03)", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
+                                  style={{ borderTop: i === 0 ? "1px solid var(--border)" : "1px solid var(--layer-1)", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                                   {/* Date */}
                                   <span className="text-[12px] w-[52px] flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>
                                     {format(parseISO(p.date), "dd MMM", { locale: fr })}

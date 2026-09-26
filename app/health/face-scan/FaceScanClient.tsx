@@ -49,7 +49,7 @@ function StarRow({ score, color }: { score: number; color: string }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
-        <IconStarFilled key={i} size={13} style={{ color: i <= score ? color : "rgba(255,255,255,0.1)" }} />
+        <IconStarFilled key={i} size={13} style={{ color: i <= score ? color : "var(--layer-3)" }} />
       ))}
     </div>
   );
@@ -160,7 +160,7 @@ export default function FaceScanClient() {
   const renderAnalysis = (scan: FaceScanEntry) => (
     <div className="space-y-3">
       {scan.analysis.scorecard && (
-        <div className="flex items-center gap-4 rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-4 rounded-lg p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <FaceZoneDiagram scorecard={scan.analysis.scorecard} size={72} />
           <div className="flex-1 space-y-1.5">
             {SCORE_AXES.map(axis => (
@@ -180,7 +180,7 @@ export default function FaceScanClient() {
       {scan.analysis.findings.length > 0 && (
         <div className="space-y-2">
           {scan.analysis.findings.map((f, i) => (
-            <div key={i} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+            <div key={i} className="rounded-lg p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{f.indicator}</span>
                 <span className="text-[12px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `color-mix(in srgb, ${CONFIDENCE_COLOR[f.confidence]} 9%, transparent)`, color: CONFIDENCE_COLOR[f.confidence] }}>
@@ -304,7 +304,7 @@ export default function FaceScanClient() {
                       onClick={() => setCompareMode(opt.key)}
                       className="px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                       style={{
-                        background: compareMode === opt.key ? "rgba(99,102,241,0.18)" : "rgba(255,255,255,0.05)",
+                        background: compareMode === opt.key ? "rgba(99,102,241,0.18)" : "var(--layer-2)",
                         border: `1px solid ${compareMode === opt.key ? "rgba(99,102,241,0.45)" : "var(--border)"}`,
                         color: compareMode === opt.key ? "var(--indigo)" : "var(--text-muted)",
                       }}
@@ -349,7 +349,7 @@ export default function FaceScanClient() {
         )}
 
         {/* Sources */}
-        <div className="rounded-xl overflow-hidden mb-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <button type="button" onClick={() => setShowSources(v => !v)} className="w-full flex items-center gap-1.5 px-3 py-2.5">
             <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Sources</span>
             <IconChevronDown size={13} style={{ color: "var(--text-muted)", marginLeft: "auto", transform: showSources ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
@@ -384,7 +384,7 @@ export default function FaceScanClient() {
               {history.map(scan => {
                 const isOpen = expandedId === scan.id;
                 return (
-                  <div key={scan.id} className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  <div key={scan.id} className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <button
                       onClick={() => setExpandedId(isOpen ? null : scan.id)}
                       className="w-full flex items-center gap-3 p-3"

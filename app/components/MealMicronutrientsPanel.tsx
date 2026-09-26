@@ -52,7 +52,7 @@ export default function MealMicronutrientsPanel({ entries, micronutrientData }: 
   if (!mealsWithData.length) return null;
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}

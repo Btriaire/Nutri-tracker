@@ -96,7 +96,7 @@ export default function MoodTrendChart({ points }: Props) {
         <ComposedChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(255,255,255,0.05)"
+            stroke="var(--layer-2)"
             vertical={false}
           />
           <XAxis

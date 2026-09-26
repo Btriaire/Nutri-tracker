@@ -546,7 +546,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
         {/* Tab bar */}
         <motion.div {...fade(0.02)} className="flex gap-1 p-1 rounded-xl mb-4 overflow-x-auto"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", scrollbarWidth: "none" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)", scrollbarWidth: "none" }}>
           {([
             {
               id: "synthese", label: "Synthèse",
@@ -613,7 +613,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
         {/* Date nav — above all tabs */}
         <div className="flex items-center justify-between mb-4 px-4 py-2.5 rounded-2xl"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+          style={{ background: "var(--layer-1)", border: "1px solid var(--layer-3)" }}
         >
           <button
             onClick={() => navigate(format(subDays(parseISO(date + "T12:00:00"), 1), "yyyy-MM-dd"))}
@@ -658,7 +658,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
                 <button onClick={handleWithingsSync} disabled={wSyncing}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] transition-all"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                   {wSyncing ? <IconLoader2 size={11} className="animate-spin" /> : <IconRefresh size={11} />}
                   Sync
                 </button>
@@ -683,7 +683,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "var(--danger)", fmt: (v: number) => v.toFixed(1) },
                     ].map(({ label, value, unit, color, fmt }) => (
                       <div key={label} className="rounded-xl p-3"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
                         {value !== null
                           ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
@@ -781,7 +781,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {readings.map((r, i) => (
                     <div key={i}
                       className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <div>
                         <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                           {r.moment && (() => {
@@ -796,7 +796,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
                           <span className="text-[12px] font-medium px-1.5 py-0.5 rounded-full"
                             style={{
-                              background: r.source ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
+                              background: r.source ? "rgba(96,165,250,0.12)" : "var(--layer-2)",
                               color: r.source ? "var(--fat)" : "var(--text-muted)",
                             }}>
                             {bpSourceLabel(r.source)}
@@ -1118,7 +1118,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     {synthesis && !synthesisLoading && (
                       <button onClick={() => setSynthesisExpanded(v => !v)}
                         className="w-6 h-6 flex items-center justify-center rounded-lg flex-shrink-0"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
+                        style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                         {synthesisExpanded ? <IconChevronUp size={11} /> : <IconChevronDown size={11} />}
                       </button>
                     )}
@@ -1254,10 +1254,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {meds.map(m => (
                     <div key={m.id}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
-                      style={{ background: m.taken ? "rgba(192,132,252,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${m.taken ? "rgba(192,132,252,0.3)" : "var(--border)"}` }}>
+                      style={{ background: m.taken ? "rgba(192,132,252,0.08)" : "var(--layer-1)", border: `1px solid ${m.taken ? "rgba(192,132,252,0.3)" : "var(--border)"}` }}>
                       <button onClick={() => handleToggleMed(m.id)}
                         className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
-                        style={{ background: m.taken ? "var(--violet)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${m.taken ? "var(--violet)" : "var(--border)"}` }}>
+                        style={{ background: m.taken ? "var(--violet)" : "var(--layer-2)", border: `1.5px solid ${m.taken ? "var(--violet)" : "var(--border)"}` }}>
                         {m.taken && <IconCheck size={11} color="#fff" />}
                       </button>
                       <div className="flex-1 min-w-0">
@@ -1338,7 +1338,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       <div key={s.id}
                         className="px-3 py-2.5 rounded-xl"
                         style={{
-                          background: isEnded ? "rgba(52,211,153,0.04)" : "rgba(255,255,255,0.04)",
+                          background: isEnded ? "rgba(52,211,153,0.04)" : "var(--layer-1)",
                           border: `1px solid ${borderCol}`,
                         }}>
                         {/* Top row */}
@@ -1362,7 +1362,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                   onClick={() => handleSetSeverity(s.id, sv)}
                                   className="px-2 py-0.5 rounded-full text-[12px] font-semibold uppercase tracking-wide transition-all"
                                   style={{
-                                    background: s.severity === sv ? `color-mix(in srgb, ${sevColor[sv]} 13%, transparent)` : "rgba(255,255,255,0.04)",
+                                    background: s.severity === sv ? `color-mix(in srgb, ${sevColor[sv]} 13%, transparent)` : "var(--layer-1)",
                                     border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
                                     color: s.severity === sv ? sevColor[sv] : "var(--text-muted)",
                                   }}>
@@ -1477,7 +1477,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                           disabled={symSaving}
                                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all"
                                           style={{
-                                            background: active ? `color-mix(in srgb, ${cat.color} 13%, transparent)` : "rgba(255,255,255,0.05)",
+                                            background: active ? `color-mix(in srgb, ${cat.color} 13%, transparent)` : "var(--layer-2)",
                                             border: `1px solid ${active ? cat.color : "var(--border)"}`,
                                             color: active ? cat.color : "var(--text-secondary)",
                                           }}>
@@ -1695,7 +1695,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   <button key={m} onClick={() => setBpMoment(m)}
                     className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all flex items-center justify-center gap-1.5"
                     style={{
-                      background: bpMoment === m ? "rgba(234,67,53,0.1)" : "rgba(255,255,255,0.04)",
+                      background: bpMoment === m ? "rgba(234,67,53,0.1)" : "var(--layer-1)",
                       border: `1px solid ${bpMoment === m ? "rgba(234,67,53,0.4)" : "var(--border)"}`,
                       color: bpMoment === m ? "var(--fit-red)" : "var(--text-secondary)",
                     }}>

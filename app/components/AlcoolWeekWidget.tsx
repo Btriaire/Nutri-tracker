@@ -55,7 +55,7 @@ export default function AlcoolWeekWidget({
       </div>
 
       {/* Weekly progress bar */}
-      <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "var(--layer-2)" }}>
         <motion.div
           className="h-full rounded-full"
           style={{ background: overWeek ? "var(--danger)" : "linear-gradient(90deg,#a855f7,var(--violet))" }}

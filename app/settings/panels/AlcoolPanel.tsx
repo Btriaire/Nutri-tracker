@@ -63,7 +63,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
           <button
             onClick={e => { e.stopPropagation(); setEnabled(v => !v); }}
             className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-            style={{ background: enabled ? "var(--violet)" : "rgba(255,255,255,0.12)" }}
+            style={{ background: enabled ? "var(--violet)" : "var(--layer-3)" }}
           >
             <span
               className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
@@ -103,7 +103,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                 <button
                   onClick={() => setEnabled(v => !v)}
                   className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                  style={{ background: enabled ? "var(--violet)" : "rgba(255,255,255,0.12)" }}
+                  style={{ background: enabled ? "var(--violet)" : "var(--layer-3)" }}
                 >
                   <span
                     className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
@@ -132,7 +132,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                         <button
                           onClick={() => setWeeklyGoal(v => String(Math.max(1, (parseFloat(v) || 14) - 1)))}
                           className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
-                          style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}
+                          style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}
                         >−</button>
                         <input
                           type="number" value={weeklyGoal} min="1" max="100" step="1"
@@ -147,7 +147,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                         <button
                           onClick={() => setWeeklyGoal(v => String((parseFloat(v) || 14) + 1))}
                           className="w-9 h-9 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
-                          style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-secondary)" }}
+                          style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}
                         >+</button>
                         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>unités / semaine</span>
                       </div>

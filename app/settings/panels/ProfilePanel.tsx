@@ -105,7 +105,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
               <img src={photoUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[32px]"
-                style={{ background: "rgba(255,255,255,0.06)" }}>
+                style={{ background: "var(--layer-2)" }}>
                 👤
               </div>
             )}

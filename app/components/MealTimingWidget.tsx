@@ -107,7 +107,7 @@ function MealTimingSVG({ stats }: { stats: MealTimingStats[] }) {
             {/* Track line */}
             <line
               x1={LP} y1={cy} x2={LP + PW} y2={cy}
-              stroke="rgba(255,255,255,0.07)" strokeWidth={3} strokeLinecap="round"
+              stroke="var(--layer-2)" strokeWidth={3} strokeLinecap="round"
             />
 
             {/* Std-dev band */}
@@ -215,8 +215,8 @@ export default function MealTimingWidget() {
   if (loading) {
     return (
       <div className="glass p-4 animate-pulse">
-        <div className="h-3 rounded-full w-2/5 mb-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-        <div className="h-32 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-3 rounded-full w-2/5 mb-3" style={{ background: "var(--layer-2)" }} />
+        <div className="h-32 rounded-xl" style={{ background: "var(--layer-1)" }} />
       </div>
     );
   }
@@ -273,7 +273,7 @@ export default function MealTimingWidget() {
             <div className="flex items-center gap-1.5">
               <svg width="18" height="10" viewBox="0 0 18 10">
                 <rect x="1" y="2" width="16" height="6" rx="3"
-                  fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" strokeWidth="0.75"/>
+                  fill="var(--layer-3)" stroke="rgba(255,255,255,0.25)" strokeWidth="0.75"/>
               </svg>
               <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>±1σ</span>
             </div>

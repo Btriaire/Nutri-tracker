@@ -293,7 +293,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
         className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl flex flex-col mx-auto"
         style={{
-          background: "rgba(11,11,17,0.98)", border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(11,11,17,0.98)", border: "1px solid var(--layer-3)",
           borderBottom: "none", backdropFilter: "blur(28px)", maxHeight: "92vh", maxWidth: "34rem",
         }}
       >
@@ -302,10 +302,10 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
         </div>
 
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--layer-2)" }}>
           {view === "picker" ? (
             <button onClick={() => { setView("builder"); setQuery(""); }} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
               <IconChevronLeft size={16} />
             </button>
           ) : (
@@ -322,7 +322,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             </p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
             <IconX size={15} />
           </button>
         </div>
@@ -332,7 +332,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {/* search */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+              style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
               <IconSearch size={15} style={{ color: "var(--text-muted)" }} />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un exercice…"
                 className="flex-1 bg-transparent outline-none text-[13px]" style={{ color: "var(--text-primary)" }} />
@@ -345,7 +345,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                   <button key={g} onClick={() => setPickerGroup(g)}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all"
                     style={{
-                      background: pickerGroup === g ? ACCENT : "rgba(255,255,255,0.05)",
+                      background: pickerGroup === g ? ACCENT : "var(--layer-2)",
                       color: pickerGroup === g ? "#fff" : "var(--text-muted)",
                     }}>
                     {GROUP_LABELS[g]}
@@ -359,7 +359,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               {pickerList.map((ex) => (
                 <button key={ex.id} onClick={() => addExercise(ex)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all active:scale-[0.99]"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
                     <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
@@ -385,8 +385,8 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             <div className="flex gap-2 mb-3">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom de la séance"
                 className="flex-1 px-3 py-2.5 rounded-xl text-[14px] font-semibold outline-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-              <div className="flex items-center gap-1 px-2 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+              <div className="flex items-center gap-1 px-2 rounded-xl" style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
                 <button onClick={() => setDurationMin((d) => Math.max(5, d - 5))} className="w-6 h-6 flex items-center justify-center" style={{ color: "var(--text-muted)" }}><IconMinus size={12} /></button>
                 <span className="text-[13px] tabular-nums w-12 text-center" style={{ color: "var(--text-primary)" }}>{durationMin}m</span>
                 <button onClick={() => setDurationMin((d) => Math.min(300, d + 5))} className="w-6 h-6 flex items-center justify-center" style={{ color: "var(--text-muted)" }}><IconPlus size={12} /></button>
@@ -398,7 +398,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               {NAME_PRESETS.map((p) => (
                 <button key={p} onClick={() => setName(p)}
                   className="px-2.5 py-1 rounded-lg text-[12px] whitespace-nowrap"
-                  style={{ background: name === p ? `color-mix(in srgb, ${ACCENT} 13%, transparent)` : "rgba(255,255,255,0.04)", color: name === p ? ACCENT : "var(--text-muted)" }}>
+                  style={{ background: name === p ? `color-mix(in srgb, ${ACCENT} 13%, transparent)` : "var(--layer-1)", color: name === p ? ACCENT : "var(--text-muted)" }}>
                   {p}
                 </button>
               ))}
@@ -414,7 +414,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                 <div className="space-y-1.5">
                   {programs.map((p) => (
                     <div key={p.id} className="flex items-center gap-2 p-2.5 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--layer-3)" }}>
                       <button onClick={() => launchProgram(p)} className="flex-1 flex items-center gap-2.5 min-w-0 text-left active:scale-[0.99] transition-transform">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 10%, transparent)`, color: ACCENT }}>
                           <IconPlayerPlay size={15} stroke={2.5} />
@@ -435,7 +435,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
 
             {/* live body map */}
             {exercises.length > 0 && (
-              <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid var(--layer-2)" }}>
                 <MuscleBodyMap primary={primaryMuscles} secondary={secondaryMuscles} accent={ACCENT} size={180} />
                 <div className="flex justify-center gap-4 mt-2 text-[12px]" style={{ color: "var(--text-muted)" }}>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} /> Principal</span>
@@ -448,12 +448,12 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             <div className="space-y-3">
               {exercises.map((ex, i) => (
                 <motion.div key={`${ex.exerciseId}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  className="rounded-xl p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--layer-3)" }}>
                   <div className="flex items-center justify-between mb-2 gap-2">
                     {ex.machinePhoto && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={ex.machinePhoto} alt="appareil" className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                        style={{ border: "1px solid rgba(255,255,255,0.1)" }} />
+                        style={{ border: "1px solid var(--layer-3)" }} />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
@@ -473,7 +473,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                         <button onClick={() => toggleSetDone(i, si)} aria-label="Valider la série"
                           className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
                           style={{
-                            background: s.done ? ACCENT : "rgba(255,255,255,0.06)",
+                            background: s.done ? ACCENT : "var(--layer-2)",
                             border: `1.5px solid ${s.done ? ACCENT : "rgba(255,255,255,0.18)"}`,
                             color: s.done ? "#fff" : "var(--text-muted)",
                           }}>
@@ -481,18 +481,18 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                         </button>
                         {/* reps */}
                         <div className="flex items-center gap-1 flex-1">
-                          <button onClick={() => updateSet(i, si, "reps", s.reps - 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
+                          <button onClick={() => updateSet(i, si, "reps", s.reps - 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
                           <input type="number" value={s.reps} onChange={(e) => updateSet(i, si, "reps", parseInt(e.target.value) || 0)}
-                            className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
-                          <button onClick={() => updateSet(i, si, "reps", s.reps + 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
+                            className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "var(--layer-2)", border: "1px solid var(--layer-3)", color: "var(--text-primary)" }} />
+                          <button onClick={() => updateSet(i, si, "reps", s.reps + 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
                         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>reps</span>
                         {/* weight */}
                         <div className="flex items-center gap-1 flex-1">
-                          <button onClick={() => updateSet(i, si, "weightKg", s.weightKg - 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
+                          <button onClick={() => updateSet(i, si, "weightKg", s.weightKg - 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
                           <input type="number" value={s.weightKg} onChange={(e) => updateSet(i, si, "weightKg", parseFloat(e.target.value) || 0)}
-                            className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
-                          <button onClick={() => updateSet(i, si, "weightKg", s.weightKg + 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
+                            className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "var(--layer-2)", border: "1px solid var(--layer-3)", color: "var(--text-primary)" }} />
+                          <button onClick={() => updateSet(i, si, "weightKg", s.weightKg + 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
                         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>kg</span>
                         <button onClick={() => removeSet(i, si)} className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ color: "var(--text-muted)" }}><IconX size={11} /></button>
@@ -501,7 +501,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                   </div>
 
                   <button onClick={() => addSet(i)} className="mt-2 w-full py-1.5 rounded-lg text-[12px] font-medium flex items-center justify-center gap-1"
-                    style={{ background: "rgba(255,255,255,0.04)", color: ACCENT }}>
+                    style={{ background: "var(--layer-1)", color: ACCENT }}>
                     <IconPlus size={12} /> Ajouter une série
                   </button>
                 </motion.div>
@@ -519,7 +519,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             {exercises.length > 0 && (
               <button onClick={saveAsProgram}
                 className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-medium flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-                style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)" }}>
+                style={{ background: "var(--layer-1)", color: "var(--text-secondary)" }}>
                 <IconDeviceFloppy size={14} /> Enregistrer comme programme
               </button>
             )}
@@ -548,8 +548,8 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                 Repos {Math.floor(restSec / 60)}:{String(restSec % 60).padStart(2, "0")}
               </span>
               <div className="flex-1" />
-              <button onClick={() => setRestSec((s) => (s ?? 0) + 15)} className="text-[12px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>+15s</button>
-              <button onClick={() => setRestSec(null)} className="flex items-center gap-1 text-[12px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>
+              <button onClick={() => setRestSec((s) => (s ?? 0) + 15)} className="text-[12px] px-2 py-1 rounded-md" style={{ background: "var(--layer-3)", color: "var(--text-secondary)" }}>+15s</button>
+              <button onClick={() => setRestSec(null)} className="flex items-center gap-1 text-[12px] px-2 py-1 rounded-md" style={{ background: "var(--layer-3)", color: "var(--text-secondary)" }}>
                 <IconPlayerSkipForward size={11} /> Passer
               </button>
             </motion.div>
@@ -558,7 +558,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
 
         {/* Bottom save bar (builder only) */}
         {view === "builder" && (
-          <div className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid var(--layer-2)" }}>
             <button onClick={save} disabled={saving || exercises.length === 0}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
               style={{ background: ACCENT_SOLID, color: "#fff", boxShadow: exercises.length > 0 ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>

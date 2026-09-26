@@ -110,8 +110,8 @@ export default function FastingPanel() {
                   onClick={() => setEnabled(v => !v)}
                   className="relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
                   style={{
-                    background: enabled ? "#818cf8" : "rgba(255,255,255,0.1)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: enabled ? "#818cf8" : "var(--layer-3)",
+                    border: "1px solid var(--layer-3)",
                   }}
                 >
                   <span
@@ -139,8 +139,8 @@ export default function FastingPanel() {
                           onClick={() => setDuration(h)}
                           className="flex flex-col items-center gap-1 py-3 rounded-2xl transition-all"
                           style={{
-                            background: duration === h ? "rgba(129,140,248,0.18)" : "rgba(255,255,255,0.04)",
-                            border: `1.5px solid ${duration === h ? "#818cf8" : "rgba(255,255,255,0.07)"}`,
+                            background: duration === h ? "rgba(129,140,248,0.18)" : "var(--layer-1)",
+                            border: `1.5px solid ${duration === h ? "#818cf8" : "var(--layer-2)"}`,
                             boxShadow: duration === h ? "0 0 12px rgba(129,140,248,0.2)" : "none",
                           }}
                         >
@@ -171,9 +171,9 @@ export default function FastingPanel() {
                             onClick={() => toggleDay(dow)}
                             className="flex-1 h-10 rounded-xl text-[12px] font-bold transition-all"
                             style={{
-                              background: on ? "rgba(129,140,248,0.18)" : "rgba(255,255,255,0.04)",
+                              background: on ? "rgba(129,140,248,0.18)" : "var(--layer-1)",
                               color:      on ? "#818cf8" : "var(--text-muted)",
-                              border:     `1.5px solid ${on ? "#818cf8" : "rgba(255,255,255,0.07)"}`,
+                              border:     `1.5px solid ${on ? "#818cf8" : "var(--layer-2)"}`,
                             }}
                           >
                             {short}

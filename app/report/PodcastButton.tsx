@@ -79,7 +79,7 @@ export default function PodcastButton() {
 
       {/* Version courte / longue */}
       <div className="flex gap-1 p-0.5 rounded-lg mb-3"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
         {([["short", "Version courte"], ["long", "Bilan complet"]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setLength(key)} disabled={running}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[12px] font-medium transition-all"
@@ -102,7 +102,7 @@ export default function PodcastButton() {
               <button key={p.key} onClick={() => setPeriod(p.key)} disabled={running}
                 className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
                 style={{
-                  background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
+                  background: active ? "rgba(249,115,22,0.15)" : "var(--layer-1)",
                   border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
                   color:      active ? "var(--calories)" : "var(--text-muted)",
                 }}>
@@ -139,7 +139,7 @@ export default function PodcastButton() {
 
       {latest && (
         <div className="mt-3 px-3 py-2.5 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
               <IconMicrophone size={12} />
@@ -177,7 +177,7 @@ export default function PodcastButton() {
             <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
               {history.map((f) => (
                 <div key={f.name} className="px-3 py-2 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                       {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko

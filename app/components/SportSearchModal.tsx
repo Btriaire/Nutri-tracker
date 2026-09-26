@@ -128,7 +128,7 @@ export default function SportSearchModal({ open, onClose, onSelect, onCustomize,
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.08)" }}
+                style={{ background: "var(--layer-3)" }}
               >
                 <IconX size={14} style={{ color: "var(--text-muted)" }} />
               </button>
@@ -137,7 +137,7 @@ export default function SportSearchModal({ open, onClose, onSelect, onCustomize,
             {/* Search bar */}
             <div className="px-4 pb-3 flex-shrink-0">
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
                 <IconSearch size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                 <input
                   ref={searchRef}
@@ -166,7 +166,7 @@ export default function SportSearchModal({ open, onClose, onSelect, onCustomize,
                     onClick={() => setCategory(tab.id)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap flex-shrink-0 transition-all"
                     style={{
-                      background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.05)",
+                      background: active ? "rgba(167,139,250,0.18)" : "var(--layer-2)",
                       border: `1px solid ${active ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                       color: active ? "var(--protein)" : "var(--text-secondary)",
                     }}
@@ -237,12 +237,12 @@ function ExerciseCard({
   return (
     <div
       className="flex items-center gap-3 p-3 rounded-xl transition-all"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}
+      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}
     >
       {/* Emoji */}
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}
+        style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
       >
         {exercise.emoji}
       </div>
@@ -274,7 +274,7 @@ function ExerciseCard({
         <button
           onClick={(e) => { e.stopPropagation(); onSave(); }}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}
+          style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
           title="Sauvegarder comme séance type"
         >
           <IconBookmark size={14} style={{ color: "var(--text-muted)" }} />

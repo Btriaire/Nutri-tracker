@@ -234,7 +234,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     onChange={e => setForm({ ...form, name: e.target.value })}
                     placeholder="Ex: Vitamine D3, Oméga-3"
                     className="flex-1 px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                   <button
                     type="button"
@@ -261,7 +261,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   placeholder="Description du produit et ses bénéfices"
                   className="w-full px-3 py-2 rounded-lg text-[12px] h-16 resize-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 />
               </div>
 
@@ -276,7 +276,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     onChange={e => setForm({ ...form, ingredients: e.target.value })}
                     placeholder="Ex: Cholécalciférol, huile de coco"
                     className="w-full px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                 </div>
 
@@ -290,7 +290,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     onChange={e => setForm({ ...form, dosagePerServing: e.target.value })}
                     placeholder="Ex: 1000 IU, 500mg"
                     className="w-full px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     onChange={e => setForm({ ...form, recommendedDosage: e.target.value })}
                     placeholder="Ex: 1 comprimé par jour"
                     className="w-full px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                 </div>
 
@@ -318,7 +318,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     value={form.frequency}
                     onChange={e => setForm({ ...form, frequency: e.target.value as SupplementFrequency })}
                     className="w-full px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   >
                     {FREQUENCIES.map(f => (
                       <option key={f.value} value={f.value}>{f.label}</option>
@@ -337,11 +337,11 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   placeholder="Notes personnelles (optionnel)"
                   className="w-full px-3 py-2 rounded-lg text-[12px]"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 />
               </div>
 
-              <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+              <div className="rounded-lg p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 <MicronutrientSelector
                   micronutrients={form.micronutrients}
                   onChange={micronutrients => setForm({ ...form, micronutrients })}
@@ -367,7 +367,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   onClick={resetForm}
                   className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
                   style={{
-                    background: "rgba(255,255,255,0.05)",
+                    background: "var(--layer-2)",
                     border: "1px solid var(--border)",
                     color: "var(--text-muted)",
                   }}
@@ -396,7 +396,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
               key={product.id}
               className="rounded-lg p-3 flex items-start justify-between transition-opacity"
               style={{
-                background: "rgba(255,255,255,0.03)",
+                background: "var(--layer-1)",
                 border: "1px solid var(--border)",
                 opacity: isPaused ? 0.55 : 1,
               }}

@@ -55,7 +55,7 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block", flexShrink: 0 }}>
       {/* Track */}
-      <circle cx={cx} cy={cx} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={7} />
+      <circle cx={cx} cy={cx} r={R} fill="none" stroke="var(--layer-2)" strokeWidth={7} />
       {/* Filled arc */}
       <motion.circle
         cx={cx} cy={cx} r={R}
@@ -99,7 +99,7 @@ function CalorieBudgetBar({ eaten, goal, remaining }: { eaten: number; goal: num
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ display: "block" }}>
       {/* Track */}
-      <rect x={0} y={0} width={W} height={H} rx={H / 2} fill="rgba(255,255,255,0.07)" />
+      <rect x={0} y={0} width={W} height={H} rx={H / 2} fill="var(--layer-2)" />
       {/* Fill */}
       <motion.rect
         x={0} y={0} height={H} rx={H / 2}
@@ -157,7 +157,7 @@ function MacroSVGBars({
               </span>
             </div>
             <svg viewBox={`0 0 ${W} ${BH}`} width="100%" height={BH} style={{ display: "block" }}>
-              <rect x={0} y={0} width={W} height={BH} rx={BH / 2} fill="rgba(255,255,255,0.07)" />
+              <rect x={0} y={0} width={W} height={BH} rx={BH / 2} fill="var(--layer-2)" />
               <motion.rect
                 x={0} y={0} height={BH} rx={BH / 2}
                 fill={col}
@@ -192,7 +192,7 @@ function TrackedNutrientPill({
           {value}<span className="font-normal text-[12px]">{unit}</span>
         </span>
       </div>
-      <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
         <div className="h-full rounded-full w-full"
           style={levelBarStyle(over && invertAlert ? 1.1 : fraction)} />
       </div>
@@ -604,7 +604,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   style={{ overflow: "hidden" }}
                 >
                   <div className="mt-3 pt-3 rounded-xl p-3"
-                    style={{ borderTop: "1px solid rgba(255,255,255,0.08)", background: `color-mix(in srgb, ${dayQuality.color} 5%, transparent)`, border: `1px solid color-mix(in srgb, ${dayQuality.color} 20%, transparent)` }}>
+                    style={{ borderTop: "1px solid var(--layer-3)", background: `color-mix(in srgb, ${dayQuality.color} 5%, transparent)`, border: `1px solid color-mix(in srgb, ${dayQuality.color} 20%, transparent)` }}>
                     <p className="text-[12px] font-semibold mb-2" style={{ color: dayQuality.color }}>
                       Qualité nutritionnelle du jour · {dayQuality.label}
                     </p>
@@ -628,8 +628,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 onClick={handleUnlockTap}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all active:scale-90"
                 style={{
-                  background: unlockConfirming ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${unlockConfirming ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"}`,
+                  background: unlockConfirming ? "rgba(239,68,68,0.18)" : "var(--layer-2)",
+                  border: `1px solid ${unlockConfirming ? "rgba(239,68,68,0.5)" : "var(--layer-3)"}`,
                   color: unlockConfirming ? "var(--danger)" : "var(--text-muted)",
                 }}
                 title="Déverrouiller pour modifier la journée"
@@ -643,7 +643,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               onClick={() => setShowValidateModal(true)}
               className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-medium transition-all"
               style={{
-                background: "rgba(255,255,255,0.04)",
+                background: "var(--layer-1)",
                 border: "1px solid var(--border)",
                 color: "var(--text-secondary)",
               }}
@@ -693,10 +693,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             transition={{ duration: 0.3, delay: 0.068 }}
             className="mb-5 flex items-center gap-2 px-3 py-2.5 rounded-xl"
             style={{
-              background: dietPaused ? "rgba(255,255,255,0.03)"
+              background: dietPaused ? "var(--layer-1)"
                 : dietReport?.day.status === "ecarts" ? "rgba(239,68,68,0.08)"
                 : dietReport?.day.status === "conforme" ? "rgba(34,197,94,0.08)"
-                : "rgba(255,255,255,0.03)",
+                : "var(--layer-1)",
               border: `1px solid ${dietPaused ? "var(--border)"
                 : dietReport?.day.status === "ecarts" ? "rgba(239,68,68,0.25)"
                 : dietReport?.day.status === "conforme" ? "rgba(34,197,94,0.25)" : "var(--border)"}`,
@@ -725,7 +725,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               onClick={handleToggleDietPause}
               className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
               style={{
-                background: dietPaused ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
+                background: dietPaused ? "rgba(251,191,36,0.15)" : "var(--layer-2)",
                 color: dietPaused ? "var(--carbs)" : "var(--text-muted)",
               }}
               aria-label={dietPaused ? "Réactiver le suivi du régime" : "Ne pas suivre le régime aujourd'hui"}
@@ -737,7 +737,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               type="button"
               onClick={() => setShowDietInfo(true)}
               className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
-              style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}
+              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}
               aria-label="Voir les repères du régime"
               title="Voir ce qui est interdit / à favoriser"
             >
@@ -861,7 +861,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 >
                   <div className="pt-3 space-y-3">
                     <div className="rounded-2xl p-4 overflow-hidden"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <WaterTracker
                         date={date}
                         waterMl={waterMl}
@@ -945,7 +945,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl p-6 pb-10"
               style={{
                 background: "rgba(13,13,17,0.98)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: "1px solid var(--layer-3)",
                 borderBottom: "none",
                 backdropFilter: "blur(24px)",
               }}
@@ -968,7 +968,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   { label: "Lipides",   val: `${Math.round(totals.fatG)}g / ${goals.fatGrams}g`,        color: "var(--fat)" },
                 ].map(({ label, val, color }) => (
                   <div key={label} className="p-3 rounded-xl text-center"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <p className="text-[12px] tabular-nums font-bold" style={{ color }}>{val}</p>
                     <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{label}</p>
                   </div>
@@ -1022,7 +1022,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             style={{
               background: "rgba(30,30,40,0.92)",
               backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid var(--layer-3)",
               whiteSpace: "nowrap",
             }}
           >

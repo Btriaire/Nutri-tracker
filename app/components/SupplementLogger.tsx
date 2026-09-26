@@ -311,7 +311,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
 
       {/* Comme hier — quick re-add from yesterday's intakes, collapsed by default */}
       {yesterdaySuggestions.length > 0 && (
-        <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <button
             type="button"
             onClick={() => setShowYesterday(v => !v)}
@@ -391,7 +391,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   onChange={e => handleSelectProduct(e.target.value)}
                   disabled={!!editingIntakeId}
                   className="w-full px-3 py-2 rounded-lg text-[12px] disabled:opacity-60"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 >
                   <option value="">Sélectionner un supplément</option>
                   {(editingIntakeId && !activeProducts.some(p => p.id === form.supplementId)
@@ -418,7 +418,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                       setForm(prev => ({ ...prev, time, moment: guessMoment(hour) }));
                     }}
                     className="flex-1 px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                 </div>
               </div>
@@ -437,7 +437,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                         onClick={() => setForm(prev => ({ ...prev, moment: m.value }))}
                         className="px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all"
                         style={{
-                          background: selected ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
+                          background: selected ? "rgba(52,211,153,0.18)" : "var(--layer-2)",
                           border: `1px solid ${selected ? "rgba(52,211,153,0.45)" : "var(--border)"}`,
                           color: selected ? "var(--fiber)" : "var(--text-muted)",
                         }}
@@ -459,7 +459,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   placeholder="Ex: Avec nourriture, avec jus d'orange"
                   className="w-full px-3 py-2 rounded-lg text-[12px]"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 />
               </div>
 
@@ -482,7 +482,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   onClick={resetForm}
                   className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
                   style={{
-                    background: "rgba(255,255,255,0.05)",
+                    background: "var(--layer-2)",
                     border: "1px solid var(--border)",
                     color: "var(--text-muted)",
                   }}
@@ -508,7 +508,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               className="rounded-lg p-3 flex items-start justify-between"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
+              style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

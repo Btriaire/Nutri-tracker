@@ -106,8 +106,8 @@ export default function ChartPrefsPanel() {
                     <button key={opt.value} onClick={() => setCalType(opt.value)}
                       className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all"
                       style={{
-                        background: calType === opt.value ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.03)",
-                        border: `1.5px solid ${calType === opt.value ? "rgba(167,139,250,0.5)" : "rgba(255,255,255,0.07)"}`,
+                        background: calType === opt.value ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
+                        border: `1.5px solid ${calType === opt.value ? "rgba(167,139,250,0.5)" : "var(--layer-2)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
                       <span className="text-[12px] font-medium"
@@ -129,8 +129,8 @@ export default function ChartPrefsPanel() {
                     <button key={opt.value} onClick={() => setMacroDisp(opt.value)}
                       className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all"
                       style={{
-                        background: macroDisp === opt.value ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.03)",
-                        border: `1.5px solid ${macroDisp === opt.value ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.07)"}`,
+                        background: macroDisp === opt.value ? "rgba(52,211,153,0.12)" : "var(--layer-1)",
+                        border: `1.5px solid ${macroDisp === opt.value ? "rgba(52,211,153,0.4)" : "var(--layer-2)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
                       <span className="text-[12px] font-medium"
@@ -152,8 +152,8 @@ export default function ChartPrefsPanel() {
                     <button key={opt.value} onClick={() => setWtType(opt.value)}
                       className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all"
                       style={{
-                        background: wtType === opt.value ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.03)",
-                        border: `1.5px solid ${wtType === opt.value ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"}`,
+                        background: wtType === opt.value ? "rgba(251,191,36,0.12)" : "var(--layer-1)",
+                        border: `1.5px solid ${wtType === opt.value ? "rgba(251,191,36,0.4)" : "var(--layer-2)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
                       <span className="text-[12px] font-medium"
@@ -177,7 +177,7 @@ export default function ChartPrefsPanel() {
                     <span className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>Micro-nutriments</span>
                   </div>
                   <div className="w-10 h-5.5 rounded-full relative flex-shrink-0 transition-all"
-                    style={{ background: showMicro ? "var(--protein)" : "rgba(255,255,255,0.12)", height: "22px" }}>
+                    style={{ background: showMicro ? "var(--protein)" : "var(--layer-3)", height: "22px" }}>
                     <span className="absolute top-[2px] w-[18px] h-[18px] rounded-full transition-all"
                       style={{ background: "#fff", left: showMicro ? "calc(100% - 20px)" : "2px" }} />
                   </div>

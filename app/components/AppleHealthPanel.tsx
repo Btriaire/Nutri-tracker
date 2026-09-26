@@ -82,7 +82,7 @@ export default function AppleHealthPanel() {
               </p>
 
               {/* Method selector */}
-              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 {([["hae", "Health Auto Export"], ["shortcuts", "Raccourci Shortcuts"]] as const).map(([key, label]) => (
                   <button key={key} onClick={() => setMethod(key)}
                     className="flex-1 py-1.5 rounded-md text-[12px] font-medium transition-all"
@@ -117,7 +117,7 @@ export default function AppleHealthPanel() {
                       </label>
                       <div className="flex gap-2">
                         <div className="flex-1 px-3 py-2 rounded-lg text-[12px] font-mono break-all"
-                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                          style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                           {haeUrl}
                         </div>
                         <button onClick={() => copyText(haeUrl, "haeUrl")}
@@ -133,7 +133,7 @@ export default function AppleHealthPanel() {
                         <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>URL du webhook</label>
                         <div className="flex gap-2">
                           <div className="flex-1 px-3 py-2 rounded-lg text-[12px] font-mono break-all"
-                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                            style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                             {ingestUrl}
                           </div>
                           <button onClick={() => copyText(ingestUrl, "url")}
@@ -148,7 +148,7 @@ export default function AppleHealthPanel() {
                         <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>Token (à coller dans le Dictionnaire, pas dans l&apos;URL)</label>
                         <div className="flex gap-2">
                           <div className="flex-1 px-3 py-2 rounded-lg text-[12px] font-mono break-all"
-                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                            style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                             {token}
                           </div>
                           <button onClick={() => token && copyText(token, "token")}
@@ -170,7 +170,7 @@ export default function AppleHealthPanel() {
               )}
 
               {method === "hae" ? (
-                <div className="rounded-lg p-3 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                <div className="rounded-lg p-3 space-y-2.5" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                   <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>Configurer Health Auto Export (~5 min) :</p>
 
                   <div>
@@ -202,7 +202,7 @@ export default function AppleHealthPanel() {
                   </div>
                 </div>
               ) : (
-              <div className="rounded-lg p-3 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+              <div className="rounded-lg p-3 space-y-2.5" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>Créer le Raccourci — guide détaillé (gratuit, ~15 min) :</p>
 
                 <div>

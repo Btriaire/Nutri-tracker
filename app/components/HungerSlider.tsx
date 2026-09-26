@@ -59,7 +59,7 @@ export default function HungerSlider({ value, onChange, label, compact = false }
                   flex:         1,
                   height:       3,
                   borderRadius: 2,
-                  background:   filled ? color : "rgba(255,255,255,0.1)",
+                  background:   filled ? color : "var(--layer-3)",
                   border:       "none",
                   padding:      0,
                   transition:   "background 0.12s",
@@ -76,7 +76,7 @@ export default function HungerSlider({ value, onChange, label, compact = false }
           aria-label="Moins faim"
           style={{
             width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
-            background: "rgba(255,255,255,0.08)",
+            background: "var(--layer-3)",
             color: "var(--text-muted)",
             fontSize: 13, fontWeight: 700, lineHeight: 1,
             cursor: "pointer", flexShrink: 0,
@@ -89,7 +89,7 @@ export default function HungerSlider({ value, onChange, label, compact = false }
           aria-label="Plus faim"
           style={{
             width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
-            background: "rgba(255,255,255,0.08)",
+            background: "var(--layer-3)",
             color: "var(--text-muted)",
             fontSize: 13, fontWeight: 700, lineHeight: 1,
             cursor: "pointer", flexShrink: 0,

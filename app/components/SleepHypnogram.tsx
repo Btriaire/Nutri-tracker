@@ -187,7 +187,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
             <line key={s}
               x1={PAD.left} y1={yFn(s)}
               x2={PAD.left + plotW} y2={yFn(s)}
-              stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
+              stroke="var(--layer-1)" strokeWidth={1} />
           ))}
 
           {/* Filled stage rectangles */}
@@ -210,7 +210,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
             <line key={i}
               x1={xFn(t)} y1={PAD.top}
               x2={xFn(t)} y2={PAD.top + plotH}
-              stroke="rgba(255,255,255,0.12)" strokeWidth={1} strokeDasharray="3 3" />
+              stroke="var(--layer-3)" strokeWidth={1} strokeDasharray="3 3" />
           ))}
 
           {/* Step line */}
@@ -243,7 +243,7 @@ export default function SleepHypnogram({ sleepMinutes, bedtimeHour = 23 }: Props
           {/* X axis line */}
           <line x1={PAD.left} y1={PAD.top + plotH}
             x2={PAD.left + plotW} y2={PAD.top + plotH}
-            stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+            stroke="var(--layer-3)" strokeWidth={1} />
         </svg>
       </div>
 

@@ -109,7 +109,7 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                 value={m.amount}
                 onChange={e => handleAmountChange(m.code, parseFloat(e.target.value) || 0)}
                 className="w-16 px-1.5 py-1 rounded text-[12px]"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
               />
               <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                 {m.unit}
@@ -180,26 +180,26 @@ export default function MicronutrientSelector({ micronutrients, onChange }: Prop
                   type="text" placeholder="Nom (ex: Choline)" value={newLabel}
                   onChange={e => setNewLabel(e.target.value)}
                   className="w-full px-2 py-1 rounded text-[12px]"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                 />
                 <div className="flex gap-1.5">
                   <input
                     type="text" placeholder="Unité (mg, µg...)" value={newUnit}
                     onChange={e => setNewUnit(e.target.value)}
                     className="flex-1 min-w-0 px-2 py-1 rounded text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                   <input
                     type="number" placeholder="AJR (optionnel)" value={newRda}
                     onChange={e => setNewRda(e.target.value)}
                     className="flex-1 min-w-0 px-2 py-1 rounded text-[12px]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                   />
                 </div>
                 <div className="flex gap-1.5">
                   <button type="button" onClick={() => setShowCreate(false)}
                     className="flex-1 py-1 rounded text-[12px] font-medium"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
+                    style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                     Annuler
                   </button>
                   <button type="button" onClick={handleCreateCustom} disabled={creating || !newLabel.trim() || !newUnit.trim()}

@@ -49,7 +49,7 @@ export default function FaceScanTrendChart({ scans }: Props) {
                     <stop offset="100%" stopColor={axis.color} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-2)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis domain={[1, 5]} hide />
                 <Tooltip content={({ active, payload, label }) => {

@@ -53,7 +53,7 @@ function StatRow({ icon, label, value, unit, color }: {
 }) {
   if (value == null || value === 0) return null;
   return (
-    <div className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+    <div className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid var(--layer-1)" }}>
       <div className="flex items-center gap-2">
         <span style={{ color: color ?? "var(--text-muted)" }}>{icon}</span>
         <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
@@ -120,7 +120,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-safe-top pt-4 pb-3 flex-shrink-0"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          style={{ borderBottom: "1px solid var(--layer-3)" }}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center"
               style={{ background: "rgba(139,92,246,0.2)", border: "1px solid rgba(139,92,246,0.4)" }}>
@@ -146,7 +146,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
             <button key={p.key} onClick={() => setPeriod(p.key)}
               className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
               style={{
-                background: period === p.key ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.05)",
+                background: period === p.key ? "rgba(139,92,246,0.15)" : "var(--layer-2)",
                 border: `1px solid ${period === p.key ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
                 color: period === p.key ? "var(--protein)" : "var(--text-secondary)",
               }}>

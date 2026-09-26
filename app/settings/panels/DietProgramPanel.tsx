@@ -87,7 +87,7 @@ export default function DietProgramPanel() {
                 <button key={label} onClick={() => !saving && handleSelect(id)} disabled={saving}
                   className="px-3 py-1.5 rounded-full text-[11.5px] font-medium transition-all"
                   style={{
-                    background: active ? "rgba(56,189,248,0.15)" : "rgba(255,255,255,0.04)",
+                    background: active ? "rgba(56,189,248,0.15)" : "var(--layer-1)",
                     border:     active ? "1px solid rgba(56,189,248,0.5)" : "1px solid var(--border)",
                     color:      active ? "#38bdf8" : "var(--text-muted)",
                   }}>
@@ -113,7 +113,7 @@ export default function DietProgramPanel() {
                 <div className="space-y-1.5">
                   {DIET_MEAL_ORDER.map((meal) => (
                     <div key={meal} className="px-3 py-2 rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{DIET_MEAL_LABEL[meal]}</p>
                       <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
                     </div>

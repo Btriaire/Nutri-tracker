@@ -10,7 +10,7 @@ import type { StreakData, HeatmapDay } from "@/app/api/streak/route";
 // ── Heat colour (0-100+ pct) ──────────────────────────────────────────────────
 
 function heatColor(day: HeatmapDay): string {
-  if (!day.logged || day.pct === 0) return "rgba(255,255,255,0.05)";
+  if (!day.logged || day.pct === 0) return "var(--layer-2)";
   if (day.pct < 50)  return "rgba(249,115,22,0.25)";
   if (day.pct < 80)  return "rgba(249,115,22,0.50)";
   if (day.pct < 100) return "rgba(249,115,22,0.75)";
@@ -90,7 +90,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
           <div key={v} style={{
             width: LEGEND_CELL, height: LEGEND_CELL, borderRadius: 2, flexShrink: 0,
             background: v === 0
-              ? "rgba(255,255,255,0.05)"
+              ? "var(--layer-2)"
               : v === 0.25 ? "rgba(249,115,22,0.25)"
               : v === 0.5  ? "rgba(249,115,22,0.50)"
               : v === 0.75 ? "rgba(249,115,22,0.75)"
@@ -137,8 +137,8 @@ export default function StreakWidget() {
   if (loading) {
     return (
       <div className="glass p-4 animate-pulse">
-        <div className="h-3 rounded-full w-1/3 mb-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-        <div className="h-16 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-3 rounded-full w-1/3 mb-3" style={{ background: "var(--layer-2)" }} />
+        <div className="h-16 rounded-xl" style={{ background: "var(--layer-1)" }} />
       </div>
     );
   }
@@ -181,7 +181,7 @@ export default function StreakWidget() {
 
       {/* Stats row */}
       <div className="flex items-stretch mb-2"
-        style={{ borderRadius: 8, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        style={{ borderRadius: 8, overflow: "hidden", background: "var(--layer-1)", border: "1px solid var(--border)" }}>
         <StatPill Icon={IconTrophy} label="Record" value={data.longestStreak} sub="j" />
         <div style={{ width: 1, background: "var(--border)", margin: "4px 0" }} />
         <StatPill Icon={IconCalendar} label="Jours loggés" value={data.totalLoggedDays} />

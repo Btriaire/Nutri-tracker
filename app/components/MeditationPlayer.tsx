@@ -470,7 +470,7 @@ function NowPlaying({
             onClick={() => onChangeTrack(t)}
             className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all"
             style={{
-              background: t.id === track.id ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
+              background: t.id === track.id ? "rgba(52,211,153,0.18)" : "var(--layer-2)",
               border:     `1px solid ${t.id === track.id ? "rgba(52,211,153,0.5)" : "var(--border)"}`,
               color:      t.id === track.id ? "var(--fiber)" : "var(--text-muted)",
             }}
@@ -778,7 +778,7 @@ export default function MeditationPlayer() {
           <div className="flex items-center gap-1">
             {selected.steps.map((_, i) => (
               <motion.div key={i} className="flex-1 h-1 rounded-full"
-                animate={{ background: i < stepIdx ? "var(--fiber)" : i === stepIdx ? selected.color : "rgba(255,255,255,0.08)" }}
+                animate={{ background: i < stepIdx ? "var(--fiber)" : i === stepIdx ? selected.color : "var(--layer-3)" }}
                 transition={{ duration: 0.5 }}
               />
             ))}
@@ -908,7 +908,7 @@ export default function MeditationPlayer() {
                 <button key={d} onClick={() => setAiDuration(d)}
                   className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
                   style={{
-                    background: aiDuration === d ? "rgba(139,92,246,0.22)" : "rgba(255,255,255,0.04)",
+                    background: aiDuration === d ? "rgba(139,92,246,0.22)" : "var(--layer-1)",
                     border: `1px solid ${aiDuration === d ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
                     color: aiDuration === d ? "var(--protein)" : "var(--text-muted)",
                   }}>
@@ -926,7 +926,7 @@ export default function MeditationPlayer() {
                 onClick={() => { setAiTheme(label); handleAiSearch(label); }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium transition-all"
                 style={{
-                  background: aiTheme === label ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)",
+                  background: aiTheme === label ? "rgba(139,92,246,0.2)" : "var(--layer-2)",
                   border: `1px solid ${aiTheme === label ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
                   color: aiTheme === label ? "var(--protein)" : "var(--text-muted)",
                 }}>
@@ -945,7 +945,7 @@ export default function MeditationPlayer() {
               placeholder="Thème libre… (ex: chakra sacral, pleine lune)"
               className="flex-1 px-3 py-2 rounded-xl text-[12px] outline-none"
               style={{
-                background: "rgba(255,255,255,0.04)",
+                background: "var(--layer-1)",
                 border: "1px solid rgba(139,92,246,0.25)",
                 color: "var(--text-primary)",
               }}
@@ -1045,12 +1045,12 @@ export default function MeditationPlayer() {
               <span className="text-[12px] uppercase" style={{ color: isToday ? "var(--fiber)" : "var(--text-muted)" }}>{label}</span>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                 style={{
-                  background: hasSess ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
+                  background: hasSess ? "rgba(52,211,153,0.18)" : "var(--layer-1)",
                   border: `1px solid ${hasSess ? "rgba(52,211,153,0.4)" : "var(--border)"}`,
                 }}>
                 {hasSess
                   ? <span className="text-[12px]">🧘</span>
-                  : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", display: "inline-block" }} />
+                  : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--layer-3)", display: "inline-block" }} />
                 }
               </div>
               {hasSess && <span className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>{mins}m</span>}
@@ -1129,7 +1129,7 @@ export default function MeditationPlayer() {
       {/* ── Historique / Tracking ────────────────────────────────────── */}
       {allSessions.length > 0 && (
         <div className="rounded-2xl overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <button
             onClick={() => setShowHistory(h => !h)}
             className="w-full flex items-center justify-between px-4 py-3">
@@ -1159,7 +1159,7 @@ export default function MeditationPlayer() {
                 <div className="px-4 pb-4 space-y-1.5">
                   {allSessions.slice(0, 15).map((s) => (
                     <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <span className="text-[16px]">
                         {PROGRAMS.find(p => p.id === s.programId)?.emoji ?? "🧘"}
                       </span>

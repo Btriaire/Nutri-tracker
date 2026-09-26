@@ -58,7 +58,7 @@ export default function MeasurementReminderBanner() {
       </p>
       <button onClick={handleDismiss} aria-label="Masquer ce rappel"
         className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
-        style={{ background: "rgba(255,255,255,0.06)" }}>
+        style={{ background: "var(--layer-2)" }}>
         <IconX size={12} stroke={2} style={{ color: "var(--text-muted)" }} />
       </button>
     </div>

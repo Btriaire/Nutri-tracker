@@ -2,7 +2,7 @@ export function Shimmer({ className = "", style = {} }: { className?: string; st
   return (
     <div
       className={`rounded-xl animate-pulse ${className}`}
-      style={{ background: "rgba(255,255,255,0.07)", ...style }}
+      style={{ background: "var(--layer-2)", ...style }}
     />
   );
 }

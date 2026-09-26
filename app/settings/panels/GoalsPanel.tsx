@@ -33,7 +33,7 @@ function SliderField({ label, unit, value, min, max, step, color, onChange }: {
         onChange={e => onChange(e.target.value)}
         className="nt-slider"
         style={{
-          background: `linear-gradient(to right, ${color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+          background: `linear-gradient(to right, ${color} ${pct}%, var(--layer-3) ${pct}%)`,
         }}
       />
       <div className="flex justify-between text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
@@ -326,7 +326,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
 
   const inputClass = "w-full px-3 py-2 rounded-xl text-[13px] transition-colors outline-none";
   const inputStyle = {
-    background: "rgba(255,255,255,0.06)",
+    background: "var(--layer-2)",
     border: "1px solid var(--border)",
     color: "var(--text-primary)",
   };
@@ -411,7 +411,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     <button key={g} onClick={() => setGender(g)}
                       className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
                       style={{
-                        background: gender === g ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                        background: gender === g ? "rgba(249,115,22,0.12)" : "var(--layer-1)",
                         border: `1px solid ${gender === g ? "var(--calories)" : "var(--border)"}`,
                         color: gender === g ? "var(--calories)" : "var(--text-muted)",
                       }}>
@@ -469,7 +469,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                         <button key={p.months} onClick={() => setTargetDate(d)}
                           className="px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                           style={{
-                            background: sel ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+                            background: sel ? "rgba(99,102,241,0.15)" : "var(--layer-2)",
                             border: `1px solid ${sel ? "rgba(99,102,241,0.5)" : "var(--border)"}`,
                             color: sel ? "#a5b4fc" : "var(--text-muted)",
                           }}>
@@ -570,7 +570,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                             onClick={() => { setActivity(level); setActivityLevelOpen(false); }}
                             className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all"
                             style={{
-                              background: activity === level ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.03)",
+                              background: activity === level ? "rgba(249,115,22,0.08)" : "var(--layer-1)",
                               border: `1px solid ${activity === level ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
                             }}>
                             <div>
@@ -596,7 +596,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     <button key={g} onClick={() => setWeeklyGoal(g)}
                       className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
                       style={{
-                        background: weeklyGoal === g ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.04)",
+                        background: weeklyGoal === g ? "rgba(167,139,250,0.12)" : "var(--layer-1)",
                         border: `1px solid ${weeklyGoal === g ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                         color: weeklyGoal === g ? "var(--protein)" : "var(--text-muted)",
                       }}>
@@ -648,7 +648,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                           onChange={e => setApSessions(parseInt(e.target.value))}
                           className="nt-slider"
                           style={{
-                            background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, rgba(255,255,255,0.1) ${((apSessions - 1) / 6) * 100}%)`,
+                            background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, var(--layer-3) ${((apSessions - 1) / 6) * 100}%)`,
                           }}
                         />
                         <div className="flex justify-between text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
@@ -667,7 +667,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                             <button key={d} onClick={() => setApMinDuration(d)}
                               className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                               style={{
-                                background: apMinDuration === d ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                                background: apMinDuration === d ? "var(--calories)" : "var(--layer-2)",
                                 color: apMinDuration === d ? "#fff" : "var(--text-muted)",
                                 border: `1px solid ${apMinDuration === d ? "var(--calories)" : "var(--border)"}`,
                               }}>
@@ -691,7 +691,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                               }}
                               className="rounded-xl p-3 text-left transition-all"
                               style={{
-                                background: isSelected ? "rgba(249,115,22,0.08)" : "rgba(255,255,255,0.04)",
+                                background: isSelected ? "rgba(249,115,22,0.08)" : "var(--layer-1)",
                                 border: `1px solid ${isSelected ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
                               }}>
                               <div className="flex items-center gap-2 mb-1">
@@ -700,7 +700,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                   {act.label}
                                 </p>
                                 <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                                  style={{ background: isSelected ? "var(--calories)" : "rgba(255,255,255,0.06)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
+                                  style={{ background: isSelected ? "var(--calories)" : "var(--layer-2)", border: `1.5px solid ${isSelected ? "var(--calories)" : "var(--border)"}` }}>
                                   {isSelected && <IconCircleCheck size={10} color="#fff" />}
                                 </div>
                               </div>
@@ -777,7 +777,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                             <button key={key} onClick={() => handleApplyProgram(key)}
                               className="flex flex-col items-start p-3 rounded-xl text-left transition-all"
                               style={{
-                                background: active ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                                background: active ? "rgba(249,115,22,0.12)" : "var(--layer-1)",
                                 border: `1px solid ${active ? "rgba(249,115,22,0.5)" : "var(--border)"}`,
                               }}>
                               <span className="text-base mb-1">{prog.emoji}</span>
@@ -810,7 +810,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                               <button key={key} onClick={() => handleApplyProgram(key)}
                                 className="flex flex-col items-start p-2.5 rounded-xl text-left transition-all"
                                 style={{
-                                  background: active ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)",
+                                  background: active ? "rgba(34,197,94,0.15)" : "var(--layer-1)",
                                   border: `1px solid ${active ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.15)"}`,
                                 }}>
                                 <span className="text-base mb-1">{prog.emoji}</span>
@@ -862,7 +862,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                             <button key={key} onClick={() => setTdeeFormula(key)}
                               className="flex-1 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                               style={{
-                                background: tdeeFormula === key ? "var(--calories)" : "rgba(255,255,255,0.05)",
+                                background: tdeeFormula === key ? "var(--calories)" : "var(--layer-2)",
                                 color: tdeeFormula === key ? "#fff" : "var(--text-muted)",
                                 border: `1px solid ${tdeeFormula === key ? "var(--calories)" : "var(--border)"}`,
                               }}>
@@ -893,7 +893,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                     placeholder="ex: 18"
                                     className="w-full px-3 py-2 rounded-xl text-[13px] outline-none transition-colors"
                                     style={{
-                                      background: "rgba(255,255,255,0.06)",
+                                      background: "var(--layer-2)",
                                       border: "1px solid var(--border)",
                                       color: "var(--text-primary)",
                                       paddingRight: "28px",
@@ -912,7 +912,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                           className="w-full btn gap-2 text-[12px]"
                           style={{
                             height: "34px",
-                            background: age && height && gender ? "var(--calories)" : "rgba(255,255,255,0.06)",
+                            background: age && height && gender ? "var(--calories)" : "var(--layer-2)",
                             color: age && height && gender ? "#fff" : "var(--text-muted)",
                             border: "none",
                             opacity: age && height && gender ? 1 : 0.5,
@@ -985,7 +985,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     className="w-full btn gap-2 text-[13px]"
                     style={{
                       height: "38px",
-                      background: age && height && gender ? "linear-gradient(135deg,rgba(52,211,153,0.3),rgba(16,185,129,0.2))" : "rgba(255,255,255,0.06)",
+                      background: age && height && gender ? "linear-gradient(135deg,rgba(52,211,153,0.3),rgba(16,185,129,0.2))" : "var(--layer-2)",
                       color: age && height && gender ? "var(--fiber)" : "var(--text-muted)",
                       border: age && height && gender ? "1px solid rgba(52,211,153,0.4)" : "1px solid var(--border)",
                       opacity: age && height && gender ? 1 : 0.5,
@@ -1095,7 +1095,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     <button
                       onClick={() => setDeductBurned(v => !v)}
                       className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                      style={{ background: deductBurned ? "var(--fit-green, var(--fiber))" : "rgba(255,255,255,0.12)" }}
+                      style={{ background: deductBurned ? "var(--fit-green, var(--fiber))" : "var(--layer-3)" }}
                     >
                       <span
                         className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
@@ -1165,7 +1165,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   className="flex-1 btn text-[12px]"
                   style={{
                     height: "36px",
-                    background: "rgba(255,255,255,0.06)",
+                    background: "var(--layer-2)",
                     border: "1px solid var(--border)",
                     color: "var(--text-muted)",
                   }}>

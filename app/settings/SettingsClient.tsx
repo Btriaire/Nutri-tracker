@@ -372,7 +372,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                 <button
                   onClick={() => { setShowFullSync(v => !v); setYearProgress([]); setFullSyncDone(false); setSyncMsg(""); }}
                   className="w-full flex items-center justify-between px-3 py-2.5 text-[12px] transition-colors"
-                  style={{ color: "var(--text-secondary)", background: "rgba(255,255,255,0.03)" }}
+                  style={{ color: "var(--text-secondary)", background: "var(--layer-1)" }}
                 >
                   <span className="flex items-center gap-2">
                     <IconDatabase size={13} />
@@ -405,7 +405,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                                 disabled={fullSyncRunning}
                                 className="px-2.5 py-1 rounded-md text-[12px] transition-colors"
                                 style={{
-                                  background: yearsBack === y ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                                  background: yearsBack === y ? "var(--accent)" : "var(--layer-2)",
                                   color:      yearsBack === y ? "#fff" : "var(--text-secondary)",
                                   border:     `1px solid ${yearsBack === y ? "var(--accent)" : "var(--border)"}`,
                                 }}>
@@ -492,7 +492,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
         >
           <button className="w-full flex items-center gap-3" onClick={() => setWithingsOpen(v => !v)}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, rgba(0,150,255,0.25) 0%, rgba(0,200,180,0.25) 100%)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              style={{ background: "linear-gradient(135deg, rgba(0,150,255,0.25) 0%, rgba(0,200,180,0.25) 100%)", border: "1px solid var(--layer-3)" }}>
               ⚖️
             </div>
             <div className="flex-1 min-w-0 text-left">

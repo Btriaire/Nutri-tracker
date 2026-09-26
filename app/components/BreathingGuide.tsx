@@ -275,7 +275,7 @@ export default function BreathingGuide() {
             <button key={p.id} onClick={() => handleSelectProgram(p.id)}
               className="flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all text-center"
               style={{
-                background: sel ? `color-mix(in srgb, ${p.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
+                background: sel ? `color-mix(in srgb, ${p.color} 9%, transparent)` : "var(--layer-1)",
                 border: `1px solid ${sel ? alpha(p.color, 33) : "var(--border)"}`,
               }}>
               <span className="text-[20px]">{p.emoji}</span>
@@ -345,7 +345,7 @@ export default function BreathingGuide() {
           {active && (
             <svg className="absolute inset-0 w-full h-full" style={{ transform: "rotate(-90deg)" }}>
               <circle cx="65" cy="65" r="60" fill="none"
-                stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+                stroke="var(--layer-3)" strokeWidth="3" />
               <motion.circle cx="65" cy="65" r="60" fill="none"
                 stroke="rgba(255,255,255,0.7)" strokeWidth="3"
                 strokeLinecap="round"
@@ -397,7 +397,7 @@ export default function BreathingGuide() {
                 disabled={active}
                 className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                 style={{
-                  background: sel ? `color-mix(in srgb, ${prog.color} 15%, transparent)` : "rgba(255,255,255,0.04)",
+                  background: sel ? `color-mix(in srgb, ${prog.color} 15%, transparent)` : "var(--layer-1)",
                   border: `1px solid ${sel ? alpha(prog.color, 38) : "var(--border)"}`,
                   color: sel ? prog.color : "var(--text-muted)",
                   opacity: active ? 0.5 : 1,

@@ -52,7 +52,7 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                           / {goals.dailyCalories} kcal
                         </span>
                       </div>
-                      <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: "rgba(255,255,255,0.07)" }}>
+                      <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: "var(--layer-2)" }}>
                         <div className="h-full rounded-full" style={{
                           background: "var(--calories)",
                           width: `${Math.min((todayPoint.calories / goals.dailyCalories) * 100, 100)}%`,
@@ -67,7 +67,7 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                           { label: "Eau",       val: Math.round((todayPoint.waterMl ?? 0) / 100) / 10, goal: (goals.waterMl ?? 2000) / 1000, color: "var(--info)", unit: "L" },
                         ].map(({ label, val, goal, color, unit }) => (
                           <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                            style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                             <span className="text-[16px] font-bold tabular-nums" style={{ color }}>{val}{unit}</span>
                             <span className="text-[12px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
                             <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
@@ -94,7 +94,7 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                       { icon: IconHeart,    label: "FC moy.",         val: todayPoint?.heartRateAvg ? `${todayPoint.heartRateAvg} bpm` : "—",               color: "var(--fit-red)",   goal: todayPoint?.heartRateAvg ? (todayPoint.heartRateAvg < 60 ? "Repos" : todayPoint.heartRateAvg < 100 ? "Normal" : "Élevé") : "" },
                     ].map(({ icon: Icon, label, val, color, goal }) => (
                       <div key={label} className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <Icon size={22} stroke={1.5} style={{ color, flexShrink: 0 }} />
                         <div>
                           <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color }}>{val}</p>
@@ -114,7 +114,7 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-3 p-3 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <IconMoon size={24} stroke={1.5} style={{ color: "var(--fit-indigo)", flexShrink: 0 }} />
                       <div>
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--fit-indigo)" }}>
@@ -129,7 +129,7 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <IconDroplet size={24} stroke={1.5} style={{ color: "var(--info)", flexShrink: 0 }} />
                       <div>
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--info)" }}>

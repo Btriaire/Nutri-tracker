@@ -253,7 +253,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
       onClick={() => copy(text, k)}
       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all flex-shrink-0"
       style={{
-        background: copied === k ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
+        background: copied === k ? "rgba(52,211,153,0.12)" : "var(--layer-2)",
         border: `1px solid ${copied === k ? "rgba(52,211,153,0.3)" : "var(--border)"}`,
         color: copied === k ? "var(--fiber)" : "var(--text-secondary)",
       }}>
@@ -268,7 +268,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,rgba(255,45,85,0.2),rgba(255,149,0,0.2))", border: "1px solid rgba(255,255,255,0.1)" }}>
+            style={{ background: "linear-gradient(135deg,rgba(255,45,85,0.2),rgba(255,149,0,0.2))", border: "1px solid var(--layer-3)" }}>
             🍎
           </div>
           <div>
@@ -291,7 +291,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
       )}
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+      <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
         {(["shortcut", "import"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className="flex-1 py-1.5 rounded-lg text-[12px] font-medium transition-all"
@@ -313,7 +313,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>Token secret</p>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[12px] truncate"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 {token ? token : <span style={{ color: "var(--text-muted)" }}>Aucun token — générez-en un</span>}
               </div>
               {token && <CopyBtn text={token} k="token" label="Copier" />}
@@ -333,7 +333,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>URL du webhook</p>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[12px] truncate"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 {webhookUrl}
               </div>
               <CopyBtn text={webhookUrl} k="url" label="Copier" />
@@ -342,7 +342,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
 
           {/* Instructions */}
           <div className="rounded-xl p-3 space-y-2"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
               Configuration du Shortcut iOS
             </p>
@@ -422,7 +422,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                     { label: "Avec sommeil", value: parsedDays.filter(d=>d.sleepMinutes).length },
                   ].map(({ label, value }) => (
                     <div key={label} className="px-3 py-2 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
                     </div>
@@ -444,7 +444,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                 <p className="text-[12px] text-center" style={{ color: "var(--text-secondary)" }}>
                   Envoi en cours… {sendProgress}%
                 </p>
-                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--layer-3)" }}>
                   <motion.div className="h-full rounded-full" style={{ background: "#ff9500" }}
                     animate={{ width: `${sendProgress}%` }} transition={{ duration: 0.3 }} />
                 </div>

@@ -202,7 +202,7 @@ export default function MealSection({
           disabled={uploading}
           className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
           style={{
-            background: uploading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
+            background: uploading ? "var(--layer-2)" : "var(--layer-1)",
             border: "1px solid var(--border)",
             color: photoUrl ? "var(--protein)" : "var(--text-muted)",
           }}
@@ -219,7 +219,7 @@ export default function MealSection({
           onClick={() => setPhotoAnalyzer(true)}
           className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--layer-1)",
             border: "1px solid var(--border)",
             color: "var(--text-muted)",
           }}
@@ -235,7 +235,7 @@ export default function MealSection({
             onClick={(e) => { e.stopPropagation(); setShowNutrition((x) => !x); }}
             className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
             style={{
-              background: showNutrition ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+              background: showNutrition ? "rgba(249,115,22,0.12)" : "var(--layer-1)",
               border: `1px solid ${showNutrition ? "rgba(249,115,22,0.4)" : "var(--border)"}`,
               color: showNutrition ? "var(--calories)" : "var(--text-muted)",
             }}
@@ -251,7 +251,7 @@ export default function MealSection({
             onClick={(e) => { e.stopPropagation(); setSaveMealOpen(true); }}
             className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
             style={{
-              background: "rgba(255,255,255,0.04)",
+              background: "var(--layer-1)",
               border: "1px solid var(--border)",
               color: "var(--text-muted)",
             }}
@@ -353,7 +353,7 @@ export default function MealSection({
                   </div>
                 )}
                 <div className="rounded-xl overflow-hidden"
-                  style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                  style={{ border: "1px solid var(--border)", background: "var(--layer-1)" }}>
                   {/* Header row */}
                   <div className="grid gap-1 px-3 py-2"
                     style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", borderBottom: "1px solid var(--border)" }}>
@@ -389,7 +389,7 @@ export default function MealSection({
                     const totFat  = entries.reduce((s, e) => s + e.nutrition.fatG, 0);
                     return (
                       <div className="grid gap-1 px-3 py-2"
-                        style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", background: "rgba(255,255,255,0.03)" }}>
+                        style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", background: "var(--layer-1)" }}>
                         <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>TOTAL</span>
                         <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--calories)" }}>
                           {Math.round(totCal)}
@@ -574,13 +574,13 @@ function SaveMealModal({ defaultName, entries, onClose }: {
                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
                 placeholder="Nom du repas"
                 className="w-full px-3 py-2.5 rounded-xl text-[13px] mb-3"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
               />
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
                   className="flex-1 py-2.5 rounded-xl text-[12.5px] font-medium"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
                 >
                   Annuler
                 </button>
@@ -643,7 +643,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
             <button
               onClick={() => setOpen(false)}
               className="px-4 py-2.5 rounded-xl text-[13px] font-medium"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--text-secondary)" }}
+              style={{ background: "var(--layer-3)", border: "1px solid var(--layer-3)", color: "var(--text-secondary)" }}
             >
               Fermer
             </button>
@@ -652,7 +652,7 @@ function PhotoThumb({ url, onDelete }: { url: string; onDelete: () => void }) {
         {/* Close X */}
         <button onClick={() => setOpen(false)}
           className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.12)" }}>
+          style={{ background: "var(--layer-3)" }}>
           <IconX size={14} stroke={2} style={{ color: "white" }} />
         </button>
       </motion.div>

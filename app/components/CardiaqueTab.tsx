@@ -76,7 +76,7 @@ export default function CardiaqueTab({
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium"
                       style={{
-                        background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
+                        background: delta === 0 ? "var(--layer-2)" : delta < 0 ? "rgba(52,168,83,0.1)" : "rgba(234,67,53,0.1)",
                         color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "var(--fit-green)" : "var(--fit-red)",
                       }}>
                       {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
@@ -106,7 +106,7 @@ export default function CardiaqueTab({
             {/* Weekly trend badge */}
             {weekDelta !== null && (
               <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 {weekDelta === 0
                   ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
                   : weekDelta < 0
@@ -123,7 +123,7 @@ export default function CardiaqueTab({
                   onClick={() => setRangeDays(days)}
                   className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                   style={{
-                    background: rangeDays === days ? "var(--surface-active)" : "rgba(255,255,255,0.04)",
+                    background: rangeDays === days ? "var(--surface-active)" : "var(--layer-1)",
                     color:      rangeDays === days ? "var(--text-primary)"   : "var(--text-muted)",
                     border:     rangeDays === days ? "1px solid var(--border-strong)" : "1px solid transparent",
                   }}>
@@ -189,7 +189,7 @@ export default function CardiaqueTab({
                 </ResponsiveContainer>
               </div>
 
-              <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+              <div className="mb-0.5" style={{ borderTop: "1px solid var(--layer-1)" }}>
                 {/* Calories — bar */}
                 <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--info)" }}>Calories actives (kcal)</p>
                 <ResponsiveContainer width="100%" height={52}>
@@ -210,7 +210,7 @@ export default function CardiaqueTab({
                 </ResponsiveContainer>
               </div>
 
-              <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+              <div className="mb-0.5" style={{ borderTop: "1px solid var(--layer-1)" }}>
                 {/* Activité — bar */}
                 <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-green)" }}>Activité (min)</p>
                 <ResponsiveContainer width="100%" height={52}>
@@ -232,7 +232,7 @@ export default function CardiaqueTab({
                 </ResponsiveContainer>
               </div>
 
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ borderTop: "1px solid var(--layer-1)" }}>
                 {/* Sommeil — bar avec X axis */}
                 <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-indigo)" }}>Sommeil (h) · — objectif 7h</p>
                 <ResponsiveContainer width="100%" height={65}>
@@ -274,7 +274,7 @@ export default function CardiaqueTab({
                     const z = p.hrAvg ? hrZone(p.hrAvg, fcMax) : null;
                     return (
                       <div key={p.date} className="flex items-center gap-3 py-1.5"
-                        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        style={{ borderBottom: "1px solid var(--layer-1)" }}>
                         <span className="text-[12px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                           {format(parseISO(p.date), "dd MMM", { locale: fr })}
                         </span>

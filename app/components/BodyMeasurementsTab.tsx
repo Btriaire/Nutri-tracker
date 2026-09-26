@@ -58,7 +58,7 @@ function AnatomicalBody({
         side="front"
         gender="male"
         defaultFill="#27272a"
-        border="rgba(255,255,255,0.12)"
+        border="var(--layer-3)"
         onBodyPartPress={(part) => {
           const field = part.slug ? SLUG_TO_FIELD.get(part.slug) : undefined;
           if (!field) return;
@@ -227,7 +227,7 @@ export default function BodyMeasurementsTab() {
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all text-left"
                   onClick={() => setHighlighted(highlighted === key ? null : key)}
                   style={{
-                    background: highlighted === key ? `color-mix(in srgb, ${color} 8%, transparent)` : "rgba(255,255,255,0.03)",
+                    background: highlighted === key ? `color-mix(in srgb, ${color} 8%, transparent)` : "var(--layer-1)",
                     border: `1px solid ${highlighted === key ? `color-mix(in srgb, ${color} 25%, transparent)` : "var(--border)"}`,
                   }}
                 >
@@ -281,7 +281,7 @@ export default function BodyMeasurementsTab() {
                 onClick={() => setActiveChart(f.key)}
                 className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium transition-all"
                 style={{
-                  background: activeChart === f.key ? `color-mix(in srgb, ${f.color} 13%, transparent)` : "rgba(255,255,255,0.04)",
+                  background: activeChart === f.key ? `color-mix(in srgb, ${f.color} 13%, transparent)` : "var(--layer-1)",
                   border: `1px solid ${activeChart === f.key ? `color-mix(in srgb, ${f.color} 31%, transparent)` : "var(--border)"}`,
                   color: activeChart === f.key ? f.color : "var(--text-muted)",
                 }}>
@@ -297,7 +297,7 @@ export default function BodyMeasurementsTab() {
           )}
           <ResponsiveContainer width="100%" height={120}>
             <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-2)" />
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} tickFormatter={v => `${v}`} />
               <Tooltip content={({ active, payload, label: lbl }) => {
@@ -347,7 +347,7 @@ export default function BodyMeasurementsTab() {
                   </div>
                   <button onClick={() => setShowForm(false)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                    style={{ background: "var(--layer-2)" }}>
                     <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
                   </button>
                 </div>
@@ -368,7 +368,7 @@ export default function BodyMeasurementsTab() {
                           placeholder="—"
                           className="w-20 px-2 py-1.5 rounded-xl text-[13px] text-right tabular-nums outline-none"
                           style={{
-                            background: "rgba(255,255,255,0.06)",
+                            background: "var(--layer-2)",
                             border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`,
                             color: form[key] ? color : "var(--text-muted)",
                           }}

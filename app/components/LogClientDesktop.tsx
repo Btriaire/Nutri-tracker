@@ -34,7 +34,7 @@ function CalorieDonut({ eaten, goal, size = 120 }: { eaten: number; goal: number
   const dash = `${Math.min(frac, 1) * circ} ${circ}`;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
-      <circle cx={cx} cy={cx} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={8} />
+      <circle cx={cx} cy={cx} r={R} fill="none" stroke="var(--layer-2)" strokeWidth={8} />
       <motion.circle cx={cx} cy={cx} r={R} fill="none" stroke={col} strokeWidth={8} strokeLinecap="round"
         strokeDasharray={dash} transform={`rotate(-90 ${cx} ${cx})`}
         initial={{ strokeDasharray: `0 ${circ}` }}
@@ -64,7 +64,7 @@ function MacroBar({ value, goal, color, label }: {
           {value}g <span style={{ color: "var(--text-muted)" }}>/ {goal}g</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
         <motion.div className="h-full rounded-full"
           style={{ background: over ? "var(--danger)" : color, width: `${p}%` }}
           initial={{ width: 0 }}

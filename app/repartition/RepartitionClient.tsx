@@ -65,7 +65,7 @@ function MicroGauge({ m }: { m: MicroRow }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="w-14 h-14 rounded-full flex items-center justify-center"
-        style={{ background: `conic-gradient(${color} 0% ${pct}%, rgba(255,255,255,0.06) ${pct}% 100%)` }}>
+        style={{ background: `conic-gradient(${color} 0% ${pct}%, var(--layer-2) ${pct}% 100%)` }}>
         <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center"
           style={{ background: "var(--surface, #1a1a1f)" }}>
           <span className="text-[12px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
@@ -145,7 +145,7 @@ export default function RepartitionClient() {
 
         <div className="flex items-center gap-2 mb-5">
           <Link href="/progress" className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
             <IconChevronLeft size={16} stroke={1.8} style={{ color: "var(--text-muted)" }} />
           </Link>
           <IconChartDonut size={18} stroke={1.8} style={{ color: "var(--protein)" }} />
@@ -159,7 +159,7 @@ export default function RepartitionClient() {
             <button key={p.key} onClick={() => setPending(p.key)}
               className="flex-1 px-3 py-2 rounded-xl text-[12.5px] font-medium transition-all"
               style={{
-                background: period === p.key ? "rgba(59,130,246,0.14)" : "rgba(255,255,255,0.04)",
+                background: period === p.key ? "rgba(59,130,246,0.14)" : "var(--layer-1)",
                 color:      period === p.key ? "var(--protein)" : "var(--text-secondary)",
                 border:     `1px solid ${period === p.key ? "rgba(59,130,246,0.4)" : "var(--border)"}`,
               }}>
@@ -257,11 +257,11 @@ export default function RepartitionClient() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                  <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "var(--layer-1)" }}>
                     <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>dont sucres</p>
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data.macros.sugarG} g</p>
                   </div>
-                  <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "var(--layer-1)" }}>
                     <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>dont saturés</p>
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{data.macros.saturatedFatG} g</p>
                   </div>

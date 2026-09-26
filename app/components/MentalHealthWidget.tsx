@@ -48,7 +48,7 @@ function MoodFace({ val, size = 38, active = false }: { val: number; size?: numb
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
       {/* Head circle */}
       <circle cx={cx} cy={cx} r={r}
-        fill={active ? `color-mix(in srgb, ${c} 9%, transparent)` : "rgba(255,255,255,0.04)"}
+        fill={active ? `color-mix(in srgb, ${c} 9%, transparent)` : "var(--layer-1)"}
         stroke={active ? c : "rgba(255,255,255,0.13)"}
         strokeWidth={active ? 1.5 : 1}
       />
@@ -260,7 +260,7 @@ export default function MentalHealthWidget({ date }: Props) {
                 <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>Bilan de la journée</p>
               </div>
               <button onClick={handleClose} className="p-2 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.06)" }}>
+                style={{ background: "var(--layer-2)" }}>
                 <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
               </button>
             </div>
@@ -297,9 +297,9 @@ export default function MentalHealthWidget({ date }: Props) {
                       onClick={() => toggleTag(tag)}
                       className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
                       style={{
-                        background: on ? "rgba(129,140,248,0.18)" : "rgba(255,255,255,0.04)",
+                        background: on ? "rgba(129,140,248,0.18)" : "var(--layer-1)",
                         color:      on ? "#818cf8" : "var(--text-secondary)",
-                        border:     `1px solid ${on ? "rgba(129,140,248,0.4)" : "rgba(255,255,255,0.06)"}`,
+                        border:     `1px solid ${on ? "rgba(129,140,248,0.4)" : "var(--layer-2)"}`,
                       }}
                     >
                       {tag}
@@ -319,7 +319,7 @@ export default function MentalHealthWidget({ date }: Props) {
                 placeholder="Quelque chose à noter…"
                 className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
+                  background: "var(--layer-1)",
                   border:     "1px solid var(--border)",
                   color:      "var(--text-primary)",
                 }}

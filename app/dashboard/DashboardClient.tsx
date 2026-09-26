@@ -92,7 +92,7 @@ function ScoreRing({ score }: { score: number }) {
   const color = levelColorPct(score);
   return (
     <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-      <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={SW} />
+      <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="var(--layer-3)" strokeWidth={SW} />
       <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke={color} strokeWidth={SW}
         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
         transform={`rotate(-90 ${SIZE/2} ${SIZE/2})`} />
@@ -379,7 +379,7 @@ export default function DashboardClient({
               title="Synchroniser"
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
               style={{
-                background: "rgba(255,255,255,0.05)",
+                background: "var(--layer-2)",
                 border: "1px solid var(--border)",
                 color: syncMsg.includes("✓") ? "var(--fit-green)" : syncMsg === "!" ? "var(--fit-red)" : "var(--text-muted)",
               }}>
@@ -406,7 +406,7 @@ export default function DashboardClient({
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.15 + i * 0.06, type: "spring", stiffness: 500 }}
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ background: ok ? "var(--calories)" : "rgba(255,255,255,0.12)" }}
+                  style={{ background: ok ? "var(--calories)" : "var(--layer-3)" }}
                 />
               ))}
             </div>
@@ -425,7 +425,7 @@ export default function DashboardClient({
             return (
               <div className="mt-2 rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-x-2 gap-y-1"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
+                  background: "var(--layer-1)",
                   border: "1px solid var(--border)",
                 }}>
                 {plan && (
@@ -555,7 +555,7 @@ export default function DashboardClient({
               title={showSpider ? "Vue anneaux" : "Vue radar"}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95"
               style={{
-                background: showSpider ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.05)",
+                background: showSpider ? "rgba(249,115,22,0.12)" : "var(--layer-2)",
                 border: `1px solid ${showSpider ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
                 color: showSpider ? "var(--calories)" : "var(--text-muted)",
               }}
@@ -597,7 +597,7 @@ export default function DashboardClient({
                         <stop offset="100%" stopColor="var(--calories)" stopOpacity={0.08} />
                       </linearGradient>
                     </defs>
-                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarGrid stroke="var(--layer-3)" />
                     <PolarAngleAxis
                       dataKey="subject"
                       tick={({ x, y, payload }) => {
@@ -677,14 +677,14 @@ export default function DashboardClient({
                       onClick={toggleDeductBurned}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all active:scale-95"
                       style={{
-                        background: deductBurned ? "rgba(52,211,153,0.10)" : "rgba(255,255,255,0.05)",
+                        background: deductBurned ? "rgba(52,211,153,0.10)" : "var(--layer-2)",
                         border: `1px solid ${deductBurned ? "rgba(52,211,153,0.35)" : "var(--border)"}`,
                         color: deductBurned ? "rgba(52,211,153,0.9)" : "var(--text-muted)",
                       }}
                     >
                       {/* Mini pill switch */}
                       <div className="relative w-7 h-4 rounded-full flex-shrink-0 transition-colors"
-                        style={{ background: deductBurned ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.12)" }}>
+                        style={{ background: deductBurned ? "rgba(52,211,153,0.5)" : "var(--layer-3)" }}>
                         <div className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform"
                           style={{ transform: deductBurned ? "translateX(15px)" : "translateX(2px)" }} />
                       </div>
@@ -705,7 +705,7 @@ export default function DashboardClient({
                               {Math.round(value)}g
                             </span>
                           </div>
-                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                             <motion.div
                               className="h-full rounded-full w-full"
                               style={{ background: levelBarBg(over ? 1.1 : fraction) }}
@@ -742,7 +742,7 @@ export default function DashboardClient({
                 onClick={() => setBilanMode(m => m === "%" ? "g" : "%")}
                 className="px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-all"
                 style={{
-                  background: bilanMode === "g" ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)",
+                  background: bilanMode === "g" ? "rgba(249,115,22,0.15)" : "var(--layer-2)",
                   color:      bilanMode === "g" ? "var(--calories)"        : "var(--text-muted)",
                   border:     bilanMode === "g" ? "1px solid rgba(249,115,22,0.3)" : "1px solid var(--border)",
                 }}>
@@ -774,7 +774,7 @@ export default function DashboardClient({
                     </span>
                   )}
                 </div>
-                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                   {pct !== null && (
                     <motion.div
                       className="h-full rounded-full w-full"
@@ -828,7 +828,7 @@ export default function DashboardClient({
               style={{ color: steps !== null ? "var(--text-primary)" : "var(--text-muted)" }}>
               {steps !== null ? steps.toLocaleString("fr-FR") : "—"}
             </span>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
               <motion.div
                 className="h-full rounded-full w-full"
                 style={{ background: levelBarBg(stepsPct / 100) }}
@@ -870,7 +870,7 @@ export default function DashboardClient({
                 {sleepMinutes ? fmtSleep(sleepMinutes) : "—"}
               </span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
               <motion.div
                 className="h-full rounded-full w-full"
                 style={{ background: levelBarBg(sleepPct / 100) }}
@@ -940,7 +940,7 @@ export default function DashboardClient({
                 <span className="text-[12px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
               )}
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
               <motion.div
                 className="h-full rounded-full w-full"
                 style={{ background: levelBarBg(activePct / 100) }}
@@ -973,7 +973,7 @@ export default function DashboardClient({
               {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
                 <div key={s.id} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                    style={{ background: "rgba(255,255,255,0.06)" }}>
+                    style={{ background: "var(--layer-2)" }}>
                     {activityEmoji(s.activityType)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1027,7 +1027,7 @@ export default function DashboardClient({
                     </div>
                     <button onClick={() => setBurnedDetailOpen(false)}
                       className="w-7 h-7 rounded-full flex items-center justify-center"
-                      style={{ background: "rgba(255,255,255,0.06)" }}>
+                      style={{ background: "var(--layer-2)" }}>
                       <IconX size={13} stroke={2} style={{ color: "var(--text-muted)" }} />
                     </button>
                   </div>
@@ -1050,9 +1050,9 @@ export default function DashboardClient({
                       const stepKcal = Math.round(steps * 0.04);
                       return (
                         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                            style={{ background: "rgba(255,255,255,0.05)" }}><IconShoe size={13} stroke={1.6} /></div>
+                            style={{ background: "var(--layer-2)" }}><IconShoe size={13} stroke={1.6} /></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Marche · {steps.toLocaleString("fr-FR")} pas</p>
                             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>≈ 0.04 kcal/pas</p>
@@ -1066,9 +1066,9 @@ export default function DashboardClient({
                     {/* Activity sessions */}
                     {sessions.filter(s => ![72, 110, 111, 112, 113, 114].includes(s.activityType)).map(s => (
                       <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                          style={{ background: "rgba(255,255,255,0.05)" }}>
+                          style={{ background: "var(--layer-2)" }}>
                           {activityEmoji(s.activityType)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1087,9 +1087,9 @@ export default function DashboardClient({
                     {/* Active minutes context */}
                     {activeMinutes && activeMinutes > 0 && (
                       <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                          style={{ background: "rgba(255,255,255,0.05)" }}><IconBolt size={13} stroke={1.6} /></div>
+                          style={{ background: "var(--layer-2)" }}><IconBolt size={13} stroke={1.6} /></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Minutes actives</p>
                           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Intensité globale du jour</p>
@@ -1174,7 +1174,7 @@ export default function DashboardClient({
                     <div key={key} className="flex items-center gap-2.5">
                       <Icon size={15} stroke={1.6} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
                       <span className="text-[12px] w-[88px] flex-shrink-0 truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
-                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                         <motion.div
                           className="h-full rounded-full w-full"
                           style={{ background: levelBarBg(over && invertAlert ? 1.1 : fraction) }}
@@ -1279,7 +1279,7 @@ export default function DashboardClient({
                       <span style={{ color: "var(--text-muted)" }}> / {goal}g</span>
                     </span>
                   </div>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                     <motion.div
                       className="h-full rounded-full w-full"
                       style={{ background: levelBarBg(fraction) }}

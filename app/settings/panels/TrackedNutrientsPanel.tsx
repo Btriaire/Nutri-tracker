@@ -169,7 +169,7 @@ export default function TrackedNutrientsPanel() {
           <div className="flex items-center gap-1.5 flex-wrap px-1">
             {(["OMS", "EFSA", "FDA", "ANSES"] as const).map(org => (
               <span key={org} className="text-[12px] font-bold px-1.5 py-0.5 rounded"
-                style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                 {org}
               </span>
             ))}
@@ -191,7 +191,7 @@ export default function TrackedNutrientsPanel() {
 
             return (
               <div key={key} className="rounded-xl overflow-hidden"
-                style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? "rgba(255,255,255,0.12)" : "var(--border)"}` }}>
+                style={{ background: "var(--layer-1)", border: `1px solid ${isActive ? "var(--layer-3)" : "var(--border)"}` }}>
 
                 {/* Row header */}
                 <div className="flex items-center gap-3 px-3 py-2.5">
@@ -205,7 +205,7 @@ export default function TrackedNutrientsPanel() {
                   {/* Toggle */}
                   <button onClick={() => toggle(key as keyof TrackedNutrients)}
                     className="relative flex-shrink-0 w-[44px] h-[24px] rounded-full transition-all"
-                    style={{ background: isActive ? cfg.color : "rgba(255,255,255,0.1)", border: "1px solid var(--border)" }}>
+                    style={{ background: isActive ? cfg.color : "var(--layer-3)", border: "1px solid var(--border)" }}>
                     <span className="absolute top-[2px] w-[18px] h-[18px] rounded-full transition-all"
                       style={{ background: "#fff", left: isActive ? "calc(100% - 20px)" : "2px", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
                   </button>
@@ -217,7 +217,7 @@ export default function TrackedNutrientsPanel() {
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }} style={{ overflow: "hidden" }}>
                     <div className="px-3 pb-3 space-y-3"
-                      style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      style={{ borderTop: "1px solid var(--layer-2)" }}>
 
                       {/* Reference presets */}
                       <div>
@@ -232,13 +232,13 @@ export default function TrackedNutrientsPanel() {
                                 onClick={() => setGoals(prev => ({ ...prev, [cfg.field]: val }))}
                                 className="flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-all"
                                 style={{
-                                  background: isSelected ? `color-mix(in srgb, ${cfg.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
+                                  background: isSelected ? `color-mix(in srgb, ${cfg.color} 9%, transparent)` : "var(--layer-1)",
                                   border: `1px solid ${isSelected ? cfg.color : "var(--border)"}`,
                                 }}>
                                 <div className="flex items-center gap-2">
                                   <span className="text-[12px] font-bold px-1.5 py-0.5 rounded"
                                     style={{
-                                      background: isSelected ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : "rgba(255,255,255,0.06)",
+                                      background: isSelected ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : "var(--layer-2)",
                                       color: isSelected ? cfg.color : "var(--text-muted)",
                                       border: `1px solid ${isSelected ? cfg.color : "var(--border)"}`,
                                       minWidth: "44px",
@@ -276,7 +276,7 @@ export default function TrackedNutrientsPanel() {
                             onChange={e => setGoals(prev => ({ ...prev, [cfg.field]: Number(e.target.value) }))}
                             className="w-20 h-8 rounded-lg text-center text-[13px] font-medium"
                             style={{
-                              background: "rgba(255,255,255,0.06)",
+                              background: "var(--layer-2)",
                               border: `1px solid ${cfg.color}`,
                               color: "var(--text-primary)",
                             }}
@@ -287,7 +287,7 @@ export default function TrackedNutrientsPanel() {
 
                       {/* Visual bar */}
                       <div>
-                        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                           <div className="h-full rounded-full transition-all" style={{
                             width: `${Math.min(currentVal / (maxRef * 1.3) * 100, 100)}%`,
                             background: isMax && currentVal > maxRef ? "var(--danger)" : cfg.color,

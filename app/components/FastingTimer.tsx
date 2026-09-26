@@ -102,7 +102,7 @@ function TimeEditor({
         <button
           onClick={onCancel}
           className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[12px]"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+          style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
           title="Annuler"
         >
           ✕
@@ -327,7 +327,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           <div className="flex-shrink-0">
             <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
               <circle cx={SIZE/2} cy={SIZE/2} r={R}
-                fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={SW} />
+                fill="none" stroke="var(--layer-2)" strokeWidth={SW} />
               <circle cx={SIZE/2} cy={SIZE/2} r={R}
                 fill="none" stroke={rc} strokeWidth={SW}
                 strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
@@ -360,7 +360,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
             </div>
 
             {/* Progress bar */}
-            <div className="h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+            <div className="h-[5px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
               <div className="h-full rounded-full"
                 style={{
                   width: `${pct * 100}%`,
@@ -398,7 +398,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
                         setEditingStart(true);
                       }}
                       className="w-6 h-6 rounded-md flex items-center justify-center text-[12px] transition-all"
-                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}
+                      style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
                       title="Modifier l'heure de début"
                     >
                       ✏️

@@ -104,7 +104,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
                 <BarChart data={topFoods} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
-                  <Tooltip content={<ChartTooltip unit=" fois" />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+                  <Tooltip content={<ChartTooltip unit=" fois" />} cursor={{ fill: "var(--layer-1)" }} />
                   <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={14}>
                     {topFoods.map((_, i) => <Cell key={i} fill="var(--protein)" fillOpacity={0.4 + (i / topFoods.length) * 0.6} />)}
                   </Bar>
@@ -155,7 +155,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
                   <BarChart data={discoveryTimeline} margin={{ top: 0, right: 4, left: -28, bottom: 0 }}>
                     <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
                     <YAxis hide />
-                    <Tooltip content={<ChartTooltip unit=" nouveaux" />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+                    <Tooltip content={<ChartTooltip unit=" nouveaux" />} cursor={{ fill: "var(--layer-1)" }} />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]} fill="var(--fiber)" />
                   </BarChart>
                 </ResponsiveContainer>

@@ -116,7 +116,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
                 alt="photo du jour"
                 onClick={() => setLightbox(photo.dataUrl)}
                 className="w-full h-full object-cover rounded-xl cursor-pointer border"
-                style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                style={{ borderColor: "var(--layer-3)" }}
               />
               {/* Delete button */}
               <button
@@ -141,7 +141,7 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
             style={{
               width: 52, height: 52,
               borderColor: "rgba(255,255,255,0.18)",
-              background: "rgba(255,255,255,0.03)",
+              background: "var(--layer-1)",
               color: "var(--text-muted)",
             }}
           >

@@ -332,7 +332,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
 
           {/* Progress bar */}
           <div className="h-1.5 rounded-full overflow-hidden mb-1"
-            style={{ background: "rgba(255,255,255,0.06)" }}>
+            style={{ background: "var(--layer-2)" }}>
             <motion.div className="h-full rounded-full"
               style={{ background: over ? "var(--danger)" : "var(--violet)" }}
               animate={{ width: `${pct}%` }}
@@ -396,7 +396,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
       <button onClick={() => setShowCustom(v => !v)}
         className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-medium transition-all"
         style={{
-          background: showCustom ? "rgba(192,132,252,0.10)" : "rgba(255,255,255,0.03)",
+          background: showCustom ? "rgba(192,132,252,0.10)" : "var(--layer-1)",
           border: `1px solid ${showCustom ? "rgba(192,132,252,0.3)" : "var(--border)"}`,
           color: showCustom ? "var(--violet)" : "var(--text-muted)",
         }}>
@@ -422,7 +422,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 value={customType}
                 onChange={e => setCustomType(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl text-[12px] outline-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
               />
 
               {/* Volume + ABV row */}
@@ -433,16 +433,16 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomMl(v => Math.max(10, v - 25))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                      style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                       <IconMinus size={10} stroke={2} />
                     </button>
                     <input type="number" value={customMl}
                       onChange={e => setCustomMl(Math.max(5, Number(e.target.value)))}
                       className="flex-1 text-center text-[13px] font-bold rounded-lg outline-none tabular-nums min-w-0"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "5px 2px" }} />
+                      style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "5px 2px" }} />
                     <button onClick={() => setCustomMl(v => v + 25)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                      style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                       <IconPlus size={10} stroke={2} />
                     </button>
                   </div>
@@ -454,16 +454,16 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomAbv(v => Math.max(0.5, Math.round((v - 0.5) * 10) / 10))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                      style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                       <IconMinus size={10} stroke={2} />
                     </button>
                     <input type="number" value={customAbv} step="0.5"
                       onChange={e => setCustomAbv(Math.max(0.1, Number(e.target.value)))}
                       className="flex-1 text-center text-[13px] font-bold rounded-lg outline-none tabular-nums min-w-0"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "5px 2px" }} />
+                      style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)", padding: "5px 2px" }} />
                     <button onClick={() => setCustomAbv(v => Math.round((v + 0.5) * 10) / 10)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                      style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                       <IconPlus size={10} stroke={2} />
                     </button>
                   </div>

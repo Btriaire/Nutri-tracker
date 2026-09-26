@@ -57,7 +57,7 @@ export default function AnimatedLogo({ size = 96, play = true, orbit = true, cla
         </defs>
 
         {/* anneau de fond */}
-        <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+        <circle cx="50" cy="50" r="42" stroke="var(--layer-3)" strokeWidth="6" />
 
         {/* anneau de progression qui se dessine */}
         <motion.circle

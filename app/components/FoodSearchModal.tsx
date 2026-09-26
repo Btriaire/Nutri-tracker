@@ -84,7 +84,7 @@ function NutrientGroup({ label, rows, accent }: { label: string; rows: { l: stri
   const color = accent ?? GROUP_COLORS[label.split(" ")[0]] ?? "var(--protein)";
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-2 px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid var(--border)" }}>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--border)" }}>
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
         <span className="text-[12px] font-semibold" style={{ color }}>{label}</span>
       </div>
@@ -113,7 +113,7 @@ function MacroPills({ n }: { n: FoodNutrition }) {
         { l: "F", v: n.fiberG,   c: "var(--fiber)" },
       ].map(({ l, v, c }) => (
         <div key={l} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md"
-          style={{ background: "rgba(255,255,255,0.04)" }}>
+          style={{ background: "var(--layer-1)" }}>
           <span className="text-[12px] font-bold" style={{ color: c }}>{l}</span>
           <span className="text-[12px] tabular-nums" style={{ color: "var(--text-secondary)" }}>{Math.round(v)}g</span>
         </div>
@@ -736,7 +736,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             {/* Tab bar — always at the top */}
             <div className="px-4 pb-0 pt-0 flex-shrink-0">
               <div className="flex gap-1 p-1 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 {([
                   { id: "aliments",     label: "Aliments",  Icon: IconToolsKitchen2 },
                   { id: "repas",        label: "Repas",     Icon: IconToolsKitchen },
@@ -879,7 +879,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                             transition={{ duration: 0.18, delay: i * 0.022, ease: [0.34, 1.56, 0.64, 1] }}
                             onClick={() => browseCategory(cat)}
                             className="flex flex-col items-center gap-2 p-2.5 rounded-2xl transition-all"
-                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                            style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}
                             whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.93 }}>
                             {/* Pictogram icon */}
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[22px] relative overflow-hidden flex-shrink-0"
@@ -962,7 +962,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       return (
                         <motion.div key={r.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                           className="flex items-center gap-2 rounded-xl overflow-hidden"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                           {/* Tap to configure */}
                           <button onClick={() => selectFood(r)} className="flex-1 flex items-center gap-2.5 p-3 text-left min-w-0">
                             <FoodPictogram name={r.name} category={r.category} />
@@ -1050,7 +1050,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                     title={saved ? "Déjà sauvegardé" : "Sauvegarder dans ma base"}
                                     className="shrink-0 flex items-center justify-center w-9 self-stretch transition-all"
                                     style={{
-                                      background: saved ? "rgba(52,211,153,0.1)" : "rgba(255,255,255,0.03)",
+                                      background: saved ? "rgba(52,211,153,0.1)" : "var(--layer-1)",
                                       borderLeft: "1px solid rgba(168,85,247,0.15)",
                                     }}
                                   >
@@ -1105,7 +1105,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                   <div className="space-y-2">
                     {savedMeals.map((m) => (
                       <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <span className="text-2xl flex-shrink-0">{m.icon}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{m.name}</p>
@@ -1153,7 +1153,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                     {recipes.map((r) => (
                       <motion.button key={r.id} onClick={() => selectRecipe(r)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl text-left"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}
                         whileHover={{ background: "rgba(255,255,255,0.055)" }}>
                         <span className="text-2xl flex-shrink-0">🍳</span>
                         <div className="flex-1 min-w-0">
@@ -1205,12 +1205,12 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                       <div key={dayLog.date} className="mb-5">
                         {/* Day header */}
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+                          <div className="h-px flex-1" style={{ background: "var(--layer-3)" }} />
                           <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+                            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                             {dayLog.label} · {dateLabel}
                           </span>
-                          <div className="h-px flex-1" style={{ background: "rgba(255,255,255,0.08)" }} />
+                          <div className="h-px flex-1" style={{ background: "var(--layer-3)" }} />
                         </div>
 
                         <div className="space-y-3">
@@ -1252,10 +1252,10 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="rounded-xl overflow-hidden"
-                                style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                                style={{ border: "1px solid var(--layer-2)" }}>
                                 {/* Meal header */}
                                 <div className="flex items-center gap-2 px-3 py-2"
-                                  style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                                  style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--layer-2)" }}>
                                   <span className="text-[14px]">{emoji}</span>
                                   <span className="text-[12px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>{label}</span>
                                   <span className="text-[12px] font-medium tabular-nums" style={{ color: "var(--calories)" }}>
@@ -1281,7 +1281,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 </div>
 
                                 {/* Entries list */}
-                                <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+                                <div className="divide-y" style={{ borderColor: "var(--layer-1)" }}>
                                   {mealEntries.map((entry) => (
                                     <div key={entry.id} className="flex items-center gap-2 px-3 py-2">
                                       <FoodPictogram name={entry.name} />
@@ -1484,7 +1484,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                   <button key={opt.label} onClick={() => setSelectedUnit(opt)}
                                     className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors"
                                     style={{
-                                      background: selectedUnit?.label === opt.label ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                                      background: selectedUnit?.label === opt.label ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
                                       border: `1px solid ${selectedUnit?.label === opt.label ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                                       color: selectedUnit?.label === opt.label ? "var(--protein)" : "var(--text-secondary)",
                                     }}>
@@ -1524,7 +1524,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
 
                         {/* Nutrition preview */}
                         {cn && (
-                          <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                             {/* Calorie hero */}
                             <div className="flex items-center justify-between px-4 pt-4 pb-3">
                               <div className="flex items-baseline gap-1.5">
@@ -1534,7 +1534,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                                 <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>kcal</span>
                               </div>
                               <div className="px-2.5 py-1 rounded-lg"
-                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                                style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
                                 <span className="text-[12px] tabular-nums font-medium" style={{ color: "var(--text-secondary)" }}>
                                   {Math.round(effectiveGrams())} g
                                 </span>
@@ -1692,7 +1692,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                               <button key={icon} onClick={() => setNewMealIcon(icon)}
                                 className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition-all"
                                 style={{
-                                  background: newMealIcon === icon ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                                  background: newMealIcon === icon ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
                                   border: `1px solid ${newMealIcon === icon ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                                 }}>
                                 {icon}
@@ -1716,7 +1716,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           <div className="space-y-1">
                             {selectedRecipe.ingredients.map((ing, i) => (
                               <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg"
-                                style={{ background: "rgba(255,255,255,0.03)" }}>
+                                style={{ background: "var(--layer-1)" }}>
                                 <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{ing.name}</span>
                                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{ing.grams}g</span>
                               </div>
@@ -1741,7 +1741,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                           const n = scaleNutrition(selectedRecipe.nutritionPer100g, grams);
                           return (
                             <div className="p-3 rounded-xl space-y-2"
-                              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                              style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                               <div className="flex items-center justify-between">
                                 <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
                                   {Math.round(n.calories)} kcal

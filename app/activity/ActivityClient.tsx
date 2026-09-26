@@ -738,7 +738,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               onClick={() => setShowSportSearch(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all"
               style={{
-                background: "rgba(255,255,255,0.06)",
+                background: "var(--layer-2)",
                 border: "1px solid var(--border)",
                 color: "var(--text-secondary)",
               }}
@@ -828,7 +828,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <div className="flex items-center justify-between mb-4">
                 <p className="label-xs">Nouvelle activité</p>
                 <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-                  className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  className="p-1.5 rounded-lg" style={{ background: "var(--layer-2)" }}>
                   <IconX size={13} style={{ color: "var(--text-muted)" }} />
                 </button>
               </div>
@@ -893,7 +893,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               onClick={() => setShowTplForm((x) => !x)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all ml-2"
               style={{
-                background: showTplForm ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.05)",
+                background: showTplForm ? "rgba(167,139,250,0.12)" : "var(--layer-2)",
                 border:     `1px solid ${showTplForm ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                 color:      showTplForm ? "var(--protein)" : "var(--text-secondary)",
               }}>
@@ -946,7 +946,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                     <button
                       onClick={() => photoInputRef.current?.click()}
                       className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all overflow-hidden"
-                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}
+                      style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
                       type="button"
                       title="Ajouter une photo"
                     >
@@ -997,13 +997,13 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                   <div className="space-y-2">
                     {templates.map((tpl) => (
                       <div key={tpl.id} className="flex items-center gap-3 py-2"
-                        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        style={{ borderBottom: "1px solid var(--layer-1)" }}>
                         {/* Photo thumbnail — clickable to change photo */}
                         <button
                           type="button"
                           onClick={() => { setEditingTplId(tpl.id); tplPhotoEditRef.current?.click(); }}
                           className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 overflow-hidden relative group"
-                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}
+                          style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}
                           title="Changer la photo"
                         >
                           {tpl.photoDataUrl
@@ -1556,7 +1556,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                   setTimeout(() => actPhotoInputRef.current?.click(), 50);
                 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-                style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)" }}>
+                style={{ background: "var(--layer-3)", color: "white", border: "1px solid rgba(255,255,255,0.2)" }}>
                 <IconCamera size={14} />
                 Remplacer
               </button>
@@ -1564,7 +1564,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <button
                 onClick={() => setPhotoZoom(null)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-                style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                style={{ background: "var(--layer-2)", color: "rgba(255,255,255,0.7)", border: "1px solid var(--layer-3)" }}>
                 <IconX size={14} />
                 Fermer
               </button>

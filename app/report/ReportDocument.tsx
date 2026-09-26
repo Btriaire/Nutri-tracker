@@ -101,7 +101,7 @@ function GoalRing({ pct, color, size = 44 }: { pct: number; color: string; size?
   const p   = Math.min(pct / 100, 1);
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
+      <circle cx={size / 2} cy={size / 2} r={R} fill="none" stroke="var(--layer-3)" strokeWidth={4} />
       <circle
         cx={size / 2} cy={size / 2} r={R}
         fill="none"
@@ -129,7 +129,7 @@ function HBarRow({
         <span className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
         <span className="text-[12px] font-semibold" style={{ color }}>{valueLabel}</span>
       </div>
-      <div className="rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
+      <div className="rounded-full overflow-hidden" style={{ height: 6, background: "var(--layer-2)" }}>
         <div style={{ width: `${width}%`, height: "100%", background: color, borderRadius: 999 }} />
       </div>
       {sub && <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</p>}
@@ -229,7 +229,7 @@ function TrendChartCard({
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMid)}{unit}</span>
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{fmt(scaleMin)}{unit}</span>
         </div>
-        <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 90, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+        <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 90, background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           {/* Gridlines */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             <div style={{ borderTop: "1px dashed var(--border)" }} />
@@ -513,7 +513,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               { icon: "📅", label: "Jours loggés",   val: data.nutrition.daysLogged,  goal: data.meta.totalDays,          unit: " j",  color: "var(--calories)" },
             ].map(({ icon, label, val, goal, unit, color }) => (
               <div key={label} className="flex items-center justify-between px-3 py-2 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px]">{icon}</span>
                   <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
@@ -549,7 +549,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               return (
                 <div className="flex gap-1.5">
                   <YAxisScale max={calMax} mid={calMax / 2} min={0} height={70} unit=" kcal" />
-                  <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 70, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                  <div className="relative rounded-xl overflow-hidden flex-1" style={{ height: 70, background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <MiniBarChart
                       data={(data.nutrition.daily as DayNutrition[]).map(d => ({ val: d.calories, label: d.date }))}
                       color="var(--calories)"
@@ -674,7 +674,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
               <p className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution des pas</p>
               <div className="flex gap-1.5">
                 <YAxisScale max={stepsMax} mid={stepsMax / 2} min={0} height={60} />
-                <div className="rounded-xl overflow-hidden flex-1" style={{ height: 60, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+                <div className="rounded-xl overflow-hidden flex-1" style={{ height: 60, background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                   <MiniBarChart
                     data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.steps, label: d.date }))}
                     color="var(--fit-blue)"
@@ -693,7 +693,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
             <p className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Évolution du sommeil</p>
             <div className="flex gap-1.5">
               <YAxisScale max={12} mid={6} min={0} height={50} unit="h" />
-              <div className="rounded-xl overflow-hidden flex-1" style={{ height: 50, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)" }}>
+              <div className="rounded-xl overflow-hidden flex-1" style={{ height: 50, background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                 <MiniBarChart
                   data={(data.activity.daily as DayActivity[]).map(d => ({ val: d.sleepMin ? d.sleepMin / 60 : null, label: d.date }))}
                   color="var(--fit-indigo)"
@@ -751,7 +751,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Adherence table */}
         {data.supplements.perProduct.length > 0 && (
           <div className="rounded-xl overflow-hidden mb-5" style={{ border: "1px solid var(--border)" }}>
-            <div className="px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
+            <div className="px-3 py-2.5" style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Observance par complément
               </p>
@@ -802,7 +802,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Micronutrient status table */}
         {data.micronutrients.perNutrient.length > 0 && (
           <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
+            <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 Apports micronutriments (suppléments) vs AJR
               </p>
@@ -816,7 +816,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                   carence: { label: "Carence",  color: "var(--danger)", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)" },
                   ok:      { label: "OK",       color: "var(--fiber)", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.3)" },
                   exces:   { label: "Excès",    color: "var(--carbs)", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.3)" },
-                  inconnu: { label: "—",        color: "var(--text-muted)", bg: "rgba(255,255,255,0.03)", border: "var(--border)" },
+                  inconnu: { label: "—",        color: "var(--text-muted)", bg: "var(--layer-1)", border: "var(--border)" },
                 };
                 const cfg = STATUS_CFG[n.status];
                 return (
@@ -879,7 +879,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 {data.health.weightDelta !== null && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full"
                     style={{
-                      background: data.health.weightDelta < 0 ? "rgba(52,211,153,0.1)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.1)" : "rgba(255,255,255,0.05)",
+                      background: data.health.weightDelta < 0 ? "rgba(52,211,153,0.1)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.1)" : "var(--layer-2)",
                       border: `1px solid ${data.health.weightDelta < 0 ? "rgba(52,211,153,0.3)" : data.health.weightDelta > 0 ? "rgba(248,113,113,0.3)" : "var(--border)"}`,
                     }}>
                     {data.health.weightDelta < 0 ? <IconArrowDown size={11} style={{ color: "var(--fiber)" }} /> :
@@ -1023,7 +1023,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
         {/* Symptoms summary */}
         {data.health.symptomsTotal > 0 && (
           <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid var(--border)" }}>
-            <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
+            <div className="px-3 py-2.5 flex items-center justify-between" style={{ background: "var(--layer-1)", borderBottom: "1px solid var(--border)" }}>
               <p className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                 🩺 Symptômes enregistrés
               </p>

@@ -224,7 +224,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                 <div className="flex gap-2 items-center">
                   <button onClick={cycleIcon}
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-[22px] flex-shrink-0 transition-transform active:scale-95"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
                     {mealIcon}
                   </button>
                   <input
@@ -238,7 +238,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
 
                 {items.length > 0 && (
                   <div className="flex items-center gap-3 px-3 py-2 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                       {Math.round(totals.calories)} kcal
                     </span>
@@ -264,7 +264,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                   <div className="space-y-1.5">
                     {items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                        style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                             {item.name}
@@ -313,7 +313,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                         className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors"
                         style={{
                           background: editingUnit?.label === opt.label
-                            ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                            ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
                           border: `1px solid ${editingUnit?.label === opt.label
                             ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
                           color: editingUnit?.label === opt.label
@@ -377,7 +377,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                       {results.slice(0, 12).map((r) => (
                         <button key={r.id} onClick={() => selectFood(r)}
                           className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-colors"
-                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                               {r.name}

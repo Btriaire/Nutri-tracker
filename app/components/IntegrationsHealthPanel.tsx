@@ -64,7 +64,7 @@ export default function IntegrationsHealthPanel({ initial }: { initial: Integrat
         </div>
         <button onClick={load} disabled={loading}
           className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
+          style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
           aria-label="Revérifier">
           {loading ? <IconLoader2 size={14} className="animate-spin" /> : <IconRefresh size={14} />}
         </button>
@@ -75,7 +75,7 @@ export default function IntegrationsHealthPanel({ initial }: { initial: Integrat
           const meta = STATE_META[item.state];
           return (
             <div key={item.id} className="flex items-start gap-2.5 px-3 py-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${item.state === "ok" ? "var(--border)" : `color-mix(in srgb, ${meta.color} 20%, transparent)`}` }}>
+              style={{ background: "var(--layer-1)", border: `1px solid ${item.state === "ok" ? "var(--border)" : `color-mix(in srgb, ${meta.color} 20%, transparent)`}` }}>
               <meta.Icon size={13} stroke={1.8} style={{ color: meta.color, flexShrink: 0, marginTop: 1 }} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{item.label}</p>

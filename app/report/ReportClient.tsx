@@ -106,7 +106,7 @@ export default function ReportClient() {
                     onClick={() => { setFrom(p.from); setTo(p.to); }}
                     className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
                     style={{
-                      background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
+                      background: active ? "rgba(249,115,22,0.15)" : "var(--layer-1)",
                       border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
                       color:      active ? "var(--calories)" : "var(--text-muted)",
                     }}>
@@ -155,7 +155,7 @@ export default function ReportClient() {
 
           <a href="/report/history"
             className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-medium mb-4"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
             📁 Voir l&apos;historique des rapports générés automatiquement
           </a>
         </div>

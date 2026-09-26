@@ -31,7 +31,7 @@ export default function QualityScoreBadge({ score, size = 40, strokeWidth, showV
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block", flexShrink: 0 }}>
-      <circle cx={cx} cy={cx} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
+      <circle cx={cx} cy={cx} r={R} fill="none" stroke="var(--layer-3)" strokeWidth={sw} />
       {score != null && (
         <motion.circle
           cx={cx} cy={cx} r={R}

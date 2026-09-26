@@ -19,18 +19,18 @@ const MEAL_LABELS: Record<MealType, string> = {
 function SkeletonCard() {
   return (
     <div className="rounded-2xl p-4 flex-shrink-0 w-[280px] space-y-3 animate-pulse"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl" style={{ background: "rgba(255,255,255,0.08)" }} />
+        <div className="w-8 h-8 rounded-xl" style={{ background: "var(--layer-3)" }} />
         <div className="flex-1 space-y-1">
-          <div className="h-3 rounded-full w-3/4" style={{ background: "rgba(255,255,255,0.08)" }} />
-          <div className="h-2 rounded-full w-1/2" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <div className="h-3 rounded-full w-3/4" style={{ background: "var(--layer-3)" }} />
+          <div className="h-2 rounded-full w-1/2" style={{ background: "var(--layer-2)" }} />
         </div>
       </div>
       {[1, 0.85, 0.7, 0.9].map((w, i) => (
-        <div key={i} className="h-2 rounded-full" style={{ width: `${w * 100}%`, background: "rgba(255,255,255,0.06)" }} />
+        <div key={i} className="h-2 rounded-full" style={{ width: `${w * 100}%`, background: "var(--layer-2)" }} />
       ))}
-      <div className="h-12 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+      <div className="h-12 rounded-xl" style={{ background: "var(--layer-1)" }} />
     </div>
   );
 }
@@ -52,7 +52,7 @@ function MacroPill({ label, value, unit, color }: { label: string; value: number
 function IngredientRow({ ing }: { ing: SuggestionIngredient }) {
   return (
     <div className="flex items-center justify-between py-1.5"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      style={{ borderBottom: "1px solid var(--layer-1)" }}>
       <div className="flex-1 min-w-0">
         <span className="text-[12.5px] truncate block" style={{ color: "var(--text-primary)" }}>
           {ing.name}
@@ -107,15 +107,15 @@ function SuggestionCard({
       transition={{ duration: 0.3, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
       className="rounded-2xl overflow-hidden flex-shrink-0 w-[285px]"
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "var(--layer-1)",
+        border: "1px solid var(--layer-3)",
       }}
     >
       {/* Card header */}
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3 mb-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 text-[22px]"
-            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
             {suggestion.emoji}
           </div>
           <div className="flex-1 min-w-0">
@@ -131,7 +131,7 @@ function SuggestionCard({
         {/* Badges */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
             <IconClock size={11} style={{ color: "var(--text-muted)" }} />
             <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{suggestion.prepTimeMin} min</span>
           </div>
@@ -157,7 +157,7 @@ function SuggestionCard({
 
         {/* Macros row */}
         <div className="flex items-center gap-1 p-2.5 rounded-xl mb-3"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <MacroPill label="Prot." value={suggestion.totalNutrition.proteinG}   unit="g" color="var(--protein)" />
           <div className="w-px h-8 flex-shrink-0" style={{ background: "var(--border)" }} />
           <MacroPill label="Gluc." value={suggestion.totalNutrition.carbsG}     unit="g" color="var(--carbs)" />
@@ -195,7 +195,7 @@ function SuggestionCard({
             style={{ overflow: "hidden" }}
           >
             <div className="px-4 pb-3"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              style={{ borderTop: "1px solid var(--layer-2)" }}>
               {suggestion.ingredients.map((ing, i) => (
                 <IngredientRow key={i} ing={ing} />
               ))}
@@ -418,7 +418,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
                 <button
                   onClick={onClose}
                   className="flex items-center justify-center w-8 h-8 rounded-full transition-all"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
                 >
                   <IconX size={15} stroke={2} />
                 </button>

@@ -85,7 +85,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex-shrink-0"
             style={{
-              background: active ? bg  : "rgba(255,255,255,0.04)",
+              background: active ? bg  : "var(--layer-1)",
               border:     `1px solid ${active ? `color-mix(in srgb, ${color} 33%, transparent)` : "var(--border)"}`,
               color:      active ? color : "var(--text-muted)",
             }}
@@ -118,7 +118,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             disabled={saving}
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex-shrink-0 overflow-hidden"
             style={{
-              background: jetlag ? "rgba(239,68,68,0.12)"  : "rgba(255,255,255,0.04)",
+              background: jetlag ? "rgba(239,68,68,0.12)"  : "var(--layer-1)",
               border:     `1px solid ${jetlag ? "rgba(239,68,68,0.4)" : "var(--border)"}`,
               color:      jetlag ? "var(--danger)" : "var(--text-muted)",
             }}

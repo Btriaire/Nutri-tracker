@@ -67,7 +67,7 @@ function FoodSlot({
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-2 px-2.5 py-2" style={{ background: "rgba(255,255,255,0.03)" }}>
+      <div className="flex items-center gap-2 px-2.5 py-2" style={{ background: "var(--layer-1)" }}>
         <IconSearch size={13} stroke={1.8} style={{ color: "var(--text-muted)" }} />
         <input
           value={query}
@@ -80,7 +80,7 @@ function FoodSlot({
       </div>
 
       {!showingSearch && (
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderTop: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5" style={{ borderTop: "1px solid var(--border)", background: "var(--layer-1)" }}>
           <IconHistory size={11} stroke={2} style={{ color: "var(--text-muted)" }} />
           <span className="text-[12px] uppercase tracking-wide font-semibold" style={{ color: "var(--text-muted)" }}>
             Mes aliments récents
@@ -145,7 +145,7 @@ function PickedCard({
   gramsInput?: { value: string; onChange: (v: string) => void };
 }) {
   return (
-    <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-3 py-2.5" style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
       <div className="flex items-center gap-2.5">
         <div className="flex-1 min-w-0">
           <p className="text-[12.5px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{picked.name}</p>
@@ -171,7 +171,7 @@ function PickedCard({
             value={gramsInput.value}
             onChange={(e) => gramsInput.onChange(e.target.value)}
             className="w-16 px-2 py-1 rounded-lg text-[12px] tabular-nums outline-none"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
           />
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>g</span>
         </div>
@@ -263,7 +263,7 @@ function MacroRow({ row }: { row: SubstitutionResult["rows"][number] }) {
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <span className="text-[12px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>A</span>
-          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
             <div className="h-full rounded-full" style={{ width: `${(row.sourceValue / maxVal) * 100}%`, background: "var(--protein)" }} />
           </div>
           <span className="text-[12px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
@@ -272,7 +272,7 @@ function MacroRow({ row }: { row: SubstitutionResult["rows"][number] }) {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[12px] w-4 flex-shrink-0" style={{ color: "var(--text-muted)" }}>B</span>
-          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
             <div className="h-full rounded-full" style={{ width: `${(row.targetValue / maxVal) * 100}%`, background: "#4ade80" }} />
           </div>
           <span className="text-[12px] tabular-nums w-12 text-right flex-shrink-0" style={{ color: "var(--text-muted)" }}>
@@ -411,7 +411,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
             {/* Swap icon */}
             <div className="flex justify-center">
               <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
                 <IconArrowsExchange size={13} stroke={2} style={{ color: "var(--text-muted)", transform: "rotate(90deg)" }} />
               </div>
             </div>
@@ -447,7 +447,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                 <p className="text-[12px] uppercase tracking-wide text-center mb-2 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Correspondance calorique
                 </p>
-                <div className="rounded-lg overflow-hidden mb-1" style={{ border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }}>
+                <div className="rounded-lg overflow-hidden mb-1" style={{ border: "1px solid var(--border)", background: "var(--layer-1)" }}>
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold truncate" style={{ color: "var(--protein)" }}>{grams} g · {source.name}</p>
@@ -459,7 +459,7 @@ export default function AlternativeFoodsModal({ onClose, lang = "fr" }: Props) {
                       {Math.round(result.sourceCalories)} kcal
                     </span>
                   </div>
-                  <div className="flex items-center justify-center py-1" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                  <div className="flex items-center justify-center py-1" style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "var(--layer-1)" }}>
                     <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>≈</span>
                   </div>
                   <div className="flex items-center justify-between gap-2 px-3 py-2">

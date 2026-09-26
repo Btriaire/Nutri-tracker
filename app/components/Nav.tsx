@@ -175,7 +175,7 @@ export default function Nav() {
               style={{ background: active ? bg : "transparent", color: active ? color : "var(--text-secondary)" }}
             >
               <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: active ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)" }}>
+                style={{ background: active ? "var(--layer-3)" : "var(--layer-1)" }}>
                 <Icon size={17} stroke={active ? 2.2 : 1.6}
                   style={{ color: active ? color : "var(--text-muted)" }} />
               </div>

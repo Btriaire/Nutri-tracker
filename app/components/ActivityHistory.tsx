@@ -48,7 +48,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
         </div>
         <ResponsiveContainer width="100%" height={130}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -30, bottom: 0 }} barGap={2}>
-            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+            <CartesianGrid vertical={false} stroke="var(--layer-1)" />
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
             <YAxis yAxisId="steps" orientation="left" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false}
               tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} domain={[0, maxSteps * 1.1]} />
@@ -108,7 +108,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
             const stepsOk     = p.steps >= stepsGoal * 0.7;
             const isOpen      = expanded === p.date;
             return (
-              <div key={p.date} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+              <div key={p.date} style={{ borderBottom: "1px solid var(--layer-1)" }}>
                 <button
                   className="w-full flex items-center gap-3 py-2.5 transition-opacity active:opacity-60"
                   onClick={() => setExpanded(isOpen ? null : p.date)}
@@ -176,7 +176,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                       <div className="pb-2 pl-[56px] space-y-1.5">
                         {p.sessions.map((s, i) => (
                           <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-                            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                            style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                             <span className="text-[14px] flex-shrink-0">{s.emoji}</span>
                             <span className="flex-1 text-[12px] font-medium truncate"
                               style={{ color: "var(--text-secondary)" }}>{s.name}</span>
@@ -196,7 +196,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                 {/* Horizontal steps bar */}
                 {!hasActivity ? null : (
                   <div className="pb-1 pl-[44px] pr-2">
-                    <div className="h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                    <div className="h-0.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                       <div className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min((p.steps / stepsGoal) * 100, 100)}%`,

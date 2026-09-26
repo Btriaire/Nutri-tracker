@@ -228,15 +228,15 @@ export default function ActivityDetailSheet({
                 <>
                   <div className="flex items-start justify-around mb-6">
                     <Stepper label="Séries"    value={sets}   onChange={setSets}   min={1}   color={catColor} />
-                    <div className="w-px self-stretch mt-8" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <div className="w-px self-stretch mt-8" style={{ background: "var(--layer-2)" }} />
                     <Stepper label="Répétitions" value={reps} onChange={setReps}   min={1}   color={catColor} />
-                    <div className="w-px self-stretch mt-8" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <div className="w-px self-stretch mt-8" style={{ background: "var(--layer-2)" }} />
                     <Stepper label="Poids (kg)"  value={loadKg} onChange={setLoadKg} min={0} step={2.5} unit="kg" color={catColor} />
                   </div>
 
                   {/* Kcal override */}
                   <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                     <IconFlame size={15} style={{ color: catColor }} />
                     <span className="text-[12px] flex-1" style={{ color: "rgba(255,255,255,0.5)" }}>
                       Kcal brûlées
@@ -276,8 +276,8 @@ export default function ActivityDetailSheet({
                         onClick={() => setDuration(p)}
                         className="px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                         style={{
-                          background:  duration === p ? `color-mix(in srgb, ${catColor} 13%, transparent)` : "rgba(255,255,255,0.05)",
-                          border:      `1px solid ${duration === p ? alpha(catColor, 27) : "rgba(255,255,255,0.08)"}`,
+                          background:  duration === p ? `color-mix(in srgb, ${catColor} 13%, transparent)` : "var(--layer-2)",
+                          border:      `1px solid ${duration === p ? alpha(catColor, 27) : "var(--layer-3)"}`,
                           color:       duration === p ? catColor : "rgba(255,255,255,0.45)",
                         }}
                       >
@@ -288,7 +288,7 @@ export default function ActivityDetailSheet({
 
                   {/* Kcal override row */}
                   <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                     <IconFlame size={15} style={{ color: catColor }} />
                     <span className="text-[12px] flex-1" style={{ color: "rgba(255,255,255,0.5)" }}>
                       Kcal brûlées
@@ -317,7 +317,7 @@ export default function ActivityDetailSheet({
                 style={{
                   height: "52px",
                   background: saving
-                    ? "rgba(255,255,255,0.06)"
+                    ? "var(--layer-2)"
                     : `linear-gradient(135deg, ${catColor} 0%, ${catColor2} 100%)`,
                   color:  saving ? "rgba(255,255,255,0.4)" : "#fff",
                   boxShadow: saving ? "none" : `0 4px 24px color-mix(in srgb, ${catColor} 25%, transparent)`,

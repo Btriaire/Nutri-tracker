@@ -190,7 +190,7 @@ export default function CalorieBudgetRing({
 
       {/* ── Stats row ── */}
       <div className="w-full flex items-stretch justify-center"
-        style={{ borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+        style={{ borderRadius: 12, overflow: "hidden", background: "var(--layer-1)", border: "1px solid var(--border)" }}>
 
         {/* Consommé */}
         <StatCell

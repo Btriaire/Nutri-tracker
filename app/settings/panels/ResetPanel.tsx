@@ -87,7 +87,7 @@ export default function ResetPanel() {
             <button key={key} onClick={() => toggle(key)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
               style={{
-                background: checked ? "rgba(248,113,113,0.08)" : "rgba(255,255,255,0.03)",
+                background: checked ? "rgba(248,113,113,0.08)" : "var(--layer-1)",
                 border: `1px solid ${checked ? "rgba(248,113,113,0.35)" : "var(--border)"}`,
               }}>
               <span className="text-[18px]">{emoji}</span>
@@ -96,7 +96,7 @@ export default function ResetPanel() {
                 <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
               </div>
               <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ background: checked ? "var(--danger)" : "rgba(255,255,255,0.06)", border: `1px solid ${checked ? "var(--danger)" : "var(--border)"}` }}>
+                style={{ background: checked ? "var(--danger)" : "var(--layer-2)", border: `1px solid ${checked ? "var(--danger)" : "var(--border)"}` }}>
                 {checked && <IconCircleCheck size={13} color="#fff" />}
               </div>
             </button>
@@ -111,7 +111,7 @@ export default function ResetPanel() {
           className="btn w-full gap-2 text-[13px]"
           style={{
             height: "40px",
-            background: selected.size > 0 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.04)",
+            background: selected.size > 0 ? "rgba(248,113,113,0.12)" : "var(--layer-1)",
             border: `1px solid ${selected.size > 0 ? "rgba(248,113,113,0.4)" : "var(--border)"}`,
             color: selected.size > 0 ? "var(--danger)" : "var(--text-muted)",
           }}>

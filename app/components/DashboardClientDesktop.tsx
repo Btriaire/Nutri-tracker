@@ -50,7 +50,7 @@ function StatPill({ icon, label, value, color, pct }: {
 }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ background: `color-mix(in srgb, ${color} 9%, transparent)` }}>
         <span style={{ color }}>{icon}</span>
@@ -59,7 +59,7 @@ function StatPill({ icon, label, value, color, pct }: {
         <div className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</div>
         <div className="text-[14px] font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{value}</div>
         {pct !== undefined && (
-          <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
             <motion.div className="h-full rounded-full"
               style={{ background: color, width: `${Math.min(100, pct)}%` }}
               initial={{ width: 0 }}
@@ -85,7 +85,7 @@ function MacroRow({ label, value, goal, color }: {
           {value}g <span style={{ color: "var(--text-muted)" }}>/ {goal}g</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
         <motion.div className="h-full rounded-full"
           style={{ background: over ? "var(--danger)" : color, width: `${p}%` }}
           initial={{ width: 0 }}
@@ -240,7 +240,7 @@ export default function DashboardClientDesktop({
                 <div className="space-y-2">
                   {sessions.map(s => (
                     <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.03)" }}>
+                      style={{ background: "var(--layer-1)" }}>
                       <span className="text-[18px]">{ACT_EMOJI[s.activityType] ?? "🏅"}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
@@ -278,7 +278,7 @@ export default function DashboardClientDesktop({
               ].map(({ href, label }) => (
                 <Link key={href} href={href}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] transition-all hover:opacity-80"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                   {label}
                 </Link>
               ))}

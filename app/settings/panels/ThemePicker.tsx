@@ -91,7 +91,7 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
             background: t.surface,
             borderRadius: t.radius,
             padding: "4px 6px",
-            border: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.07)"}`,
+            border: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" ? "rgba(0,0,0,0.08)" : "var(--layer-2)"}`,
           }}
         >
           {/* Mini chart bars */}
@@ -120,7 +120,7 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
       <div
         style={{
           background: t.nav,
-          borderTop: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" || t.nav === "#FFFFFF" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)"}`,
+          borderTop: `1px solid ${t.bg === "#F2F2F2" || t.bg === "#f4f4f8" || t.nav === "#FFFFFF" ? "rgba(0,0,0,0.08)" : "var(--layer-2)"}`,
           height: 16,
           display: "flex",
           alignItems: "center",

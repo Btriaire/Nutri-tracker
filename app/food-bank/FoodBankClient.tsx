@@ -77,7 +77,7 @@ function QualityBadges({ food }: { food: BankFood }) {
       {quality.novaGroup && (
         <span className="flex items-center gap-1 text-[12px] font-medium px-2 py-0.5 rounded-full"
           style={{
-            background: quality.novaGroup >= 4 ? "rgba(248,113,113,0.12)" : "rgba(255,255,255,0.05)",
+            background: quality.novaGroup >= 4 ? "rgba(248,113,113,0.12)" : "var(--layer-2)",
             color: quality.novaGroup >= 4 ? "var(--danger)" : "var(--text-muted)",
           }}>
           NOVA {quality.novaGroup}{quality.novaGroup >= 4 ? " · ultra-transformé" : ""}
@@ -118,17 +118,17 @@ function FoodDetail({ food }: { food: BankFood }) {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "var(--layer-1)" }}>
             <IconScale size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatGrams(food.totalGrams)}</p>
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>au total</p>
           </div>
-          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "var(--layer-1)" }}>
             <IconCalendar size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatDate(food.firstLoggedDate)}</p>
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>1ère fois</p>
           </div>
-          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+          <div className="rounded-lg px-2 py-1.5 text-center" style={{ background: "var(--layer-1)" }}>
             <IconFlame size={11} className="mx-auto mb-0.5" style={{ color: "var(--text-muted)" }} />
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{formatDate(food.lastLoggedDate)}</p>
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>dernière fois</p>
@@ -141,7 +141,7 @@ function FoodDetail({ food }: { food: BankFood }) {
             {meals.sort((a, b) => b[1] - a[1]).map(([meal, count]) => (
               <div key={meal} className="flex items-center gap-2">
                 <span className="text-[12px] w-16 flex-shrink-0" style={{ color: "var(--text-muted)" }}>{MEAL_LABELS[meal]}</span>
-                <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                   <div className="h-full rounded-full" style={{ width: `${(count / maxMeal) * 100}%`, background: "var(--protein)" }} />
                 </div>
                 <span className="text-[12px] w-4 text-right tabular-nums" style={{ color: "var(--text-muted)" }}>{count}</span>
@@ -162,7 +162,7 @@ function FoodRow({ food, expanded, onToggle }: { food: BankFood; expanded: boole
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
       <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors active:bg-white/5">
         <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px]"
-          style={{ background: "rgba(255,255,255,0.04)" }}>
+          style={{ background: "var(--layer-1)" }}>
           {cat.emoji}
         </span>
         <div className="flex-1 min-w-0">
@@ -275,7 +275,7 @@ export default function FoodBankClient() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un aliment…"
             className="w-full pl-10 pr-3 py-2.5 rounded-xl text-[13px] outline-none"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
           />
         </div>
 
@@ -284,7 +284,7 @@ export default function FoodBankClient() {
           <button onClick={() => setActiveCat(null)}
             className="flex-shrink-0 px-3 py-1.5 rounded-full text-[11.5px] font-medium transition-colors"
             style={{
-              background: !activeCat ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+              background: !activeCat ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
               border: `1px solid ${!activeCat ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
               color: !activeCat ? "var(--protein)" : "var(--text-secondary)",
             }}>
@@ -297,7 +297,7 @@ export default function FoodBankClient() {
               <button key={cat} onClick={() => setActiveCat(active ? null : cat)}
                 className="flex-shrink-0 px-3 py-1.5 rounded-full text-[11.5px] font-medium transition-colors"
                 style={{
-                  background: active ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+                  background: active ? "rgba(167,139,250,0.15)" : "var(--layer-1)",
                   border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                   color: active ? "var(--protein)" : "var(--text-secondary)",
                 }}>
@@ -314,7 +314,7 @@ export default function FoodBankClient() {
             <button key={opt.id} onClick={() => setSortMode(opt.id)}
               className="px-2 py-0.5 rounded-full text-[12px] font-medium transition-colors"
               style={{
-                background: sortMode === opt.id ? "rgba(255,255,255,0.08)" : "transparent",
+                background: sortMode === opt.id ? "var(--layer-3)" : "transparent",
                 color: sortMode === opt.id ? "var(--text-primary)" : "var(--text-muted)",
               }}>
               {opt.label}

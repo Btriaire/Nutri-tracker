@@ -73,7 +73,7 @@ function MacroBar({
   const totalCal = proteinG * 4 + carbsG * 4 + fatG * 9;
   if (totalCal <= 0) return (
     <svg viewBox="0 0 200 6" width="100%" height={height} style={{ display: "block" }}>
-      <rect x={0} y={0} width={200} height={6} rx={3} fill="rgba(255,255,255,0.06)" />
+      <rect x={0} y={0} width={200} height={6} rx={3} fill="var(--layer-2)" />
     </svg>
   );
 
@@ -84,7 +84,7 @@ function MacroBar({
 
   return (
     <svg viewBox="0 0 200 6" width="100%" height={height} style={{ display: "block" }}>
-      <rect x={0} y={0} width={200} height={6} rx={r} fill="rgba(255,255,255,0.06)" />
+      <rect x={0} y={0} width={200} height={6} rx={r} fill="var(--layer-2)" />
       {/* Protein */}
       <rect x={0}          y={0} width={pP} height={6} rx={r}   fill="#3b82f6" />
       {/* Carbs */}
@@ -104,7 +104,7 @@ function SpinArc({ color, size = 48 }: { color: string; size?: number }) {
   const circ = 2 * Math.PI * R;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
-      <circle cx={cx} cy={cx} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={3} />
+      <circle cx={cx} cy={cx} r={R} fill="none" stroke="var(--layer-2)" strokeWidth={3} />
       <motion.circle
         cx={cx} cy={cx} r={R}
         fill="none" stroke={color} strokeWidth={3}
@@ -128,7 +128,7 @@ function FillBar({
   const pct = goal > 0 ? Math.min(1, value / goal) : 0;
   return (
     <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} style={{ display: "block" }}>
-      <rect x={0} y={0} width={width} height={height} rx={height / 2} fill="rgba(255,255,255,0.07)" />
+      <rect x={0} y={0} width={width} height={height} rx={height / 2} fill="var(--layer-2)" />
       <motion.rect
         x={0} y={0} height={height} rx={height / 2}
         fill={color}
@@ -315,7 +315,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
         className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl flex flex-col"
         style={{
           background:    "rgba(11,11,17,0.98)",
-          border:        "1px solid rgba(255,255,255,0.08)",
+          border:        "1px solid var(--layer-3)",
           borderBottom:  "none",
           backdropFilter: "blur(28px)",
           maxHeight:     "88vh",
@@ -328,7 +328,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          style={{ borderBottom: "1px solid var(--layer-2)" }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: `color-mix(in srgb, ${mealColor} 13%, transparent)` }}>
             <IconSparkles size={16} style={{ color: mealColor }} />
@@ -343,7 +343,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
           </div>
           <button onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
             <IconX size={15} />
           </button>
         </div>
@@ -419,10 +419,10 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                 <button
                   onClick={() => galleryRef.current?.click()}
                   className="flex-1 flex flex-col items-center gap-3 py-7 rounded-2xl transition-all active:scale-[0.97]"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "2px dashed rgba(255,255,255,0.12)" }}
+                  style={{ background: "var(--layer-1)", border: "2px dashed var(--layer-3)" }}
                 >
                   <svg width="52" height="52" viewBox="0 0 52 52" style={{ display: "block" }}>
-                    <circle cx="26" cy="26" r="24" fill="rgba(255,255,255,0.06)" />
+                    <circle cx="26" cy="26" r="24" fill="var(--layer-2)" />
                     <text x="26" y="26" textAnchor="middle" dominantBaseline="middle" fontSize="22">🖼️</text>
                   </svg>
                   <span className="text-[13px] font-semibold px-2 text-center" style={{ color: "var(--text-primary)" }}>
@@ -433,7 +433,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
 
               {/* Tip */}
               <div className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                style={{ background: "var(--layer-1)", border: "1px solid var(--layer-2)" }}>
                 <span className="text-[13px] flex-shrink-0">💡</span>
                 <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   Pour de meilleurs résultats : photo de dessus, bonne lumière, assiette entière visible. Vous pouvez aussi utiliser une photo déjà prise.
@@ -470,7 +470,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                     initial={{ opacity: 0 }} animate={{ opacity: [0.4, 0.7, 0.4] }}
                     transition={{ delay: i * 0.12, duration: 1.4, repeat: Infinity }}
                     className="h-[58px] rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.04)", width: `${w}%` }} />
+                    style={{ background: "var(--layer-1)", width: `${w}%` }} />
                 ))}
               </div>
             </div>
@@ -529,7 +529,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       className="rounded-xl p-3"
                       style={{
                         background: item.selected ? `color-mix(in srgb, ${mealColor} 5%, transparent)` : "rgba(255,255,255,0.025)",
-                        border:     `1px solid ${item.selected ? alpha(mealColor, 21) : "rgba(255,255,255,0.07)"}`,
+                        border:     `1px solid ${item.selected ? alpha(mealColor, 21) : "var(--layer-2)"}`,
                         opacity:    isSaving ? 0.65 : 1,
                         transition: "background 0.15s, border-color 0.15s, opacity 0.2s",
                       }}
@@ -540,7 +540,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                           onClick={() => !isSaving && toggleSelect(idx)}
                           className="mt-0.5 w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center transition-all"
                           style={{
-                            background: item.selected ? mealColor : "rgba(255,255,255,0.07)",
+                            background: item.selected ? mealColor : "var(--layer-2)",
                             border:     `1.5px solid ${item.selected ? mealColor : "rgba(255,255,255,0.18)"}`,
                           }}>
                           {item.selected && <IconCheck size={11} style={{ color: "#fff" }} />}
@@ -572,7 +572,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             <button
                               onClick={() => !isSaving && adjustGrams(idx, -10)}
                               className="w-5 h-5 rounded-md flex items-center justify-center"
-                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                               <IconMinus size={9} />
                             </button>
                             <input
@@ -581,8 +581,8 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                               onChange={(e) => !isSaving && setGrams(idx, parseInt(e.target.value))}
                               className="w-11 text-center text-[12px] rounded-md tabular-nums outline-none"
                               style={{
-                                background: "rgba(255,255,255,0.05)",
-                                border:     "1px solid rgba(255,255,255,0.1)",
+                                background: "var(--layer-2)",
+                                border:     "1px solid var(--layer-3)",
                                 color:      "var(--text-secondary)",
                                 padding:    "2px 3px",
                               }}
@@ -591,7 +591,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             <button
                               onClick={() => !isSaving && adjustGrams(idx, 10)}
                               className="w-5 h-5 rounded-md flex items-center justify-center"
-                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
+                              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                               <IconPlus size={9} />
                             </button>
                             <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>g</span>
@@ -614,7 +614,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                     style={{ border: "1px solid rgba(255,255,255,0.09)" }}
                   >
                     {/* Calories bar */}
-                    <div className="px-3 pt-3 pb-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+                    <div className="px-3 pt-3 pb-2" style={{ background: "var(--layer-1)" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
                           {selected.length} aliment{selected.length > 1 ? "s" : ""} sélectionné{selected.length > 1 ? "s" : ""}
@@ -648,7 +648,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
 
                     {/* Per-macro fill bars */}
                     <div className="px-3 py-2.5 grid grid-cols-3 gap-3"
-                      style={{ background: "rgba(255,255,255,0.02)" }}>
+                      style={{ background: "var(--layer-1)" }}>
                       {[
                         { label: "Protéines", color: "var(--info)", val: totals.proteinG, goal: 50 },
                         { label: "Glucides",  color: "var(--carbs)", val: totals.carbsG,   goal: 150 },
@@ -677,7 +677,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
               className="flex-shrink-0 px-5 pt-3"
               style={{
-                borderTop: "1px solid rgba(255,255,255,0.07)",
+                borderTop: "1px solid var(--layer-2)",
                 paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)",
               }}
             >

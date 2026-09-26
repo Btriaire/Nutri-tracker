@@ -28,7 +28,7 @@ export default function QualityScoreDetail({ quality }: { quality: QualityScore 
                   {val.toFixed(1)}/{max}
                 </span>
               </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
               </div>
             </div>

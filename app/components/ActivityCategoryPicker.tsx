@@ -390,7 +390,7 @@ export default function ActivityCategoryPicker({
                 })()}
 
                 {/* ── Separator ── */}
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 20px" }} />
+                <div style={{ height: "1px", background: "var(--layer-2)", margin: "0 20px" }} />
 
                 {/* ── Exercise list ── */}
                 {EXERCISE_CATALOG.filter(activeCat.filter).map((e, idx, arr) => {
@@ -410,7 +410,7 @@ export default function ActivityCategoryPicker({
                       }}
                       className="w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all cursor-pointer"
                       style={{
-                        borderBottom: idx < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                        borderBottom: idx < arr.length - 1 ? "1px solid var(--layer-1)" : "none",
                       }}
                     >
                       {/* Emoji */}
@@ -442,8 +442,8 @@ export default function ActivityCategoryPicker({
                         onClick={ev => { ev.stopPropagation(); onToggleFav(e.id); }}
                         className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl transition-all"
                         style={{
-                          background: isFav ? `color-mix(in srgb, ${activeCat.c1} 13%, transparent)` : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${isFav ? alpha(activeCat.c1, 25) : "rgba(255,255,255,0.06)"}`,
+                          background: isFav ? `color-mix(in srgb, ${activeCat.c1} 13%, transparent)` : "var(--layer-1)",
+                          border: `1px solid ${isFav ? alpha(activeCat.c1, 25) : "var(--layer-2)"}`,
                         }}
                       >
                         <span className="text-[15px] leading-none">{isFav ? "⭐" : "☆"}</span>

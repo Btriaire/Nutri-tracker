@@ -114,7 +114,7 @@ export default function BarcodeScanner({ onDetect, onClose }: { onDetect: (code:
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-[15px] font-semibold text-white">Scanner un code-barre</p>
-          <button onClick={onClose} className="p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}>
+          <button onClick={onClose} className="p-2 rounded-lg" style={{ background: "var(--layer-3)", color: "#fff" }}>
             <IconX size={16} />
           </button>
         </div>
@@ -198,7 +198,7 @@ export default function BarcodeScanner({ onDetect, onClose }: { onDetect: (code:
                   onChange={e => setManualCode(e.target.value)}
                   placeholder="Ex: 3017624010701"
                   className="flex-1 px-3 py-2 rounded-xl text-[13px] text-white"
-                  style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+                  style={{ background: "var(--layer-3)", border: "1px solid rgba(255,255,255,0.2)" }}
                   onKeyDown={e => { if (e.key === "Enter" && manualCode.trim()) onDetect(manualCode.trim()); }}
                 />
                 <button

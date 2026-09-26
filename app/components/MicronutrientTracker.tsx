@@ -72,7 +72,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
 
   if (!rows.length) {
     return (
-      <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+      <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
         <p className="text-[12px] flex-1" style={{ color: "var(--text-muted)" }}>
           Aucun micronutriment suivi pour aujourd&apos;hui
         </p>
@@ -121,7 +121,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
               {row.unit}
             </span>
           </div>
-          <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+          <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-3)" }}>
             <motion.div
               className="h-full rounded-full"
               style={{ background: row.color }}
@@ -143,7 +143,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
   };
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <div className="w-full flex items-center pr-1">
         <button
           type="button"

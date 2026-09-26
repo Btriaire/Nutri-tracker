@@ -70,7 +70,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
   const maxAmount = rows.length ? rows[0].amount : 0;
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
@@ -104,7 +104,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                     onClick={() => setActive(c.key)}
                     className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all"
                     style={{
-                      background: active === c.key ? `color-mix(in srgb, ${c.color} 13%, transparent)` : "rgba(255,255,255,0.04)",
+                      background: active === c.key ? `color-mix(in srgb, ${c.color} 13%, transparent)` : "var(--layer-1)",
                       border: `1px solid ${active === c.key ? `color-mix(in srgb, ${c.color} 33%, transparent)` : "var(--border)"}`,
                     }}
                   >
@@ -147,7 +147,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                             {Math.round(amount)}{cat.unit} <span style={{ opacity: 0.7 }}>({Math.round(dayPct)}%)</span>
                           </span>
                         </div>
-                        <div className="h-2 rounded-full relative overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                        <div className="h-2 rounded-full relative overflow-hidden" style={{ background: "var(--layer-3)" }}>
                           <motion.div
                             className="h-full rounded-full absolute inset-y-0 left-0"
                             style={{ background: cat.color }}

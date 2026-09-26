@@ -101,7 +101,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
         </p>
         {hasAny && (
           <span className="ml-auto text-[12px] px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
             {recorded.length}/{MEALS.length} repas
           </span>
         )}
@@ -138,7 +138,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           {MEALS.map((_, i) => (
             <line key={i}
               x1={xFor(i)} y1={PAD_TOP} x2={xFor(i)} y2={SVG_H - PAD_BOT}
-              stroke="rgba(255,255,255,0.07)" strokeWidth={1}
+              stroke="var(--layer-2)" strokeWidth={1}
             />
           ))}
 
@@ -208,7 +208,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
             {/* Meal icon + label */}
             <div className="flex items-center gap-1.5 shrink-0" style={{ width: 90 }}>
               <span className="flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}>
+                style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}>
                 <m.Icon size={12} />
               </span>
               <span className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>

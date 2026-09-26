@@ -182,9 +182,9 @@ export default function PixelWall({ points, today }: Props) {
                 const idx       = pixelIndex++;
 
                 let bg: string;
-                if (isFuture)        bg = "rgba(255,255,255,0.03)";
+                if (isFuture)        bg = "var(--layer-1)";
                 else if (mood != null) bg = MOOD_COLORS[mood];
-                else                 bg = "rgba(255,255,255,0.06)";
+                else                 bg = "var(--layer-2)";
 
                 // Tooltip text
                 const dayLabel = format(day, "EEEE d MMMM", { locale: fr });
@@ -245,7 +245,7 @@ export default function PixelWall({ points, today }: Props) {
       {weekSummary != null && (
         <div
           className="mt-3 text-[12px] rounded-lg px-3 py-2"
-          style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)" }}
+          style={{ background: "var(--layer-1)", color: "var(--text-secondary)" }}
         >
           Cette semaine, couleur dominante&nbsp;:&nbsp;
           <span className="font-semibold" style={{ color: "var(--text-primary)" }}>

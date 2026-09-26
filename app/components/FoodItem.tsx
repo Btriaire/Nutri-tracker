@@ -382,7 +382,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 <button
                   onClick={() => setEditGrams((v) => String(Math.max(1, (parseFloat(v) || 1) - 10)))}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-primary)" }}>
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
                   −
                 </button>
                 <div className="relative flex-1">
@@ -401,7 +401,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 <button
                   onClick={() => setEditGrams((v) => String((parseFloat(v) || 0) + 10))}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-primary)" }}>
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
                   +
                 </button>
                 {previewN && (
@@ -419,7 +419,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 <button
                   onClick={() => setEditing(false)}
                   className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+                  style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
                   <IconX size={11} stroke={2} />
                 </button>
               </div>
@@ -434,7 +434,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                       onClick={() => setEditGrams(String(g))}
                       className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                       style={{
-                        background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
+                        background: active ? "rgba(167,139,250,0.18)" : "var(--layer-1)",
                         border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                         color: active ? "var(--protein)" : "var(--text-muted)",
                       }}>
@@ -523,7 +523,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               {/* Micro-nutrient grid (existing, only if has values) */}
               {hasMicros && microRows.length > 0 && (
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 p-2.5 rounded-xl mb-2"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                  style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                   {microRows.map(({ label, value, unit, color }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>

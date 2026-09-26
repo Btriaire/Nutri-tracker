@@ -11,7 +11,7 @@ export default function DesktopLayout({ children }: { children: React.ReactNode 
         style={{
           background: "rgba(15,15,20,0.92)",
           backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid var(--layer-3)",
           color: "rgba(255,255,255,0.55)",
         }}
       >

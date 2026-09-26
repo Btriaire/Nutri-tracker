@@ -229,7 +229,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
         className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl flex flex-col mx-auto"
         style={{
-          background: "rgba(11,11,17,0.98)", border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgba(11,11,17,0.98)", border: "1px solid var(--layer-3)",
           borderBottom: "none", backdropFilter: "blur(28px)", maxHeight: "88vh", maxWidth: "32rem",
         }}
       >
@@ -239,7 +239,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
         </div>
 
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--layer-2)" }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `color-mix(in srgb, ${ACCENT} 13%, transparent)` }}>
             <IconSparkles size={16} style={{ color: ACCENT }} />
           </div>
@@ -248,7 +248,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Nutri-IA · reconnaissance vocale</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+            style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
             <IconX size={15} />
           </button>
         </div>
@@ -288,7 +288,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 placeholder="Votre activité apparaît ici — vous pouvez corriger le texte…"
                 rows={3}
                 className="w-full mt-4 px-3 py-2.5 rounded-xl text-[13px] outline-none resize-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${listening ? alpha(ACCENT, 33) : "var(--border)"}`, color: "var(--text-primary)" }}
+                style={{ background: "var(--layer-2)", border: `1px solid ${listening ? alpha(ACCENT, 33) : "var(--border)"}`, color: "var(--text-primary)" }}
               />
 
               <button
@@ -313,7 +313,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 {[100, 85, 70].map((w, i) => (
                   <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: [0.4, 0.7, 0.4] }}
                     transition={{ delay: i * 0.12, duration: 1.4, repeat: Infinity }}
-                    className="h-[58px] rounded-xl" style={{ background: "rgba(255,255,255,0.04)", width: `${w}%` }} />
+                    className="h-[58px] rounded-xl" style={{ background: "var(--layer-1)", width: `${w}%` }} />
                 ))}
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                   ✨ {items.length} activité{items.length > 1 ? "s" : ""} reconnue{items.length > 1 ? "s" : ""}
                 </span>
                 <button onClick={() => { setPhase("idle"); setItems([]); }}
-                  className="text-[12px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+                  className="text-[12px] px-2 py-0.5 rounded-md" style={{ background: "var(--layer-3)", color: "var(--text-muted)" }}>
                   Recommencer
                 </button>
               </div>
@@ -352,14 +352,14 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                       className="rounded-xl p-3"
                       style={{
                         background: item.selected ? `color-mix(in srgb, ${ACCENT} 5%, transparent)` : "rgba(255,255,255,0.025)",
-                        border: `1px solid ${item.selected ? alpha(ACCENT, 21) : "rgba(255,255,255,0.07)"}`,
+                        border: `1px solid ${item.selected ? alpha(ACCENT, 21) : "var(--layer-2)"}`,
                         opacity: isSaving ? 0.65 : 1,
                       }}>
                       <div className="flex items-start gap-3">
                         {/* Checkbox */}
                         <button onClick={() => !isSaving && toggleSelect(idx)}
                           className="mt-0.5 w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center transition-all"
-                          style={{ background: item.selected ? ACCENT : "rgba(255,255,255,0.07)", border: `1.5px solid ${item.selected ? ACCENT : "rgba(255,255,255,0.18)"}` }}>
+                          style={{ background: item.selected ? ACCENT : "var(--layer-2)", border: `1.5px solid ${item.selected ? ACCENT : "rgba(255,255,255,0.18)"}` }}>
                           {item.selected && <IconCheck size={11} style={{ color: "#fff" }} />}
                         </button>
 
@@ -377,14 +377,14 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <div className="flex items-center gap-1">
                             <button onClick={() => !isSaving && adjustDuration(idx, -5)} className="w-5 h-5 rounded-md flex items-center justify-center"
-                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconMinus size={9} /></button>
+                              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconMinus size={9} /></button>
                             <input type="number" value={item.durationMin}
                               onChange={(e) => !isSaving && setDuration(idx, parseInt(e.target.value))}
                               className="w-11 text-center text-[12px] rounded-md tabular-nums outline-none"
-                              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-secondary)", padding: "2px 3px" }}
+                              style={{ background: "var(--layer-2)", border: "1px solid var(--layer-3)", color: "var(--text-secondary)", padding: "2px 3px" }}
                               disabled={isSaving} />
                             <button onClick={() => !isSaving && adjustDuration(idx, 5)} className="w-5 h-5 rounded-md flex items-center justify-center"
-                              style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconPlus size={9} /></button>
+                              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}><IconPlus size={9} /></button>
                           </div>
                           <span className="inline-flex items-center gap-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                             <IconClock size={9} /> min
@@ -403,7 +403,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
         <AnimatePresence>
           {(phase === "results" || phase === "saving") && selected.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-              className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+              className="flex-shrink-0 px-5 pt-3 pb-8" style={{ borderTop: "1px solid var(--layer-2)" }}>
               <button onClick={handleAdd} disabled={phase === "saving"}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]"
                 style={{ background: phase === "saving" ? `color-mix(in srgb, ${ACCENT} 44%, transparent)` : ACCENT_SOLID, color: "#fff", boxShadow: phase !== "saving" ? `0 4px 20px color-mix(in srgb, ${ACCENT} 21%, transparent)` : "none" }}>

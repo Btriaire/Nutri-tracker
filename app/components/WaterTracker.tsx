@@ -44,7 +44,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
             {" "}/ {goalMl >= 1000 ? `${(goalMl / 1000).toFixed(1)}L` : `${goalMl}ml`}
           </span>
         </p>
-        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
           <motion.div
             className="h-full rounded-full"
             style={{ background: "var(--steps)" }}
@@ -79,7 +79,7 @@ export default function WaterTracker({ date, waterMl, goalMl, onUpdate }: Props)
           disabled={loading || waterMl === 0}
           className="flex items-center justify-center px-2.5 py-2 rounded-lg transition-colors disabled:opacity-30 hover:opacity-80"
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--layer-1)",
             border: "1px solid var(--border)",
             color: "var(--text-muted)",
           }}

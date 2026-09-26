@@ -375,7 +375,7 @@ export default function RelaxationPlayer() {
               whileTap={{ scale: 0.97 }}
               className="flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all"
               style={{
-                background: active ? `color-mix(in srgb, ${s.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
+                background: active ? `color-mix(in srgb, ${s.color} 9%, transparent)` : "var(--layer-1)",
                 border:     `1px solid ${active ? `color-mix(in srgb, ${s.color} 33%, transparent)` : "var(--border)"}`,
               }}
             >
@@ -430,7 +430,7 @@ export default function RelaxationPlayer() {
                     <button key={value} onClick={() => handleTimer(value)}
                       className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                       style={{
-                        background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
+                        background: active ? "rgba(167,139,250,0.18)" : "var(--layer-1)",
                         border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
                         color: active ? "var(--protein)" : "var(--text-muted)",
                       }}>

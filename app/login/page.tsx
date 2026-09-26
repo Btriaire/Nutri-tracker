@@ -91,12 +91,12 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-2.5 rounded-xl text-[13px] font-medium transition-all"
             style={{
               height: "40px",
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              background: "var(--layer-2)",
+              border: "1px solid var(--layer-3)",
               color: "var(--text-primary)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.11)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--layer-2)")}
           >
             {googleLoad ? (
               <IconLoader2 size={14} className="animate-spin" />

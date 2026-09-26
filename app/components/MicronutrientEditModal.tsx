@@ -89,7 +89,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
               )}
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
+              style={{ background: "var(--layer-2)", color: "var(--text-muted)" }}>
               <IconX size={15} />
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
                 const info = MICRONUTRIENT_DB[code];
                 return (
                   <label key={code} className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     <span className="text-[12px] flex-1 min-w-0 truncate" style={{ color: "var(--text-secondary)" }}>
                       {info.label}
                     </span>

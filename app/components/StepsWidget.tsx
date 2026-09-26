@@ -36,7 +36,7 @@ export default function StepsWidget({ steps, goal = 10000 }: Props) {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
         <motion.div
           className="h-full rounded-full"
           style={{ background: "linear-gradient(90deg, var(--steps), rgba(34,211,238,0.6))" }}

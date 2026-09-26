@@ -98,7 +98,7 @@ export default function CardioClient({ points, age }: Props) {
         {/* Header */}
         <motion.div {...fade(0)} className="flex items-center gap-3 mb-6">
           <Link href="/dashboard" className="p-2 rounded-xl transition-opacity active:opacity-60"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
             <IconChevronLeft size={16} style={{ color: "var(--text-secondary)" }} />
           </Link>
           <div>
@@ -135,7 +135,7 @@ export default function CardioClient({ points, age }: Props) {
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium"
                   style={{
-                    background: delta === 0 ? "rgba(255,255,255,0.05)" : delta < 0 ? "color-mix(in srgb, var(--fit-green) 12%, transparent)" : "color-mix(in srgb, var(--fit-red) 12%, transparent)",
+                    background: delta === 0 ? "var(--layer-2)" : delta < 0 ? "color-mix(in srgb, var(--fit-green) 12%, transparent)" : "color-mix(in srgb, var(--fit-red) 12%, transparent)",
                     color: delta === 0 ? "var(--text-muted)" : delta < 0 ? "var(--fit-green)" : "var(--fit-red)",
                   }}>
                   {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
@@ -164,7 +164,7 @@ export default function CardioClient({ points, age }: Props) {
         {/* Weekly trend badge */}
         {weekDelta !== null && (
           <motion.div {...fade(0.1)} className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-[12px]"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
             {weekDelta === 0
               ? <><IconCircleCheck size={15} style={{ color: "var(--fit-green)" }} /><span style={{ color: "var(--text-secondary)" }}>Stable sur 7 jours</span></>
               : weekDelta < 0
@@ -181,7 +181,7 @@ export default function CardioClient({ points, age }: Props) {
               onClick={() => setRangeDays(days as 7 | 14 | 30)}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
               style={{
-                background: rangeDays === days ? "var(--surface-active)" : "rgba(255,255,255,0.04)",
+                background: rangeDays === days ? "var(--surface-active)" : "var(--layer-1)",
                 color:      rangeDays === days ? "var(--text-primary)"   : "var(--text-muted)",
                 border:     rangeDays === days ? "1px solid var(--border-strong)" : "1px solid transparent",
               }}>
@@ -202,7 +202,7 @@ export default function CardioClient({ points, age }: Props) {
                     <stop offset="95%" stopColor="var(--fit-red)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--layer-1)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
                 <Tooltip content={<HrTooltip />} />
@@ -300,7 +300,7 @@ export default function CardioClient({ points, age }: Props) {
               const z = p.hrAvg ? hrZone(p.hrAvg, fcMax) : null;
               return (
                 <div key={p.date} className="flex items-center gap-3 py-1.5"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  style={{ borderBottom: "1px solid var(--layer-1)" }}>
                   <span className="text-[12px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                     {format(parseISO(p.date), "dd MMM", { locale: fr })}
                   </span>
