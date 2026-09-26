@@ -16,6 +16,7 @@ import AppleHealthPanel from "@/app/components/AppleHealthPanel";
 import IntegrationsHealthPanel from "@/app/components/IntegrationsHealthPanel";
 import GoalsPanel from "./panels/GoalsPanel";
 import DataSafetyBanner from "./panels/DataSafetyBanner";
+import BackupPanel from "./panels/BackupPanel";
 import ProfilePanel from "./panels/ProfilePanel";
 import AlcoolPanel from "./panels/AlcoolPanel";
 import ChartPrefsPanel from "./panels/ChartPrefsPanel";
@@ -220,6 +221,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Data safety banner */}
         <DataSafetyBanner />
+        <BackupPanel />
 
         {/* Profil — TOP */}
         <ProfilePanel initialPhotoUrl={initialPhotoUrl} initialDisplayName={initialDisplayName} initialGoals={initialGoals} />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildBackup } from "@/app/lib/backup";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { logBackup, clearBackupRequest } from "@/app/lib/backup-log";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -42,7 +43,10 @@ async function handle(req: NextRequest) {
   const key = set ? `backup_${set}` : "backup";
   try {
     const result = await buildBackup(set);
-    await record(key, { ok: true, at: new Date().toISOString(), totalDocs: result.totalDocs, sizeBytes: result.sizeBytes });
+    const at = new Date().toISOString();
+    await record(key, { ok: true, at, totalDocs: result.totalDocs, sizeBytes: result.sizeBytes });
+    await logBackup({ at, set: set ?? null, ok: true, totalDocs: result.totalDocs, sizeBytes: result.sizeBytes, gzBytes: result.gzBytes });
+    if (!set) await clearBackupRequest();
     return new NextResponse(new Uint8Array(result.gz), {
       headers: {
         "Content-Type": "application/gzip",
@@ -53,7 +57,10 @@ async function handle(req: NextRequest) {
     });
   } catch (e) {
     console.error("[cron/backup] Error:", e);
-    await record(key, { ok: false, at: new Date().toISOString(), error: e instanceof Error ? e.message : "erreur inconnue" });
+    const at = new Date().toISOString();
+    const error = e instanceof Error ? e.message : "erreur inconnue";
+    await record(key, { ok: false, at, error });
+    await logBackup({ at, set: set ?? null, ok: false, error });
     return NextResponse.json({ error: "Backup failed" }, { status: 500 });
   }
 }
