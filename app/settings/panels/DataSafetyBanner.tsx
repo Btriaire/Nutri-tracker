@@ -1,11 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { IconCircleCheck, IconLoader2, IconDatabase } from "@tabler/icons-react";
 
 export default function DataSafetyBanner() {
   const [downloading, setDownloading] = useState(false);
   const [done,        setDone]        = useState(false);
+  const [backup, setBackup] = useState<{ ok: boolean; ageDays: number } | null | undefined>(undefined);
+
+  useEffect(() => {
+    fetch("/api/backup/status")
+      .then(r => r.json())
+      .then((d: { backup?: { ok: boolean; at: string } | null }) => {
+        const b = d.backup;
+        setBackup(b ? { ok: b.ok, ageDays: Math.floor((Date.now() - new Date(b.at).getTime()) / 86_400_000) } : null);
+      })
+      .catch(() => setBackup(null));
+  }, []);
+
+  const ageDays = backup?.ageDays ?? null;
+  const stale = backup === null || (backup !== undefined && (!backup.ok || (ageDays ?? 99) >= 2));
+  const backupLabel = backup === undefined ? "Vérification de la sauvegarde…"
+    : backup === null ? "Aucune sauvegarde automatique enregistrée"
+    : !backup.ok ? "Dernière sauvegarde en échec — exporte tes données"
+    : ageDays === 0 ? "Sauvegarde automatique : aujourd'hui"
+    : `Sauvegarde automatique : il y a ${ageDays} jour${ageDays === 1 ? "" : "s"}`;
 
   const handleQuickExport = async () => {
     setDownloading(true);
@@ -38,11 +57,11 @@ export default function DataSafetyBanner() {
     >
       <span className="text-[18px] flex-shrink-0">🔒</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
-          Tes données sont en sécurité
+        <p className="text-[12px] font-semibold" style={{ color: stale ? "var(--carbs)" : "var(--fiber)" }}>
+          {stale ? "Sauvegarde à vérifier" : "Tes données sont en sécurité"}
         </p>
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-          Stockées dans Firestore · accessibles uniquement par toi
+          {backupLabel}
         </p>
       </div>
       <button

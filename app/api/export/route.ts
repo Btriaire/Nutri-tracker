@@ -3,51 +3,25 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const USER = "owner";
+const SCHEMA_VERSION = 2;
 
-// ─── Helper: fetch entire subcollection ───────────────────────────────────────
+// Exclues : jetons de connexion, photos base64 (sauvegardees a part par le cron), historique interne.
+const EXCLUDED = new Set(["oauthTokens", "dayPhotos", "mealPhotos", "faceScans", "_history"]);
+const DATE_ID = /^\d{4}-\d{2}-\d{2}$/;
 
-async function fetchCollection(db: FirebaseFirestore.Firestore, path: string) {
-  const snap = await db.collection(path).get();
-  return snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-}
-
-// ─── Helper: fetch subcollection with date range ──────────────────────────────
-
-async function fetchDateRange(
-  db: FirebaseFirestore.Firestore,
-  path: string,
-  field: string,
-  from?: string,
-  to?: string,
-) {
-  let q: FirebaseFirestore.Query = db.collection(path);
-  if (from) q = q.where(field, ">=", from);
-  if (to)   q = q.where(field, "<=", to);
-  const snap = await q.get();
-  return snap.docs.map(d => ({ _id: d.id, ...d.data() }));
-}
-
-// ─── Sanitize timestamps → ISO strings ───────────────────────────────────────
+// ─── Timestamps → ISO ────────────────────────────────────────────────────────
 
 function sanitize(obj: unknown): unknown {
-  if (obj === null || obj === undefined) return obj;
-  if (typeof obj !== "object") return obj;
-
-  // Firestore Timestamp
-  if (
-    typeof (obj as Record<string, unknown>)._seconds === "number" &&
-    typeof (obj as Record<string, unknown>)._nanoseconds === "number"
-  ) {
-    const ts = obj as { _seconds: number; _nanoseconds: number };
-    return new Date(ts._seconds * 1000 + ts._nanoseconds / 1e6).toISOString();
-  }
-
+  if (obj === null || obj === undefined || typeof obj !== "object") return obj;
+  const o = obj as Record<string, unknown>;
+  if (typeof o.toDate === "function") return (o.toDate as () => Date)().toISOString();
   if (Array.isArray(obj)) return obj.map(sanitize);
-
   const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+  for (const [k, v] of Object.entries(o)) {
+    if (/token|secret|password/i.test(k)) continue;
     result[k] = sanitize(v);
   }
   return result;
@@ -65,70 +39,43 @@ export async function GET(req: NextRequest) {
   const format = searchParams.get("format") ?? "json";
 
   const db = getAdminFirestore();
-  const base = `users/${USER}`;
+  const userRef = db.doc(`users/${USER}`);
 
-  // ── Fetch everything in parallel ──────────────────────────────────────────
-  const [
-    profileSnap,
-    foodLogDocs,
-    healthDocs,
-    fitnessDocs,
-    manualActivities,
-    customFoods,
-    recipeDocs,
-    savedMealDocs,
-    mentalHealthDocs,
-    workoutTemplates,
-  ] = await Promise.all([
-    db.doc(`${base}`).get(),
-    fetchDateRange(db, `${base}/foodLog`,          "_id",  from, to),
-    fetchDateRange(db, `${base}/healthEntries`,    "date", from, to),
-    fetchDateRange(db, `${base}/fitnessData`,      "_id",  from, to),
-    fetchCollection(db, `${base}/manualActivities`),
-    fetchCollection(db, `${base}/customFoods`),
-    fetchCollection(db, `${base}/recipes`),
-    fetchCollection(db, `${base}/savedMeals`),
-    fetchCollection(db, `${base}/mentalHealth`),
-    fetchCollection(db, `${base}/workoutTemplates`),
+  // Toutes les sous-collections sont decouvertes dynamiquement : rien n'est oublie.
+  const names = (await userRef.listCollections()).map((c) => c.id).filter((n) => !EXCLUDED.has(n));
+  const [profileSnap, ...snaps] = await Promise.all([
+    userRef.get(),
+    ...names.map((n) => db.collection(`users/${USER}/${n}`).get()),
   ]);
 
-  const profile = profileSnap.exists ? profileSnap.data() : null;
+  // La plage de dates ne s'applique qu'aux documents dont l'id est une date (journaux quotidiens).
+  const inRange = (id: string) => !DATE_ID.test(id) || ((!from || id >= from) && (!to || id <= to));
 
-  // ── Build export object ───────────────────────────────────────────────────
+  const collections: Record<string, unknown[]> = {};
+  names.forEach((n, i) => {
+    collections[n] = snaps[i].docs
+      .filter((d) => inRange(d.id))
+      .map((d) => ({ _id: d.id, ...(sanitize(d.data()) as Record<string, unknown>) }))
+      .sort((a, b) => String(a._id).localeCompare(String(b._id)));
+  });
 
   const exportDate = new Date().toISOString();
-
-  const payload = {
-    meta: {
-      exportedAt:  exportDate,
-      exportedBy:  USER,
-      appVersion:  "nutri-tracker",
-      dateRange:   { from: from ?? "all", to: to ?? "all" },
-      totalDays:   foodLogDocs.length,
-    },
-
-    profile: sanitize(profile),
-
-    foodLog: (sanitize(foodLogDocs) as Record<string,string>[])
-      .sort((a, b) => (a._id ?? "").localeCompare(b._id ?? "")),
-
-    healthEntries: (sanitize(healthDocs) as Record<string,string>[])
-      .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
-
-    fitnessData: (sanitize(fitnessDocs) as Record<string,string>[])
-      .sort((a, b) => (a._id ?? "").localeCompare(b._id ?? "")),
-
-    manualActivities: sanitize(manualActivities),
-    customFoods:      sanitize(customFoods),
-    recipes:          sanitize(recipeDocs),
-    savedMeals:       sanitize(savedMealDocs),
-    mentalHealth:     sanitize(mentalHealthDocs),
-    workoutTemplates: sanitize(workoutTemplates),
-  };
-
-  // ── JSON export ───────────────────────────────────────────────────────────
+  const counts = Object.fromEntries(Object.entries(collections).map(([k, v]) => [k, v.length]));
 
   if (format === "json") {
+    const payload = {
+      meta: {
+        schemaVersion: SCHEMA_VERSION,
+        exportedAt: exportDate,
+        exportedBy: USER,
+        dateRange: { from: from ?? "all", to: to ?? "all" },
+        units: { energy: "kcal", macros: "g", sodium: "mg", water: "ml", weight: "kg", length: "cm" },
+        counts,
+        notIncluded: ["photos (dayPhotos, mealPhotos, faceScans)", "jetons de connexion"],
+      },
+      profile: sanitize(profileSnap.exists ? profileSnap.data() : null),
+      ...collections,
+    };
     const filename = `nutri-tracker-export-${exportDate.slice(0, 10)}.json`;
     return new NextResponse(JSON.stringify(payload, null, 2), {
       headers: {
@@ -138,50 +85,35 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // ── CSV export (food log only — most useful for spreadsheets) ────────────
-
+  // ── CSV : journal alimentaire, 1 ligne par aliment, ouvrable dans Excel FR ──
   if (format === "csv") {
-    const rows: string[] = [];
+    const SEP = ";";
+    const num = (v: unknown) => (v == null || v === "" ? "" : String(v).replace(".", ","));
+    const rows: string[] = [[
+      "date", "repas", "aliment", "marque", "source", "portion", "grammes", "calories",
+      "proteines_g", "glucides_g", "lipides_g", "fibres_g", "sucres_g", "graisses_saturees_g", "sodium_mg",
+    ].join(SEP)];
 
-    // Header
-    rows.push([
-      "date", "meal", "food_name", "brand", "source",
-      "grams", "calories", "protein_g", "carbs_g", "fat_g", "fiber_g",
-      "sugar_g", "saturated_fat_g", "sodium_mg", "water_g",
-    ].join(","));
-
-    for (const day of payload.foodLog as Record<string, unknown>[]) {
-      const date = day._id as string;
-      const meals = day.meals as Record<string, unknown[]> | undefined;
-      if (!meals) continue;
-      for (const [mealType, entries] of Object.entries(meals)) {
-        if (!Array.isArray(entries)) continue;
-        for (const e of entries) {
-          const entry = e as Record<string, unknown>;
-          const n = (entry.nutrition as Record<string, unknown>) ?? {};
-          const row = [
-            date,
-            mealType,
-            csvEscape(String(entry.name ?? "")),
-            csvEscape(String(entry.brand ?? "")),
-            csvEscape(String(entry.source ?? "")),
-            entry.grams ?? 0,
-            n.calories  ?? 0,
-            n.proteinG  ?? 0,
-            n.carbsG    ?? 0,
-            n.fatG      ?? 0,
-            n.fiberG    ?? 0,
-            n.sugarG    ?? "",
-            n.saturatedFatG ?? "",
-            n.sodiumMg  ?? "",
-            n.waterG    ?? "",
-          ].join(",");
-          rows.push(row);
-        }
+    for (const day of (collections.foodLog ?? []) as Record<string, unknown>[]) {
+      const entries = Array.isArray(day.entries) ? (day.entries as Record<string, unknown>[]) : [];
+      for (const e of entries) {
+        const n = (e.nutrition as Record<string, unknown>) ?? {};
+        rows.push([
+          day._id,
+          e.meal ?? "",
+          csvEscape(String(e.name ?? "")),
+          csvEscape(String(e.brand ?? "")),
+          csvEscape(String(e.source ?? "")),
+          csvEscape(String(e.servingLabel ?? "")),
+          num(e.servingGrams),
+          num(n.calories), num(n.proteinG), num(n.carbsG), num(n.fatG), num(n.fiberG),
+          num(n.sugarG), num(n.saturatedFatG), num(n.sodiumMg),
+        ].join(SEP));
       }
     }
 
-    const csv = rows.join("\n");
+    // BOM UTF-8 : sans lui Excel casse les accents.
+    const csv = "﻿" + rows.join("\r\n");
     const filename = `nutri-tracker-foodlog-${exportDate.slice(0, 10)}.csv`;
     return new NextResponse(csv, {
       headers: {
@@ -195,7 +127,7 @@ export async function GET(req: NextRequest) {
 }
 
 function csvEscape(s: string): string {
-  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+  if (s.includes(";") || s.includes('"') || s.includes("\n")) {
     return `"${s.replace(/"/g, '""')}"`;
   }
   return s;

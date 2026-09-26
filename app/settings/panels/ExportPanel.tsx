@@ -48,7 +48,7 @@ export default function ExportPanel() {
   ];
 
   const FIELDS_CSV = [
-    { icon: "🍽️", label: "Journal alimentaire uniquement", desc: "1 ligne par aliment · idéal pour Excel / Google Sheets" },
+    { icon: "🍽️", label: "Journal alimentaire uniquement", desc: "1 ligne par aliment · séparateur « ; » et accents compatibles Excel" },
     { icon: "📋", label: "Colonnes", desc: "date, repas, aliment, marque, source, grammes, calories, protéines, glucides, lipides, fibres, sel, graisses saturées, sodium, eau" },
   ];
 
@@ -70,7 +70,7 @@ export default function ExportPanel() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-semibold">Exporter mes données</p>
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Export exhaustif de tous tes paramètres</p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>JSON complet (toutes les collections, hors photos) · CSV du journal repas</p>
         </div>
         <IconChevronDown
           size={16}

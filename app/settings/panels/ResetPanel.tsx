@@ -13,6 +13,7 @@ export default function ResetPanel() {
   const [open,     setOpen]     = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm,  setConfirm]  = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [done,     setDone]     = useState<Record<string, number> | null>(null);
 
@@ -21,15 +22,19 @@ export default function ResetPanel() {
 
   const handleReset = async () => {
     setResetting(true);
+    setError(null);
     try {
       const targets = selected.size === 3 ? ["all"] : Array.from(selected);
       const res = await fetch("/api/admin/reset", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targets }),
+        body: JSON.stringify({ targets, confirm: "RESET" }),
       });
-      const json = await res.json() as { ok: boolean; results: Record<string, number> };
-      if (json.ok) { setDone(json.results); setConfirm(false); setSelected(new Set()); }
+      const json = await res.json() as { ok?: boolean; results?: Record<string, number>; error?: string };
+      if (json.ok && json.results) { setDone(json.results); setConfirm(false); setSelected(new Set()); }
+      else setError(json.error ?? "La remise à zéro a échoué. Rien n'a été supprimé.");
+    } catch {
+      setError("La remise à zéro a échoué. Rien n'a été supprimé.");
     } finally { setResetting(false); }
   };
 
@@ -104,6 +109,7 @@ export default function ResetPanel() {
         })}
       </div>
 
+      {error && <p role="alert" className="px-4 pb-2 text-[12px]" style={{ color: "var(--danger)" }}>{error}</p>}
       {!confirm ? (
         <button
           onClick={() => setConfirm(true)}

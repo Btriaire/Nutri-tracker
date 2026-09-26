@@ -9,6 +9,9 @@
     { "path": "/api/report/generate?period=7d",  "schedule": "0 8 * * 0" },
     { "path": "/api/report/generate?period=30d", "schedule": "0 8 1 * *" },
     { "path": "/api/cron/sync-integrations",     "schedule": "0 5 * * *" },
-    { "path": "/api/cron/backup",                "schedule": "0 4 1 * *" }
+    { "path": "/api/cron/backup",                "schedule": "0 4 * * *" },
+    { "path": "/api/cron/backup?set=dayPhotos",  "schedule": "0 3 * * 0" },
+    { "path": "/api/cron/backup?set=mealPhotos", "schedule": "20 3 * * 0" },
+    { "path": "/api/cron/backup?set=faceScans",  "schedule": "40 3 * * 0" }
   ]
 }

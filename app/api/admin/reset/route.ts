@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
+import { runBackup } from "@/app/lib/backup";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 async function deleteCollection(db: FirebaseFirestore.Firestore, path: string) {
   let deleted = 0;
@@ -23,7 +25,18 @@ export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { targets } = await req.json() as { targets: string[] };
+  const { targets, confirm } = await req.json() as { targets: string[]; confirm?: string };
+  if (confirm !== "RESET" || !Array.isArray(targets) || targets.length === 0) {
+    return NextResponse.json({ error: "Confirmation requise" }, { status: 400 });
+  }
+
+  // Jamais de suppression sans copie de securite fraiche (les batch.delete contournent l'historique).
+  try {
+    await runBackup();
+  } catch (e) {
+    console.error("[admin/reset] sauvegarde prealable impossible", e);
+    return NextResponse.json({ error: "Sauvegarde préalable impossible : rien n'a été supprimé." }, { status: 500 });
+  }
   const userId = "owner";
   const db = getAdminFirestore();
   const results: Record<string, number> = {};
