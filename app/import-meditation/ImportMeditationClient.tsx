@@ -71,7 +71,7 @@ export default function ImportMeditationClient({ valid, programId, programLabel,
                 Séance importée dans ton journal méditation.
               </p>
               <Link
-                href="/hub"
+                href="/dashboard"
                 className="mt-2 text-[13px] underline"
                 style={{ color: "var(--text-muted)" }}
               >

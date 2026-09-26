@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   // Hard navigation (not router.push) — on iOS standalone PWAs, a session cookie set via
   // fetch() doesn't always get durably persisted until a real top-level page load happens.
-  const redirect = () => { window.location.href = "/hub"; };
+  const redirect = () => { window.location.href = "/dashboard"; };
 
   // ── Email / password ────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {

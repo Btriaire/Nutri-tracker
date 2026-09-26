@@ -8,18 +8,23 @@ import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
 import {
   IconLayoutDashboard, IconNotebook, IconHeartbeat,
-  IconFlame, IconTrendingUp, IconSettings2, IconLogout,
+  IconFlame, IconTrendingUp, IconSettings2, IconLogout, IconPlus,
 } from "@tabler/icons-react";
+import AddSheet from "./AddSheet";
 import { playNavSound } from "@/app/lib/sounds";
 
 const TABS = [
-  { href: "/hub",       Icon: IconLayoutDashboard, label: "Accueil",  color: "var(--calories)", bg: "rgba(249,115,22,0.14)" },
-  { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "var(--info)", bg: "rgba(59,130,246,0.14)" },
-  { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "var(--danger)", bg: "rgba(244,63,94,0.14)"  },
-  { href: "/activity",  Icon: IconFlame,           label: "Activité", color: "var(--fiber)", bg: "rgba(52,211,153,0.14)" },
-  { href: "/progress",  Icon: IconTrendingUp,      label: "Progrès",  color: "var(--protein)", bg: "rgba(167,139,250,0.14)"},
-  { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "var(--text-secondary)", bg: "rgba(148,163,184,0.12)"},
+  { href: "/dashboard", Icon: IconLayoutDashboard, label: "Aujourd'hui", color: "var(--calories)", bg: "color-mix(in srgb, var(--calories) 20%, transparent)" },
+  { href: "/log",       Icon: IconNotebook,        label: "Journal",  color: "var(--info)",     bg: "color-mix(in srgb, var(--info) 20%, transparent)" },
+  { href: "/health",    Icon: IconHeartbeat,       label: "Santé",    color: "var(--danger)",   bg: "color-mix(in srgb, var(--danger) 20%, transparent)" },
+  { href: "/activity",  Icon: IconFlame,           label: "Activité", color: "var(--fiber)",    bg: "color-mix(in srgb, var(--fiber) 20%, transparent)" },
+  { href: "/progress",  Icon: IconTrendingUp,      label: "Progrès",  color: "var(--protein)",  bg: "color-mix(in srgb, var(--protein) 20%, transparent)" },
+  { href: "/settings",  Icon: IconSettings2,       label: "Réglages", color: "var(--text-secondary)", bg: "var(--surface-active)" },
 ] as const;
+
+// Barre mobile : 4 onglets + bouton "+" central. Activite et Reglages restent
+// atteignables via la feuille "Ajouter" ("Aller a").
+const MOBILE_HREFS = new Set(["/dashboard", "/log", "/health", "/progress"]);
 
 // La barre du haut affichait le logo sur les 48px les plus precieux de
 // l'ecran, a chaque page, alors que l'utilisateur sait deja quelle appli il
@@ -40,7 +45,6 @@ const TITLES: [string, string][] = [
   ["/library",          "Bibliothèque"],
   ["/report",           "Rapport"],
   ["/repartition",      "Répartition"],
-  ["/hub",              "Accueil"],
 ];
 
 function pageTitle(path: string): string {
@@ -54,6 +58,7 @@ function pageTitle(path: string): string {
 
 export default function Nav() {
   const path   = usePathname();
+  const [addOpen, setAddOpen] = useState(false);
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -90,7 +95,7 @@ export default function Nav() {
           style={{ color: "var(--text-primary)" }}>
           {pageTitle(path)}
         </span>
-        <Link href="/hub" className="flex items-center flex-shrink-0 opacity-70 active:opacity-100">
+        <Link href="/dashboard" className="flex items-center flex-shrink-0 opacity-70 active:opacity-100">
           <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-6 w-auto" priority />
         </Link>
       </div>
@@ -105,9 +110,9 @@ export default function Nav() {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        {TABS.map(({ href, Icon, label, color, bg }) => {
+        {TABS.filter(t => MOBILE_HREFS.has(t.href)).flatMap(({ href, Icon, label, color, bg }, i) => {
           const active = path.startsWith(href);
-          return (
+          const tab = (
             <Link
               key={href}
               href={href}
@@ -130,8 +135,22 @@ export default function Nav() {
               </span>
             </Link>
           );
+          return i === 2 ? [(
+            <div key="fab" className="flex-1 flex items-center justify-center">
+              <button type="button" onClick={() => setAddOpen(true)} aria-label="Ajouter"
+                className="-mt-6 flex items-center justify-center w-14 h-14 rounded-full active:scale-95 transition-transform"
+                style={{
+                  background: "linear-gradient(135deg, var(--protein), var(--steps))",
+                  color: "var(--bg)",
+                  boxShadow: "0 0 28px color-mix(in srgb, var(--protein) 55%, transparent)",
+                }}>
+                <IconPlus size={28} stroke={2.6} />
+              </button>
+            </div>
+          ), tab] : [tab];
         })}
       </nav>
+      <AddSheet open={addOpen} onClose={() => setAddOpen(false)} />
 
       {/* Side nav (desktop) */}
       <nav
@@ -142,7 +161,7 @@ export default function Nav() {
           backdropFilter: "blur(20px)",
         }}
       >
-        <Link href="/hub" className="flex items-center px-2 mb-6">
+        <Link href="/dashboard" className="flex items-center px-2 mb-6">
           <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103}
             className="w-full max-w-[180px] h-auto" priority />
         </Link>
