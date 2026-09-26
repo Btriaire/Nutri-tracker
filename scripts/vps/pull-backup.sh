@@ -23,6 +23,14 @@ pull() {  # $1 = set (vide = principal) ; $2 = fichier de sortie
   fi
 }
 
+# Mode "--if-requested" (cron toutes les 5 min) : ne sauvegarde que si demande depuis Reglages.
+if [ "${1:-}" = "--if-requested" ]; then
+  resp=$(curl -s -m 20 -H "X-Cron-Secret: $SECRET" "${BASE}-pending" || true)
+  case "$resp" in *'"pending":true'*) ;; *) exit 0 ;; esac
+  pull "" "$DEST/nutri-tracker-$(date -u +%Y-%m-%dT%H%M%S).json.gz"
+  exit $?
+fi
+
 rc=0
 pull "" "$DEST/nutri-tracker-$DATE.json.gz" || rc=1
 if [ "$(date -u +%u)" = "7" ]; then
