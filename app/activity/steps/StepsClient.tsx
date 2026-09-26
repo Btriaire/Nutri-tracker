@@ -269,7 +269,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   const color = stepsColor(val, stepsGoal);
                   return (
                     <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
-                      style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p className="font-bold text-[14px]" style={{ color }}>{val.toLocaleString("fr-FR")} pas</p>
                       <p style={{ color: "var(--text-muted)" }}>{Math.round(val / stepsGoal * 100)}% de l&apos;objectif</p>
@@ -328,7 +328,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   if (!active || !payload?.length) return null;
                   return (
                     <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                      style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
                     </div>
@@ -360,7 +360,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   if (!active || !payload?.length) return null;
                   return (
                     <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                      style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p style={{ color: "var(--calories)" }} className="font-bold">{payload[0]?.value} kcal</p>
                     </div>

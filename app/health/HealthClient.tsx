@@ -517,7 +517,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     const z = hrZone(bpm, fcMax);
     return (
       <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
-        style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+        style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
         <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
         <p className="font-bold text-[14px]" style={{ color: z.color }}>{bpm} bpm</p>
         <p style={{ color: z.color }}>{z.label}</p>
@@ -708,7 +708,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               if (!active || !payload?.length) return null;
                               return (
                                 <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                                  style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                  style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                                   <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                   <p className="font-bold" style={{ color: "var(--fat)" }}>{(payload[0].value as number).toFixed(1)} kg</p>
                                 </div>
@@ -869,7 +869,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           const cls = s && d ? bpCategory(s, d) : null;
                           return (
                             <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                              style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                              style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                               <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                               {s && d && <p style={{ color: "var(--fit-red)" }} className="font-bold">{s} / {d} mmHg</p>}
                               {cls && <p className="text-[12px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}

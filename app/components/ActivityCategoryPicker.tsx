@@ -290,8 +290,7 @@ export default function ActivityCategoryPicker({
               className="w-full max-w-md flex flex-col rounded-t-3xl"
               style={{
                 maxHeight: "82vh",
-                background: "rgba(10,10,14,0.98)",
-                backdropFilter: "blur(24px)",
+                background: "var(--surface-hover)",
                 borderTop: `1px solid color-mix(in srgb, ${activeCat.c1} 13%, transparent)`,
               }}
               onClick={e => e.stopPropagation()}

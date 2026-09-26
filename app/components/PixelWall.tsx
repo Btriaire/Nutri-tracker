@@ -224,7 +224,7 @@ export default function PixelWall({ points, today }: Props) {
                           bottom: "calc(100% + 6px)",
                           left: "50%",
                           transform: "translateX(-50%)",
-                          background: "rgba(13,13,17,0.96)",
+                          background: "var(--surface-hover)",
                           border: "1px solid var(--border)",
                           backdropFilter: "blur(8px)",
                           color: "var(--text-primary)",

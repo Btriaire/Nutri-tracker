@@ -178,7 +178,7 @@ export default function CardiaqueTab({
                       if (!v) return null;
                       const z = hrZone(v, fcMax);
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: z.color }}>{v} bpm · {z.label}</p>
                         </div>
@@ -199,7 +199,7 @@ export default function CardiaqueTab({
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--info)" }}>{payload[0]?.value} kcal</p>
                         </div>
@@ -221,7 +221,7 @@ export default function CardiaqueTab({
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--fit-green)" }}>{payload[0]?.value} min</p>
                         </div>
@@ -248,7 +248,7 @@ export default function CardiaqueTab({
                       if (!active || !payload?.length) return null;
                       const v = payload[0]?.value as number | null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--fit-indigo)" }}>{v != null ? `${v}h` : "—"}</p>
                         </div>

@@ -234,7 +234,7 @@ export default function RepartitionClient() {
                         <Pie data={macroPieData} dataKey="value" nameKey="name" innerRadius={38} outerRadius={58} startAngle={90} endAngle={-270} stroke="none">
                           {macroPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                         </Pie>
-                        <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 11 }} />
+                        <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 11 }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -281,7 +281,7 @@ export default function RepartitionClient() {
                           <Pie data={groupPieData} dataKey="value" nameKey="name" innerRadius={0} outerRadius={58} stroke="none">
                             {groupPieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                           </Pie>
-                          <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 11 }} />
+                          <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 11 }} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>

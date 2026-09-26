@@ -186,9 +186,8 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
             className="fixed inset-x-0 bottom-0 flex flex-col rounded-t-2xl"
             style={{
               zIndex: 80,
-              background: "rgba(13,13,17,0.98)",
+              background: "var(--surface-hover)",
               border: "1px solid var(--border-strong)", borderBottom: "none",
-              backdropFilter: "blur(24px)",
               maxHeight: "94vh",
             }}
           >

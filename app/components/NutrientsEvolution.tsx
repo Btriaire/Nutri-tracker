@@ -117,7 +117,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                             if (!active || !payload?.length) return null;
                             return (
                               <div className="px-3 py-2 rounded-xl space-y-0.5 text-[12px]"
-                                style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)", marginBottom: 4 }}>{label}</p>
                                 {payload.map(e => (
                                   <p key={e.dataKey as string} style={{ color: e.color }}>{e.name} {e.value}g</p>
@@ -198,7 +198,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                                     if (!active || !payload?.length) return null;
                                     return (
                                       <div className="px-2 py-1 rounded-lg text-[12px]"
-                                        style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                        style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                                         <p style={{ color: "var(--text-muted)" }}>{label}</p>
                                         <p style={{ color: ref.color }}>{payload[0].value}{ref.unit}</p>
                                       </div>

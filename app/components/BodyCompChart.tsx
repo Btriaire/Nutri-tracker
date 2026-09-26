@@ -116,7 +116,7 @@ function CustomTooltip({ active, payload, label, metrics }: {
   const date = label ? format(parseISO(label), "d MMM", { locale: fr }) : "";
   return (
     <div className="rounded-xl px-3 py-2.5 text-[12px] space-y-1"
-      style={{ background: "rgba(15,15,22,0.97)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+      style={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
       <p className="font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>{date}</p>
       {payload.map((p) => {
         const def = metrics.find(m => m.label === p.name.replace(/ \(moy\.\)$/, ""));

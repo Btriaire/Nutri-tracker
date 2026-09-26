@@ -1185,7 +1185,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                               : null;
                             return (
                               <div className="px-3 py-2 rounded-xl text-[12px] space-y-1"
-                                style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                                style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                 {entries.map((p, i) => (
                                   <p key={i} className="font-semibold" style={{ color: p.dataKey === "actual" ? "var(--protein)" : p.dataKey === "projected" ? "var(--ok)" : "var(--calories)" }}>

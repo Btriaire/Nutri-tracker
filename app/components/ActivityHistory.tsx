@@ -60,7 +60,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                 const sport = (payload.find(p => p.dataKey === "sportMin")?.value as number) ?? 0;
                 return (
                   <div className="px-3 py-2 rounded-xl text-[12px] space-y-1"
-                    style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{label}</p>
                     {steps > 0 && <p style={{ color: "#63b3ed" }}>👟 {steps.toLocaleString("fr-FR")} pas</p>}
                     {sport > 0 && <p style={{ color: "var(--calories)" }}>🏅 {sport} min sport</p>}

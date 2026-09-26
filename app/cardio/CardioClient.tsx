@@ -82,7 +82,7 @@ export default function CardioClient({ points, age }: Props) {
     const z = hrZone(bpm, fcMax);
     return (
       <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
-        style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+        style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
         <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
         <p className="font-bold text-[14px]" style={{ color: z.color }}>{bpm} bpm</p>
         <p style={{ color: z.color }}>{z.label}</p>
@@ -249,7 +249,7 @@ export default function CardioClient({ points, age }: Props) {
                 if (!active || !payload?.length) return null;
                 return (
                   <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                    style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                     <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
                   </div>
@@ -279,7 +279,7 @@ export default function CardioClient({ points, age }: Props) {
                 if (!active || !payload?.length) return null;
                 return (
                   <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                    style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                    style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                     <p style={{ color: "var(--fit-indigo)" }} className="font-bold">{fmtSleep(payload[0]?.value as number)}</p>
                   </div>

@@ -721,9 +721,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
             transition={{ type: "spring", damping: 32, stiffness: 320, mass: 0.8 }}
             className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl overflow-hidden"
             style={{
-              background: "rgba(13,13,17,0.97)",
-              border: "1px solid var(--border-strong)", borderBottom: "none",
-              backdropFilter: "blur(24px)", height: "82vh",
+              background: "var(--surface-hover)",
+              border: "1px solid var(--border-strong)", borderBottom: "none", height: "82vh",
             }}
           >
             {/* Drag handle + close button */}
@@ -1407,9 +1406,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               className="fixed inset-x-0 bottom-0 flex flex-col rounded-t-2xl overflow-hidden"
               style={{
                 zIndex: 60,
-                background: "rgba(15,15,22,0.99)",
+                background: "var(--surface-hover)",
                 border: "1px solid var(--border-strong)", borderBottom: "none",
-                backdropFilter: "blur(28px)",
                 // dvh (not vh) so the sheet shrinks with the on-screen keyboard on iOS —
                 // otherwise the bottom-anchored panel (and its save button) can end up
                 // partly hidden behind the keyboard while typing a quantity/grams value.

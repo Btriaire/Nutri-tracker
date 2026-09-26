@@ -875,7 +875,7 @@ export default function SleepClient({ points: initialPoints, sleepGoalMin }: Pro
                   const v = payload[0]?.payload?.sleepMin as number | null;
                   return (
                     <div className="px-2.5 py-2 rounded-lg text-[12px]"
-                      style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                      style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="font-bold" style={{ color: "var(--fit-indigo)" }}>{v ? fmtSleep(v) : "—"}</p>
                       {v && <p style={{ color: "var(--text-muted)" }}>{Math.round(v / sleepGoalMin * 100)}% objectif</p>}

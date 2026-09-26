@@ -98,16 +98,16 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .glass-strong {
   background: var(--surface-hover);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Inner card — slightly elevated */
@@ -796,16 +796,16 @@ html[data-theme="ocean"] .glass {
   background: rgba(0, 188, 212, 0.04);
   border: 1px solid rgba(0, 188, 212, 0.10);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-theme="ocean"] .glass-strong {
   background: rgba(0, 188, 212, 0.06);
   border: 1px solid rgba(0, 188, 212, 0.16);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-theme="ocean"] .card {

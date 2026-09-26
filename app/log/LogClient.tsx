@@ -944,10 +944,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
               className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl p-6 pb-10"
               style={{
-                background: "rgba(13,13,17,0.98)",
+                background: "var(--surface-hover)",
                 border: "1px solid var(--layer-3)",
                 borderBottom: "none",
-                backdropFilter: "blur(24px)",
               }}
             >
               <div className="flex justify-center mb-4">

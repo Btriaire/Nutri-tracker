@@ -24,7 +24,7 @@ function ChartTooltip({ active, payload, label, unit }: {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl px-3 py-2 text-[12px]"
-      style={{ background: "rgba(15,15,22,0.97)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+      style={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
       <p className="font-medium" style={{ color: "var(--text-primary)" }}>{payload[0]?.payload?.fullName ?? label}</p>
       <p style={{ color: "var(--protein)" }}>{payload[0]?.value}{unit ?? ""}</p>
     </div>

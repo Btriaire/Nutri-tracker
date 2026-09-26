@@ -55,7 +55,7 @@ export default function FaceScanTrendChart({ scans }: Props) {
                 <Tooltip content={({ active, payload, label }) => {
                   if (!active || !payload?.length || payload[0].value == null) return null;
                   return (
-                    <div className="px-2 py-1 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                    <div className="px-2 py-1 rounded-lg text-[12px]" style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p style={{ color: axis.color }}>{payload[0].value}/5</p>
                     </div>

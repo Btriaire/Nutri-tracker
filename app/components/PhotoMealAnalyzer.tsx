@@ -314,10 +314,9 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
         className="fixed bottom-0 inset-x-0 z-50 rounded-t-2xl flex flex-col"
         style={{
-          background:    "rgba(11,11,17,0.98)",
+          background:    "var(--surface-hover)",
           border:        "1px solid var(--layer-3)",
           borderBottom:  "none",
-          backdropFilter: "blur(28px)",
           maxHeight:     "88vh",
         }}
       >

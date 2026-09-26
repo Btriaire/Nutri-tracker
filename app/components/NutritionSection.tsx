@@ -21,7 +21,7 @@ interface Props {
 
 const Tt = ({ bg, label, value, unit, color }: { bg?: string; label: string; value: string | number | undefined; unit?: string; color?: string }) => (
   <div className="px-3 py-2 rounded-xl text-[12px]"
-    style={{ background: bg ?? "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+    style={{ background: bg ?? "var(--surface-hover)", border: "1px solid var(--border)" }}>
     <p style={{ color: "var(--text-muted)" }}>{label}</p>
     <p className="font-bold" style={{ color: color ?? "var(--text-primary)" }}>{value}{unit ? ` ${unit}` : ""}</p>
   </div>

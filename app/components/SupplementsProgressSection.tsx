@@ -203,7 +203,7 @@ export default function SupplementsProgressSection() {
                         if (!active || !payload?.length) return null;
                         return (
                           <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
-                            style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                            style={{ background: "var(--surface-hover)", border: "1px solid var(--border)" }}>
                             <p style={{ color: "var(--text-muted)" }}>{label}</p>
                             <p style={{ color: info.color }}>{payload[0].value}{info.unit}</p>
                           </div>

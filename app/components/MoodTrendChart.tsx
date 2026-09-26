@@ -49,7 +49,7 @@ function CustomTooltip({ active, payload, label }: {
     <div
       className="px-3 py-2 rounded-xl text-[12px] space-y-1"
       style={{
-        background: "rgba(13,13,17,0.96)",
+        background: "var(--surface-hover)",
         border: "1px solid var(--border)",
         backdropFilter: "blur(8px)",
       }}
