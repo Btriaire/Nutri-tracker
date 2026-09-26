@@ -34,6 +34,7 @@ const TITLES: [string, string][] = [
   ["/activity/steps",   "Pas"],
   ["/health/face-scan", "Scan du visage"],
   ["/report/history",   "Historique"],
+  ["/review",           "Bilan de la semaine"],
   ["/log",              "Journal"],
   ["/health",           "Santé"],
   ["/activity",         "Activité"],

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ComponentType } from "react";
 import {
   IconSalad, IconScale, IconBarbell, IconMoodSmile, IconFlame,
-  IconSettings2, IconFileText, IconBooks, IconTrendingUp,
+  IconSettings2, IconFileText, IconBooks, IconTrendingUp, IconChecklist,
 } from "@tabler/icons-react";
 import Sheet from "./Sheet";
 
@@ -19,6 +19,7 @@ const ADD: Item[] = [
 
 const GO: Item[] = [
   { href: "/activity", label: "Activité",    hint: "", color: "var(--fiber)",          Icon: IconFlame },
+  { href: "/review",   label: "Bilan de la semaine", hint: "", color: "var(--steps)", Icon: IconChecklist },
   { href: "/progress", label: "Progrès",     hint: "", color: "var(--protein)",        Icon: IconTrendingUp },
   { href: "/report",   label: "Rapport",     hint: "", color: "var(--fat)",            Icon: IconFileText },
   { href: "/library",  label: "Bibliothèque", hint: "", color: "var(--carbs)",         Icon: IconBooks },
