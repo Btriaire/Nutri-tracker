@@ -3,9 +3,9 @@
  * Restaure une sauvegarde produite par /api/cron/backup dans Firestore.
  *
  * Usage :
- *   npx tsx scripts/restore-backup.ts <fichier.json>                  # APERCU (rien n'est ecrit)
- *   npx tsx scripts/restore-backup.ts <fichier.json> --apply          # ecrit, sans ecraser l'existant
- *   npx tsx scripts/restore-backup.ts <fichier.json> --apply --overwrite   # ecrase les documents existants
+ *   npx tsx scripts/restore-backup.ts <fichier.json | fichier.json.gz>                  # APERCU (rien n'est ecrit)
+ *   npx tsx scripts/restore-backup.ts <fichier.json | fichier.json.gz> --apply          # ecrit, sans ecraser l'existant
+ *   npx tsx scripts/restore-backup.ts <fichier.json | fichier.json.gz> --apply --overwrite   # ecrase les documents existants
  *   Options : --only=measurements,foodLog   limite a certaines collections
  *
  * Par defaut un document deja present est CONSERVE (aucune perte possible).
@@ -13,6 +13,7 @@
  */
 
 import * as fs from "fs";
+import { gunzipSync } from "zlib";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
@@ -30,7 +31,8 @@ const only = args.find((a) => a.startsWith("--only="))?.slice(7).split(",");
 if (!file) { console.error("Fichier de sauvegarde manquant."); process.exit(1); }
 
 const META = new Set(["schemaVersion", "exportedAt", "user", "profile", "counts"]);
-const backup = JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, unknown>;
+const raw = fs.readFileSync(file);
+const backup = JSON.parse((file.endsWith(".gz") ? gunzipSync(raw) : raw).toString("utf8")) as Record<string, unknown>;
 const user = (backup.user as string) ?? "owner";
 
 if (getApps().length === 0) {

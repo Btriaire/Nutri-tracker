@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runBackup } from "@/app/lib/backup";
+import { buildBackup } from "@/app/lib/backup";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -8,11 +8,11 @@ export const maxDuration = 60;
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
 /**
- * Sauvegarde Firestore -> Vercel Blob. Sans parametre : tout sauf les collections a
- * photos (quotidien). `?set=dayPhotos|mealPhotos|faceScans` : une collection photo
- * (hebdomadaire, voir vercel.json). Le resultat est consigne dans system/cronStatus
- * (affiche dans Reglages). Vercel Cron appelle en GET avec Authorization: Bearer.
- * Manuel : curl -H "X-Cron-Secret: $CRON_SECRET" https://nutri-tracker-mocha.vercel.app/api/cron/backup
+ * Sauvegarde Firestore renvoyee en JSON gzippe a l'appelant authentifie (le VPS la tire chaque
+ * jour, voir /root/nutri-tracker-backups/pull-backup.sh) : rien n'est publie. Sans parametre :
+ * tout sauf les collections a photos. `?set=dayPhotos|mealPhotos|faceScans` : une collection photo.
+ * Le resultat est consigne dans system/cronStatus (affiche dans Reglages).
+ * Manuel : curl -H "X-Cron-Secret: $CRON_SECRET" -o backup.json.gz https://nutri-tracker-mocha.vercel.app/api/cron/backup
  */
 export async function GET(req: NextRequest) {
   return handle(req);
@@ -41,9 +41,16 @@ async function handle(req: NextRequest) {
   const set = req.nextUrl.searchParams.get("set") ?? undefined;
   const key = set ? `backup_${set}` : "backup";
   try {
-    const result = await runBackup(set);
-    await record(key, { ok: true, at: new Date().toISOString(), totalDocs: result.totalDocs, sizeBytes: result.sizeBytes, url: result.url });
-    return NextResponse.json({ ok: true, ...result });
+    const result = await buildBackup(set);
+    await record(key, { ok: true, at: new Date().toISOString(), totalDocs: result.totalDocs, sizeBytes: result.sizeBytes });
+    return new NextResponse(new Uint8Array(result.gz), {
+      headers: {
+        "Content-Type": "application/gzip",
+        "Content-Disposition": `attachment; filename="nutri-tracker-${set ?? "backup"}-${new Date().toISOString().slice(0, 10)}.json.gz"`,
+        "X-Backup-Docs": String(result.totalDocs),
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (e) {
     console.error("[cron/backup] Error:", e);
     await record(key, { ok: false, at: new Date().toISOString(), error: e instanceof Error ? e.message : "erreur inconnue" });

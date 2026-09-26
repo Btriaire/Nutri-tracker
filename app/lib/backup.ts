@@ -1,4 +1,4 @@
-import { put, list, del } from "@vercel/blob";
+import { gzipSync } from "zlib";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { recordReads } from "@/app/lib/quota-tracker";
@@ -12,8 +12,6 @@ export const PHOTO_COLLECTIONS = ["dayPhotos", "mealPhotos", "faceScans"] as con
 const SECRET_COLLECTIONS = ["oauthTokens"];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const KEEP_ALL_DAYS = 60;
-const KEEP_MONTHLY_DAYS = 365;
 const HISTORY_DAYS = 400;
 
 // Les Timestamps sont marques pour pouvoir etre reconvertis a la restauration.
@@ -37,9 +35,9 @@ function stripSecrets(value: unknown): unknown {
   return value;
 }
 
-/** Sauvegarde toutes les sous-collections (decouvertes dynamiquement : une nouvelle
+/** Construit la sauvegarde (JSON gzippe, renvoye a l'appelant : jamais publie). Toutes les sous-collections (decouvertes dynamiquement : une nouvelle
  *  collection est couverte sans toucher a ce fichier). `only` = une collection photo. */
-export async function runBackup(only?: string) {
+export async function buildBackup(only?: string) {
   const db = getAdminFirestore();
   const userRef = db.doc(`users/${USER}`);
   const backup: Record<string, unknown> = { schemaVersion: 2, exportedAt: new Date().toISOString(), user: USER };
@@ -67,44 +65,10 @@ export async function runBackup(only?: string) {
   void recordReads(totalDocs + 1);
 
   const json = JSON.stringify(backup, jsonReplacer);
-  const date = new Date().toISOString().slice(0, 10);
-  const pathname = only ? `backups/${only}/nutri-tracker-${only}-${date}.json` : `backups/nutri-tracker-${date}.json`;
-
-  const blob = await put(pathname, json, {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
-
-  // Verification apres ecriture : le fichier relu doit avoir la taille attendue.
-  const check = await fetch(blob.url, { method: "HEAD" });
-  const remote = Number(check.headers.get("content-length") ?? 0);
-  if (remote && remote !== Buffer.byteLength(json)) throw new Error(`Verification echouee (${remote} != ${Buffer.byteLength(json)})`);
-
-  const pruned = await pruneOldBackups(only ? `backups/${only}/` : "backups/nutri-tracker-");
+  const gz = gzipSync(Buffer.from(json), { level: 9 });
   const historyPruned = only ? 0 : await pruneHistory(db);
 
-  return { url: blob.url, collections: names, counts, totalDocs, sizeBytes: Buffer.byteLength(json), pruned, historyPruned };
-}
-
-// Quotidien pendant KEEP_ALL_DAYS jours, puis seulement les sauvegardes du 1er du mois.
-async function pruneOldBackups(prefix: string) {
-  const stale: string[] = [];
-  const now = Date.now();
-  let cursor: string | undefined;
-  do {
-    const page = await list({ prefix, cursor });
-    for (const b of page.blobs) {
-      const age = now - b.uploadedAt.getTime();
-      const old = age > KEEP_MONTHLY_DAYS * DAY_MS
-        || (age > KEEP_ALL_DAYS * DAY_MS && !/-\d{4}-\d{2}-01\.json$/.test(b.pathname));
-      if (old) stale.push(b.url);
-    }
-    cursor = page.hasMore ? page.cursor : undefined;
-  } while (cursor);
-  if (stale.length) await del(stale);
-  return stale.length;
+  return { gz, collections: names, counts, totalDocs, sizeBytes: Buffer.byteLength(json), gzBytes: gz.length, historyPruned };
 }
 
 async function pruneHistory(db: FirebaseFirestore.Firestore) {

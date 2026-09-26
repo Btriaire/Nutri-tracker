@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
-import { runBackup } from "@/app/lib/backup";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -30,13 +29,14 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Confirmation requise" }, { status: 400 });
   }
 
-  // Jamais de suppression sans copie de securite fraiche (les batch.delete contournent l'historique).
-  try {
-    await runBackup();
-  } catch (e) {
-    console.error("[admin/reset] sauvegarde prealable impossible", e);
-    return NextResponse.json({ error: "Sauvegarde préalable impossible : rien n'a été supprimé." }, { status: 500 });
+  // Jamais de suppression sans sauvegarde recente sur le VPS (les batch.delete contournent l'historique).
+  const status = await getAdminFirestore().doc("system/cronStatus").get();
+  const last = (status.data() as { backup?: { ok: boolean; at: string } } | undefined)?.backup;
+  const fresh = !!last?.ok && Date.now() - new Date(last.at).getTime() < 26 * 3600 * 1000;
+  if (!fresh) {
+    return NextResponse.json({ error: "Aucune sauvegarde des dernières 26 h : exporte tes données (Réglages) ou attends la sauvegarde quotidienne. Rien n'a été supprimé." }, { status: 409 });
   }
+
   const userId = "owner";
   const db = getAdminFirestore();
   const results: Record<string, number> = {};
