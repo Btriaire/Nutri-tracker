@@ -274,7 +274,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           Suppléments & Compléments
         </h3>
         {sortedIntakes.length > 0 && (
-          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
+          <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
             {sortedIntakes.length} prise{sortedIntakes.length > 1 ? "s" : ""}
           </span>
         )}
@@ -297,7 +297,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
               <div className="flex justify-end">
                 <button
                   onClick={() => (showForm ? resetForm() : setShowForm(true))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                   style={{
                     background: "rgba(52,211,153,0.12)",
                     border: "1px solid rgba(52,211,153,0.3)",
@@ -318,7 +318,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
             className="w-full flex items-center gap-1.5 px-3 py-2 transition-all"
           >
             <IconHistory size={13} style={{ color: "var(--text-muted)" }} />
-            <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
               Comme hier ({yesterdaySuggestions.length})
             </span>
             <IconChevronDown
@@ -344,7 +344,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                         type="button"
                         onClick={() => quickAddFromYesterday(intake)}
                         disabled={isAdding}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 active:scale-95"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all disabled:opacity-60 active:scale-95"
                         style={{
                           background: "rgba(52,211,153,0.1)",
                           border: "1px solid rgba(52,211,153,0.3)",
@@ -378,12 +378,12 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
           >
             <form onSubmit={handleSubmit} className="space-y-3">
               {editingIntakeId && (
-                <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
+                <p className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>
                   Modifier l&apos;horaire de la prise
                 </p>
               )}
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Supplément *
                 </label>
                 <select
@@ -404,7 +404,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
               </div>
 
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Heure de prise *
                 </label>
                 <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
               </div>
 
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Moment de la journée *
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -435,7 +435,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                         key={m.value}
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, moment: m.value }))}
-                        className="px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                        className="px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all"
                         style={{
                           background: selected ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
                           border: `1px solid ${selected ? "rgba(52,211,153,0.45)" : "var(--border)"}`,
@@ -450,7 +450,7 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
               </div>
 
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Notes
                 </label>
                 <input
@@ -515,17 +515,17 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {intake.supplementName}
                   </span>
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
+                  <span className="text-[12px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {intake.time}
                   </span>
                   {intake.moment && (
-                    <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
+                    <span className="text-[12px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
                       {MOMENT_LABEL[intake.moment]}
                     </span>
                   )}
                 </div>
                 {intake.notes && (
-                  <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
                     {intake.notes}
                   </p>
                 )}

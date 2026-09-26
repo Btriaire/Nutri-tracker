@@ -326,7 +326,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
                   <div>
                     <p className="text-[12px] font-semibold" style={{ color: "var(--warn)" }}>Reconnexion requise</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--warn)" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: "var(--warn)" }}>
                       Le token a expiré. Reconnectez Google Fit pour rétablir la sync.
                     </p>
                     <Link href="/api/google-fit/auth"
@@ -395,7 +395,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
                         {/* Year picker */}
                         <div className="space-y-1.5">
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             Remonter jusqu&apos;à {new Date().getFullYear() - yearsBack + 1}
                           </p>
                           <div className="flex gap-1.5 flex-wrap">
@@ -403,7 +403,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                               <button key={y}
                                 onClick={() => setYearsBack(y)}
                                 disabled={fullSyncRunning}
-                                className="px-2.5 py-1 rounded-md text-[11px] transition-colors"
+                                className="px-2.5 py-1 rounded-md text-[12px] transition-colors"
                                 style={{
                                   background: yearsBack === y ? "var(--accent)" : "rgba(255,255,255,0.05)",
                                   color:      yearsBack === y ? "#fff" : "var(--text-secondary)",
@@ -426,7 +426,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                                   {p.status === "error"   && <IconCircleX     size={11} style={{ color: "var(--danger)" }} />}
                                   {p.status === "pending" && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--border)" }} />}
                                 </div>
-                                <span className="text-[11px] flex-1" style={{
+                                <span className="text-[12px] flex-1" style={{
                                   color: p.status === "running" ? "var(--text-primary)"
                                        : p.status === "done"    ? "var(--text-secondary)"
                                        : "var(--text-muted)",
@@ -434,13 +434,13 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                                   {p.year}
                                 </span>
                                 {p.status === "done" && p.days !== undefined && (
-                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.days} j</span>
+                                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{p.days} j</span>
                                 )}
                               </div>
                             ))}
                             {(fullSyncRunning || fullSyncDone) && (
                               <div className="pt-1" style={{ borderTop: "1px solid var(--border)" }}>
-                                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                                   {fullSyncRunning ? `${totalSynced} jours traités…` : `✓ ${totalSynced} jours stockés`}
                                 </p>
                               </div>
@@ -460,7 +460,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                           }
                         </button>
 
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           Traitement année par année — chaque appel peut prendre jusqu&apos;à 30s.
                           Les données sont stockées dans Firestore et disponibles pour les graphiques.
                         </p>
@@ -518,10 +518,10 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   <IconAlertCircle size={14} style={{ color: "var(--warn)", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-semibold" style={{ color: "var(--warn)" }}>Reconnexion requise</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>Le token a expiré ou a été révoqué.</p>
                   </div>
                   <button type="button" onClick={openWithingsAuth}
-                    className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                    className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-all"
                     style={{ background: "rgba(245,158,11,0.20)", color: "var(--warn)", border: "1px solid rgba(245,158,11,0.40)" }}>
                     Reconnecter
                   </button>
@@ -558,7 +558,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
               {/* Debug button */}
               <button onClick={handleWithingsDebug} disabled={wDebug}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-medium transition-all"
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-medium transition-all"
                 style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", color: "var(--carbs)" }}>
                 {wDebug
                   ? <><IconLoader2 size={11} className="animate-spin" /> Diagnostic en cours…</>
@@ -568,7 +568,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
               {wDebugRes && (
                 <div className="rounded-xl p-3 overflow-x-auto"
                   style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap"
+                  <pre className="text-[12px] leading-relaxed whitespace-pre-wrap"
                     style={{ color: "var(--carbs)", fontFamily: "monospace" }}>
                     {wDebugRes}
                   </pre>

@@ -41,8 +41,8 @@ function MacroPill({ label, value, unit, color }: { label: string; value: number
   return (
     <div className="flex flex-col items-center gap-0.5 flex-1">
       <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{Math.round(value)}</span>
-      <span className="text-[11px] font-medium" style={{ color }}>{unit}</span>
-      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[12px] font-medium" style={{ color }}>{unit}</span>
+      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }
@@ -57,18 +57,18 @@ function IngredientRow({ ing }: { ing: SuggestionIngredient }) {
         <span className="text-[12.5px] truncate block" style={{ color: "var(--text-primary)" }}>
           {ing.name}
         </span>
-        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           {ing.quantity} {ing.unit}
         </span>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-        <span className="text-[11px] font-medium tabular-nums" style={{ color: "var(--calories)" }}>
+        <span className="text-[12px] font-medium tabular-nums" style={{ color: "var(--calories)" }}>
           {Math.round(ing.calories)} kcal
         </span>
         <div className="flex gap-1">
-          <span className="text-[11px] tabular-nums" style={{ color: "var(--protein)" }}>{Math.round(ing.proteinG)}P</span>
-          <span className="text-[11px] tabular-nums" style={{ color: "var(--carbs)" }}>{Math.round(ing.carbsG)}G</span>
-          <span className="text-[11px] tabular-nums" style={{ color: "var(--fat)" }}>{Math.round(ing.fatG)}L</span>
+          <span className="text-[12px] tabular-nums" style={{ color: "var(--protein)" }}>{Math.round(ing.proteinG)}P</span>
+          <span className="text-[12px] tabular-nums" style={{ color: "var(--carbs)" }}>{Math.round(ing.carbsG)}G</span>
+          <span className="text-[12px] tabular-nums" style={{ color: "var(--fat)" }}>{Math.round(ing.fatG)}L</span>
         </div>
       </div>
     </div>
@@ -122,7 +122,7 @@ function SuggestionCard({
             <h3 className="text-[14px] font-semibold leading-tight" style={{ color: "var(--text-primary)" }}>
               {suggestion.name}
             </h3>
-            <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px] mt-0.5 leading-snug" style={{ color: "var(--text-muted)" }}>
               {suggestion.description}
             </p>
           </div>
@@ -133,7 +133,7 @@ function SuggestionCard({
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)" }}>
             <IconClock size={11} style={{ color: "var(--text-muted)" }} />
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{suggestion.prepTimeMin} min</span>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{suggestion.prepTimeMin} min</span>
           </div>
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{
@@ -141,7 +141,7 @@ function SuggestionCard({
               border: `1px solid ${suggestion.difficulty === "facile" ? "rgba(34,197,94,0.2)" : "rgba(249,115,22,0.2)"}`,
             }}>
             <IconChefHat size={11} style={{ color: suggestion.difficulty === "facile" ? "var(--ok)" : "var(--calories)" }} />
-            <span className="text-[11px] capitalize"
+            <span className="text-[12px] capitalize"
               style={{ color: suggestion.difficulty === "facile" ? "var(--ok)" : "var(--calories)" }}>
               {suggestion.difficulty}
             </span>
@@ -149,7 +149,7 @@ function SuggestionCard({
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg ml-auto"
             style={{ background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.25)" }}>
             <IconFlame size={11} style={{ color: "var(--calories)" }} />
-            <span className="text-[11px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
+            <span className="text-[12px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
               {Math.round(suggestion.totalNutrition.calories)} kcal
             </span>
           </div>
@@ -170,7 +170,7 @@ function SuggestionCard({
         {/* Toggle ingredients */}
         <button
           onClick={() => setExpanded(e => !e)}
-          className="w-full flex items-center justify-between text-[11px] font-medium transition-colors py-1"
+          className="w-full flex items-center justify-between text-[12px] font-medium transition-colors py-1"
           style={{ color: expanded ? "var(--text-secondary)" : "var(--text-muted)" }}
         >
           <span>Ingrédients ({suggestion.ingredients.length})</span>
@@ -211,7 +211,7 @@ function SuggestionCard({
             background: "linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.06))",
             border: "1px solid rgba(139,92,246,0.2)",
           }}>
-          <p className="text-[11px] leading-relaxed" style={{ color: "#c4b5fd" }}>
+          <p className="text-[12px] leading-relaxed" style={{ color: "#c4b5fd" }}>
             <span className="font-semibold">💡 Conseil ·</span> {suggestion.tip}
           </p>
         </div>
@@ -400,7 +400,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
                 <button
                   onClick={load}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                   style={{
                     background: "rgba(139,92,246,0.1)",
                     border: "1px solid rgba(139,92,246,0.25)",
@@ -467,7 +467,7 @@ export default function MenuSuggestionModal({ open, meal, date, goals, alreadyKc
 
             {/* Footer note */}
             <div className="px-5 pb-6 pt-0 flex-shrink-0">
-              <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
                 ✨ Suggestions générées par IA · inspirées de l&apos;approche Jean-Michel Cohen
               </p>
             </div>

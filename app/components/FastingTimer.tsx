@@ -73,7 +73,7 @@ function TimeEditor({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] uppercase tracking-widest flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+      <span className="text-[12px] uppercase tracking-widest flex-shrink-0" style={{ color: "var(--text-muted)" }}>
         {label}
       </span>
       <input
@@ -284,7 +284,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           <p className="text-[13px] font-semibold" style={{ color: "var(--ok)" }}>
             Jeûne {durationH}h accompli !
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
             Durée réelle : {fmtMs(actualMs)}
           </p>
         </div>
@@ -315,7 +315,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
               style={{ background: rc, boxShadow: `0 0 6px ${rc}` }} />
           </div>
           <motion.button whileTap={{ scale: 0.93 }} onClick={handleStop} disabled={stopping}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+            className="px-3 py-1.5 rounded-lg text-[12px] font-semibold"
             style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
             {stopping ? "…" : "Arrêter"}
           </motion.button>
@@ -353,7 +353,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
           <div className="flex-1 space-y-3">
             {/* Remaining */}
             <div>
-              <p className="text-[11px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Restant</p>
+              <p className="text-[12px] uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Restant</p>
               <p className="text-[18px] font-bold tabular-nums leading-none font-mono" style={{ color: "var(--text-primary)" }}>
                 {fmtMs(remainMs)}
               </p>
@@ -388,7 +388,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
                   <motion.div key="display"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex items-center gap-2">
-                    <p className="text-[11px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Début</p>
+                    <p className="text-[12px] uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Début</p>
                     <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                       {session.startedAtMs ? msToHHMM(session.startedAtMs) : "—"}
                     </p>
@@ -397,7 +397,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
                         setEditTime(session.startedAtMs ? msToHHMM(session.startedAtMs) : nowHHMM());
                         setEditingStart(true);
                       }}
-                      className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] transition-all"
+                      className="w-6 h-6 rounded-md flex items-center justify-center text-[12px] transition-all"
                       style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)" }}
                       title="Modifier l'heure de début"
                     >
@@ -411,7 +411,7 @@ export default function FastingTimer({ date, fastingConfig }: Props) {
             {/* End estimate */}
             {session.startedAtMs && !editingStart && (
               <div>
-                <p className="text-[11px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>Fin prévue</p>
+                <p className="text-[12px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-muted)" }}>Fin prévue</p>
                 <p className="text-[12px] font-medium" style={{ color: rc }}>
                   {new Date(session.startedAtMs + targetMs).toLocaleTimeString("fr-FR", {
                     hour: "2-digit", minute: "2-digit",

@@ -82,7 +82,7 @@ export default function PodcastButton() {
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
         {([["short", "Version courte"], ["long", "Bilan complet"]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setLength(key)} disabled={running}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium transition-all"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[12px] font-medium transition-all"
             style={{
               background: length === key ? "rgba(249,115,22,0.12)" : "transparent",
               color:      length === key ? "var(--calories)" : "var(--text-muted)",
@@ -100,7 +100,7 @@ export default function PodcastButton() {
             const active = period === p.key;
             return (
               <button key={p.key} onClick={() => setPeriod(p.key)} disabled={running}
-                className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
                 style={{
                   background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
                   border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
@@ -112,7 +112,7 @@ export default function PodcastButton() {
           })}
         </div>
       ) : (
-        <p className="text-[11px] mb-3 px-0.5" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] mb-3 px-0.5" style={{ color: "var(--text-muted)" }}>
           Depuis le tout début de ton suivi · mensurations incluses · mise en perspective de ta progression · conseils pour les prochaines semaines.
         </p>
       )}
@@ -131,7 +131,7 @@ export default function PodcastButton() {
       </button>
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-xl text-[11px]"
+        <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-xl text-[12px]"
           style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
           <IconAlertCircle size={12} /> {error}
         </div>
@@ -141,11 +141,11 @@ export default function PodcastButton() {
         <div className="mt-3 px-3 py-2.5 rounded-xl"
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
               <IconMicrophone size={12} />
               Dernier podcast prêt · {new Date(latest.mtime).toLocaleDateString("fr-FR")}
               {isLongFile(latest.name) && (
-                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                   style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
                   <IconSparkles size={9} stroke={2} />Bilan complet
                 </span>
@@ -165,7 +165,7 @@ export default function PodcastButton() {
       {history.length > 0 && (
         <div className="mt-2">
           <button onClick={() => setShowHistory((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 py-2 text-[11px]"
+            className="w-full flex items-center justify-between gap-2 py-2 text-[12px]"
             style={{ color: "var(--text-muted)" }}>
             <span className="flex items-center gap-1.5">
               <IconFolder size={12} />
@@ -179,10 +179,10 @@ export default function PodcastButton() {
                 <div key={f.name} className="px-3 py-2 rounded-xl"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                       {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko
                       {isLongFile(f.name) && (
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                        <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                           style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
                           <IconSparkles size={9} stroke={2} />Bilan complet
                         </span>

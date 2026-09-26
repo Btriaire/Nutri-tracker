@@ -56,7 +56,7 @@ function StatPill({ icon, label, value, color, pct }: {
         <span style={{ color }}>{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</div>
+        <div className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</div>
         <div className="text-[14px] font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{value}</div>
         {pct !== undefined && (
           <div className="mt-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
@@ -181,7 +181,7 @@ export default function DashboardClientDesktop({
             </div>
 
             <div className="glass p-4 space-y-3">
-              <p className="text-[11px] font-semibold tracking-wider" style={{ color: "var(--text-muted)" }}>MACROS</p>
+              <p className="text-[12px] font-semibold tracking-wider" style={{ color: "var(--text-muted)" }}>MACROS</p>
               <MacroRow label="Protéines" value={Math.round(consumed.proteinG)} goal={goals.proteinGrams} color="var(--protein)" />
               <MacroRow label="Glucides"  value={Math.round(consumed.carbsG)}   goal={goals.carbsGrams}   color="var(--carbs)" />
               <MacroRow label="Lipides"   value={Math.round(consumed.fatG)}     goal={goals.fatGrams}     color="var(--fat)" />
@@ -200,7 +200,7 @@ export default function DashboardClientDesktop({
           {/* ══ COL 2 : Chart + stats ══ */}
           <div className="flex flex-col gap-4">
             <div className="glass p-5">
-              <p className="text-[11px] font-semibold tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] font-semibold tracking-wider mb-4" style={{ color: "var(--text-muted)" }}>
                 TENDANCE CALORIQUE — 14 JOURS
               </p>
               <ResponsiveContainer width="100%" height={200}>
@@ -234,7 +234,7 @@ export default function DashboardClientDesktop({
 
             {sessions.length > 0 && (
               <div className="glass p-4">
-                <p className="text-[11px] font-semibold tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] font-semibold tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
                   SÉANCES DU JOUR
                 </p>
                 <div className="space-y-2">
@@ -244,7 +244,7 @@ export default function DashboardClientDesktop({
                       <span className="text-[18px]">{ACT_EMOJI[s.activityType] ?? "🏅"}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           {s.durationMin} min{s.calories ? ` · ${Math.round(s.calories)} kcal` : ""}
                         </p>
                       </div>
@@ -266,7 +266,7 @@ export default function DashboardClientDesktop({
             <StreakWidget />
 
             <div className="glass p-4 space-y-1.5">
-              <p className="text-[11px] font-semibold tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] font-semibold tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
                 ACCÈS RAPIDE
               </p>
               {[

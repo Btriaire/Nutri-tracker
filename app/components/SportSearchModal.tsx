@@ -121,7 +121,7 @@ export default function SportSearchModal({ open, onClose, onSelect, onCustomize,
                 <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
                   NutriTrack-Sport
                 </p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   {EXERCISE_CATALOG.length} exercices disponibles
                 </p>
               </div>
@@ -254,14 +254,14 @@ function ExerciseCard({
             {exercise.name}
           </span>
           <span
-            className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+            className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
             style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 27%, transparent)` }}
           >
             {categoryLabel[exercise.category]}
           </span>
         </div>
         <span
-          className="text-[11px] font-semibold"
+          className="text-[12px] font-semibold"
           style={{ color: "var(--calories)" }}
         >
           ~{exercise.kcalPer30min75kg} kcal / 30 min

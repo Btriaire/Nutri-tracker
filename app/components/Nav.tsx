@@ -129,7 +129,7 @@ export default function Nav() {
                 <Icon size={22} stroke={active ? 2.2 : 1.6}
                   style={{ color: active ? color : "var(--text-muted)" }} />
               </div>
-              <span className="text-[11px] font-medium leading-none"
+              <span className="text-[12px] font-medium leading-none"
                 style={{ color: active ? color : "var(--text-muted)" }}>
                 {label}
               </span>
@@ -195,7 +195,7 @@ export default function Nav() {
                 {photoUrl ? (
                   <img src={photoUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[11px] font-semibold"
+                  <div className="w-full h-full flex items-center justify-center text-[12px] font-semibold"
                     style={{ background: "rgba(249,115,22,0.15)", color: "var(--calories)" }}>
                     {displayName ? displayName[0].toUpperCase() : "N"}
                   </div>

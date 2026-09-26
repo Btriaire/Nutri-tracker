@@ -130,7 +130,7 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
               <h2 className="text-[17px] font-semibold" style={{ color: "var(--text-primary)" }}>
                 Analyse Avancée
               </h2>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 Bilan holistique IA de toutes vos données
               </p>
             </div>
@@ -221,13 +221,13 @@ export default function AdvancedAnalysisModal({ open, onClose }: Props) {
               transition={{ duration: 0.3 }} className="space-y-4">
 
               {/* Period label */}
-              <p className="text-[11px] pt-1" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] pt-1" style={{ color: "var(--text-muted)" }}>
                 Analyse sur les {result.periodLabel} · {d.logDays} jours de nutrition · {d.fitDays} jours fitness
               </p>
 
               {/* Stats grid */}
               <div className="glass p-4 rounded-2xl space-y-0">
-                <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] font-semibold mb-2 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                   Données brutes
                 </p>
                 <StatRow icon={<IconFlame size={14} />} label="Calories moy." value={d.avgCalories} unit="kcal/j" color="var(--calories)" />

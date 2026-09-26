@@ -126,23 +126,23 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
           {photoUrl && (
             <div className="flex items-center gap-2 px-1">
               {saving ? (
-                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                   <IconLoader2 size={11} className="animate-spin" /> Sauvegarde…
                 </span>
               ) : saved ? (
-                <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--fiber)" }}>
+                <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--fiber)" }}>
                   <IconCircleCheck size={12} /> Sauvegardée ✓
                 </span>
               ) : (
                 <button onClick={handleSave}
-                  className="flex items-center gap-1.5 text-[11px] underline underline-offset-2"
+                  className="flex items-center gap-1.5 text-[12px] underline underline-offset-2"
                   style={{ color: "var(--text-muted)" }}>
                   <IconDeviceFloppy size={11} /> Sauvegarder manuellement
                 </button>
               )}
             </div>
           )}
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             Sauvegarde automatique · 128×128 px JPEG
           </p>
         </div>
@@ -150,11 +150,11 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
 
       {/* ── Informations personnelles ── */}
       <div className="mt-4 pt-4 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-        <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Informations personnelles</p>
+        <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Informations personnelles</p>
 
         {/* Prénom */}
         <div>
-          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Prénom / Pseudo</label>
+          <label className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Prénom / Pseudo</label>
           <input
             type="text"
             value={firstName}
@@ -166,7 +166,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
 
         {/* Année de naissance */}
         <div>
-          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
+          <label className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>
             Année de naissance
             {computedAge && computedAge > 0 && computedAge < 120 && (
               <span className="ml-2 font-normal" style={{ color: "var(--text-muted)" }}>{computedAge} ans</span>
@@ -180,14 +180,14 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             min={1920} max={new Date().getFullYear() - 10}
             className="input w-full text-[13px]"
           />
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
             Utilisé pour calculer le métabolisme de base (BMR)
           </p>
         </div>
 
         {/* Profession */}
         <div>
-          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Profession <span className="font-normal opacity-60">(optionnel)</span></label>
+          <label className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Profession <span className="font-normal opacity-60">(optionnel)</span></label>
           <input
             type="text"
             value={profession}
@@ -195,14 +195,14 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             placeholder="ex. Développeur, Enseignant…"
             className="input w-full text-[13px]"
           />
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
             Aide à contextualiser le niveau d&apos;activité et le stress
           </p>
         </div>
 
         {/* Notes santé */}
         <div>
-          <label className="text-[11px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Notes de santé <span className="font-normal opacity-60">(optionnel)</span></label>
+          <label className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Notes de santé <span className="font-normal opacity-60">(optionnel)</span></label>
           <textarea
             value={healthNotes}
             onChange={e => setHealthNotes(e.target.value)}
@@ -211,7 +211,7 @@ export default function ProfilePanel({ initialPhotoUrl, initialDisplayName, init
             className="input w-full text-[12px] resize-none"
             style={{ lineHeight: "1.5" }}
           />
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
             Utilisé par les suggestions IA pour personnaliser les recettes et conseils
           </p>
         </div>

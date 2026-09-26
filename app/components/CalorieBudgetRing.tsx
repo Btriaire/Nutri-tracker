@@ -168,7 +168,7 @@ export default function CalorieBudgetRing({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.45 }}
-            className="text-[11px] font-medium tracking-wide"
+            className="text-[12px] font-medium tracking-wide"
             style={{ color: over ? C_CONSUMED_OVER : "var(--text-muted)" }}
           >
             {over ? "kcal dépassé" : "kcal restantes"}
@@ -220,7 +220,7 @@ export default function CalorieBudgetRing({
                 Brûlées{onBurnedClick ? " ℹ" : ""}
               </span>
               {(activeMinutes != null && activeMinutes > 0 || sessionCount != null && sessionCount > 0) && (
-                <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                   {[
                     activeMinutes ? `${activeMinutes} min` : null,
                     sessionCount  ? `${sessionCount} séance${sessionCount > 1 ? "s" : ""}` : null,
@@ -265,7 +265,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1">
       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }

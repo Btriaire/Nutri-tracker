@@ -109,7 +109,7 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>ou</span>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>ou</span>
             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
           </div>
 
@@ -155,7 +155,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-[11px] mt-4" style={{ color: "var(--text-muted)" }}>
+        <p className="text-center text-[12px] mt-4" style={{ color: "var(--text-muted)" }}>
           Accès privé · Données stockées dans votre Firestore
         </p>
       </motion.div>

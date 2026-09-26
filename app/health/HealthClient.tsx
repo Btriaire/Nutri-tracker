@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -515,7 +516,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
     const bpm = payload[0].value;
     const z = hrZone(bpm, fcMax);
     return (
-      <div className="px-3 py-2 rounded-xl text-[11px] space-y-0.5"
+      <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
         style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
         <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
         <p className="font-bold text-[14px]" style={{ color: z.color }}>{bpm} bpm</p>
@@ -604,7 +605,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   border:     active ? `1px solid color-mix(in srgb, ${color} 21%, transparent)` : "1px solid transparent",
                 }}>
                 {icon}
-                <span className="text-[11px] font-medium leading-none whitespace-nowrap">{label}</span>
+                <span className="text-[12px] font-medium leading-none whitespace-nowrap">{label}</span>
               </button>
             );
           })}
@@ -652,11 +653,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   </div>
                   <div>
                     <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Composition corporelle</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Withings · balance connectée</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Withings · balance connectée</p>
                   </div>
                 </div>
                 <button onClick={handleWithingsSync} disabled={wSyncing}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] transition-all"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
                   {wSyncing ? <IconLoader2 size={11} className="animate-spin" /> : <IconRefresh size={11} />}
                   Sync
@@ -664,7 +665,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               </div>
 
               {wSyncMsg && (
-                <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
+                <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>{wSyncMsg}</p>
               )}
 
               {!latestW && !latestF && !latestM ? (
@@ -683,10 +684,10 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     ].map(({ label, value, unit, color, fmt }) => (
                       <div key={label} className="rounded-xl p-3"
                         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                        <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                        <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
                         {value !== null
                           ? <p className="text-[20px] font-bold tabular-nums leading-none" style={{ color }}>
-                              {fmt(value)}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+                              {fmt(value)}<span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
                             </p>
                           : <p className="text-[16px]" style={{ color: "var(--text-muted)" }}>—</p>
                         }
@@ -697,7 +698,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {/* Weight trend mini chart */}
                   {weightChartData.length > 1 && (
                     <div>
-                      <p className="text-[11px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
+                      <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Évolution du poids · {weightChartData.length} mesures</p>
                       <ResponsiveContainer width="100%" height={80}>
                         <LineChart data={weightChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                           <XAxis dataKey="label" hide />
@@ -706,7 +707,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             content={({ active, payload, label: lbl }) => {
                               if (!active || !payload?.length) return null;
                               return (
-                                <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                                <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                                   style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                   <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                   <p className="font-bold" style={{ color: "var(--fat)" }}>{(payload[0].value as number).toFixed(1)} kg</p>
@@ -722,7 +723,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   )}
 
                   {latestW && (
-                    <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
                       Dernière mesure : {format(parseISO(latestW.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
                     </p>
                   )}
@@ -747,11 +748,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
                       Tension artérielle
                     </p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>mmHg · manuel ou synchronisé</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>mmHg · manuel ou synchronisé</p>
                   </div>
                 </div>
                 {bpCat && (
-                  <span className="text-[11px] font-semibold px-2 py-1 rounded-full"
+                  <span className="text-[12px] font-semibold px-2 py-1 rounded-full"
                     style={{ background: bpCat.bg, color: bpCat.color, border: `1px solid color-mix(in srgb, ${bpCat.color} 25%, transparent)` }}>
                     {bpCat.label}
                   </span>
@@ -786,14 +787,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {r.moment && (() => {
                             const { Icon, label } = MOMENT_META[r.moment];
                             return (
-                              <span className="flex items-center gap-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                              <span className="flex items-center gap-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                                 <Icon size={10} stroke={1.8} />
                                 {label}
                               </span>
                             );
                           })()}
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
-                          <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full"
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>· {r.time}</span>
+                          <span className="text-[12px] font-medium px-1.5 py-0.5 rounded-full"
                             style={{
                               background: r.source ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
                               color: r.source ? "var(--fat)" : "var(--text-muted)",
@@ -809,9 +810,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
                             {r.diastolic}
                           </span>
-                          <span className="text-[11px] ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
+                          <span className="text-[12px] ml-1" style={{ color: "var(--text-muted)" }}>mmHg</span>
                           {r.pulse && (
-                            <span className="text-[11px] ml-2 flex items-center gap-0.5" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[12px] ml-2 flex items-center gap-0.5" style={{ color: "var(--text-muted)" }}>
                               <IconHeart size={10} style={{ color: "var(--fit-red)" }} />
                               {r.pulse}
                             </span>
@@ -867,11 +868,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           const d = payload.find(p => p.dataKey === "dia")?.value as number;
                           const cls = s && d ? bpCategory(s, d) : null;
                           return (
-                            <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                            <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                               style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                               <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                               {s && d && <p style={{ color: "var(--fit-red)" }} className="font-bold">{s} / {d} mmHg</p>}
-                              {cls && <p className="text-[11px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}
+                              {cls && <p className="text-[12px] font-medium mt-0.5" style={{ color: cls.color }}>● {cls.label}</p>}
                             </div>
                           );
                         }} />
@@ -883,18 +884,18 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       </LineChart>
                     </ResponsiveContainer>
                     <div className="flex items-center gap-4 mt-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                         <div className="w-3 h-0.5 rounded" style={{ background: "var(--fit-red)" }} />
                         Systolique
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <div className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                         <div className="w-3 h-0.5 rounded" style={{ background: "var(--fit-indigo)" }} />
                         Diastolique
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--fit-yellow)" }}>
+                      <div className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--fit-yellow)" }}>
                         — 120
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--calories)" }}>
+                      <div className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--calories)" }}>
                         — 140
                       </div>
                     </div>
@@ -969,13 +970,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       </div>
                       <div>
                         <p className="text-[14px] font-semibold">Sommeil</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           {lastSleep ? format(parseISO(lastSleep.date + "T12:00:00"), "dd MMM", { locale: fr }) : "Aucune donnée"}
                         </p>
                       </div>
                     </div>
                     <Link href="/activity/sleep"
-                      className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors"
+                      className="flex items-center gap-1 text-[12px] px-2.5 py-1 rounded-lg transition-colors"
                       style={{ background: "rgba(121,134,203,0.1)", color: "var(--fit-indigo)", border: "1px solid rgba(121,134,203,0.2)" }}>
                       Détail
                       <IconArrowUp size={10} style={{ transform: "rotate(45deg)" }} />
@@ -989,14 +990,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {sleepH}h
                         </span>
                         <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>/ 7h objectif</span>
-                        {sleepOk && <span className="text-[11px] font-medium ml-1" style={{ color: "var(--fit-green)" }}>✓ Objectif atteint</span>}
+                        {sleepOk && <span className="text-[12px] font-medium ml-1" style={{ color: "var(--fit-green)" }}>✓ Objectif atteint</span>}
                       </div>
                     </>
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Aucune donnée de sommeil</p>
                       <Link href="/activity/sleep"
-                        className="text-[11px] font-medium"
+                        className="text-[12px] font-medium"
                         style={{ color: "var(--fit-indigo)" }}>
                         Saisir manuellement →
                       </Link>
@@ -1093,7 +1094,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Nutri-IA-Med</span>
                     {/* Alert pill */}
                     {synthesis && cfg && (
-                      <span className="flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      <span className="flex items-center gap-1 text-[12px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                         style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
                         {synthesis.alertLabel}
@@ -1102,7 +1103,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     <div className="flex-1" />
                     {/* Relancer / Analyser */}
                     <button onClick={handleSynthesis} disabled={synthesisLoading}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all flex-shrink-0"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium transition-all flex-shrink-0"
                       style={{
                         background: "rgba(167,139,250,0.1)",
                         border: "1px solid rgba(167,139,250,0.3)",
@@ -1135,14 +1136,14 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
                   {/* Error inline */}
                   {synthesisError && !synthesisLoading && (
-                    <p className="text-[11px] mt-1.5" style={{ color: "var(--danger)" }}>
+                    <p className="text-[12px] mt-1.5" style={{ color: "var(--danger)" }}>
                       Erreur d&apos;analyse · réessaye
                     </p>
                   )}
 
                   {/* Summary — always visible when synthesis */}
                   {synthesis && !synthesisLoading && (
-                    <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                       {synthesis.summary}
                     </p>
                   )}
@@ -1150,7 +1151,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   {/* Empty state minimal */}
                   {!synthesis && !synthesisLoading && !synthesisError && (
                     <button onClick={handleSynthesis}
-                      className="w-full mt-2 py-2 rounded-lg text-[11px] font-medium transition-all"
+                      className="w-full mt-2 py-2 rounded-lg text-[12px] font-medium transition-all"
                       style={{ border: "1px dashed rgba(167,139,250,0.25)", color: "var(--protein)" }}>
                       Lancer l&apos;analyse
                     </button>
@@ -1170,7 +1171,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             { Icon: IconSalad,      label: "Nutrition",  text: synthesis.nutrition,  show: true },
                             { Icon: IconRun,        label: "Activité",   text: synthesis.activite,   show: !!synthesis.activite },
                           ].filter(s => s.show).map(({ Icon, label, text }) => (
-                            <p key={label} className="text-[11px] leading-relaxed flex items-start gap-1.5">
+                            <p key={label} className="text-[12px] leading-relaxed flex items-start gap-1.5">
                               <Icon size={12} stroke={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "var(--text-muted)" }} />
                               <span>
                                 <span className="font-medium" style={{ color: "var(--text-muted)" }}>{label} · </span>
@@ -1182,13 +1183,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
                         {synthesis.recommandations?.length > 0 && (
                           <div className="mt-3">
-                            <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+                            <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                               <IconBulb size={11} stroke={1.8} />
                               Recommandations
                             </p>
                             <div className="space-y-1">
                               {synthesis.recommandations.map((r, i) => (
-                                <p key={i} className="text-[11px] leading-relaxed">
+                                <p key={i} className="text-[12px] leading-relaxed">
                                   <span className="font-bold mr-1" style={{ color: "var(--protein)" }}>{i + 1}.</span>
                                   <span style={{ color: "var(--text-secondary)" }}>{r}</span>
                                 </p>
@@ -1198,13 +1199,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         )}
 
                         {synthesis.consulter && (
-                          <p className="text-[11px] mt-2 leading-relaxed flex items-start gap-1.5" style={{ color: "var(--danger)" }}>
+                          <p className="text-[12px] mt-2 leading-relaxed flex items-start gap-1.5" style={{ color: "var(--danger)" }}>
                             <IconAlertTriangle size={12} stroke={1.8} className="flex-shrink-0 mt-0.5" />
                             {synthesis.consulter}
                           </p>
                         )}
 
-                        <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
                           Indicatif · ne remplace pas un avis médical
                         </p>
                       </motion.div>
@@ -1228,7 +1229,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
                 <div className="flex items-center gap-1.5">
                   {meds.length > 0 && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full"
+                    <span className="text-[12px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(192,132,252,0.12)", color: "var(--accent)", border: "1px solid rgba(192,132,252,0.3)" }}>
                       {meds.filter(m => m.taken).length}/{meds.length} pris
                     </span>
@@ -1246,7 +1247,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   className="w-full py-2 px-3 rounded-lg flex items-center gap-2 transition-colors"
                   style={{ border: "1px dashed var(--border)" }}>
                   <IconPill size={13} style={{ color: "var(--text-muted)" }} />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un médicament</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Ajouter un médicament</span>
                 </button>
               ) : (
                 <div className="space-y-2">
@@ -1265,7 +1266,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {m.name}
                         </p>
                         {(m.dose || m.time) && (
-                          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                             {[m.dose, m.time].filter(Boolean).join(" · ")}
                           </p>
                         )}
@@ -1297,7 +1298,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                 </div>
                 <div className="flex items-center gap-1.5">
                   {symptoms.length > 0 && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full"
+                    <span className="text-[12px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(251,146,60,0.12)", color: "var(--calories)", border: "1px solid rgba(251,146,60,0.3)" }}>
                       {symptoms.length} symptôme{symptoms.length > 1 ? "s" : ""}
                     </span>
@@ -1316,7 +1317,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   className="w-full py-2 px-3 rounded-lg flex items-center gap-2 transition-colors"
                   style={{ border: "1px dashed var(--border)" }}>
                   <IconStethoscope size={13} style={{ color: "var(--text-muted)" }} />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
                 </button>
               )}
 
@@ -1349,7 +1350,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                 {s.name}
                               </p>
                               {isEnded && (
-                                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                                <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1"
                                   style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "var(--fiber)" }}>
                                   ✓ Terminé
                                 </span>
@@ -1359,7 +1360,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               {sev.map(sv => (
                                 <button key={sv}
                                   onClick={() => handleSetSeverity(s.id, sv)}
-                                  className="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-all"
+                                  className="px-2 py-0.5 rounded-full text-[12px] font-semibold uppercase tracking-wide transition-all"
                                   style={{
                                     background: s.severity === sv ? `color-mix(in srgb, ${sevColor[sv]} 13%, transparent)` : "rgba(255,255,255,0.04)",
                                     border: `1px solid ${s.severity === sv ? sevColor[sv] : "var(--border)"}`,
@@ -1383,17 +1384,17 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         {/* Time row — start → end + duration */}
                         <div className="flex items-center gap-2 mt-2 pl-6">
                           {s.time && (
-                            <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--text-muted)" }}>
                               <IconClock size={10} stroke={1.5} />
                               {s.time}
                             </span>
                           )}
                           {isEnded && (
                             <>
-                              <span className="text-[11px]" style={{ color: "var(--border-strong)" }}>→</span>
-                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.endTime}</span>
+                              <span className="text-[12px]" style={{ color: "var(--border-strong)" }}>→</span>
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{s.endTime}</span>
                               {s.durationMin != null && (
-                                <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md"
+                                <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-md"
                                   style={{ background: "rgba(52,211,153,0.1)", color: "var(--fiber)" }}>
                                   {fmtDuration(s.durationMin)}
                                 </span>
@@ -1404,7 +1405,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                           {!isEnded && (
                             <button
                               onClick={() => handleEndSymptom(s.id)}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all ml-auto"
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-semibold transition-all ml-auto"
                               style={{
                                 background: "rgba(251,191,36,0.1)",
                                 border:     "1px solid rgba(251,191,36,0.35)",
@@ -1437,7 +1438,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         const isOpen = symCatOpen === cat.key;
                         return (
                           <div key={cat.key} className="rounded-xl overflow-hidden"
-                            style={{ border: `1px solid ${isOpen ? cat.color + "55" : "var(--border)"}`, background: isOpen ? `color-mix(in srgb, ${cat.color} 3%, transparent)` : "transparent" }}>
+                            style={{ border: `1px solid ${isOpen ? alpha(cat.color, 33) : "var(--border)"}`, background: isOpen ? `color-mix(in srgb, ${cat.color} 3%, transparent)` : "transparent" }}>
                             {/* Category header */}
                             <button
                               onClick={() => setSymCatOpen(v => v === cat.key ? null : cat.key)}
@@ -1451,13 +1452,13 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                               {(() => {
                                 const n = symptoms.filter(s => s.category === cat.key).length;
                                 return n > 0 ? (
-                                  <span className="text-[11px] px-1.5 py-0.5 rounded-full font-semibold"
+                                  <span className="text-[12px] px-1.5 py-0.5 rounded-full font-semibold"
                                     style={{ background: `color-mix(in srgb, ${cat.color} 13%, transparent)`, color: cat.color, border: `1px solid color-mix(in srgb, ${cat.color} 33%, transparent)` }}>
                                     {n}
                                   </span>
                                 ) : null;
                               })()}
-                              <span className="text-[11px]" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
                             </button>
                             {/* Symptom chips */}
                             <AnimatePresence>
@@ -1474,7 +1475,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                                         <button key={sym}
                                           onClick={() => handleAddSymptom(cat.key, sym)}
                                           disabled={symSaving}
-                                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all"
                                           style={{
                                             background: active ? `color-mix(in srgb, ${cat.color} 13%, transparent)` : "rgba(255,255,255,0.05)",
                                             border: `1px solid ${active ? cat.color : "var(--border)"}`,
@@ -1503,7 +1504,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   className="w-full py-4 rounded-xl flex flex-col items-center gap-1.5 transition-colors"
                   style={{ border: "1.5px dashed var(--border)" }}>
                   <IconStethoscope size={18} style={{ color: "var(--text-muted)" }} />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Ajouter un symptôme</span>
                 </button>
               )}
             </div>
@@ -1527,7 +1528,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                   <div className="flex items-center gap-2 mb-3">
                     <IconClipboardList size={14} style={{ color: "var(--calories)" }} />
                     <p className="label-xs">Historique des symptômes</p>
-                    <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full"
+                    <span className="ml-auto text-[12px] px-2 py-0.5 rounded-full"
                       style={{ background: "rgba(251,146,60,0.1)", color: "var(--calories)", border: "1px solid rgba(251,146,60,0.25)" }}>
                       {history.length} jour{history.length > 1 ? "s" : ""}
                     </span>
@@ -1538,11 +1539,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                         {/* Date row */}
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#fb923c" }} />
-                          <p className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                          <p className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>
                             {format(parseISO(e.date + "T12:00:00"), "EEEE d MMMM", { locale: fr })}
                           </p>
                           <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             {(e.symptoms ?? []).length} symptôme{(e.symptoms ?? []).length > 1 ? "s" : ""}
                           </span>
                         </div>
@@ -1553,7 +1554,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             const sevColor = s.severity ? (SEV_COLOR[s.severity] ?? "#fb923c") : "#fb923c";
                             return (
                               <span key={s.id}
-                                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-medium"
                                 style={{
                                   background: s.endTime ? "rgba(52,211,153,0.08)" : `color-mix(in srgb, ${sevColor} 7%, transparent)`,
                                   border: `1px solid ${s.endTime ? "rgba(52,211,153,0.3)" : `color-mix(in srgb, ${sevColor} 27%, transparent)`}`,
@@ -1579,7 +1580,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
                               background: e.aiSynthesis.alertLevel === "vert" ? "var(--fiber)" : e.aiSynthesis.alertLevel === "orange" ? "var(--carbs)" : "var(--danger)",
                             }} />
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                               Nutri-IA-Med · {e.aiSynthesis.alertLabel}
                             </span>
                           </div>
@@ -1647,7 +1648,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     style={{ background: "rgba(234,67,53,0.08)", border: "2px solid rgba(234,67,53,0.35)", color: "var(--fit-red)", padding: "12px 8px" }}
                     min={50} max={300}
                   />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Systolique</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Systolique</span>
                 </div>
                 <span className="text-[36px] font-light mb-5" style={{ color: "var(--text-muted)" }}>/</span>
                 <div className="flex flex-col items-center gap-1">
@@ -1657,7 +1658,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     style={{ background: "rgba(121,134,203,0.08)", border: "2px solid rgba(121,134,203,0.35)", color: "var(--fit-indigo)", padding: "12px 8px" }}
                     min={30} max={200}
                   />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Diastolique</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Diastolique</span>
                 </div>
               </div>
 
@@ -1675,20 +1676,20 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Pouls (optionnel)</p>
+                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Pouls (optionnel)</p>
                   <div className="relative">
                     <input type="number" value={bpPulse} onChange={e => setBpPulse(e.target.value)}
                       placeholder="72" className="input pr-10" min={30} max={250} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px]" style={{ color: "var(--text-muted)" }}>bpm</span>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
+                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
                   <input type="time" value={bpTime} onChange={e => setBpTime(e.target.value)} className="input" />
                 </div>
               </div>
 
-              <p className="text-[11px] mb-2" style={{ color: "var(--text-muted)" }}>Moment</p>
+              <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>Moment</p>
               <div className="flex gap-2 mb-6">
                 {(["morning", "evening", "other"] as BPMoment[]).map(m => (
                   <button key={m} onClick={() => setBpMoment(m)}
@@ -1751,7 +1752,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
               <div className="space-y-3 mb-5">
                 {/* Nom + Nutri-AI-Med button */}
                 <div>
-                  <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
+                  <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Nom *</p>
                   <div className="flex gap-2">
                     <input
                       autoFocus type="text" value={medName}
@@ -1791,20 +1792,20 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       <div className="flex items-start gap-2">
                         <IconSparkles size={13} stroke={2} style={{ color: "var(--accent)" }} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold" style={{ color: "var(--accent)" }}>
+                          <p className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
                             {medAiInfo.class}
                           </p>
                           <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
                             {medAiInfo.description}
                           </p>
-                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
                             <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Indication :</span> {medAiInfo.indication}
                           </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                             <span className="font-medium" style={{ color: "var(--text-secondary)" }}>Dose :</span> {medAiInfo.dose}
                           </p>
                           {medAiInfo.warning && (
-                            <p className="text-[11px] mt-1.5 flex items-start gap-1" style={{ color: "var(--carbs)" }}>
+                            <p className="text-[12px] mt-1.5 flex items-start gap-1" style={{ color: "var(--carbs)" }}>
                               <IconAlertCircle size={11} className="mt-0.5 flex-shrink-0" />
                               {medAiInfo.warning}
                             </p>
@@ -1817,7 +1818,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>
+                    <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Dosage</p>
                     <input type="text" value={medDose}
                       onChange={e => setMedDose(e.target.value)}
                       placeholder="500 mg, 1 cp…"
@@ -1825,7 +1826,7 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                     />
                   </div>
                   <div>
-                    <p className="text-[11px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
+                    <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>Heure</p>
                     <input type="time" value={medTime}
                       onChange={e => setMedTime(e.target.value)}
                       className="input text-[13px]"
@@ -1892,7 +1893,7 @@ function VitalCard({
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 mb-0.5">
             {icon}
-            <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>{label}</span>
+            <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>{label}</span>
           </div>
           <div className="relative">
             <input
@@ -1902,27 +1903,27 @@ function VitalCard({
               className="input text-[14px] pr-10"
               step={step} min={min} max={max}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px]"
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px]"
               style={{ color: "var(--text-muted)" }}>{unit}</span>
           </div>
           <div className="flex gap-1.5">
             <button onClick={onSave} disabled={saving}
-              className="flex-1 btn gap-1 text-[11px]"
+              className="flex-1 btn gap-1 text-[12px]"
               style={{ height: "28px", background: "var(--fiber)", color: "var(--bg)", border: "none" }}>
               {saving ? <IconLoader2 size={10} className="animate-spin" /> : "OK"}
             </button>
             <button onClick={onCancel}
-              className="btn btn-ghost text-[11px] px-2" style={{ height: "28px" }}>
+              className="btn btn-ghost text-[12px] px-2" style={{ height: "28px" }}>
               <IconX size={11} />
             </button>
             {value != null && (
               <button onClick={onClear}
-                className="btn btn-ghost text-[11px] px-2" style={{ height: "28px", color: "var(--danger)" }}>
+                className="btn btn-ghost text-[12px] px-2" style={{ height: "28px", color: "var(--danger)" }}>
                 <IconTrash size={11} />
               </button>
             )}
           </div>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{refRange}</p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{refRange}</p>
         </div>
       ) : displayVal != null ? (
         /* ── Display mode — horizontal row ── */
@@ -1930,12 +1931,12 @@ function VitalCard({
           {/* Left: icon + label */}
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {icon}
-            <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+            <span className="text-[12px] font-medium truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
           </div>
           {/* Right: value + status */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {status && (
-              <span className="text-[11px] font-medium hidden sm:inline" style={{ color: status.color }}>
+              <span className="text-[12px] font-medium hidden sm:inline" style={{ color: status.color }}>
                 {status.label}
               </span>
             )}
@@ -1944,7 +1945,7 @@ function VitalCard({
                 style={{ color: status?.color ?? "var(--text-primary)" }}>
                 {displayVal}
               </span>
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{unit}</span>
             </div>
             <button onClick={onStartEdit} className="p-1 rounded-md" style={{ color: "var(--text-muted)" }}>
               <IconPencil size={11} />
@@ -1958,9 +1959,9 @@ function VitalCard({
           style={{ color: "var(--text-muted)" }}>
           <div className="flex items-center gap-1.5 flex-1">
             {icon}
-            <span className="text-[11px] font-medium">{label}</span>
+            <span className="text-[12px] font-medium">{label}</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px]" style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "2px 8px" }}>
+          <div className="flex items-center gap-1 text-[12px]" style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "2px 8px" }}>
             <IconPlus size={11} />
             Saisir
           </div>

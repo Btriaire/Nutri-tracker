@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useEffect, useRef } from "react";
 import { IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
 import type { HungerLevel, MealType } from "@/app/lib/types";
@@ -99,7 +100,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
           Évolution de la faim
         </p>
         {hasAny && (
-          <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full"
+          <span className="ml-auto text-[12px] px-2 py-0.5 rounded-full"
             style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
             {recorded.length}/{MEALS.length} repas
           </span>
@@ -179,7 +180,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
             const cfg = HUNGER_CFG[level];
             return (
               <g key={idx}>
-                <circle cx={x} cy={y} r={8} fill={cfg.color + "33"} stroke={cfg.color} strokeWidth={1.5} />
+                <circle cx={x} cy={y} r={8} fill={alpha(cfg.color, 20)} stroke={cfg.color} strokeWidth={1.5} />
                 <text x={x} y={y + 1} textAnchor="middle" fontSize={8} fontWeight="700" dominantBaseline="middle" fill={cfg.color}>
                   {level}
                 </text>
@@ -210,7 +211,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}>
                 <m.Icon size={12} />
               </span>
-              <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
+              <span className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                 {m.label}
               </span>
             </div>
@@ -229,7 +230,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
       {/* Mini legend */}
       <div className="flex justify-between px-1 pt-0.5">
         {([1, 2, 3, 4, 5] as HungerLevel[]).map((lvl) => (
-          <span key={lvl} className="text-[11px] font-medium tabular-nums"
+          <span key={lvl} className="text-[12px] font-medium tabular-nums"
             style={{ color: "var(--text-muted)", opacity: 0.45 }}>
             {lvl}
           </span>

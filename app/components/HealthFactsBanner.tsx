@@ -72,7 +72,7 @@ export default function HealthFactsBanner() {
           <IconLeaf size={14} stroke={2} style={{ color: "var(--fiber)" }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--fiber)" }}>
+          <p className="text-[12px] font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--fiber)" }}>
             Nutrition &amp; Santé
           </p>
           <AnimatePresence mode="wait" initial={false}>

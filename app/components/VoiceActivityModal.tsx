@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconX, IconSparkles, IconCheck, IconPlus, IconMinus, IconMicrophone, IconPlayerStopFilled, IconFlame, IconClock } from "@tabler/icons-react";
@@ -244,7 +245,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Dicter mon activité</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Nutri-IA · reconnaissance vocale</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Nutri-IA · reconnaissance vocale</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}>
@@ -276,7 +277,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
               <p className="text-[13px] font-medium text-center mt-2" style={{ color: "var(--text-primary)" }}>
                 {listening ? "À l'écoute… parlez" : supported ? "Touchez le micro et décrivez votre séance" : "Tapez votre activité ci-dessous"}
               </p>
-              <p className="text-[11px] text-center mt-1 px-4" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] text-center mt-1 px-4" style={{ color: "var(--text-muted)" }}>
                 Ex : « J&apos;ai couru 30 minutes puis 20 min de musculation »
               </p>
 
@@ -287,7 +288,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                 placeholder="Votre activité apparaît ici — vous pouvez corriger le texte…"
                 rows={3}
                 className="w-full mt-4 px-3 py-2.5 rounded-xl text-[13px] outline-none resize-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${listening ? ACCENT + "55" : "var(--border)"}`, color: "var(--text-primary)" }}
+                style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${listening ? alpha(ACCENT, 33) : "var(--border)"}`, color: "var(--text-primary)" }}
               />
 
               <button
@@ -322,11 +323,11 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
           {(phase === "results" || phase === "saving") && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   ✨ {items.length} activité{items.length > 1 ? "s" : ""} reconnue{items.length > 1 ? "s" : ""}
                 </span>
                 <button onClick={() => { setPhase("idle"); setItems([]); }}
-                  className="text-[11px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+                  className="text-[12px] px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
                   Recommencer
                 </button>
               </div>
@@ -351,7 +352,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                       className="rounded-xl p-3"
                       style={{
                         background: item.selected ? `color-mix(in srgb, ${ACCENT} 5%, transparent)` : "rgba(255,255,255,0.025)",
-                        border: `1px solid ${item.selected ? ACCENT + "35" : "rgba(255,255,255,0.07)"}`,
+                        border: `1px solid ${item.selected ? alpha(ACCENT, 21) : "rgba(255,255,255,0.07)"}`,
                         opacity: isSaving ? 0.65 : 1,
                       }}>
                       <div className="flex items-start gap-3">
@@ -367,7 +368,7 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                             <span className="mr-1">{emoji}</span>{item.name}
                           </p>
                           {item.caloriesBurned != null && (
-                            <p className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold" style={{ color: "var(--fit-red, var(--danger))" }}>
+                            <p className="inline-flex items-center gap-1 mt-1 text-[12px] font-semibold" style={{ color: "var(--fit-red, var(--danger))" }}>
                               <IconFlame size={12} /> {item.caloriesBurned} kcal brûlées
                             </p>
                           )}
@@ -379,13 +380,13 @@ export default function VoiceActivityModal({ date, onAdded, onClose }: Props) {
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconMinus size={9} /></button>
                             <input type="number" value={item.durationMin}
                               onChange={(e) => !isSaving && setDuration(idx, parseInt(e.target.value))}
-                              className="w-11 text-center text-[11px] rounded-md tabular-nums outline-none"
+                              className="w-11 text-center text-[12px] rounded-md tabular-nums outline-none"
                               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-secondary)", padding: "2px 3px" }}
                               disabled={isSaving} />
                             <button onClick={() => !isSaving && adjustDuration(idx, 5)} className="w-5 h-5 rounded-md flex items-center justify-center"
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}><IconPlus size={9} /></button>
                           </div>
-                          <span className="inline-flex items-center gap-0.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <span className="inline-flex items-center gap-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
                             <IconClock size={9} /> min
                           </span>
                         </div>

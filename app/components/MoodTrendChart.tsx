@@ -47,7 +47,7 @@ function CustomTooltip({ active, payload, label }: {
 
   return (
     <div
-      className="px-3 py-2 rounded-xl text-[11px] space-y-1"
+      className="px-3 py-2 rounded-xl text-[12px] space-y-1"
       style={{
         background: "rgba(13,13,17,0.96)",
         border: "1px solid var(--border)",
@@ -75,7 +75,7 @@ export default function MoodTrendChart({ points }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Évolution 30 jours</p>
-        <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <div className="flex items-center gap-3 text-[12px]" style={{ color: "var(--text-muted)" }}>
           <span className="flex items-center gap-1">
             <span className="inline-block w-4 h-0.5 rounded" style={{ background: "#a855f7" }} />
             😊 Humeur
@@ -157,7 +157,7 @@ export default function MoodTrendChart({ points }: Props) {
       </ResponsiveContainer>
 
       {/* Bottom legend */}
-      <div className="flex items-center justify-center gap-5 mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+      <div className="flex items-center justify-center gap-5 mt-2 text-[12px]" style={{ color: "var(--text-muted)" }}>
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-0.5 rounded" style={{ background: "#a855f7" }} />
           😊 Humeur

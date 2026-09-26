@@ -114,7 +114,7 @@ export default function GymProgressModal({ onClose }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Progression salle</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>90 derniers jours</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>90 derniers jours</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconX size={15} /></button>
@@ -126,7 +126,7 @@ export default function GymProgressModal({ onClose }: Props) {
           ) : totalSessions === 0 ? (
             <div className="text-center py-12">
               <p className="text-[13px]" style={{ color: "var(--text-primary)" }}>Aucune séance enregistrée</p>
-              <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>Enregistre une séance pour voir ta progression ici.</p>
+              <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>Enregistre une séance pour voir ta progression ici.</p>
             </div>
           ) : (
             <>
@@ -134,17 +134,17 @@ export default function GymProgressModal({ onClose }: Props) {
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                   <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{totalSessions}</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>séances</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>séances</p>
                 </div>
                 <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                   <p className="text-[20px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{Math.round(totalVolume / 1000)}t</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>volume total soulevé</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>volume total soulevé</p>
                 </div>
               </div>
 
               {/* Muscle heatmap */}
               <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-center text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Muscles les plus travaillés</p>
+                <p className="text-center text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Muscles les plus travaillés</p>
                 <MuscleBodyMap primary={hotMuscles} secondary={warmMuscles} accent={ACCENT} size={180} />
               </div>
 
@@ -164,7 +164,7 @@ export default function GymProgressModal({ onClose }: Props) {
                   <div className="flex items-center justify-between mb-2 px-1">
                     <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{EXERCISE_BY_ID[exId] ? MUSCLE_LABELS[EXERCISE_BY_ID[exId].primary] : ""}</p>
                     {pr > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(250,204,21,0.12)", color: "var(--warn)" }}>
+                      <span className="inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(250,204,21,0.12)", color: "var(--warn)" }}>
                         <IconTrophy size={12} /> Record {pr} kg
                       </span>
                     )}
@@ -184,7 +184,7 @@ export default function GymProgressModal({ onClose }: Props) {
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-center text-[11px] py-8" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-center text-[12px] py-8" style={{ color: "var(--text-muted)" }}>
                       Encore une séance avec cet exercice pour tracer la courbe.
                     </p>
                   )}

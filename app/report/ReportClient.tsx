@@ -81,7 +81,7 @@ export default function ReportClient() {
         {/* ── Controls (hidden on print) ── */}
         <div className="print-hide">
           <div className="mb-1 hidden md:block">
-            <p className="text-[11px] uppercase tracking-wider font-medium" style={{ color: "var(--text-muted)" }}>Analyses</p>
+            <p className="text-[12px] uppercase tracking-wider font-medium" style={{ color: "var(--text-muted)" }}>Analyses</p>
           </div>
           <div className="hidden md:flex items-center justify-between mb-5">
             <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -104,7 +104,7 @@ export default function ReportClient() {
                 return (
                   <button key={p.label}
                     onClick={() => { setFrom(p.from); setTo(p.to); }}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all"
+                    className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all"
                     style={{
                       background: active ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.04)",
                       border:     active ? "1px solid rgba(249,115,22,0.5)" : "1px solid var(--border)",
@@ -119,12 +119,12 @@ export default function ReportClient() {
             {/* Custom range */}
             <div className="flex gap-3 items-center">
               <div className="flex-1">
-                <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Du</p>
+                <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Du</p>
                 <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
                   className="input text-[12px] w-full" style={{ height: 36 }} />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Au</p>
+                <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Au</p>
                 <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
                   className="input text-[12px] w-full" style={{ height: 36 }} />
               </div>

@@ -317,7 +317,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
               {view === "picker" ? "Choisir un exercice" : "Nouvelle séance"}
             </p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {view === "picker" ? `${EXERCISES.length} exercices` : "Salle de sport"}
             </p>
           </div>
@@ -362,7 +362,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                       {MUSCLE_LABELS[ex.primary]} · {EQUIPMENT_LABELS[ex.equipment]}
                     </p>
                   </div>
@@ -397,7 +397,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             <div className="flex gap-1.5 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
               {NAME_PRESETS.map((p) => (
                 <button key={p} onClick={() => setName(p)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap"
+                  className="px-2.5 py-1 rounded-lg text-[12px] whitespace-nowrap"
                   style={{ background: name === p ? `color-mix(in srgb, ${ACCENT} 13%, transparent)` : "rgba(255,255,255,0.04)", color: name === p ? ACCENT : "var(--text-muted)" }}>
                   {p}
                 </button>
@@ -409,7 +409,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
               <div className="mb-4">
                 <div className="flex items-center gap-1.5 mb-2 px-0.5">
                   <IconLayoutGrid size={13} style={{ color: "var(--text-muted)" }} />
-                  <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Tes programmes</p>
+                  <p className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Tes programmes</p>
                 </div>
                 <div className="space-y-1.5">
                   {programs.map((p) => (
@@ -421,7 +421,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{p.name}</p>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.exercises.length} exercices</p>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{p.exercises.length} exercices</p>
                         </div>
                       </button>
                       <button onClick={() => deleteProgram(p.id)} aria-label="Supprimer le programme"
@@ -437,7 +437,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
             {exercises.length > 0 && (
               <div className="rounded-2xl py-4 mb-4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <MuscleBodyMap primary={primaryMuscles} secondary={secondaryMuscles} accent={ACCENT} size={180} />
-                <div className="flex justify-center gap-4 mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <div className="flex justify-center gap-4 mt-2 text-[12px]" style={{ color: "var(--text-muted)" }}>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} /> Principal</span>
                   <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: `color-mix(in srgb, ${ACCENT} 40%, transparent)` }} /> Secondaire</span>
                 </div>
@@ -457,7 +457,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{ex.name}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{MUSCLE_LABELS[ex.primaryMuscle]}</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{MUSCLE_LABELS[ex.primaryMuscle]}</p>
                     </div>
                     <button onClick={() => openCamera(i)} aria-label="Photo de l'appareil"
                       className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
@@ -477,7 +477,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             border: `1.5px solid ${s.done ? ACCENT : "rgba(255,255,255,0.18)"}`,
                             color: s.done ? "#fff" : "var(--text-muted)",
                           }}>
-                          {s.done ? <IconCheck size={12} stroke={3} /> : <span className="text-[11px] tabular-nums">{si + 1}</span>}
+                          {s.done ? <IconCheck size={12} stroke={3} /> : <span className="text-[12px] tabular-nums">{si + 1}</span>}
                         </button>
                         {/* reps */}
                         <div className="flex items-center gap-1 flex-1">
@@ -486,7 +486,7 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
                           <button onClick={() => updateSet(i, si, "reps", s.reps + 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>reps</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>reps</span>
                         {/* weight */}
                         <div className="flex items-center gap-1 flex-1">
                           <button onClick={() => updateSet(i, si, "weightKg", s.weightKg - 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconMinus size={10} /></button>
@@ -494,13 +494,13 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                             className="w-full text-center text-[12px] rounded-md tabular-nums outline-none py-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-primary)" }} />
                           <button onClick={() => updateSet(i, si, "weightKg", s.weightKg + 2.5)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-muted)" }}><IconPlus size={10} /></button>
                         </div>
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kg</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>kg</span>
                         <button onClick={() => removeSet(i, si)} className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ color: "var(--text-muted)" }}><IconX size={11} /></button>
                       </div>
                     ))}
                   </div>
 
-                  <button onClick={() => addSet(i)} className="mt-2 w-full py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1"
+                  <button onClick={() => addSet(i)} className="mt-2 w-full py-1.5 rounded-lg text-[12px] font-medium flex items-center justify-center gap-1"
                     style={{ background: "rgba(255,255,255,0.04)", color: ACCENT }}>
                     <IconPlus size={12} /> Ajouter une série
                   </button>
@@ -548,8 +548,8 @@ export default function GymSessionModal({ date, onSaved, onClose }: Props) {
                 Repos {Math.floor(restSec / 60)}:{String(restSec % 60).padStart(2, "0")}
               </span>
               <div className="flex-1" />
-              <button onClick={() => setRestSec((s) => (s ?? 0) + 15)} className="text-[11px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>+15s</button>
-              <button onClick={() => setRestSec(null)} className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>
+              <button onClick={() => setRestSec((s) => (s ?? 0) + 15)} className="text-[12px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>+15s</button>
+              <button onClick={() => setRestSec(null)} className="flex items-center gap-1 text-[12px] px-2 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>
                 <IconPlayerSkipForward size={11} /> Passer
               </button>
             </motion.div>

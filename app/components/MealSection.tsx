@@ -176,7 +176,7 @@ export default function MealSection({
           )}
           {dietMealReport && dietMealReport.status !== "vide" && (
             <span
-              className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+              className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
               style={{
                 color: dietMealReport.status === "ecarts" ? "var(--danger)" : "var(--ok)",
                 background: dietMealReport.status === "ecarts" ? "#ef444418" : "#22c55e18",
@@ -209,7 +209,7 @@ export default function MealSection({
           aria-label="Photo du repas"
         >
           {uploading
-            ? <span className="animate-spin text-[11px]">⏳</span>
+            ? <span className="animate-spin text-[12px]">⏳</span>
             : <IconCamera size={16} stroke={photoUrl ? 2 : 1.5} />
           }
         </button>
@@ -358,7 +358,7 @@ export default function MealSection({
                   <div className="grid gap-1 px-3 py-2"
                     style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", borderBottom: "1px solid var(--border)" }}>
                     {["Aliment", "kcal", "P", "G", "L"].map((h) => (
-                      <span key={h} className="text-[11px] font-semibold uppercase"
+                      <span key={h} className="text-[12px] font-semibold uppercase"
                         style={{ color: "var(--text-muted)" }}>{h}</span>
                     ))}
                   </div>
@@ -390,7 +390,7 @@ export default function MealSection({
                     return (
                       <div className="grid gap-1 px-3 py-2"
                         style={{ gridTemplateColumns: "1fr 52px 40px 40px 40px", background: "rgba(255,255,255,0.03)" }}>
-                        <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>TOTAL</span>
+                        <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>TOTAL</span>
                         <span className="text-[12px] tabular-nums font-bold" style={{ color: "var(--calories)" }}>
                           {Math.round(totCal)}
                         </span>
@@ -424,8 +424,8 @@ export default function MealSection({
                         style={{ borderTop: "1px solid var(--border)" }}>
                         {micros.map(({ l, v, u }) => (
                           <div key={l} className="flex items-center gap-1">
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</span>
-                            <span className="text-[11px] font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{l}</span>
+                            <span className="text-[12px] font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
                               {Math.round(v)}{u}
                             </span>
                           </div>
@@ -564,7 +564,7 @@ function SaveMealModal({ defaultName, entries, onClose }: {
                   <IconX size={16} stroke={1.5} />
                 </button>
               </div>
-              <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
                 {entries.length} aliment{entries.length > 1 ? "s" : ""} · réutilisable depuis « Repas » lors d&apos;un prochain ajout
               </p>
               <input

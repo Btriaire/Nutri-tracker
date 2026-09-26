@@ -83,7 +83,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
                 </h2>
               </div>
               {verified && (
-                <span className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--fiber)" }}>
+                <span className="flex items-center gap-1 text-[12px] mt-0.5" style={{ color: "var(--fiber)" }}>
                   <IconCheck size={11} /> Vérifié manuellement
                 </span>
               )}
@@ -94,7 +94,7 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
             </button>
           </div>
 
-          <p className="text-[11px] px-4 pt-3" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] px-4 pt-3" style={{ color: "var(--text-muted)" }}>
             Valeurs pour 100 g. Laisse un champ vide ou à 0 si le nutriment est absent — ces valeurs
             remplacent définitivement toute estimation IA pour cet aliment.
           </p>
@@ -111,17 +111,17 @@ export default function MicronutrientEditModal({ foodName, onClose, onSaved }: P
                 return (
                   <label key={code} className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                    <span className="text-[11px] flex-1 min-w-0 truncate" style={{ color: "var(--text-secondary)" }}>
+                    <span className="text-[12px] flex-1 min-w-0 truncate" style={{ color: "var(--text-secondary)" }}>
                       {info.label}
                     </span>
                     <input
                       type="number" inputMode="decimal" step="any" placeholder="0"
                       value={values[code] ?? ""}
                       onChange={e => setValues(v => ({ ...v, [code]: e.target.value }))}
-                      className="input text-[11px] text-right"
+                      className="input text-[12px] text-right"
                       style={{ width: 56, height: 26, padding: "0 6px" }}
                     />
-                    <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{info.unit}</span>
+                    <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>{info.unit}</span>
                   </label>
                 );
               })}

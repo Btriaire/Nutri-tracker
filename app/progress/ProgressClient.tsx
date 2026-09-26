@@ -729,7 +729,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             <div className="flex gap-1.5 md:mt-1">
               <Link
                 href="/report"
-                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(248,113,113,0.1)",
                   border: "1px solid rgba(248,113,113,0.3)",
@@ -741,7 +741,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </Link>
               <button
                 onClick={() => setShowAlbum(true)}
-                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(245,158,11,0.1)",
                   border: "1px solid rgba(245,158,11,0.3)",
@@ -753,7 +753,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </button>
               <button
                 onClick={() => setShowAnalysis(true)}
-                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(139,92,246,0.1)",
                   border: "1px solid rgba(139,92,246,0.3)",
@@ -765,7 +765,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               </button>
               <Link
                 href="/repartition"
-                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+                className="flex flex-1 md:flex-none items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                 style={{
                   background: "rgba(96,165,250,0.1)",
                   border: "1px solid rgba(96,165,250,0.3)",
@@ -800,11 +800,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <span className="text-[20px]">{plan.programEmoji}</span>
                     <div className="text-left">
                       <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>{plan.programLabel}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Démarré le {format(new Date(plan.startDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Démarré le {format(new Date(plan.startDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                    <span className="px-2 py-0.5 rounded-full text-[12px] font-semibold"
                       style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.3)" }}>
                       Jour {daysInPlan}
                     </span>
@@ -819,7 +819,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <div className="pt-3">
                         <div className="flex justify-end mb-2">
                           <button onClick={handleRecalcPlan} disabled={planRecalcLoading}
-                            className="btn btn-ghost text-[11px] px-2 py-1 gap-1"
+                            className="btn btn-ghost text-[12px] px-2 py-1 gap-1"
                             style={{ height: "auto" }}>
                             {planRecalcLoading
                               ? <IconLoader2 size={11} stroke={2} className="animate-spin" />
@@ -839,7 +839,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             <div key={label} className="flex flex-col items-center p-2 rounded-xl gap-0.5"
                               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                               <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{value}</span>
-                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                             </div>
                           ))}
                         </div>
@@ -847,7 +847,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         {/* Progress bar */}
                         {progressPct !== null && (
                           <div className="mb-3">
-                            <div className="flex justify-between text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+                            <div className="flex justify-between text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>
                               <span>{startKg} kg</span>
                               <span>{Math.round(progressPct)}% atteint</span>
                               <span>{targetKg} kg</span>
@@ -875,25 +875,25 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
                                     {sign(wk)} kg
                                   </span>
-                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
+                                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>/ semaine</span>
                                 </div>
                                 <div className="flex flex-col items-center p-2.5 rounded-xl gap-0.5"
                                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                                   <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
                                     {sign(mo)} kg
                                   </span>
-                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
+                                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>/ mois</span>
                                 </div>
                               </div>
                               {/* Target date */}
                               {plan.projectedTargetDate && (
-                                <p className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>
+                                <p className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>
                                   🎯 Objectif estimé le {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
                                 </p>
                               )}
                               {/* AI note */}
                               {plan.projectedNote && (
-                                <p className="text-[11px] mt-1 italic" style={{ color: "var(--text-muted)" }}>
+                                <p className="text-[12px] mt-1 italic" style={{ color: "var(--text-muted)" }}>
                                   {plan.projectedNote}
                                 </p>
                               )}
@@ -944,7 +944,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
             ].map((s) => (
               <button key={s.id}
                 onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 <s.Icon size={13} stroke={1.8} />
                 {s.label}
@@ -966,17 +966,17 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Moy. calories</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>{avgCalories || "—"}</span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/j</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>kcal/j</span>
               </div>
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Moy. pas</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--steps)" }}>{avgSteps ? avgSteps.toLocaleString("fr-FR") : "—"}</span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>pas/j</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>pas/j</span>
               </div>
               <div className="card flex flex-col gap-1">
                 <span className="label-xs">Min. actives</span>
                 <span className="text-[20px] font-bold tabular-nums" style={{ color: "var(--fit-green)" }}>{avgActiveMins || "—"}</span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>min/j</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>min/j</span>
               </div>
             </motion.div>
 
@@ -1009,13 +1009,13 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {/* Independent period selector for the weight chart — clairement
                       étiqueté pour éviter de le confondre avec le sélecteur global
                       en haut de page (qui ne s'applique pas à ce graphique). */}
-                  <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Période — ce graphique uniquement</p>
+                  <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Période — ce graphique uniquement</p>
                   <div className="flex gap-1">
                     {WEIGHT_RANGES.map(wr => (
                       <button
                         key={wr.key}
                         onClick={() => setWeightRange(wr.key)}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
+                        className="px-2.5 py-1 rounded-full text-[12px] font-semibold transition-all"
                         style={{
                           background: weightRange === wr.key ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.05)",
                           color:      weightRange === wr.key ? "var(--protein)"         : "var(--text-muted)",
@@ -1030,7 +1030,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   {targetWeightKg && (
                     <button
                       onClick={() => setShowAdequacyColoring(v => !v)}
-                      className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all"
+                      className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-semibold transition-all"
                       style={{
                         background: showAdequacyColoring ? "rgba(96,165,250,0.14)" : "rgba(255,255,255,0.05)",
                         color:      showAdequacyColoring ? "var(--fat)" : "var(--text-muted)",
@@ -1058,7 +1058,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <div key={label} className="flex-1 flex flex-col items-center p-2 rounded-xl gap-0.5"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                       <span className="text-[12px] font-bold tabular-nums leading-tight" style={{ color }}>{value}</span>
-                      <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -1088,7 +1088,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {loss ? <IconArrowDown size={11} stroke={2.5} /> : gain ? <IconArrowUp size={11} stroke={2.5} /> : <IconMinus size={11} stroke={2} />}
                             {Math.abs(delta).toFixed(1)} kg
                           </span>
-                          <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
+                          <span className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>{label}</span>
                         </div>
                       );
                     })}
@@ -1108,11 +1108,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <div key={days} className="flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl"
                           style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
                           <span className="text-[16px] leading-none">{cfg.emoji}</span>
-                          <span className="text-[11px] font-bold tabular-nums" style={{ color: cfg.color }}>
+                          <span className="text-[12px] font-bold tabular-nums" style={{ color: cfg.color }}>
                             {actualDelta != null ? `${actualDelta > 0 ? "+" : ""}${actualDelta.toFixed(1)} kg` : "—"}
                           </span>
-                          <span className="text-[11px] text-center leading-tight" style={{ color: cfg.color }}>{cfg.label}</span>
-                          <span className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>sur {days} j</span>
+                          <span className="text-[12px] text-center leading-tight" style={{ color: cfg.color }}>{cfg.label}</span>
+                          <span className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>sur {days} j</span>
                         </div>
                       );
                     })}
@@ -1122,11 +1122,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                 {/* Editable target date */}
                 <div className="flex items-center gap-2 mb-3">
                   <IconCalendar size={12} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Modifier la date cible :</span>
                   <input
                     type="date" value={targetDate}
                     onChange={e => setTargetDate(e.target.value)}
-                    className="flex-1 px-2 py-1 rounded-lg text-[11px] outline-none"
+                    className="flex-1 px-2 py-1 rounded-lg text-[12px] outline-none"
                     style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
                     min={format(new Date(), "yyyy-MM-dd")}
                   />
@@ -1184,7 +1184,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                               ? ((projEntry.value as number) - (actualEntry.value as number))
                               : null;
                             return (
-                              <div className="px-3 py-2 rounded-xl text-[11px] space-y-1"
+                              <div className="px-3 py-2 rounded-xl text-[12px] space-y-1"
                                 style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                                 {entries.map((p, i) => (
@@ -1194,7 +1194,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                                   </p>
                                 ))}
                                 {gap != null && (
-                                  <p className="text-[11px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "var(--ok)" : "var(--danger)" }}>
+                                  <p className="text-[12px] pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: Math.abs(gap) < 0.2 ? "var(--ok)" : "var(--danger)" }}>
                                     Écart : {gap > 0 ? "+" : ""}{gap.toFixed(1)} kg {gap > 0 ? "sous objectif" : "au-dessus"}
                                   </p>
                                 )}
@@ -1283,41 +1283,41 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         <>
                           <div className="flex items-center gap-1.5">
                             <div className="w-6 h-0.5 rounded" style={{ background: "var(--fat)" }} />
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Conforme au plan</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <div className="w-6 h-0.5 rounded" style={{ background: "var(--danger)" }} />
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Sous le rythme</span>
                           </div>
                         </>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-0.5 rounded" style={{ background: "var(--protein)" }} />
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Mesuré</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
                         <div className="w-6 h-0" style={{ borderTop: "2px dashed var(--ok)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-3 rounded-sm opacity-70" style={{ background: "rgba(248,113,113,0.35)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Écart réel/simulé</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Écart réel/simulé</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-4 h-3 rounded-sm opacity-60" style={{ background: "rgba(74,222,128,0.35)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Fourchette future</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Fourchette future</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(249,115,22,0.5)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Calories</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Calories</span>
                       </div>
                     </div>
 
                     {/* Model explanation */}
                     <div className="mt-2.5 px-3 py-2 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                         📉 <span style={{ color: "var(--text-secondary)" }}>Modèle par paliers</span> — 3 semaines de perte active
                         → 1 semaine de stagnation/rebond → répétition. Chaque cycle perd ~15% de moins (adaptation métabolique).
                         La fourchette indique l&apos;incertitude croissante.
@@ -1328,7 +1328,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     {projectionDate && avgCalories > 0 && (
                       <div className="mt-2.5 px-3 py-2 rounded-xl flex items-center justify-between"
                         style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           À ce rythme ({avgCalories} kcal/j) →
                         </p>
                         <p className="text-[12px] font-semibold" style={{ color: "var(--ok)" }}>
@@ -1374,7 +1374,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   <IconMoon size={16} stroke={1.6} style={{ color: "var(--fit-indigo)" }} />
                   <div className="text-left">
                     <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Bien-être &amp; rythme</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Méditation, faim, alcool, jeûne, repas</p>
                   </div>
                 </div>
                 {wellnessOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
@@ -1443,11 +1443,11 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                       <div className="flex items-center gap-2">
                         <span className="text-[18px] select-none"
                           style={{ filter: "drop-shadow(0 0 8px rgba(167,139,250,0.5))" }}>☸️</span>
-                        <p className="text-[11px] font-light tracking-[0.15em] uppercase"
+                        <p className="text-[12px] font-light tracking-[0.15em] uppercase"
                           style={{ color: "rgba(196,181,253,0.65)" }}>méditation</p>
                       </div>
                       {streak > 0 && (
-                        <span className="text-[11px] font-light px-2.5 py-0.5 rounded-full"
+                        <span className="text-[12px] font-light px-2.5 py-0.5 rounded-full"
                           style={{
                             background: "rgba(139,92,246,0.09)",
                             border: "1px solid rgba(139,92,246,0.2)",
@@ -1462,8 +1462,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                     <div className="flex items-baseline gap-1 mb-3">
                       <span className="text-[28px] font-extralight tabular-nums leading-none"
                         style={{ color: "#ede9fe" }}>{totalMin}</span>
-                      <span className="text-[11px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>min</span>
-                      <span className="ml-2 text-[11px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>
+                      <span className="text-[12px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>min</span>
+                      <span className="ml-2 text-[12px] font-light" style={{ color: "rgba(196,181,253,0.65)" }}>
                         · {totalSessions} séances · moy. {avgMin} min
                       </span>
                     </div>
@@ -1479,7 +1479,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                         </defs>
                         <Tooltip content={({ active, payload, label: lbl }) =>
                           active && payload?.length ? (
-                            <div className="px-2 py-1 rounded-lg text-[11px]"
+                            <div className="px-2 py-1 rounded-lg text-[12px]"
                               style={{ background: "rgba(30,10,60,0.92)", border: "1px solid rgba(139,92,246,0.3)", color: "#ede9fe" }}>
                               <p style={{ color: "rgba(196,181,253,0.65)" }}>{lbl}</p>
                               <p>{payload[0].value} min</p>
@@ -1616,7 +1616,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                           Niveaux de faim
                         </p>
                       </div>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                         Par repas · {displayDays.length} jours · intensité = niveau de faim (1–5)
                       </p>
                     </div>
@@ -1707,7 +1707,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {/* Row avg */}
                             {avgVal !== null && (
                               <div className="flex-shrink-0 ml-2 text-right" style={{ width: 28 }}>
-                                <span className="text-[11px] font-semibold tabular-nums" style={{ color: MEAL_COLORS[meal] }}>
+                                <span className="text-[12px] font-semibold tabular-nums" style={{ color: MEAL_COLORS[meal] }}>
                                   {avgVal.toFixed(1)}
                                 </span>
                               </div>
@@ -1764,7 +1764,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             {MEAL_ICONS[meal]}
                           </span>
                           {/* Label */}
-                          <p className="text-[11px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] leading-tight text-center" style={{ color: "var(--text-muted)" }}>
                             {MEAL_SHORT[meal]}
                           </p>
                           {/* Score */}
@@ -1783,7 +1783,7 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                             ))}
                           </div>
                           {/* Level label */}
-                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
                             {HUNGER_LABEL[Math.round(avg)] ?? "—"}
                           </p>
                         </div>

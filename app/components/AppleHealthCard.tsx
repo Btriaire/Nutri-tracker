@@ -251,7 +251,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
   const CopyBtn = ({ text, k, label }: { text: string; k: "url" | "token" | "json"; label: string }) => (
     <button
       onClick={() => copy(text, k)}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all flex-shrink-0"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all flex-shrink-0"
       style={{
         background: copied === k ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
         border: `1px solid ${copied === k ? "rgba(52,211,153,0.3)" : "var(--border)"}`,
@@ -285,7 +285,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
       </div>
 
       {lastSyncedAt && (
-        <p className="text-[11px] mb-3" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
           Dernière sync : {new Date(lastSyncedAt).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
         </p>
       )}
@@ -310,9 +310,9 @@ export default function AppleHealthCard({ connected: initConnected = false, last
         <div className="space-y-4">
           {/* Token */}
           <div>
-            <p className="text-[11px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>Token secret</p>
+            <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>Token secret</p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[11px] truncate"
+              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[12px] truncate"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 {token ? token : <span style={{ color: "var(--text-muted)" }}>Aucun token — générez-en un</span>}
               </div>
@@ -330,9 +330,9 @@ export default function AppleHealthCard({ connected: initConnected = false, last
 
           {/* Webhook URL */}
           <div>
-            <p className="text-[11px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>URL du webhook</p>
+            <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>URL du webhook</p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[11px] truncate"
+              <div className="flex-1 px-3 py-2 rounded-xl font-mono text-[12px] truncate"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
                 {webhookUrl}
               </div>
@@ -354,9 +354,9 @@ export default function AppleHealthCard({ connected: initConnected = false, last
               'Dans "Automatisation" : planifie à 23h55 chaque soir',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5"
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 mt-0.5"
                   style={{ background: "rgba(255,45,85,0.15)", color: "var(--danger)" }}>{i + 1}</span>
-                <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{step}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{step}</p>
               </div>
             ))}
           </div>
@@ -364,10 +364,10 @@ export default function AppleHealthCard({ connected: initConnected = false, last
           {/* JSON body */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Corps JSON du raccourci</p>
+              <p className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Corps JSON du raccourci</p>
               <CopyBtn text={sampleJson} k="json" label="Copier JSON" />
             </div>
-            <pre className="text-[11px] p-3 rounded-xl overflow-x-auto"
+            <pre className="text-[12px] p-3 rounded-xl overflow-x-auto"
               style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--border)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
               {sampleJson}
             </pre>
@@ -387,7 +387,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
               "Transfère le .zip sur ton Mac (AirDrop ou iCloud Drive)",
               "Sélectionne le fichier .zip ci-dessous",
             ].map((s, i) => (
-              <p key={i} className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
+              <p key={i} className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
                 {i + 1}. {s}
               </p>
             ))}
@@ -423,7 +423,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
                   ].map(({ label, value }) => (
                     <div key={label} className="px-3 py-2 rounded-xl"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <p className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
                     </div>
                   ))}
@@ -469,7 +469,7 @@ export default function AppleHealthCard({ connected: initConnected = false, last
             <div className="flex items-center gap-2 p-3 rounded-xl"
               style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)" }}>
               <IconAlertCircle size={14} stroke={1.5} style={{ color: "var(--danger)" }} />
-              <p className="text-[11px]" style={{ color: "var(--danger)" }}>{parseError}</p>
+              <p className="text-[12px]" style={{ color: "var(--danger)" }}>{parseError}</p>
             </div>
           )}
         </div>

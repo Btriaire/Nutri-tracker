@@ -109,7 +109,7 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                     }}
                   >
                     <c.Icon size={14} stroke={1.6} style={{ color: active === c.key ? c.color : "var(--text-muted)" }} />
-                    <span className="text-[11px] font-semibold" style={{ color: active === c.key ? c.color : "var(--text-muted)" }}>
+                    <span className="text-[12px] font-semibold" style={{ color: active === c.key ? c.color : "var(--text-muted)" }}>
                       {c.label}
                     </span>
                   </button>
@@ -117,12 +117,12 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
               </div>
 
               {!rows.length ? (
-                <p className="text-[11px] py-2 text-center" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] py-2 text-center" style={{ color: "var(--text-muted)" }}>
                   Aucun aliment avec {cat.label.toLowerCase()} aujourd&apos;hui
                 </p>
               ) : (
                 <div className="space-y-2.5">
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                     Total {cat.label.toLowerCase()} : <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{Math.round(dayTotal)}{cat.unit}</span>
                   </p>
 
@@ -137,13 +137,13 @@ export default function MacroContributionPanel({ entries, trackedNutrients }: Pr
                         transition={{ delay: Math.min(i, 8) * 0.02 }}
                       >
                         <div className="flex items-baseline justify-between gap-2 mb-0.5">
-                          <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          <span className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                             {entry.name}
-                            <span className="text-[11px] ml-1.5" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[12px] ml-1.5" style={{ color: "var(--text-muted)" }}>
                               {MEAL_LABEL[entry.meal]}
                             </span>
                           </span>
-                          <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                          <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                             {Math.round(amount)}{cat.unit} <span style={{ opacity: 0.7 }}>({Math.round(dayPct)}%)</span>
                           </span>
                         </div>

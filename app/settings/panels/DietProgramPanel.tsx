@@ -65,7 +65,7 @@ export default function DietProgramPanel() {
           style={{ background: "rgba(56,189,248,0.12)" }}>{programId ? DIET_PROGRAMS[programId].icon : "🍽️"}</div>
         <div className="flex-1 min-w-0 text-left">
           <p className="font-semibold text-[13.5px]" style={{ color: "var(--text-primary)" }}>Programme diététique</p>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             {programId ? `${DIET_PROGRAMS[programId].name} — actif` : "Aucun régime actif"}
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function DietProgramPanel() {
           </div>
 
           {saved && (
-            <p className="text-[11px] flex items-center gap-1.5 px-1" style={{ color: "var(--ok)" }}>
+            <p className="text-[12px] flex items-center gap-1.5 px-1" style={{ color: "var(--ok)" }}>
               <IconCircleCheck size={13} /> Enregistré
             </p>
           )}
@@ -107,15 +107,15 @@ export default function DietProgramPanel() {
             <>
               {/* Repères par repas */}
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Repères par repas
                 </p>
                 <div className="space-y-1.5">
                   {DIET_MEAL_ORDER.map((meal) => (
                     <div key={meal} className="px-3 py-2 rounded-lg"
                       style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-                      <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{DIET_MEAL_LABEL[meal]}</p>
-                      <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
+                      <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{DIET_MEAL_LABEL[meal]}</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
                     </div>
                   ))}
                 </div>
@@ -123,35 +123,35 @@ export default function DietProgramPanel() {
 
               {/* Fruits autorisés */}
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Fruits autorisés
                 </p>
-                <p className="text-[11px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-[12px] px-0.5" style={{ color: "var(--text-secondary)" }}>
                   {APPROVED_FRUITS_SUMMARY}
                 </p>
               </div>
 
               {/* Fruits interdits */}
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Fruits interdits
                 </p>
-                <p className="text-[11px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-[12px] px-0.5" style={{ color: "var(--text-secondary)" }}>
                   {FORBIDDEN_FRUITS_SUMMARY}
                 </p>
               </div>
 
               {/* Interdits */}
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   Interdits (tous repas)
                 </p>
-                <p className="text-[11px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-[12px] px-0.5" style={{ color: "var(--text-secondary)" }}>
                   {DIET_INTERDITS_SUMMARY}
                 </p>
               </div>
 
-              <p className="text-[11px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
                 Détection automatique par mots-clés sur le nom des aliments — vérifiez toujours
                 visuellement, ce n&apos;est pas un contrôle médical.
               </p>
@@ -161,24 +161,24 @@ export default function DietProgramPanel() {
           {programId === "cholesterol" && (
             <>
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   À favoriser
                 </p>
-                <p className="text-[11px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-[12px] px-0.5" style={{ color: "var(--text-secondary)" }}>
                   {CHOLESTEROL_FAVORISER_SUMMARY}
                 </p>
               </div>
 
               <div>
-                <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                   À limiter
                 </p>
-                <p className="text-[11px] px-0.5" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-[12px] px-0.5" style={{ color: "var(--text-secondary)" }}>
                   {CHOLESTEROL_LIMITER_SUMMARY}
                 </p>
               </div>
 
-              <p className="text-[11px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
                 Repérage automatique par mots-clés — pas un contrôle médical. Les apports en
                 graisses saturées en grammes restent suivis ailleurs dans l&apos;app (pastille
                 &quot;Lip.sat.&quot;, score de qualité nutritionnelle).

@@ -93,7 +93,7 @@ export default function ResetPanel() {
               <span className="text-[18px]">{emoji}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{label}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
               </div>
               <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{ background: checked ? "var(--danger)" : "rgba(255,255,255,0.06)", border: `1px solid ${checked ? "var(--danger)" : "var(--border)"}` }}>

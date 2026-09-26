@@ -23,7 +23,7 @@ function ChartTooltip({ active, payload, label, unit }: {
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl px-3 py-2 text-[11px]"
+    <div className="rounded-xl px-3 py-2 text-[12px]"
       style={{ background: "rgba(15,15,22,0.97)", border: "1px solid var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
       <p className="font-medium" style={{ color: "var(--text-primary)" }}>{payload[0]?.payload?.fullName ?? label}</p>
       <p style={{ color: "var(--protein)" }}>{payload[0]?.value}{unit ?? ""}</p>
@@ -96,7 +96,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
 
           {/* Top foods */}
           <div>
-            <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
               Tes aliments les plus fréquents
             </p>
             <div style={{ height: topFoods.length * 28 + 10 }}>
@@ -115,7 +115,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
 
           {/* Category breakdown */}
           <div>
-            <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
               Répartition par catégorie
             </p>
             <div className="flex items-center gap-4">
@@ -135,8 +135,8 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
                   return (
                     <div key={c.cat} className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colorForIndex(i) }} />
-                      <span className="text-[11px] flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{meta.emoji} {meta.label}</span>
-                      <span className="text-[11px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.pct}%</span>
+                      <span className="text-[12px] flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{meta.emoji} {meta.label}</span>
+                      <span className="text-[12px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>{c.pct}%</span>
                     </div>
                   );
                 })}
@@ -147,7 +147,7 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
           {/* Discovery timeline */}
           {discoveryTimeline.length > 1 && (
             <div>
-              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
                 Nouveaux aliments essayés par mois
               </p>
               <div style={{ height: 90 }}>
@@ -166,15 +166,15 @@ export default function BankDashboard({ foods }: { foods: BankFood[] }) {
           {/* Top brands */}
           {topBrands.length > 0 && (
             <div>
-              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] uppercase tracking-wide font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
                 Marques les plus fidèles
               </p>
               <div className="space-y-1">
                 {topBrands.map(([brand, count], i) => (
                   <div key={brand} className="flex items-center gap-2">
-                    <span className="text-[11px] w-4 flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>{i + 1}</span>
+                    <span className="text-[12px] w-4 flex-shrink-0 tabular-nums" style={{ color: "var(--text-muted)" }}>{i + 1}</span>
                     <span className="text-[11.5px] flex-1 truncate" style={{ color: "var(--text-primary)" }}>{brand}</span>
-                    <span className="text-[11px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>×{count}</span>
+                    <span className="text-[12px] tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>×{count}</span>
                   </div>
                 ))}
               </div>

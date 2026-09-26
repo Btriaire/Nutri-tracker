@@ -139,7 +139,7 @@ export default function PixelWall({ points, today }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">Mur de pixels — {monthLabelCap}</p>
-        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           {filledDays} jour{filledDays !== 1 ? "s" : ""} rempli{filledDays !== 1 ? "s" : ""} sur {totalDays}
         </span>
       </div>
@@ -152,7 +152,7 @@ export default function PixelWall({ points, today }: Props) {
             {DAY_COLS.map((d, i) => (
               <div
                 key={i}
-                className="text-center text-[11px] font-medium"
+                className="text-center text-[12px] font-medium"
                 style={{ width: 32, color: "var(--text-muted)" }}
               >
                 {d}
@@ -219,7 +219,7 @@ export default function PixelWall({ points, today }: Props) {
                     {/* Tooltip */}
                     {isHovered && (
                       <div
-                        className="absolute z-50 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-medium pointer-events-none"
+                        className="absolute z-50 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[12px] font-medium pointer-events-none"
                         style={{
                           bottom: "calc(100% + 6px)",
                           left: "50%",
@@ -244,7 +244,7 @@ export default function PixelWall({ points, today }: Props) {
       {/* Week summary */}
       {weekSummary != null && (
         <div
-          className="mt-3 text-[11px] rounded-lg px-3 py-2"
+          className="mt-3 text-[12px] rounded-lg px-3 py-2"
           style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)" }}
         >
           Cette semaine, couleur dominante&nbsp;:&nbsp;

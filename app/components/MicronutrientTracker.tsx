@@ -73,7 +73,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
   if (!rows.length) {
     return (
       <div className="rounded-xl p-3 flex items-center gap-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-        <p className="text-[11px] flex-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] flex-1" style={{ color: "var(--text-muted)" }}>
           Aucun micronutriment suivi pour aujourd&apos;hui
         </p>
         <button
@@ -104,7 +104,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
         className="flex items-center gap-2 py-1.5"
       >
         <span
-          className="flex-shrink-0 flex items-center justify-center rounded-md text-[11px] font-bold"
+          className="flex-shrink-0 flex items-center justify-center rounded-md text-[12px] font-bold"
           style={{ width: 26, height: 20, background: `color-mix(in srgb, ${row.color} 12%, transparent)`, color: row.color, border: `1px solid color-mix(in srgb, ${row.color} 25%, transparent)` }}
         >
           {row.symbol}
@@ -112,10 +112,10 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
+            <span className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
               {row.label}
             </span>
-            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
               {formatMicroAmount(row.amount)}
               {row.rda > 0 && <>/{formatMicroAmount(row.rda)}</>}
               {row.unit}
@@ -133,7 +133,7 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
         </div>
 
         <span
-          className="flex-shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-full text-right"
+          className="flex-shrink-0 text-[12px] font-semibold px-1.5 py-0.5 rounded-full text-right"
           style={{ color: status.color, background: `color-mix(in srgb, ${status.color} 9%, transparent)`, minWidth: 46, textAlign: "center" }}
         >
           {status.label}
@@ -144,34 +144,38 @@ export default function MicronutrientTracker({ date, micronutrientData, onRefres
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-1.5 px-3 py-2.5"
-      >
-        <h3 className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-          Micronutriments ({rows.length})
-        </h3>
-        {lowCount > 0 && (
-          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--danger)", background: "var(--danger)18" }}>
-            {lowCount} faible{lowCount > 1 ? "s" : ""}
-          </span>
-        )}
-        <span
-          role="button"
-          tabIndex={0}
+      <div className="w-full flex items-center pr-1">
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+          className="flex-1 min-w-0 flex items-center gap-1.5 px-3 py-2.5 text-left"
+        >
+          <h3 className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
+            Micronutriments ({rows.length})
+          </h3>
+          {lowCount > 0 && (
+            <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--danger)", background: "var(--danger-bg)" }}>
+              {lowCount} faible{lowCount > 1 ? "s" : ""}
+            </span>
+          )}
+          <IconChevronDown
+            size={13}
+            className="ml-auto"
+            style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+          />
+        </button>
+        <button
+          type="button"
           onClick={handleRecompute}
-          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full transition-all ml-auto"
-          style={{ color: "var(--text-muted)", opacity: recomputing ? 0.5 : 1 }}
+          aria-label="Recalculer à partir des aliments et suppléments du jour"
+          className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-full transition-all"
+          style={{ color: "var(--text-secondary)", opacity: recomputing ? 0.5 : 1 }}
           title="Recalculer à partir des aliments et suppléments du jour"
         >
-          <IconRefresh size={13} stroke={1.6} className={recomputing ? "animate-spin" : ""} />
-        </span>
-        <IconChevronDown
-          size={13}
-          style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-        />
-      </button>
+          <IconRefresh size={16} stroke={1.8} className={recomputing ? "animate-spin" : ""} />
+        </button>
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (

@@ -76,7 +76,7 @@ export default function ChartPrefsPanel() {
           </div>
           <div className="text-left">
             <p className="font-semibold text-[13.5px]" style={{ color: "var(--text-primary)" }}>Graphiques</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Apparence &amp; données</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Apparence &amp; données</p>
           </div>
         </div>
         {open
@@ -98,7 +98,7 @@ export default function ChartPrefsPanel() {
 
               {/* ── Calories chart type ── */}
               <div className="pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
                   Tendance calories
                 </p>
                 <div className="flex gap-2">
@@ -110,7 +110,7 @@ export default function ChartPrefsPanel() {
                         border: `1.5px solid ${calType === opt.value ? "rgba(167,139,250,0.5)" : "rgba(255,255,255,0.07)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
-                      <span className="text-[11px] font-medium"
+                      <span className="text-[12px] font-medium"
                         style={{ color: calType === opt.value ? "var(--protein)" : "var(--text-muted)" }}>
                         {opt.label}
                       </span>
@@ -121,7 +121,7 @@ export default function ChartPrefsPanel() {
 
               {/* ── Macros display ── */}
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
                   Affichage macros
                 </p>
                 <div className="flex gap-2">
@@ -133,7 +133,7 @@ export default function ChartPrefsPanel() {
                         border: `1.5px solid ${macroDisp === opt.value ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.07)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
-                      <span className="text-[11px] font-medium"
+                      <span className="text-[12px] font-medium"
                         style={{ color: macroDisp === opt.value ? "var(--fiber)" : "var(--text-muted)" }}>
                         {opt.label}
                       </span>
@@ -144,7 +144,7 @@ export default function ChartPrefsPanel() {
 
               {/* ── Weight trend ── */}
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: "var(--text-muted)" }}>
                   Courbe de poids
                 </p>
                 <div className="flex gap-2">
@@ -156,7 +156,7 @@ export default function ChartPrefsPanel() {
                         border: `1.5px solid ${wtType === opt.value ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"}`,
                       }}>
                       <span style={{ fontSize: 20 }}>{opt.icon}</span>
-                      <span className="text-[11px] font-medium"
+                      <span className="text-[12px] font-medium"
                         style={{ color: wtType === opt.value ? "var(--carbs)" : "var(--text-muted)" }}>
                         {opt.label}
                       </span>

@@ -90,7 +90,7 @@ export default function SupplementsProgressSection() {
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
           {([7, 14, 30] as const).map(d => (
             <button key={d} onClick={() => setDays(d)}
-              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+              className="px-2.5 py-1 rounded-md text-[12px] font-medium transition-all"
               style={{
                 background: days === d ? "rgba(52,211,153,0.12)" : "transparent",
                 color:      days === d ? "var(--fiber)"          : "var(--text-muted)",
@@ -121,7 +121,7 @@ export default function SupplementsProgressSection() {
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {product.name}
                   </span>
-                  <span className="text-[11px] font-bold tabular-nums" style={{ color }}>
+                  <span className="text-[12px] font-bold tabular-nums" style={{ color }}>
                     {daysTaken}/{days}j ({pct}%)
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export default function SupplementsProgressSection() {
         <div className="pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-1.5 mb-3">
             <IconFlask size={13} style={{ color: "var(--text-muted)" }} />
-            <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
               Micronutriments
             </span>
           </div>
@@ -176,16 +176,16 @@ export default function SupplementsProgressSection() {
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: info.color }} />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                      <span className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>
                         {info.symbol}
                       </span>
                     </div>
-                    <span className="text-[11px] font-bold tabular-nums" style={{ color: isOk ? "var(--fiber)" : "var(--danger)" }}>
+                    <span className="text-[12px] font-bold tabular-nums" style={{ color: isOk ? "var(--fiber)" : "var(--danger)" }}>
                       {avgVal}{info.unit} moy.
                     </span>
                   </div>
                   {rda > 0 && (
-                    <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>
                       Apport recommandé : {rda}{info.unit}/j
                     </p>
                   )}
@@ -202,7 +202,7 @@ export default function SupplementsProgressSection() {
                       <Tooltip content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
                         return (
-                          <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                          <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                             style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                             <p style={{ color: "var(--text-muted)" }}>{label}</p>
                             <p style={{ color: info.color }}>{payload[0].value}{info.unit}</p>

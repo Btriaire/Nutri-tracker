@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -164,7 +165,7 @@ export default function BodyMeasurementsTab() {
           <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
             Mensurations corporelles
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
             📅 {latestEntry ? `Dernière saisie : ${format(parseISO(latestEntry.date), "d MMM yyyy", { locale: fr })}` : "Aucune saisie"} · {entries.length} mesure{entries.length > 1 ? "s" : ""}
           </p>
         </div>
@@ -231,25 +232,25 @@ export default function BodyMeasurementsTab() {
                   }}
                 >
                   <Icon size={14} stroke={1.75} className="flex-shrink-0" style={{ color }} />
-                  <span className="text-[11px] flex-1" style={{ color: "var(--text-secondary)" }}>{label}</span>
+                  <span className="text-[12px] flex-1" style={{ color: "var(--text-secondary)" }}>{label}</span>
                   {hasVal ? (
                     <div className="flex items-center gap-1">
                       <span className="text-[13px] font-bold tabular-nums" style={{ color }}>{curr} cm</span>
                       {delta !== null && (
-                        <span className="text-[11px]" style={{ color: delta < 0 ? "#4ade80" : "var(--danger)" }}>
+                        <span className="text-[12px]" style={{ color: delta < 0 ? "#4ade80" : "var(--danger)" }}>
                           {delta > 0 ? "+" : ""}{delta.toFixed(1)}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>—</span>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>—</span>
                   )}
                 </button>
               );
             })}
           </div>
         </div>
-        <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
           💡 Mesurez toujours au même moment · Une saisie par jour, chacune reste dans l&apos;historique
         </p>
       </div>
@@ -278,7 +279,7 @@ export default function BodyMeasurementsTab() {
             {FIELDS.map(f => (
               <button key={f.key}
                 onClick={() => setActiveChart(f.key)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-medium transition-all"
                 style={{
                   background: activeChart === f.key ? `color-mix(in srgb, ${f.color} 13%, transparent)` : "rgba(255,255,255,0.04)",
                   border: `1px solid ${activeChart === f.key ? `color-mix(in srgb, ${f.color} 31%, transparent)` : "var(--border)"}`,
@@ -303,7 +304,7 @@ export default function BodyMeasurementsTab() {
                 if (!active || !payload?.length) return null;
                 const v = payload[0]?.value;
                 return (
-                  <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                  <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                     <p className="font-bold" style={{ color: activeField.color }}>{v} cm</p>
@@ -342,7 +343,7 @@ export default function BodyMeasurementsTab() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Saisir mes mensurations</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{displayMonth}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{displayMonth}</p>
                   </div>
                   <button onClick={() => setShowForm(false)}
                     className="w-7 h-7 rounded-full flex items-center justify-center"
@@ -368,17 +369,17 @@ export default function BodyMeasurementsTab() {
                           className="w-20 px-2 py-1.5 rounded-xl text-[13px] text-right tabular-nums outline-none"
                           style={{
                             background: "rgba(255,255,255,0.06)",
-                            border: `1px solid ${form[key] ? color + "50" : "var(--border)"}`,
+                            border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`,
                             color: form[key] ? color : "var(--text-muted)",
                           }}
                         />
-                        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>cm</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>cm</span>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] mb-4" style={{ color: "var(--text-muted)" }}>
                   💡 Mesurez à jeun, le matin, toujours au même endroit.
                   Tour de taille : au nombril. Bras : à mi-chemin entre coude et épaule.
                 </p>

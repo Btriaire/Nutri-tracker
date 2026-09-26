@@ -41,14 +41,14 @@ export default function DataSafetyBanner() {
         <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
           Tes données sont en sécurité
         </p>
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           Stockées dans Firestore · accessibles uniquement par toi
         </p>
       </div>
       <button
         onClick={handleQuickExport}
         disabled={downloading}
-        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
+        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
         style={{
           background: done ? "rgba(52,211,153,0.15)" : "rgba(96,165,250,0.12)",
           border: `1px solid ${done ? "rgba(52,211,153,0.3)" : "rgba(96,165,250,0.3)"}`,

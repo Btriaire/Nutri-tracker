@@ -56,7 +56,7 @@ export default function PhotoStrip({ photos }: Props) {
                 className="object-cover rounded-xl"
                 style={{ width: 56, height: 56, border: "1px solid var(--border-strong)" }}
               />
-              <span className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[12px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
                 {fmtDate(date)}
               </span>
             </motion.button>

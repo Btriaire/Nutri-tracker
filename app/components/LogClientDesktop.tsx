@@ -58,7 +58,7 @@ function MacroBar({ value, goal, color, label }: {
   const over = value > goal && goal > 0;
   return (
     <div>
-      <div className="flex justify-between text-[11px] mb-1">
+      <div className="flex justify-between text-[12px] mb-1">
         <span style={{ color: "var(--text-muted)" }}>{label}</span>
         <span className="tabular-nums" style={{ color: over ? "var(--danger)" : color }}>
           {value}g <span style={{ color: "var(--text-muted)" }}>/ {goal}g</span>
@@ -135,7 +135,7 @@ export default function LogClientDesktop({ date, initialLog, goals, lang = "fr" 
           <FaceScanReminderBanner />
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>Journée</span>
+            <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>Journée</span>
             <DayTypeSelector date={date} initialType={initialDayType} initialJetlag={initialJetlag} />
           </div>
 

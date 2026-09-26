@@ -69,8 +69,8 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                           <div key={label} className="flex flex-col items-center gap-1 p-2.5 rounded-xl"
                             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                             <span className="text-[16px] font-bold tabular-nums" style={{ color }}>{val}{unit}</span>
-                            <span className="text-[11px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
+                            <span className="text-[12px] text-center leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</span>
                           </div>
                         ))}
                       </div>
@@ -98,8 +98,8 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                         <Icon size={22} stroke={1.5} style={{ color, flexShrink: 0 }} />
                         <div>
                           <p className="text-[18px] font-bold tabular-nums leading-tight" style={{ color }}>{val}</p>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
-                          {goal && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{goal}</p>}
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</p>
+                          {goal && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{goal}</p>}
                         </div>
                       </div>
                     ))}
@@ -120,9 +120,9 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--fit-indigo)" }}>
                           {fmtSleep(todayPoint?.sleepMinutes)}
                         </p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Sommeil</p>
                         {todayPoint?.sleepMinutes && (
-                          <p className="text-[11px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "var(--carbs)" }}>
+                          <p className="text-[12px]" style={{ color: (todayPoint.sleepMinutes >= 420) ? "var(--fit-green)" : "var(--carbs)" }}>
                             {todayPoint.sleepMinutes >= 420 ? "✓ Récupéré" : "Insuffisant"}
                           </p>
                         )}
@@ -135,8 +135,8 @@ export default function TodayView({ todayPoint, loading, goals, targetWeightKg }
                         <p className="text-[20px] font-bold leading-tight" style={{ color: "var(--info)" }}>
                           {todayPoint?.waterMl ? `${(todayPoint.waterMl / 1000).toFixed(1)}L` : "—"}
                         </p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Hydratation</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Hydratation</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           / {((goals.waterMl ?? 2000) / 1000).toFixed(1)}L objectif
                         </p>
                       </div>

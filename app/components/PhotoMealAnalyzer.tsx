@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -336,7 +337,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
               Analyser une photo
             </p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {MEAL_FR[meal] ?? meal} · Nutri-IA Groq Vision
             </p>
           </div>
@@ -434,7 +435,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
               <div className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <span className="text-[13px] flex-shrink-0">💡</span>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   Pour de meilleurs résultats : photo de dessus, bonne lumière, assiette entière visible. Vous pouvez aussi utiliser une photo déjà prise.
                 </p>
               </div>
@@ -489,12 +490,12 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                   <div className="absolute inset-0"
                     style={{ background: "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.65))" }} />
                   <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
-                    <span className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
+                    <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
                       ✨ {items.length} aliment{items.length > 1 ? "s" : ""} détecté{items.length > 1 ? "s" : ""}
                     </span>
                     <button
                       onClick={() => { setPhase("idle"); setItems([]); }}
-                      className="text-[11px] px-2 py-0.5 rounded-md"
+                      className="text-[12px] px-2 py-0.5 rounded-md"
                       style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>
                       Nouvelle photo
                     </button>
@@ -528,7 +529,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                       className="rounded-xl p-3"
                       style={{
                         background: item.selected ? `color-mix(in srgb, ${mealColor} 5%, transparent)` : "rgba(255,255,255,0.025)",
-                        border:     `1px solid ${item.selected ? mealColor + "35" : "rgba(255,255,255,0.07)"}`,
+                        border:     `1px solid ${item.selected ? alpha(mealColor, 21) : "rgba(255,255,255,0.07)"}`,
                         opacity:    isSaving ? 0.65 : 1,
                         transition: "background 0.15s, border-color 0.15s, opacity 0.2s",
                       }}
@@ -554,7 +555,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                           <div className="mt-1.5">
                             <MacroBar proteinG={n.proteinG} carbsG={n.carbsG} fatG={n.fatG} height={5} />
                           </div>
-                          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
                             P&nbsp;{n.proteinG}g&ensp;G&nbsp;{n.carbsG}g&ensp;L&nbsp;{n.fatG}g
                           </p>
                         </div>
@@ -565,7 +566,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             style={{ color: mealColor }}>
                             {n.calories}
                           </span>
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal</span>
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>kcal</span>
                           {/* gram stepper */}
                           <div className="flex items-center gap-1 mt-0.5">
                             <button
@@ -578,7 +579,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                               type="number"
                               value={item.grams}
                               onChange={(e) => !isSaving && setGrams(idx, parseInt(e.target.value))}
-                              className="w-11 text-center text-[11px] rounded-md tabular-nums outline-none"
+                              className="w-11 text-center text-[12px] rounded-md tabular-nums outline-none"
                               style={{
                                 background: "rgba(255,255,255,0.05)",
                                 border:     "1px solid rgba(255,255,255,0.1)",
@@ -593,7 +594,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                               style={{ background: "rgba(255,255,255,0.07)", color: "var(--text-muted)" }}>
                               <IconPlus size={9} />
                             </button>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>g</span>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>g</span>
                           </div>
                         </div>
                       </div>
@@ -615,7 +616,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                     {/* Calories bar */}
                     <div className="px-3 pt-3 pb-2" style={{ background: "rgba(255,255,255,0.04)" }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+                        <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
                           {selected.length} aliment{selected.length > 1 ? "s" : ""} sélectionné{selected.length > 1 ? "s" : ""}
                         </span>
                         <span className="text-[17px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
@@ -637,7 +638,7 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                             <svg width="7" height="7" viewBox="0 0 7 7">
                               <circle cx="3.5" cy="3.5" r="3.5" fill={color} />
                             </svg>
-                            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                               {label} {val}g
                             </span>
                           </div>
@@ -654,9 +655,9 @@ export default function PhotoMealAnalyzer({ meal, date, mealColor, onAdded, onCl
                         { label: "Lipides",   color: "var(--protein)", val: totals.fatG,     goal: 60 },
                       ].map(({ label, color, val, goal }) => (
                         <div key={label}>
-                          <p className="text-[11px] mb-1 truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
+                          <p className="text-[12px] mb-1 truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
                           <FillBar value={val} goal={goal} color={color} width={72} height={4} />
-                          <p className="text-[11px] mt-0.5 font-semibold tabular-nums" style={{ color }}>
+                          <p className="text-[12px] mt-0.5 font-semibold tabular-nums" style={{ color }}>
                             {Math.round(val)}g
                           </p>
                         </div>

@@ -161,14 +161,14 @@ export default function DayPhotos({ date, initialPhotos = [] }: Props) {
 
         {/* Caption */}
         {photos.length === 0 && !error && (
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
             Capture ta journée
           </p>
         )}
       </div>
 
       {error && (
-        <p className="text-[11px] mt-1.5 px-0.5" style={{ color: "var(--danger)" }}>{error}</p>
+        <p className="text-[12px] mt-1.5 px-0.5" style={{ color: "var(--danger)" }}>{error}</p>
       )}
 
       {/* Hidden file input — no `capture` attribute, so the OS offers both

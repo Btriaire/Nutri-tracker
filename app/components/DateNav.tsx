@@ -63,7 +63,7 @@ export default function DateNav({ date, basePath = "/log" }: Props) {
             : format(parsed, "EEEE d MMMM", { locale: fr })}
           <IconCalendar size={12} stroke={2} style={{ color: "var(--text-muted)", opacity: 0.7 }} />
         </span>
-        <span className="block text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <span className="block text-[12px]" style={{ color: "var(--text-muted)" }}>
           {format(parsed, "dd/MM/yyyy")}
         </span>
       </button>

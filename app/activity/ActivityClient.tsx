@@ -791,7 +791,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2">
               <Icon size={18} style={{ color }} />
               <span className="text-[14px] font-bold tabular-nums" style={{ color }}>{value}</span>
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
         </motion.div>
@@ -876,7 +876,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <IconBookmark size={15} style={{ color: "var(--protein)" }} />
               <p className="label-xs">Séances types</p>
               {templates.length > 0 && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full ml-0.5"
+                <span className="text-[12px] px-1.5 py-0.5 rounded-full ml-0.5"
                   style={{ background: "rgba(167,139,250,0.15)", color: "var(--protein)" }}>
                   {templates.length}
                 </span>
@@ -891,7 +891,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
             </button>
             <button
               onClick={() => setShowTplForm((x) => !x)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ml-2"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all ml-2"
               style={{
                 background: showTplForm ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.05)",
                 border:     `1px solid ${showTplForm ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
@@ -912,7 +912,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                 style={{ overflow: "hidden" }}
               >
                 <div className="pt-2 pb-4 space-y-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                  <p className="text-[11px] font-semibold" style={{ color: "var(--protein)" }}>
+                  <p className="text-[12px] font-semibold" style={{ color: "var(--protein)" }}>
                     Nouvelle séance type
                   </p>
 
@@ -1019,7 +1019,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                           <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                             {tpl.name}
                           </p>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             {tpl.defaultDurationMin} min
                             {tpl.defaultCalories ? ` · ${tpl.defaultCalories} kcal` : ""}
                             {tpl.notes ? ` · ${tpl.notes}` : ""}
@@ -1027,7 +1027,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                         </div>
                         <button
                           onClick={() => launchTemplate(tpl)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all active:scale-95"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold flex-shrink-0 transition-all active:scale-95"
                           style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", color: "var(--protein)" }}
                           disabled={saving}>
                           {saving ? <IconLoader2 size={11} className="animate-spin" /> : <IconCheck size={12} />}
@@ -1128,12 +1128,12 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[14px] font-bold leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
                                     {dispName}
-                                    {edit.name && <span className="text-[11px] ml-1.5" style={{ color: "var(--protein)" }}>✎</span>}
+                                    {edit.name && <span className="text-[12px] ml-1.5" style={{ color: "var(--protein)" }}>✎</span>}
                                   </p>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                                    <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-full"
                                       style={{ background: "rgba(251,191,36,0.15)", color: "var(--carbs)" }}>GFIT</span>
-                                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                                       {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                                     </span>
                                   </div>
@@ -1209,9 +1209,9 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                     </div>
                                   </div>
                                   <div className="flex gap-2">
-                                    <button onClick={() => setEditingGFitId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
+                                    <button onClick={() => setEditingGFitId(null)} className="flex-1 btn btn-ghost text-[12px]">Annuler</button>
                                     <button onClick={() => handleGFitEditSave(s.id)} disabled={gfitEditSaving}
-                                      className="flex-1 btn btn-primary gap-1.5 text-[11px]">
+                                      className="flex-1 btn btn-primary gap-1.5 text-[12px]">
                                       {gfitEditSaving ? <><IconLoader2 size={11} className="animate-spin"/>…</> : <><IconCheck size={11}/>Enregistrer</>}
                                     </button>
                                   </div>
@@ -1273,7 +1273,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 <p className="text-[14px] font-bold leading-tight mb-1" style={{ color: "var(--text-primary)" }}>
                                   {a.name}
                                 </p>
-                                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: "rgba(99,179,237,0.15)", color: "var(--fat)" }}>MANUEL</span>
                               </div>
                               <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -1320,25 +1320,25 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                 {isMuscu(editForm.actType) ? (
                                   <div className="flex gap-2">
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
+                                      <p className="text-[12px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Séries</p>
                                       <input type="number" min="1" value={editForm.sets}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, sets: e.target.value }))}
                                         className="input text-[12px] text-center"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
+                                      <p className="text-[12px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Reps</p>
                                       <input type="number" min="1" value={editForm.reps}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, reps: e.target.value }))}
                                         className="input text-[12px] text-center"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
+                                      <p className="text-[12px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Poids kg</p>
                                       <input type="number" min="0" step="0.5" value={editForm.weightKg}
                                         onChange={(e) => setEditForm((f) => updateMusculationCalories({ ...f, weightKg: e.target.value }))}
                                         className="input text-[12px] text-center" placeholder="—"/>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1">
-                                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
+                                      <p className="text-[12px] uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Kcal</p>
                                       <input type="number" min="0" value={editForm.calories}
                                         onChange={(e) => setEditForm((f) => ({ ...f, calories: e.target.value }))}
                                         className="input text-[12px] text-center"/>
@@ -1361,9 +1361,9 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
                                   </div>
                                 )}
                                 <div className="flex gap-2">
-                                  <button onClick={() => setEditingActivityId(null)} className="flex-1 btn btn-ghost text-[11px]">Annuler</button>
+                                  <button onClick={() => setEditingActivityId(null)} className="flex-1 btn btn-ghost text-[12px]">Annuler</button>
                                   <button onClick={() => handleEditSave(a.id)} disabled={editSaving}
-                                    className="flex-1 btn btn-primary gap-1.5 text-[11px]">
+                                    className="flex-1 btn btn-primary gap-1.5 text-[12px]">
                                     {editSaving ? <><IconLoader2 size={11} className="animate-spin"/>…</> : <><IconCheck size={11}/>Enregistrer</>}
                                   </button>
                                 </div>
@@ -1391,7 +1391,7 @@ export default function ActivityClient({ date: initialDate, fitnessDay: initialF
               <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                 {Math.floor(gf.sleepMinutes / 60)}h{String(gf.sleepMinutes % 60).padStart(2, "0")} de sommeil
               </p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {gf.sleepMinutes >= 420 ? "✓ Bonne récupération" : "⚠ Sommeil insuffisant"}
               </p>
             </div>

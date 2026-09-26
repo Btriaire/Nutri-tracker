@@ -61,48 +61,48 @@ export default function DietProgramInfoModal({ onClose, programId = "tl" }: Prop
             {programId === "tl" ? (
               <>
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     À favoriser — repères par repas (quantités)
                   </p>
                   <div className="space-y-1.5">
                     {MEAL_ORDER.map((meal) => (
                       <div key={meal} className="px-3 py-2 rounded-lg"
                         style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                        <p className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--ok)" }}>{MEAL_LABEL[meal]}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
+                        <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--ok)" }}>{MEAL_LABEL[meal]}</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     Fruits autorisés
                   </p>
                   <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{APPROVED_FRUITS_SUMMARY}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{APPROVED_FRUITS_SUMMARY}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     Fruits interdits
                   </p>
                   <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{FORBIDDEN_FRUITS_SUMMARY}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{FORBIDDEN_FRUITS_SUMMARY}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     Interdits (tous repas)
                   </p>
                   <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{DIET_INTERDITS_SUMMARY}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{DIET_INTERDITS_SUMMARY}</p>
                   </div>
                 </div>
 
-                <p className="text-[11px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
                   Aide-mémoire de la feuille de régime prescrite — en cas de doute, référez-vous
                   au document original.
                 </p>
@@ -110,24 +110,24 @@ export default function DietProgramInfoModal({ onClose, programId = "tl" }: Prop
             ) : (
               <>
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     À favoriser
                   </p>
                   <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{CHOLESTEROL_FAVORISER_SUMMARY}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{CHOLESTEROL_FAVORISER_SUMMARY}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
                     À limiter
                   </p>
                   <div className="px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{CHOLESTEROL_LIMITER_SUMMARY}</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{CHOLESTEROL_LIMITER_SUMMARY}</p>
                   </div>
                 </div>
 
-                <p className="text-[11px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px] italic px-0.5" style={{ color: "var(--text-muted)" }}>
                   Repérage automatique par mots-clés sur le nom des aliments — pas un contrôle
                   médical. Les apports en graisses saturées en grammes restent suivis ailleurs
                   dans l&apos;app (pastille &quot;Lip.sat.&quot;, score de qualité nutritionnelle).

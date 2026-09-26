@@ -83,7 +83,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             key={key}
             onClick={() => toggleType(key)}
             disabled={saving}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all active:scale-95 flex-shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex-shrink-0"
             style={{
               background: active ? bg  : "rgba(255,255,255,0.04)",
               border:     `1px solid ${active ? `color-mix(in srgb, ${color} 33%, transparent)` : "var(--border)"}`,
@@ -94,7 +94,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             {label}
             {showAutoBadge && (
               <span
-                className="ml-0.5 flex items-center gap-0.5 px-1 rounded text-[11px] font-semibold"
+                className="ml-0.5 flex items-center gap-0.5 px-1 rounded text-[12px] font-semibold"
                 style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }}
               >
                 <IconSparkles size={8} />
@@ -116,7 +116,7 @@ export default function DayTypeSelector({ date, initialType, initialJetlag }: Pr
             transition={{ duration: 0.18 }}
             onClick={toggleJetlag}
             disabled={saving}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all active:scale-95 flex-shrink-0 overflow-hidden"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex-shrink-0 overflow-hidden"
             style={{
               background: jetlag ? "rgba(239,68,68,0.12)"  : "rgba(255,255,255,0.04)",
               border:     `1px solid ${jetlag ? "rgba(239,68,68,0.4)" : "var(--border)"}`,

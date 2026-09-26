@@ -80,13 +80,13 @@ export default function MealMicronutrientsPanel({ entries, micronutrientData }: 
             <div className="px-3 pb-3 space-y-3">
               {mealsWithData.map(({ meal, foods }) => (
                 <div key={meal}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>
                     {MEAL_LABEL[meal]}
                   </p>
                   <div className="space-y-2">
                     {foods.map(({ entry, micronutrients }) => (
                       <div key={entry.id}>
-                        <p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                        <p className="text-[12px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
                           {entry.name}
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -96,7 +96,7 @@ export default function MealMicronutrientsPanel({ entries, micronutrientData }: 
                             return (
                               <span
                                 key={m.code}
-                                className="text-[11px] px-2 py-1 rounded-full font-medium"
+                                className="text-[12px] px-2 py-1 rounded-full font-medium"
                                 style={{ background: `color-mix(in srgb, ${info.color} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${info.color} 20%, transparent)`, color: info.color }}
                               >
                                 {info.symbol} {formatMicroAmount(m.amount)}{m.unit}

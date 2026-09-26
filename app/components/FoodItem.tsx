@@ -262,7 +262,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
             style={{ color: "var(--danger)" }}
           >
             <IconTrash size={18} stroke={2} />
-            <span className="text-[11px] font-semibold">Supprimer</span>
+            <span className="text-[12px] font-semibold">Supprimer</span>
           </button>
         </div>
 
@@ -322,13 +322,13 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   {entry.name}
                 </p>
                 {formatLoggedTime(entry.loggedAt) && (
-                  <span className="text-[11px] tabular-nums flex-shrink-0"
+                  <span className="text-[12px] tabular-nums flex-shrink-0"
                     style={{ color: "var(--text-muted)", opacity: 0.7 }}>
                     {formatLoggedTime(entry.loggedAt)}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                 {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`}
                 {entry.weightVerified && (
                   <IconRosetteDiscountCheckFilled size={12} style={{ color: "var(--fiber)", flexShrink: 0 }} title="Poids moyen vérifié" />
@@ -341,7 +341,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               <p className="text-[13px] font-semibold t-calories tabular-nums">
                 {Math.round(n.calories)} kcal
               </p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 P{Math.round(n.proteinG)} · G{Math.round(n.carbsG)} · L{Math.round(n.fatG)}
               </p>
             </div>
@@ -395,7 +395,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                     style={{ height: "28px" }}
                     min="1"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px]"
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px]"
                     style={{ color: "var(--text-muted)" }}>g</span>
                 </div>
                 <button
@@ -405,7 +405,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   +
                 </button>
                 {previewN && (
-                  <span className="text-[11px] font-semibold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
+                  <span className="text-[12px] font-semibold tabular-nums flex-shrink-0" style={{ color: "var(--calories)" }}>
                     {Math.round(previewN.calories)} kcal
                   </span>
                 )}
@@ -432,7 +432,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                     <button
                       key={g}
                       onClick={() => setEditGrams(String(g))}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
+                      className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                       style={{
                         background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
                         border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
@@ -466,14 +466,14 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
                   <IconExclamationCircle size={14} stroke={2} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium" style={{ color: "var(--danger)" }}>Hors régime</p>
-                    <ul className="text-[11px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                    <p className="text-[12px] font-medium" style={{ color: "var(--danger)" }}>Hors régime</p>
+                    <ul className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
                       {dietViolations.map((v, i) => <li key={i}>{v.reason}</li>)}
                     </ul>
                     {onDismissViolation && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onDismissViolation(entry.name); }}
-                        className="mt-1.5 text-[11px] font-medium underline underline-offset-2"
+                        className="mt-1.5 text-[12px] font-medium underline underline-offset-2"
                         style={{ color: "var(--text-muted)" }}
                       >
                         Ce n&apos;est pas un écart — ne plus signaler « {entry.name} »
@@ -493,8 +493,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex items-center gap-1 px-2 py-0.5 rounded-lg"
                     style={{ background: `color-mix(in srgb, ${color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 19%, transparent)` }}>
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[11px] ml-0.5">g</span></span>
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color }}>{value.toFixed(1)}<span className="font-normal text-[12px] ml-0.5">g</span></span>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                   </div>
                 ))}
               </div>
@@ -503,17 +503,17 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               {(n.sugarG || n.sodiumMg || n.saturatedFatG) && (
                 <div className="flex gap-3 mb-2">
                   {n.sugarG != null && n.sugarG > 0 && (
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       Sucres <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{n.sugarG.toFixed(1)}g</span>
                     </span>
                   )}
                   {n.sodiumMg != null && n.sodiumMg > 0 && (
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       Sel <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{(n.sodiumMg / 393).toFixed(2)}g</span>
                     </span>
                   )}
                   {n.saturatedFatG != null && n.saturatedFatG > 0 && (
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       Gr. sat. <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{n.saturatedFatG.toFixed(1)}g</span>
                     </span>
                   )}
@@ -526,8 +526,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}>
                   {microRows.map(({ label, value, unit, color }) => (
                     <div key={label} className="flex justify-between items-center">
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-                      <span className="text-[11px] font-medium tabular-nums"
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[12px] font-medium tabular-nums"
                         style={{ color: color ?? "var(--text-secondary)" }}>
                         {formatMicro(value, unit)}
                       </span>
@@ -540,14 +540,14 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               <div className="flex justify-end gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowMicroEdit(true); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                   style={{ background: "rgba(99,102,241,0.10)", color: "var(--indigo)", border: "1px solid rgba(99,102,241,0.20)" }}>
                   <IconFlask size={11} stroke={2} />
                   Micronutriments
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditGrams(String(Math.round(entry.servingGrams))); setEditing(true); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                   style={{ background: "rgba(167,139,250,0.10)", color: "var(--protein)", border: "1px solid rgba(167,139,250,0.20)" }}>
                   <IconPencil size={11} stroke={2} />
                   Modifier la quantité

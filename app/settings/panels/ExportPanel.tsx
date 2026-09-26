@@ -70,7 +70,7 @@ export default function ExportPanel() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-semibold">Exporter mes données</p>
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Export exhaustif de tous tes paramètres</p>
+          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Export exhaustif de tous tes paramètres</p>
         </div>
         <IconChevronDown
           size={16}
@@ -109,7 +109,7 @@ export default function ExportPanel() {
       {/* What's included */}
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         <div className="px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
             {exportFmt === "json" ? "Contenu du fichier JSON" : "Contenu du fichier CSV"}
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function ExportPanel() {
               <span className="text-[13px] flex-shrink-0 mt-0.5">{icon}</span>
               <div>
                 <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{label}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -128,11 +128,11 @@ export default function ExportPanel() {
 
       {/* Date range */}
       <div className="space-y-2">
-        <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Période</p>
+        <p className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Période</p>
         <div className="flex gap-2 items-center">
           <input type="date" value={from} onChange={e => setFrom(e.target.value)}
             className="input text-[12px] flex-1" style={{ height: "36px" }} />
-          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>→</span>
+          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>→</span>
           <input type="date" value={to} onChange={e => setTo(e.target.value)}
             className="input text-[12px] flex-1" style={{ height: "36px" }} />
         </div>
@@ -147,7 +147,7 @@ export default function ExportPanel() {
           ].map(p => (
             <button key={p.label}
               onClick={() => { setFrom(p.from); setTo(p.to); }}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+              className="px-2.5 py-1 rounded-full text-[12px] font-medium transition-all"
               style={{
                 background: from === p.from && to === p.to ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.05)",
                 border:     from === p.from && to === p.to ? "1px solid rgba(96,165,250,0.35)" : "1px solid var(--border)",
@@ -178,7 +178,7 @@ export default function ExportPanel() {
         )}
       </button>
 
-      <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
         Les données restent sur ton appareil · aucun envoi vers des serveurs tiers
       </p>
 

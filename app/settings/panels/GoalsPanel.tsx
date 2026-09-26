@@ -20,10 +20,10 @@ function SliderField({ label, unit, value, min, max, step, color, onChange }: {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-medium" style={{ color }}>{label}</p>
+        <p className="text-[12px] font-medium" style={{ color }}>{label}</p>
         <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
           {step < 1 ? num.toFixed(1) : Math.round(num)}
-          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
         </span>
       </div>
       <input
@@ -36,7 +36,7 @@ function SliderField({ label, unit, value, min, max, step, color, onChange }: {
           background: `linear-gradient(to right, ${color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
         }}
       />
-      <div className="flex justify-between text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+      <div className="flex justify-between text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
         <span>{step < 1 ? min.toFixed(1) : min}{unit}</span>
         <span>{step < 1 ? max.toFixed(1) : max}{unit}</span>
       </div>
@@ -427,7 +427,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                     { label: "Taille", unit: "cm",  val: height, set: setHeight },
                   ].map(({ label, unit, val, set }) => (
                     <div key={label}>
-                      <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                      <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
                       <div className="relative">
                         <input
                           type="number"
@@ -437,7 +437,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                           className={inputClass}
                           style={{ ...inputStyle, paddingRight: "28px" }}
                         />
-                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px]"
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px]"
                           style={{ color: "var(--text-muted)" }}>{unit}</span>
                       </div>
                     </div>
@@ -460,14 +460,14 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
 
                 {/* ── Date cible ── */}
                 <div className="mt-4">
-                  <p className="text-[11px] mb-2 font-medium" style={{ color: "var(--text-muted)" }}>Date cible</p>
+                  <p className="text-[12px] mb-2 font-medium" style={{ color: "var(--text-muted)" }}>Date cible</p>
                   <div className="flex gap-1.5 flex-wrap mb-2">
                     {DATE_PRESETS.map(p => {
                       const d = addMonthsToToday(p.months);
                       const sel = targetDate === d;
                       return (
                         <button key={p.months} onClick={() => setTargetDate(d)}
-                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                          className="px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                           style={{
                             background: sel ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
                             border: `1px solid ${sel ? "rgba(99,102,241,0.5)" : "var(--border)"}`,
@@ -498,43 +498,43 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                         style={{ color: projLive.isUnrealistic ? "var(--danger)" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                         {projLive.isUnrealistic ? "❌ Irréaliste" : projLive.isAmbitious ? "⚠️ Ambitieux" : "✅ Réaliste"}
                       </span>
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         {Math.abs(projLive.totalKg).toFixed(1)} kg à {projLive.totalKg > 0 ? "perdre" : "prendre"}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par semaine</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par semaine</p>
                         <p className="text-[16px] font-bold tabular-nums leading-none"
                           style={{ color: projLive.isUnrealistic ? "var(--danger)" : "var(--text-primary)" }}>
                           {projLive.totalKg > 0 ? "−" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
                         </p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par jour</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par jour</p>
                         <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
                           {projLive.totalKg > 0 ? "−" : "+"}{Math.abs(projLive.perDay * 1000).toFixed(0)}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>g</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>g</span>
                         </p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit kcal/jour</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit kcal/jour</p>
                         <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
                           ~{projLive.dailyDeficit}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
                         </p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée totale</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée totale</p>
                         <p className="text-[16px] font-bold tabular-nums leading-none" style={{ color: "var(--text-secondary)" }}>
                           {projLive.days}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>jours</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>jours</span>
                         </p>
                       </div>
                     </div>
                     {projLive.isUnrealistic && (
-                      <p className="text-[11px]" style={{ color: "var(--danger)" }}>
+                      <p className="text-[12px]" style={{ color: "var(--danger)" }}>
                         ⚠️ Date mini réaliste pour {Math.abs(projLive.totalKg).toFixed(1)} kg :{" "}
                         <strong>{projLive.minDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</strong>
                       </p>
@@ -550,7 +550,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   <p className="label-xs">Niveau d&apos;activité</p>
                   <div className="flex items-center gap-2">
                     {!activityLevelOpen && (
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                      <span className="text-[12px] font-medium px-2 py-0.5 rounded-full"
                         style={{ background: "rgba(249,115,22,0.1)", color: "var(--calories)", border: "1px solid rgba(249,115,22,0.25)" }}>
                         {ACTIVITY_LABELS[activity]}
                       </span>
@@ -577,7 +577,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                               <p className="text-[12px] font-medium" style={{ color: activity === level ? "var(--calories)" : "var(--text-primary)" }}>
                                 {ACTIVITY_LABELS[level]}
                               </p>
-                              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
+                              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{ACTIVITY_DESCS[level]}</p>
                             </div>
                             {activity === level && <IconCircleCheck size={14} style={{ color: "var(--calories)" }} />}
                           </button>
@@ -594,7 +594,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                 <div className="flex gap-2">
                   {(["lose", "maintain", "gain"] as const).map(g => (
                     <button key={g} onClick={() => setWeeklyGoal(g)}
-                      className="flex-1 py-2 rounded-xl text-[11px] font-medium transition-all"
+                      className="flex-1 py-2 rounded-xl text-[12px] font-medium transition-all"
                       style={{
                         background: weeklyGoal === g ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.04)",
                         border: `1px solid ${weeklyGoal === g ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
@@ -617,7 +617,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   </p>
                   <div className="flex items-center gap-2">
                     {!activityOpen && apSelected.size > 0 && (
-                      <span className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>
+                      <span className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>
                         {apSelected.size} activité{apSelected.size > 1 ? "s" : ""} · {apSessions} séances/sem · {apMinDuration} min
                       </span>
                     )}
@@ -636,9 +636,9 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                       {/* Sessions par semaine */}
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>Séances par semaine</p>
+                          <p className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>Séances par semaine</p>
                           <span className="text-[15px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                            {apSessions}<span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}> séances</span>
+                            {apSessions}<span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}> séances</span>
                           </span>
                         </div>
                         <input
@@ -651,7 +651,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                             background: `linear-gradient(to right, var(--calories) ${((apSessions - 1) / 6) * 100}%, rgba(255,255,255,0.1) ${((apSessions - 1) / 6) * 100}%)`,
                           }}
                         />
-                        <div className="flex justify-between text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+                        <div className="flex justify-between text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
                           <span>1 séance</span>
                           <span>7 séances</span>
                         </div>
@@ -659,13 +659,13 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
 
                       {/* Durée minimale par séance */}
                       <div className="mb-4">
-                        <p className="text-[11px] font-medium mb-2" style={{ color: "var(--calories)" }}>
+                        <p className="text-[12px] font-medium mb-2" style={{ color: "var(--calories)" }}>
                           Durée minimale par séance
                         </p>
                         <div className="flex gap-1.5 flex-wrap">
                           {[20, 30, 45, 60, 90].map(d => (
                             <button key={d} onClick={() => setApMinDuration(d)}
-                              className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                              className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                               style={{
                                 background: apMinDuration === d ? "var(--calories)" : "rgba(255,255,255,0.06)",
                                 color: apMinDuration === d ? "#fff" : "var(--text-muted)",
@@ -704,7 +704,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                   {isSelected && <IconCircleCheck size={10} color="#fff" />}
                                 </div>
                               </div>
-                              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
+                              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{act.kcalPer30min} kcal/30 min</p>
                             </button>
                           );
                         })}
@@ -755,7 +755,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   </p>
                   <div className="flex items-center gap-2">
                     {selectedProgram && !programOpen && (
-                      <span className="text-[11px] font-medium" style={{ color: "var(--calories)" }}>
+                      <span className="text-[12px] font-medium" style={{ color: "var(--calories)" }}>
                         {PROGRAMS[selectedProgram].emoji} {PROGRAMS[selectedProgram].label}
                       </span>
                     )}
@@ -784,12 +784,12 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                               <p className="text-[12px] font-semibold leading-tight" style={{ color: active ? "var(--calories)" : "var(--text-primary)" }}>
                                 {prog.label}
                               </p>
-                              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
+                              <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
                             </button>
                           );
                         })}
                       </div>
-                      <p className="text-[11px] mt-2 mb-3" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px] mt-2 mb-3" style={{ color: "var(--text-muted)" }}>
                         Le programme calcule automatiquement les macros selon ton profil.
                       </p>
 
@@ -799,7 +799,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                             style={{ background: "rgba(34,197,94,0.15)", color: "var(--ok)" }}>Dr.C</span>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             Méthode Dr Jean-Michel Cohen · calories fixes
                           </p>
                         </div>
@@ -814,12 +814,12 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                   border: `1px solid ${active ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.15)"}`,
                                 }}>
                                 <span className="text-base mb-1">{prog.emoji}</span>
-                                <p className="text-[11px] font-semibold leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-primary)" }}>
+                                <p className="text-[12px] font-semibold leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-primary)" }}>
                                   {prog.label}
                                 </p>
-                                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
+                                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>{prog.desc}</p>
                                 {prog.tip && (
-                                  <p className="text-[11px] mt-1 leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-muted)", opacity: 0.8 }}>{prog.tip}</p>
+                                  <p className="text-[12px] mt-1 leading-tight" style={{ color: active ? "var(--ok)" : "var(--text-muted)", opacity: 0.8 }}>{prog.tip}</p>
                                 )}
                               </button>
                             );
@@ -841,7 +841,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   </p>
                   <div className="flex items-center gap-2">
                     {!tdeeOpen && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         {tdeeCalc ? <><span className="font-bold" style={{ color: "var(--calories)" }}>{tdeeCalc} kcal</span> · </> : ""}{TDEE_FORMULA_CONFIG[tdeeFormula].label}
                       </span>
                     )}
@@ -860,7 +860,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                         <div className="flex gap-1.5">
                           {(Object.entries(TDEE_FORMULA_CONFIG) as [TDEEFormula, typeof TDEE_FORMULA_CONFIG[TDEEFormula]][]).map(([key, cfg]) => (
                             <button key={key} onClick={() => setTdeeFormula(key)}
-                              className="flex-1 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                              className="flex-1 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                               style={{
                                 background: tdeeFormula === key ? "var(--calories)" : "rgba(255,255,255,0.05)",
                                 color: tdeeFormula === key ? "#fff" : "var(--text-muted)",
@@ -871,7 +871,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                           ))}
                         </div>
                         {/* Selected formula description */}
-                        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                           {TDEE_FORMULA_CONFIG[tdeeFormula].desc}
                         </p>
 
@@ -882,7 +882,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                               initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: "hidden" }}>
                               <div>
-                                <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
+                                <p className="text-[12px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
                                   % masse grasse (requis)
                                 </p>
                                 <div className="relative">
@@ -899,7 +899,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                                       paddingRight: "28px",
                                     }}
                                   />
-                                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px]"
+                                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px]"
                                     style={{ color: "var(--text-muted)" }}>%</span>
                                 </div>
                               </div>
@@ -935,17 +935,17 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                       <p className="text-[12px] font-semibold" style={{ color: "var(--fiber)" }}>
                         {PROGRAMS[selectedProgram].emoji} {PROGRAMS[selectedProgram].label}
                       </p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         {parseInt(calories)} kcal/j · {PROGRAMS[selectedProgram].desc}
                       </p>
                     </div>
                     {projLive && (
                       <div className="text-right">
-                        <p className="text-[11px] font-bold" style={{ color: projLive.isUnrealistic ? "var(--danger)" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
+                        <p className="text-[12px] font-bold" style={{ color: projLive.isUnrealistic ? "var(--danger)" : projLive.isAmbitious ? "var(--carbs)" : "var(--fiber)" }}>
                           {projLive.isUnrealistic ? "⚠️ Irréaliste" : projLive.isAmbitious ? "⚡ Ambitieux" : "✅ Réaliste"}
                         </p>
                         {targetDate && (
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             ~{new Date(targetDate + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                           </p>
                         )}
@@ -956,24 +956,24 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   {projLive && (
                     <div className="flex gap-3 text-center">
                       <div className="flex-1">
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par sem.</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Par sem.</p>
                         <p className="text-[14px] font-bold tabular-nums" style={{ color: projLive.isUnrealistic ? "var(--danger)" : "var(--text-primary)" }}>
                           {projLive.totalKg > 0 ? "-" : "+"}{Math.abs(projLive.perWeek).toFixed(2)}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kg</span>
                         </p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit/j</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Déficit/j</p>
                         <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                           ~{projLive.dailyDeficit}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
                         </p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée</p>
+                        <p className="text-[12px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>Durée</p>
                         <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--text-secondary)" }}>
                           {projLive.days}
-                          <span className="text-[11px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>j</span>
+                          <span className="text-[12px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>j</span>
                         </p>
                       </div>
                     </div>
@@ -1012,7 +1012,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                           </p>
                         )}
                         {planResult.projectedNote && (
-                          <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{planResult.projectedNote}</p>
+                          <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{planResult.projectedNote}</p>
                         )}
                       </motion.div>
                     )}
@@ -1030,7 +1030,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   </p>
                   <div className="flex items-center gap-2">
                     {!macroOpen && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         <span className="font-bold tabular-nums" style={{ color: "var(--calories)" }}>{calories}</span>
                         <span> kcal · </span>
                         <span style={{ color: "var(--protein)" }}>{protein}g P</span>
@@ -1086,7 +1086,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                       <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                         Soustraire les calories brûlées
                       </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                         {deductBurned
                           ? "Budget = Objectif + activité — Budget net affiché"
                           : "Budget = Objectif uniquement — Calories brûlées affichées en info"}
@@ -1151,7 +1151,7 @@ export default function GoalsPanel({ initialGoals }: { initialGoals: NutritionGo
                   <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>
                     Changer de plan ?
                   </p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                     Un plan est déjà actif
                   </p>
                 </div>

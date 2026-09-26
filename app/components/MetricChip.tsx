@@ -18,7 +18,7 @@ export default function MetricChip({ value, unit, color, icon }: {
           mesuree jusqu'a 4,27 au lieu de 4,5) — l'icone au-dessus porte deja
           l'identite de couleur. */}
       <span className="text-[13px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>{value}</span>
-      <span className="text-[11px] leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
+      <span className="text-[12px] leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>{unit}</span>
     </div>
   );
 }

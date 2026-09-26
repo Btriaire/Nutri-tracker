@@ -187,7 +187,7 @@ export default function BarcodeScanner({ onDetect, onClose }: { onDetect: (code:
         {!detected && (
           <div className="space-y-2">
             <button onClick={() => setShowManual(v => !v)}
-              className="w-full text-[11px] py-1"
+              className="w-full text-[12px] py-1"
               style={{ color: "rgba(255,255,255,0.4)" }}>
               {showManual ? "▲ Masquer" : "Saisie manuelle du code ▼"}
             </button>

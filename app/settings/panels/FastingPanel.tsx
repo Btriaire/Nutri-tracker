@@ -77,7 +77,7 @@ export default function FastingPanel() {
           </div>
           <div className="text-left">
             <p className="font-semibold text-[13.5px]" style={{ color: "var(--text-primary)" }}>Jeûne Intermittent</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {enabled ? `${duration}h · ${days.length} jour${days.length > 1 ? "s" : ""}/sem` : "Désactivé"}
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function FastingPanel() {
               <div className="flex items-center justify-between pt-4">
                 <div>
                   <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Activer</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                     Affiche un chrono sur le dashboard et le journal
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export default function FastingPanel() {
                 <>
                   {/* Duration */}
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
                       Durée du jeûne
                     </p>
                     <div className="grid grid-cols-4 gap-2">
@@ -148,7 +148,7 @@ export default function FastingPanel() {
                             style={{ color: duration === h ? "#818cf8" : "var(--text-primary)" }}>
                             {label}
                           </span>
-                          <span className="text-[11px]"
+                          <span className="text-[12px]"
                             style={{ color: duration === h ? "#818cf8" : "var(--text-muted)" }}>
                             {desc}
                           </span>
@@ -159,7 +159,7 @@ export default function FastingPanel() {
 
                   {/* Days of week */}
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
                       Jours de la semaine
                     </p>
                     <div className="flex justify-between gap-1.5">
@@ -181,7 +181,7 @@ export default function FastingPanel() {
                         );
                       })}
                     </div>
-                    <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
                       {days.length === 0
                         ? "Aucun jour sélectionné"
                         : `${days.length} jour${days.length > 1 ? "s" : ""} par semaine`}

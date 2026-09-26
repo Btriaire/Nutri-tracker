@@ -104,7 +104,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Pas
             </h1>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               Historique activité · objectif {stepsGoal.toLocaleString("fr-FR")} pas
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   {delta > 0 ? <IconArrowUp size={12} /> : delta < 0 ? <IconArrowDown size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta).toLocaleString("fr-FR")}
                 </div>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
               </div>
             )}
           </div>
@@ -160,12 +160,12 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>0</span>
-                <span className="text-[11px] font-medium tabular-nums"
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>0</span>
+                <span className="text-[12px] font-medium tabular-nums"
                   style={{ color: stepsColor(todaySteps, stepsGoal) }}>
                   {Math.round(pctToday)}%
                 </span>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{stepsGoal.toLocaleString("fr-FR")}</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{stepsGoal.toLocaleString("fr-FR")}</span>
               </div>
             </div>
           )}
@@ -182,7 +182,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <div key={label} className="card flex flex-col gap-1 items-center text-center p-2.5">
               <div className="flex items-center gap-1">{icon}</div>
               <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{value}</span>
-              <span className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
+              <span className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>{label}</span>
             </div>
           ))}
         </motion.div>
@@ -223,7 +223,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
               <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
                 Record sur {rangeDays} jours : <strong style={{ color: "var(--fit-yellow)" }}>{bestDay.toLocaleString("fr-FR")} pas</strong>
               </p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {format(parseISO(bestDate), "EEEE d MMMM", { locale: fr })}
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
           <div className="flex items-center justify-between mb-3">
             <p className="label-xs">Évolution des pas</p>
             {avgSteps > 0 && (
-              <span className="text-[11px] tabular-nums" style={{ color: "var(--steps)" }}>
+              <span className="text-[12px] tabular-nums" style={{ color: "var(--steps)" }}>
                 moy. {avgSteps.toLocaleString("fr-FR")} /j
               </span>
             )}
@@ -268,7 +268,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                   const val = payload[0].value as number;
                   const color = stepsColor(val, stepsGoal);
                   return (
-                    <div className="px-3 py-2 rounded-xl text-[11px] space-y-0.5"
+                    <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
                       style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p className="font-bold text-[14px]" style={{ color }}>{val.toLocaleString("fr-FR")} pas</p>
@@ -299,7 +299,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -311,7 +311,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
             <div className="flex items-center justify-between mb-3">
               <p className="label-xs">Minutes actives</p>
               {avgActive > 0 && (
-                <span className="text-[11px]" style={{ color: "var(--fit-green)" }}>moy. {avgActive} min/j</span>
+                <span className="text-[12px]" style={{ color: "var(--fit-green)" }}>moy. {avgActive} min/j</span>
               )}
             </div>
             <ResponsiveContainer width="100%" height={90}>
@@ -327,7 +327,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length) return null;
                   return (
-                    <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                    <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                       style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
@@ -338,7 +338,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 <Area type="monotone" dataKey="activeMinutes" stroke="var(--fit-green)" strokeWidth={1.5} fill="url(#actGrad2)" dot={false} connectNulls />
               </AreaChart>
             </ResponsiveContainer>
-            <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = recommandation OMS 30 min</p>
+            <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = recommandation OMS 30 min</p>
           </motion.div>
         )}
 
@@ -359,7 +359,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length) return null;
                   return (
-                    <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                    <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                       style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p style={{ color: "var(--calories)" }} className="font-bold">{payload[0]?.value} kcal</p>
@@ -383,7 +383,7 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                 <div key={p.date} className="py-2"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <div className="flex items-center gap-3 mb-1.5">
-                    <span className="text-[11px] w-[56px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                    <span className="text-[12px] w-[56px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                       {format(parseISO(p.date), "dd MMM", { locale: fr })}
                     </span>
                     {/* Steps */}
@@ -397,14 +397,14 @@ export default function StepsClient({ points, stepsGoal }: Props) {
                     {p.activeMinutes > 0 && (
                       <div className="flex items-center gap-1">
                         <IconBolt size={11} style={{ color: "var(--fit-green)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{p.activeMinutes}min</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{p.activeMinutes}min</span>
                       </div>
                     )}
                     {/* Calories */}
                     {p.activeCalories > 0 && (
                       <div className="flex items-center gap-1">
                         <IconFlame size={11} style={{ color: "var(--calories)" }} />
-                        <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{Math.round(p.activeCalories)}</span>
+                        <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{Math.round(p.activeCalories)}</span>
                       </div>
                     )}
                     {/* Goal badge */}

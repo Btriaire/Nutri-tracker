@@ -221,7 +221,7 @@ export default function LibraryClient() {
                         whileTap={{ scale: 0.97 }}
                       >
                         <span className="text-[26px] leading-none">{cat.emoji}</span>
-                        <span className="text-[11px] font-medium leading-tight" style={{ color: "var(--text-secondary)" }}>
+                        <span className="text-[12px] font-medium leading-tight" style={{ color: "var(--text-secondary)" }}>
                           {cat.label}
                         </span>
                       </motion.button>
@@ -298,13 +298,13 @@ export default function LibraryClient() {
                             <div className="flex items-center gap-1.5 mt-0.5">
                               {food.brand && (
                                 <>
-                                  <span className="text-[11px] truncate max-w-[100px]" style={{ color: "var(--text-muted)" }}>
+                                  <span className="text-[12px] truncate max-w-[100px]" style={{ color: "var(--text-muted)" }}>
                                     {food.brand}
                                   </span>
                                   <span style={{ color: "var(--border-strong)" }}>·</span>
                                 </>
                               )}
-                              <span className="text-[11px]" style={{ color: SOURCE_COLOR[food.source] ?? "var(--text-muted)" }}>
+                              <span className="text-[12px]" style={{ color: SOURCE_COLOR[food.source] ?? "var(--text-muted)" }}>
                                 {SOURCE_LABEL[food.source]}
                               </span>
                             </div>
@@ -314,7 +314,7 @@ export default function LibraryClient() {
                             <p className="text-[14px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                               {food.nutrition.calories}
                             </p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{food.servingSizeG}g</p>
+                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>kcal/{food.servingSizeG}g</p>
                           </div>
                         </motion.button>
                       );
@@ -368,7 +368,7 @@ export default function LibraryClient() {
                         <button
                           key={opt.label}
                           onClick={() => setServingUnit(opt)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
+                          className="px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
                           style={{
                             background: servingUnit.label === opt.label ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
                             border: `1px solid ${servingUnit.label === opt.label ? "rgba(167,139,250,0.5)" : "var(--border)"}`,

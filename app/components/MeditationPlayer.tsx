@@ -468,7 +468,7 @@ function NowPlaying({
         {tracks.map((t) => (
           <button key={t.id}
             onClick={() => onChangeTrack(t)}
-            className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+            className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all"
             style={{
               background: t.id === track.id ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.05)",
               border:     `1px solid ${t.id === track.id ? "rgba(52,211,153,0.5)" : "var(--border)"}`,
@@ -755,7 +755,7 @@ export default function MeditationPlayer() {
               <span className="text-[24px]">{selected.emoji}</span>
               <div>
                 <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>{selected.label}</p>
-                <p className="text-[11px]" style={{ color: "var(--fiber)" }}>{fmtTime(totalElapsed)} / {fmtTime(totalDuration)}</p>
+                <p className="text-[12px]" style={{ color: "var(--fiber)" }}>{fmtTime(totalElapsed)} / {fmtTime(totalDuration)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -795,7 +795,7 @@ export default function MeditationPlayer() {
                 <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--fiber)" }}>
                   {currentStep?.label}
                 </p>
-                <span className="text-[11px] tabular-nums" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[12px] tabular-nums" style={{ color: "var(--text-muted)" }}>
                   {fmtTime(Math.max(0, (currentStep?.durationSec ?? 0) - stepElapsed))}
                 </span>
               </div>
@@ -815,7 +815,7 @@ export default function MeditationPlayer() {
           </div>
 
               {paused && (
-            <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>En pause · appuyez ▶ pour reprendre</p>
+            <p className="text-center text-[12px]" style={{ color: "var(--text-muted)" }}>En pause · appuyez ▶ pour reprendre</p>
           )}
 
           {/* Now Playing */}
@@ -847,7 +847,7 @@ export default function MeditationPlayer() {
         </div>
         <p className="text-[16px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>Séance complète ✨</p>
         <p className="text-[13px] mb-1" style={{ color: "var(--text-secondary)" }}>{prog.label} · {prog.durationMin} min</p>
-        <p className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px] mb-4" style={{ color: "var(--text-muted)" }}>
           Prenez un moment pour ressentir les bénéfices de cette pratique.
         </p>
         <button onClick={() => { setSelected(null); setCompleted([]); }}
@@ -871,7 +871,7 @@ export default function MeditationPlayer() {
           <span className="text-[18px]">☸️</span>
           <div>
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Méditation</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>IA · programmes guidés · suivi</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>IA · programmes guidés · suivi</p>
           </div>
         </div>
         {streak > 0 && (
@@ -895,18 +895,18 @@ export default function MeditationPlayer() {
           </div>
           <div>
             <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Médit-IA</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Ambiances thématiques · IA + validation</p>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Ambiances thématiques · IA + validation</p>
           </div>
         </div>
 
         <div className="px-4 pb-4 space-y-3">
           {/* Duration chips */}
           <div>
-            <p className="text-[11px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Durée</p>
+            <p className="text-[12px] font-medium mb-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Durée</p>
             <div className="flex gap-1.5">
               {AI_DURATIONS.map((d) => (
                 <button key={d} onClick={() => setAiDuration(d)}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-[11px] font-semibold transition-all"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
                   style={{
                     background: aiDuration === d ? "rgba(139,92,246,0.22)" : "rgba(255,255,255,0.04)",
                     border: `1px solid ${aiDuration === d ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
@@ -924,7 +924,7 @@ export default function MeditationPlayer() {
             {AI_THEMES.map(({ label, emoji }) => (
               <button key={label}
                 onClick={() => { setAiTheme(label); handleAiSearch(label); }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium transition-all"
                 style={{
                   background: aiTheme === label ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)",
                   border: `1px solid ${aiTheme === label ? "rgba(139,92,246,0.5)" : "var(--border)"}`,
@@ -978,7 +978,7 @@ export default function MeditationPlayer() {
                 className="w-4 h-4 rounded-full flex-shrink-0"
                 style={{ border: "2px solid rgba(139,92,246,0.3)", borderTopColor: "var(--protein)" }}
               />
-              <p className="text-[11px]" style={{ color: "var(--protein)" }}>
+              <p className="text-[12px]" style={{ color: "var(--protein)" }}>
                 Recherche en cours · validation des ambiances…
               </p>
             </motion.div>
@@ -988,7 +988,7 @@ export default function MeditationPlayer() {
           {aiError && !aiLoading && (
             <div className="flex items-center justify-between px-3 py-2 rounded-xl"
               style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <p className="text-[11px]" style={{ color: "var(--danger)" }}>{aiError}</p>
+              <p className="text-[12px]" style={{ color: "var(--danger)" }}>{aiError}</p>
               <button onClick={() => setAiError("")}>
                 <IconX size={12} stroke={2} style={{ color: "var(--danger)" }} />
               </button>
@@ -1013,13 +1013,13 @@ export default function MeditationPlayer() {
                       <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                         {track.label}
                       </p>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         {aiDuration} min · {aiTheme}
                       </p>
                     </div>
                     <button
                       onClick={() => playAiTrack(track, aiDuration)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-semibold flex-shrink-0 transition-all"
                       style={{
                         background: "rgba(139,92,246,0.18)",
                         border: "1px solid rgba(139,92,246,0.4)",
@@ -1042,18 +1042,18 @@ export default function MeditationPlayer() {
         <div className="flex justify-between mb-3">
           {last7.map(({ key, label, isToday, hasSess, mins }) => (
             <div key={key} className="flex flex-col items-center gap-1">
-              <span className="text-[11px] uppercase" style={{ color: isToday ? "var(--fiber)" : "var(--text-muted)" }}>{label}</span>
+              <span className="text-[12px] uppercase" style={{ color: isToday ? "var(--fiber)" : "var(--text-muted)" }}>{label}</span>
               <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                 style={{
                   background: hasSess ? "rgba(52,211,153,0.18)" : "rgba(255,255,255,0.03)",
                   border: `1px solid ${hasSess ? "rgba(52,211,153,0.4)" : "var(--border)"}`,
                 }}>
                 {hasSess
-                  ? <span className="text-[11px]">🧘</span>
+                  ? <span className="text-[12px]">🧘</span>
                   : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", display: "inline-block" }} />
                 }
               </div>
-              {hasSess && <span className="text-[11px] font-medium" style={{ color: "var(--fiber)" }}>{mins}m</span>}
+              {hasSess && <span className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>{mins}m</span>}
             </div>
           ))}
         </div>
@@ -1066,7 +1066,7 @@ export default function MeditationPlayer() {
           ].map(({ v, l }) => (
             <div key={l}>
               <p className="text-[15px] font-bold" style={{ color: "var(--fiber)" }}>{v}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{l}</p>
             </div>
           ))}
         </div>
@@ -1094,7 +1094,7 @@ export default function MeditationPlayer() {
             >
               {/* Done count badge */}
               {doneSessions > 0 && (
-                <span className="absolute top-2 right-2.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                <span className="absolute top-2 right-2.5 text-[12px] font-bold px-1.5 py-0.5 rounded-full"
                   style={{ background: `color-mix(in srgb, ${program.color} 15%, transparent)`, color: program.color }}>
                   {doneSessions}×
                 </span>
@@ -1112,12 +1112,12 @@ export default function MeditationPlayer() {
               </p>
 
               {/* Duration + last date */}
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full mb-1"
+              <span className="text-[12px] font-medium px-2 py-0.5 rounded-full mb-1"
                 style={{ background: `color-mix(in srgb, ${program.color} 9%, transparent)`, color: program.color }}>
                 {program.durationMin} min
               </span>
               {lastDate && (
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   {format(new Date(lastDate + "T00:00:00"), "d MMM", { locale: fr })}
                 </p>
               )}
@@ -1138,7 +1138,7 @@ export default function MeditationPlayer() {
               <span className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                 Historique
               </span>
-              <span className="text-[11px] px-1.5 py-0.5 rounded-md"
+              <span className="text-[12px] px-1.5 py-0.5 rounded-md"
                 style={{ background: "rgba(52,211,153,0.1)", color: "var(--fiber)" }}>
                 {allSessions.length} séances
               </span>
@@ -1167,11 +1167,11 @@ export default function MeditationPlayer() {
                         <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                           {s.programLabel}
                         </p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                           {format(new Date(s.date + "T12:00:00"), "d MMM yyyy", { locale: fr })}
                         </p>
                       </div>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg"
+                      <span className="text-[12px] font-semibold px-2 py-0.5 rounded-lg"
                         style={{ background: "rgba(52,211,153,0.1)", color: "var(--fiber)" }}>
                         {s.durationMin} min
                       </span>
@@ -1184,7 +1184,7 @@ export default function MeditationPlayer() {
         </div>
       )}
 
-      <p className="text-[11px] text-center" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px] text-center" style={{ color: "var(--text-muted)" }}>
         🎵 Musique ambiante · Nécessite une connexion internet
       </p>
     </div>

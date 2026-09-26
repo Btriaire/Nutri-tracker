@@ -48,11 +48,11 @@ export default function WeightWidget({ weight, previous }: Props) {
       </div>
 
       {weight ? (
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           Mesuré le {new Date(weight.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
         </p>
       ) : (
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
           Synchroniser Withings pour voir votre poids
         </p>
       )}

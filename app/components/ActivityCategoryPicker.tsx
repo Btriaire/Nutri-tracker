@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -227,7 +228,7 @@ export default function ActivityCategoryPicker({
                   style={{ color: "var(--text-primary)" }}>
                   {cat.label}
                 </p>
-                <p className="text-[11px] mt-0.5 mb-auto"
+                <p className="text-[12px] mt-0.5 mb-auto"
                   style={{ color: "var(--text-muted)" }}>
                   {cat.sub}
                 </p>
@@ -240,7 +241,7 @@ export default function ActivityCategoryPicker({
                         key={e.id}
                         type="button"
                         onClick={ev => { ev.stopPropagation(); onSelectExercise(e, cat.c1, cat.c2); }}
-                        className="flex items-center gap-0.5 rounded-lg text-[11px] font-medium truncate transition-all active:opacity-70"
+                        className="flex items-center gap-0.5 rounded-lg text-[12px] font-medium truncate transition-all active:opacity-70"
                         style={{
                           maxWidth: "72px",
                           padding: "2px 6px",
@@ -254,13 +255,13 @@ export default function ActivityCategoryPicker({
                       </button>
                     ))}
                     {favExercises.length > 2 && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         +{favExercises.length - 2}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <p className="text-[11px] mt-2.5" style={{ color: `color-mix(in srgb, ${cat.c1} 38%, transparent)` }}>
+                  <p className="text-[12px] mt-2.5" style={{ color: `color-mix(in srgb, ${cat.c1} 38%, transparent)` }}>
                     {catExercises.length} activités
                   </p>
                 )}
@@ -339,7 +340,7 @@ export default function ActivityCategoryPicker({
                     <p className="font-bold text-[16px]" style={{ color: activeCat.c1 }}>
                       {activeCat.label}
                     </p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       Tap pour personnaliser · ⭐ pour ajouter aux favoris
                     </p>
                   </div>
@@ -361,7 +362,7 @@ export default function ActivityCategoryPicker({
                   if (favExercises.length === 0) return null;
                   return (
                     <div className="px-5 pt-1 pb-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest mb-2.5"
+                      <p className="text-[12px] font-semibold uppercase tracking-widest mb-2.5"
                         style={{ color: "var(--text-muted)" }}>
                         ⭐ Favoris
                       </p>
@@ -422,7 +423,7 @@ export default function ActivityCategoryPicker({
                           {e.name}
                         </p>
                         {e.muscles && e.muscles.length > 0 && (
-                          <p className="text-[11px] truncate mt-0.5"
+                          <p className="text-[12px] truncate mt-0.5"
                             style={{ color: "var(--text-muted)" }}>
                             {e.muscles.slice(0, 3).join(" · ")}
                           </p>
@@ -430,7 +431,7 @@ export default function ActivityCategoryPicker({
                       </div>
 
                       {/* Kcal estimate */}
-                      <span className="text-[11px] tabular-nums flex-shrink-0 font-medium"
+                      <span className="text-[12px] tabular-nums flex-shrink-0 font-medium"
                         style={{ color: "var(--ok)" }}>
                         ~{kcal}&thinsp;kcal
                       </span>
@@ -442,7 +443,7 @@ export default function ActivityCategoryPicker({
                         className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl transition-all"
                         style={{
                           background: isFav ? `color-mix(in srgb, ${activeCat.c1} 13%, transparent)` : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${isFav ? activeCat.c1 + "40" : "rgba(255,255,255,0.06)"}`,
+                          border: `1px solid ${isFav ? alpha(activeCat.c1, 25) : "rgba(255,255,255,0.06)"}`,
                         }}
                       >
                         <span className="text-[15px] leading-none">{isFav ? "⭐" : "☆"}</span>

@@ -200,7 +200,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
         </h3>
         <button
           onClick={toggleAddForm}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
           style={{
             background: "rgba(99,102,241,0.12)",
             border: "1px solid rgba(99,102,241,0.3)",
@@ -224,7 +224,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
           >
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Nom du produit *
                 </label>
                 <div className="flex gap-2">
@@ -240,7 +240,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                     type="button"
                     onClick={generateWithAI}
                     disabled={!form.name.trim() || generatingAI}
-                    className="px-3 py-2 rounded-lg text-[11px] font-medium transition-all disabled:opacity-50"
+                    className="px-3 py-2 rounded-lg text-[12px] font-medium transition-all disabled:opacity-50"
                     style={{
                       background: "rgba(251,191,36,0.12)",
                       border: "1px solid rgba(251,191,36,0.3)",
@@ -253,7 +253,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
               </div>
 
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Description
                 </label>
                 <textarea
@@ -267,7 +267,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                  <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                     Ingrédients (séparés par virgule)
                   </label>
                   <input
@@ -281,7 +281,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                  <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                     Dosage par prise
                   </label>
                   <input
@@ -297,7 +297,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                  <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                     Posologie recommandée *
                   </label>
                   <input
@@ -311,7 +311,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                  <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                     Cadence quotidienne *
                   </label>
                   <select
@@ -328,7 +328,7 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
               </div>
 
               <div>
-                <label className="text-[11px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
                   Notes
                 </label>
                 <input
@@ -406,25 +406,25 @@ export default function SupplementConfig({ onClose }: SupplementConfigProps) {
                   <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
                     {product.name}
                   </span>
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
+                  <span className="text-[12px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
                     {FREQUENCIES.find(f => f.value === product.frequency)?.label}
                   </span>
                   {isPaused && (() => {
                     const pausedDate = formatPausedDate(product.pausedAt);
                     return (
-                      <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(148,163,184,0.15)", color: "var(--text-muted)" }}>
+                      <span className="text-[12px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(148,163,184,0.15)", color: "var(--text-muted)" }}>
                         En pause{pausedDate ? ` depuis le ${pausedDate}` : ""}
                       </span>
                     );
                   })()}
                 </div>
                 {product.description && (
-                  <p className="text-[11px] mt-1 line-clamp-1" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] mt-1 line-clamp-1" style={{ color: "var(--text-muted)" }}>
                     {product.description}
                   </p>
                 )}
                 {product.recommendedDosage && (
-                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                     {product.recommendedDosage}
                   </p>
                 )}

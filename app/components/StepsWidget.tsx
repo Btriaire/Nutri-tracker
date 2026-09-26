@@ -46,7 +46,7 @@ export default function StepsWidget({ steps, goal = 10000 }: Props) {
         />
       </div>
 
-      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
         {steps != null
           ? pct >= 1
             ? "🎉 Objectif atteint !"

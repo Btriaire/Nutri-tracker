@@ -48,7 +48,7 @@ export default function AlcoolWeekWidget({
           <span className="text-[14px] font-bold tabular-nums" style={{ color: overWeek ? "var(--danger)" : "var(--violet)" }}>
             {weeklyTotal.toFixed(1)}
           </span>
-          <span className="text-[11px] ml-0.5" style={{ color: "var(--text-muted)" }}>
+          <span className="text-[12px] ml-0.5" style={{ color: "var(--text-muted)" }}>
             / {weeklyGoal}u sem.
           </span>
         </div>
@@ -73,7 +73,7 @@ export default function AlcoolWeekWidget({
           const col  = barColor(p.alcoolUnits);
           return (
             <div key={p.date} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[11px] tabular-nums" style={{ color: p.alcoolUnits > 0 ? col : "transparent" }}>
+              <span className="text-[12px] tabular-nums" style={{ color: p.alcoolUnits > 0 ? col : "transparent" }}>
                 {p.alcoolUnits > 0 ? p.alcoolUnits.toFixed(1) : "·"}
               </span>
               <div className="w-full flex items-end justify-center" style={{ height: "40px" }}>
@@ -85,14 +85,14 @@ export default function AlcoolWeekWidget({
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                 />
               </div>
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{p.label}</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{p.label}</span>
             </div>
           );
         })}
       </div>
 
       {/* Daily limit reference */}
-      <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>
+      <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
         Seuil jour : {dailyLimit}u · OMS ≤ {weeklyGoal}u/sem.
         {overWeek && (
           <span style={{ color: "var(--danger)" }}> · +{(weeklyTotal - weeklyGoal).toFixed(1)}u au-dessus</span>

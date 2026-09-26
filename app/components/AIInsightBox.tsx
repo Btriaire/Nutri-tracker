@@ -106,11 +106,11 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2))" }}>
               <IconSparkles size={12} stroke={2} style={{ color: "var(--protein)" }} />
             </div>
-            <span className="text-[11px] font-semibold tracking-wide uppercase"
+            <span className="text-[12px] font-semibold tracking-wide uppercase"
               style={{ color: "var(--protein)", letterSpacing: "0.06em" }}>
               IA
             </span>
-            <span className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
               · {displayLabel}
             </span>
             {text && (
@@ -150,7 +150,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
         {!launched && !autoLoad && !collapsed && (
           <button
             onClick={load}
-            className="mx-auto flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95"
+            className="mx-auto flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-all active:scale-95"
             style={{
               background: "rgba(139,92,246,0.08)",
               border: "1px solid rgba(139,92,246,0.2)",
@@ -172,7 +172,7 @@ export default function AIInsightBox({ type, data, label, delay = 600, autoLoad 
               exit={{ opacity: 0 }}
               className="mt-1"
             >
-              <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
                 {icon} {text.slice(0, 60)}…
               </p>
             </motion.div>

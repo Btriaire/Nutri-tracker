@@ -356,7 +356,7 @@ export default function RelaxationPlayer() {
       <div className="flex items-center justify-between mb-3">
         <p className="label-xs">🎧 Relaxation</p>
         {timerLeft !== null && (
-          <span className="text-[11px] font-medium tabular-nums px-2 py-0.5 rounded-full"
+          <span className="text-[12px] font-medium tabular-nums px-2 py-0.5 rounded-full"
             style={{ background: "rgba(167,139,250,0.15)", color: "var(--protein)" }}>
             <IconClock size={11} stroke={2} className="inline mr-1" />{fmtTime(timerLeft)}
           </span>
@@ -384,7 +384,7 @@ export default function RelaxationPlayer() {
                 <p className="text-[12px] font-semibold truncate" style={{ color: active ? s.color : "var(--text-primary)" }}>
                   {s.name}
                 </p>
-                <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{s.desc}</p>
+                <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{s.desc}</p>
               </div>
               <div className="ml-auto flex-shrink-0">
                 {active
@@ -428,7 +428,7 @@ export default function RelaxationPlayer() {
                   const active = timer === value;
                   return (
                     <button key={value} onClick={() => handleTimer(value)}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
+                      className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                       style={{
                         background: active ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
                         border: `1px solid ${active ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
@@ -440,7 +440,7 @@ export default function RelaxationPlayer() {
                 })}
                 {timer && (
                   <button onClick={() => { setTimer(null); if (timerRef.current) clearInterval(timerRef.current); setElapsed(0); }}
-                    className="px-2 py-0.5 rounded-lg text-[11px] transition-all"
+                    className="px-2 py-0.5 rounded-lg text-[12px] transition-all"
                     style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}>
                     Annuler
                   </button>

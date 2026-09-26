@@ -90,7 +90,7 @@ export default function ActivityFormBody({
               border: `1px solid ${form.actType === opt.type ? "rgba(167,139,250,0.5)" : "var(--border)"}`,
             }}>
             <span className="text-[18px]">{opt.emoji}</span>
-            <span className="text-[11px] leading-tight" style={{ color: form.actType === opt.type ? "var(--protein)" : "var(--text-muted)" }}>
+            <span className="text-[12px] leading-tight" style={{ color: form.actType === opt.type ? "var(--protein)" : "var(--text-muted)" }}>
               {opt.label.split(" ")[0]}
             </span>
           </button>
@@ -168,7 +168,7 @@ export default function ActivityFormBody({
                 <button
                   type="button"
                   onClick={toggleVariableWeight}
-                  className="flex-shrink-0 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+                  className="flex-shrink-0 px-2 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
                   title="Poids variable par série"
                   style={{
                     background: form.variableWeight ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.06)",
@@ -200,7 +200,7 @@ export default function ActivityFormBody({
               <div className="flex gap-1.5 flex-wrap">
                 {Array.from({ length: setsCount }, (_, i) => (
                   <div key={i} className="flex flex-col items-center gap-0.5">
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>S{i + 1}</span>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>S{i + 1}</span>
                     <input
                       type="number"
                       value={form.weightPerSet[i] ?? ""}

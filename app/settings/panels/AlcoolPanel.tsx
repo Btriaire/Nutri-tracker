@@ -53,7 +53,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
           </div>
           <div className="text-left">
             <p className={`font-semibold ${open ? "text-[13.5px]" : "text-[13px]"}`} style={{ color: "var(--text-primary)" }}>Suivi Alcool</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {enabled ? `Activé · objectif ${weeklyGoal} u/sem.` : "Désactivé — cliquer pour configurer"}
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                   <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
                     Activer le suivi
                   </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                     {enabled
                       ? "Verre SVG animé + presets rapides dans le Journal"
                       : "N'apparaît pas dans le Journal"}
@@ -125,7 +125,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                   >
                     <div className="rounded-2xl p-4 space-y-3"
                       style={{ background: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.18)" }}>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent)" }}>
+                      <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--accent)" }}>
                         Objectif hebdomadaire
                       </p>
                       <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export default function AlcoolPanel({ initialGoals }: { initialGoals: NutritionG
                         >+</button>
                         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>unités / semaine</span>
                       </div>
-                      <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         🌍 OMS : ≤ 10 u/sem pour les femmes · ≤ 14 u/sem pour les hommes.
                         1 unité standard = 10 g d&apos;alcool pur.
                       </p>

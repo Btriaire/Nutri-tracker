@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -256,7 +257,7 @@ export default function MentalHealthWidget({ date }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>Comment tu vas ?</p>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>Bilan de la journée</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>Bilan de la journée</p>
               </div>
               <button onClick={handleClose} className="p-2 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.06)" }}>
@@ -270,7 +271,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Humeur: cercle valence × arousal (modèle Halcyon-PaLaMa) ── */}
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
+              <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Humeur</p>
               <div className="flex justify-center py-1">
                 <MoodCircle initialX={moodPos.x} initialY={moodPos.y} onChange={handleMoodCircleChange} />
               </div>
@@ -278,7 +279,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Emotion tags ── */}
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
                 Émotions du jour
                 {tags.length > 0 && (
                   <span className="ml-2 normal-case font-normal" style={{ color: "var(--fit-indigo)" }}>
@@ -310,7 +311,7 @@ export default function MentalHealthWidget({ date }: Props) {
 
             {/* ── Note ── */}
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Note (optionnel)</p>
+              <p className="text-[12px] font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Note (optionnel)</p>
               <input
                 type="text"
                 value={note}
@@ -361,7 +362,7 @@ export default function MentalHealthWidget({ date }: Props) {
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{
             background: moodEntry ? `color-mix(in srgb, ${moodColor(moodEntry)} 8%, transparent)` : "rgba(129,140,248,0.12)",
-            border: `1px solid ${moodEntry ? moodColor(moodEntry) + "30" : "rgba(129,140,248,0.2)"}`,
+            border: `1px solid ${moodEntry ? alpha(moodColor(moodEntry), 19) : "rgba(129,140,248,0.2)"}`,
           }}
         >
           {moodEntry
@@ -382,8 +383,8 @@ export default function MentalHealthWidget({ date }: Props) {
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Santé mentale</p>
           {moodObj
-            ? <p className="text-[11px]" style={{ color: moodColor(moodObj.val) }}>Humeur : {moodObj.label}</p>
-            : <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Comment tu te sens ?</p>
+            ? <p className="text-[12px]" style={{ color: moodColor(moodObj.val) }}>Humeur : {moodObj.label}</p>
+            : <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Comment tu te sens ?</p>
           }
         </div>
       </button>

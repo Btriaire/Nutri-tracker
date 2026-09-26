@@ -62,7 +62,7 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-[11px] font-semibold tabular-nums"
+            className="text-[12px] font-semibold tabular-nums"
             style={{ color: ringColor }}
           >
             {Math.round(value)}
@@ -70,8 +70,8 @@ function MacroRing({ value, goal, label, color, glow, unit = "g", size = 64, del
         </div>
       </div>
       <div className="text-center">
-        <p className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</p>
-        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+        <p className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</p>
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
       </div>
     </div>
   );

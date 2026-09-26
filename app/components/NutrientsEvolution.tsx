@@ -79,7 +79,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
                       {([["macros", "Macros"], ["micros", "Micros"]] as const).map(([key, lbl]) => (
                         <button key={key} onClick={() => setNutriTab(key)}
-                          className="px-3 py-1 rounded-md text-[11px] font-medium transition-all"
+                          className="px-3 py-1 rounded-md text-[12px] font-medium transition-all"
                           style={{
                             background:  nutriTab === key ? "rgba(249,115,22,0.12)" : "transparent",
                             color:       nutriTab === key ? "var(--calories)"        : "var(--text-muted)",
@@ -101,7 +101,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                           return (
                             <div key={k} className="flex items-center gap-1">
                               <div className="w-2 h-2 rounded-full" style={{ background: cssVar }} />
-                              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                             </div>
                           );
                         })}
@@ -116,7 +116,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                           <Tooltip content={({ active, payload, label }) => {
                             if (!active || !payload?.length) return null;
                             return (
-                              <div className="px-3 py-2 rounded-xl space-y-0.5 text-[11px]"
+                              <div className="px-3 py-2 rounded-xl space-y-0.5 text-[12px]"
                                 style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                 <p style={{ color: "var(--text-muted)", marginBottom: 4 }}>{label}</p>
                                 {payload.map(e => (
@@ -142,9 +142,9 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                         ].map(({ label, val, goal, cssVar }) => (
                           <div key={label} className="flex-1 text-center">
                             <p className="text-[15px] font-bold tabular-nums" style={{ color: cssVar }}>{val}g</p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label} moy.</p>
+                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label} moy.</p>
                             {goal > 0 && (
-                              <p className="text-[11px] tabular-nums"
+                              <p className="text-[12px] tabular-nums"
                                 style={{ color: val >= goal * 0.85 && val <= goal * 1.15 ? "var(--fiber)" : "var(--carbs)" }}>
                                 obj. {goal}g
                               </p>
@@ -176,12 +176,12 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                               <div className="flex items-center justify-between mb-1.5">
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ref.color }} />
-                                  <span className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>{ref.label}</span>
+                                  <span className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>{ref.label}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-bold tabular-nums"
+                                  <span className="text-[12px] font-bold tabular-nums"
                                     style={{ color: isOkAvg ? "var(--fiber)" : "var(--danger)" }}>{avgVal}{ref.unit}</span>
-                                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>moy.</span>
+                                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>moy.</span>
                                 </div>
                               </div>
                               <ResponsiveContainer width="100%" height={64}>
@@ -197,7 +197,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                                   <Tooltip content={({ active, payload, label }) => {
                                     if (!active || !payload?.length) return null;
                                     return (
-                                      <div className="px-2 py-1 rounded-lg text-[11px]"
+                                      <div className="px-2 py-1 rounded-lg text-[12px]"
                                         style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                                         <p style={{ color: "var(--text-muted)" }}>{label}</p>
                                         <p style={{ color: ref.color }}>{payload[0].value}{ref.unit}</p>
@@ -209,7 +209,7 @@ export default function NutrientsEvolution({ caloriePoints, goals, trackedNutrie
                                     fill={`url(#micro-grad-${k})`} dot={{ r: 1.3, fill: ref.color, strokeWidth: 0 }} activeDot={{ r: 3 }} connectNulls />
                                 </AreaChart>
                               </ResponsiveContainer>
-                              <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                              <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                                 {k === "fiberG" ? `Objectif ≥ ${ref.refLine}${ref.unit}` : `Limite ${ref.refLine}${ref.unit}`} · {ref.note}
                               </p>
                             </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,7 +53,7 @@ function Stepper({
 }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="text-[11px] font-semibold uppercase tracking-widest"
+      <p className="text-[12px] font-semibold uppercase tracking-widest"
         style={{ color: "rgba(255,255,255,0.4)" }}>
         {label}
       </p>
@@ -199,7 +200,7 @@ export default function ActivityDetailSheet({
                     {exercise.name}
                   </p>
                   {exercise.muscles && exercise.muscles.length > 0 && (
-                    <p className="text-[11px] mt-0.5 truncate"
+                    <p className="text-[12px] mt-0.5 truncate"
                       style={{ color: "rgba(255,255,255,0.4)" }}>
                       {exercise.muscles.slice(0, 3).join(" · ")}
                     </p>
@@ -211,7 +212,7 @@ export default function ActivityDetailSheet({
                       style={{ color: catColor }}>
                       ~{kcalFinal ?? kcalEst} kcal
                     </span>
-                    <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>
                       estimées
                     </span>
                   </div>
@@ -276,7 +277,7 @@ export default function ActivityDetailSheet({
                         className="px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all"
                         style={{
                           background:  duration === p ? `color-mix(in srgb, ${catColor} 13%, transparent)` : "rgba(255,255,255,0.05)",
-                          border:      `1px solid ${duration === p ? catColor + "45" : "rgba(255,255,255,0.08)"}`,
+                          border:      `1px solid ${duration === p ? alpha(catColor, 27) : "rgba(255,255,255,0.08)"}`,
                           color:       duration === p ? catColor : "rgba(255,255,255,0.45)",
                         }}
                       >

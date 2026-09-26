@@ -50,7 +50,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
           return (
             <div key={wi} style={{ flex: 1, minWidth: 0 }}>
               {label && (
-                <span className="text-[11px] capitalize" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[12px] capitalize" style={{ color: "var(--text-muted)" }}>
                   {label.label}
                 </span>
               )}
@@ -85,7 +85,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
 
       {/* Legend */}
       <div className="flex items-center gap-2 mt-2">
-        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>0%</span>
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>0%</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
           <div key={v} style={{
             width: LEGEND_CELL, height: LEGEND_CELL, borderRadius: 2, flexShrink: 0,
@@ -97,7 +97,7 @@ function Heatmap({ days }: { days: HeatmapDay[] }) {
               : "var(--calories)",
           }} />
         ))}
-        <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>100%+</span>
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>100%+</span>
       </div>
     </div>
   );
@@ -113,8 +113,8 @@ function StatPill({ Icon, label, value, sub }: { Icon: typeof IconTrophy; label:
         <span className="text-[12px] font-bold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
           {value}
         </span>
-        {sub && <span className="text-[11px] tabular-nums ml-0.5" style={{ color: "var(--calories)" }}>{sub}</span>}
-        <p className="text-[11px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
+        {sub && <span className="text-[12px] tabular-nums ml-0.5" style={{ color: "var(--calories)" }}>{sub}</span>}
+        <p className="text-[12px] leading-tight truncate" style={{ color: "var(--text-muted)" }}>{label}</p>
       </div>
     </div>
   );

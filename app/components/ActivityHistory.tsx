@@ -38,11 +38,11 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "rgba(99,179,237,0.7)" }} />
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Pas</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Pas</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--calories)" }} />
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Sport (min)</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Sport (min)</span>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                 const steps = (payload.find(p => p.dataKey === "steps")?.value as number) ?? 0;
                 const sport = (payload.find(p => p.dataKey === "sportMin")?.value as number) ?? 0;
                 return (
-                  <div className="px-3 py-2 rounded-xl text-[11px] space-y-1"
+                  <div className="px-3 py-2 rounded-xl text-[12px] space-y-1"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{label}</p>
                     {steps > 0 && <p style={{ color: "#63b3ed" }}>👟 {steps.toLocaleString("fr-FR")} pas</p>}
@@ -91,7 +91,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
               ].map(({ v, l }) => (
                 <div key={l} className="flex-1 text-center">
                   <p className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{v}</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l}</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{l}</p>
                 </div>
               ))}
             </div>
@@ -114,7 +114,7 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                   onClick={() => setExpanded(isOpen ? null : p.date)}
                 >
                   {/* Date */}
-                  <span className="text-[11px] w-[44px] flex-shrink-0 text-left tabular-nums"
+                  <span className="text-[12px] w-[44px] flex-shrink-0 text-left tabular-nums"
                     style={{ color: "var(--text-muted)" }}>
                     {dateFmt(parseISO(p.date), "dd MMM", { locale: fr })}
                   </span>
@@ -123,33 +123,33 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                   <div className="flex items-center gap-1 w-[60px] flex-shrink-0">
                     {p.steps > 0 ? (
                       <>
-                        <span className="text-[11px]">👟</span>
-                        <span className="text-[11px] font-semibold tabular-nums"
+                        <span className="text-[12px]">👟</span>
+                        <span className="text-[12px] font-semibold tabular-nums"
                           style={{ color: stepsOk ? "var(--fit-green)" : "var(--text-secondary)" }}>
                           {p.steps >= 1000 ? `${(p.steps / 1000).toFixed(1)}k` : String(p.steps)}
                         </span>
                       </>
                     ) : (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>—</span>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>—</span>
                     )}
                   </div>
 
                   {/* Sport badges */}
                   <div className="flex-1 flex items-center gap-1 flex-wrap min-w-0">
                     {p.sessions.slice(0, 3).map((s, i) => (
-                      <span key={i} className="text-[11px] px-1.5 py-0.5 rounded-md flex-shrink-0"
+                      <span key={i} className="text-[12px] px-1.5 py-0.5 rounded-md flex-shrink-0"
                         style={{ background: "rgba(249,115,22,0.1)", color: "var(--calories)", fontSize: 11 }}>
                         {s.emoji} {s.durationMin}min
                       </span>
                     ))}
                     {p.sessions.length === 0 && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Repos</span>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Repos</span>
                     )}
                   </div>
 
                   {/* Kcal */}
                   {(p.activeKcal > 0 || p.sportKcal > 0) && (
-                    <span className="text-[11px] font-medium flex-shrink-0 tabular-nums"
+                    <span className="text-[12px] font-medium flex-shrink-0 tabular-nums"
                       style={{ color: "var(--fiber)" }}>
                       {Math.round(Math.max(p.activeKcal, p.sportKcal))} kcal
                     </span>
@@ -180,10 +180,10 @@ export default function ActivityHistory({ history, stepsGoal }: { history: Activ
                             <span className="text-[14px] flex-shrink-0">{s.emoji}</span>
                             <span className="flex-1 text-[12px] font-medium truncate"
                               style={{ color: "var(--text-secondary)" }}>{s.name}</span>
-                            <span className="text-[11px] tabular-nums flex-shrink-0"
+                            <span className="text-[12px] tabular-nums flex-shrink-0"
                               style={{ color: "var(--text-muted)" }}>{s.durationMin} min</span>
                             {s.calories && (
-                              <span className="text-[11px] tabular-nums flex-shrink-0"
+                              <span className="text-[12px] tabular-nums flex-shrink-0"
                                 style={{ color: "var(--fiber)" }}>{Math.round(s.calories)} kcal</span>
                             )}
                           </div>

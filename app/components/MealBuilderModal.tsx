@@ -269,7 +269,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                           <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>
                             {item.name}
                           </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
                             {item.servingLabel}
                             <span className="ml-1.5 font-medium" style={{ color: "var(--calories)" }}>
                               {Math.round(item.nutrition.calories)} kcal
@@ -298,7 +298,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                         {editingFood.name}
                       </p>
                       {editingFood.brand && (
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{editingFood.brand}</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{editingFood.brand}</p>
                       )}
                     </div>
                     <button onClick={() => setEditingFood(null)} className="btn-icon w-7 h-7 flex-shrink-0">
@@ -383,14 +383,14 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                               {r.name}
                             </p>
                             {r.brand && (
-                              <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{r.brand}</p>
+                              <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{r.brand}</p>
                             )}
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="text-[13px] font-bold tabular-nums" style={{ color: "var(--calories)" }}>
                               {r.nutrition.calories}
                             </p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
+                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>kcal/{r.servingSizeG}g</p>
                           </div>
                           <IconPlus size={14} stroke={1.5} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                         </button>

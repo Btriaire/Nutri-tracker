@@ -59,7 +59,7 @@ export default function NutritionSection({ chartData, goals, range, loading, cal
               </div>
 
               {/* Calorie chart */}
-              <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Calories consommées</p>
+              <p className="text-[12px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Calories consommées</p>
               {loading ? (
                 <div className="h-32 flex items-center justify-center">
                   <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</span>
@@ -104,9 +104,9 @@ export default function NutritionSection({ chartData, goals, range, loading, cal
                   <div className="h-px my-4" style={{ background: "var(--border)" }} />
                   <div className="flex items-center gap-2 mb-3">
                     <IconRun size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
-                    <p className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
+                    <p className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Activité sportive</p>
                     {avgSteps > 0 && (
-                      <span className="ml-auto text-[11px] tabular-nums" style={{ color: "var(--steps)" }}>
+                      <span className="ml-auto text-[12px] tabular-nums" style={{ color: "var(--steps)" }}>
                         ~{avgSteps.toLocaleString("fr-FR")} pas/j
                       </span>
                     )}
@@ -114,7 +114,7 @@ export default function NutritionSection({ chartData, goals, range, loading, cal
                   {/* Steps */}
                   {avgSteps > 0 && (
                     <>
-                      <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
+                      <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Pas journaliers</p>
                       <ResponsiveContainer width="100%" height={90}>
                         <AreaChart data={chartData.filter((p) => (p.steps ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
                           <defs>
@@ -136,7 +136,7 @@ export default function NutritionSection({ chartData, goals, range, loading, cal
                   {avgActiveMins > 0 && (
                     <>
                       <div className="h-px my-3" style={{ background: "var(--border)" }} />
-                      <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives · moy. {avgActiveMins} min/j</p>
+                      <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Minutes actives · moy. {avgActiveMins} min/j</p>
                       <ResponsiveContainer width="100%" height={80}>
                         <BarChart data={chartData.filter((p) => (p.activeMinutes ?? 0) > 0)} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
                           <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />

@@ -109,17 +109,17 @@ export default function FastingTracker({
         </div>
         <div className="flex items-center gap-1.5">
           {streak > 0 && (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+            <span className="text-[12px] font-bold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(34,197,94,0.15)", color: "var(--ok)", border: "1px solid rgba(34,197,94,0.3)" }}>
               {streak}🔥
             </span>
           )}
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+          <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: "rgba(129,140,248,0.12)", color: "var(--fit-indigo)", border: "1px solid rgba(129,140,248,0.25)" }}>
             {withEnd.length} / {fullDone.length} ✓
           </span>
           {avgH > 0 && (
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
               style={{ background: "rgba(251,191,36,0.1)", color: "var(--carbs)", border: "1px solid rgba(251,191,36,0.25)" }}>
               ⌀ {avgH.toFixed(1)}h
             </span>
@@ -160,7 +160,7 @@ export default function FastingTracker({
         ].map(l => (
           <div key={l.label} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-sm" style={{ background: l.c }} />
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{l.label}</span>
           </div>
         ))}
       </div>

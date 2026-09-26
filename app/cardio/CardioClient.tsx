@@ -81,7 +81,7 @@ export default function CardioClient({ points, age }: Props) {
     const bpm = payload[0].value;
     const z = hrZone(bpm, fcMax);
     return (
-      <div className="px-3 py-2 rounded-xl text-[11px] space-y-0.5"
+      <div className="px-3 py-2 rounded-xl text-[12px] space-y-0.5"
         style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
         <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
         <p className="font-bold text-[14px]" style={{ color: z.color }}>{bpm} bpm</p>
@@ -105,7 +105,7 @@ export default function CardioClient({ points, age }: Props) {
             <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
               Cardiaque
             </h1>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               Historique fréquence cardiaque
             </p>
           </div>
@@ -127,7 +127,7 @@ export default function CardioClient({ points, age }: Props) {
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: zone.color }} />
                   <span className="text-[12px] font-medium" style={{ color: zone.color }}>{zone.label}</span>
-                  <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>· {zone.desc}</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>· {zone.desc}</span>
                 </div>
               )}
             </div>
@@ -141,7 +141,7 @@ export default function CardioClient({ points, age }: Props) {
                   {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
                   {Math.abs(delta)} bpm
                 </div>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
               </div>
             )}
           </div>
@@ -226,7 +226,7 @@ export default function CardioClient({ points, age }: Props) {
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -248,7 +248,7 @@ export default function CardioClient({ points, age }: Props) {
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                  <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                     <p style={{ color: "var(--fit-green)" }} className="font-bold">{payload[0]?.value} min</p>
@@ -278,7 +278,7 @@ export default function CardioClient({ points, age }: Props) {
               <Tooltip content={({ active, payload, label: lbl }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                  <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                     style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                     <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                     <p style={{ color: "var(--fit-indigo)" }} className="font-bold">{fmtSleep(payload[0]?.value as number)}</p>
@@ -289,7 +289,7 @@ export default function CardioClient({ points, age }: Props) {
               <Area type="monotone" dataKey="sleepMinutes" stroke="var(--fit-indigo)" strokeWidth={1.5} fill="url(#sleepGrad)" dot={false} connectNulls />
             </AreaChart>
           </ResponsiveContainer>
-          <p className="text-[11px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
+          <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>Trait pointillé = objectif 7h</p>
         </motion.div>
 
         {/* Daily log table */}
@@ -301,7 +301,7 @@ export default function CardioClient({ points, age }: Props) {
               return (
                 <div key={p.date} className="flex items-center gap-3 py-1.5"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <span className="text-[11px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                  <span className="text-[12px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                     {format(parseISO(p.date), "dd MMM", { locale: fr })}
                   </span>
                   {/* HR */}
@@ -310,7 +310,7 @@ export default function CardioClient({ points, age }: Props) {
                     <span className="text-[12px] font-medium" style={{ color: z?.color ?? "var(--text-muted)" }}>
                       {p.hrAvg ? `${p.hrAvg}` : "—"}
                     </span>
-                    {p.hrAvg && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
+                    {p.hrAvg && <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
                   </div>
                   {/* Active min */}
                   <div className="flex items-center gap-1 w-[52px]">

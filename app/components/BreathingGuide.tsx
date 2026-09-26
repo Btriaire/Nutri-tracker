@@ -1,5 +1,6 @@
 "use client";
 
+import { alpha } from "@/app/lib/color";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlayerPlay, IconPlayerStop, IconClock, IconChevronDown, IconChevronUp, IconVolume, IconVolumeOff } from "@tabler/icons-react";
@@ -275,10 +276,10 @@ export default function BreathingGuide() {
               className="flex flex-col items-center gap-1 p-2.5 rounded-xl transition-all text-center"
               style={{
                 background: sel ? `color-mix(in srgb, ${p.color} 9%, transparent)` : "rgba(255,255,255,0.03)",
-                border: `1px solid ${sel ? p.color + "55" : "var(--border)"}`,
+                border: `1px solid ${sel ? alpha(p.color, 33) : "var(--border)"}`,
               }}>
               <span className="text-[20px]">{p.emoji}</span>
-              <p className="text-[11px] font-semibold leading-tight" style={{ color: sel ? p.color : "var(--text-primary)" }}>
+              <p className="text-[12px] font-semibold leading-tight" style={{ color: sel ? p.color : "var(--text-primary)" }}>
                 {p.name}
               </p>
             </button>
@@ -362,14 +363,14 @@ export default function BreathingGuide() {
             className="flex items-center gap-4 mt-4 text-center">
             <div>
               <p className="text-[18px] font-bold tabular-nums" style={{ color: prog.color }}>{cycleCount}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>cycles</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>cycles</p>
             </div>
             <div className="w-px h-6" style={{ background: "var(--border)" }} />
             <div>
               <p className="text-[18px] font-bold tabular-nums" style={{ color: prog.color }}>
                 {remaining !== null ? fmtTime(remaining) : fmtTime(elapsedSec)}
               </p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {remaining !== null ? "restantes" : "écoulé"}
               </p>
             </div>
@@ -378,7 +379,7 @@ export default function BreathingGuide() {
 
         {/* Hint when idle */}
         {!active && (
-          <p className="text-[11px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[12px] mt-3 text-center" style={{ color: "var(--text-muted)" }}>
             {prog.desc}
           </p>
         )}
@@ -394,10 +395,10 @@ export default function BreathingGuide() {
             return (
               <button key={d.value} onClick={() => setDuration(d.value)}
                 disabled={active}
-                className="px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all"
+                className="px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all"
                 style={{
                   background: sel ? `color-mix(in srgb, ${prog.color} 15%, transparent)` : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${sel ? prog.color + "60" : "var(--border)"}`,
+                  border: `1px solid ${sel ? alpha(prog.color, 38) : "var(--border)"}`,
                   color: sel ? prog.color : "var(--text-muted)",
                   opacity: active ? 0.5 : 1,
                 }}>
@@ -406,7 +407,7 @@ export default function BreathingGuide() {
             );
           })}
           {prog.recMin && !active && (
-            <span className="text-[11px] ml-auto" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px] ml-auto" style={{ color: "var(--text-muted)" }}>
               Recommandé : {prog.recMin} min
             </span>
           )}
@@ -416,7 +417,7 @@ export default function BreathingGuide() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => setSoundOn(v => !v)}
-            className="flex items-center gap-1.5 text-[11px] transition-all"
+            className="flex items-center gap-1.5 text-[12px] transition-all"
             style={{ color: soundOn ? prog.color : "var(--text-muted)" }}>
             {soundOn
               ? <IconVolume size={13} stroke={2} />
@@ -424,7 +425,7 @@ export default function BreathingGuide() {
             {soundOn ? "Sons zen activés" : "Sons désactivés"}
           </button>
           {soundOn && !active && (
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               Drone · Vent · Cloche
             </span>
           )}

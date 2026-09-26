@@ -178,7 +178,7 @@ export default function ThemePicker({ current, onChange }: { current: Theme; onC
           </div>
           <div className="text-left">
             <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence</p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {THEME_DEFS.find(t => t.id === current)?.name ?? "Thème actuel"}
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function ThemePicker({ current, onChange }: { current: Theme; onC
                     >
                       {t.name}
                     </p>
-                    <p className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>
                       {t.desc}
                     </p>
                   </div>

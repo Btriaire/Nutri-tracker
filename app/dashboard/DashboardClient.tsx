@@ -386,7 +386,7 @@ export default function DashboardClient({
               {syncing
                 ? <IconRefresh size={15} stroke={1.5} className="animate-spin" />
                 : syncMsg
-                  ? <span className="text-[11px] font-bold leading-none">{syncMsg}</span>
+                  ? <span className="text-[12px] font-bold leading-none">{syncMsg}</span>
                   : <IconRefresh size={15} stroke={1.5} />
               }
             </button>
@@ -410,7 +410,7 @@ export default function DashboardClient({
                 />
               ))}
             </div>
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {score}/4 objectifs du jour
             </span>
           </div>
@@ -431,15 +431,15 @@ export default function DashboardClient({
                 {plan && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px]">{plan.programEmoji}</span>
-                    <span className="text-[11px] font-semibold" style={{ color: "var(--text-secondary)" }}>{plan.programLabel}</span>
+                    <span className="text-[12px] font-semibold" style={{ color: "var(--text-secondary)" }}>{plan.programLabel}</span>
                     {daysInPlan !== null && (
-                      <span className="text-[11px] px-1 py-px rounded"
+                      <span className="text-[12px] px-1 py-px rounded"
                         style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)", fontWeight: 600 }}>
                         J{daysInPlan}
                       </span>
                     )}
                     {plan.projectedTargetDate && (
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         <IconTarget size={12} stroke={1.7} className="inline-block align-[-2px] mr-1" />
                         {format(new Date(plan.projectedTargetDate + "T00:00:00"), "d MMM", { locale: fr })}
                       </span>
@@ -447,14 +447,14 @@ export default function DashboardClient({
                   </div>
                 )}
                 {wk !== undefined && (
-                  <div className="flex items-center gap-1.5 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-[12px]">
                     <span style={{ color: "var(--border)" }}>·</span>
                     <span style={{ color: "var(--fiber)", fontWeight: 600 }}>{fmtKg(wk)}/sem</span>
                     {mo !== undefined && <span style={{ color: "var(--fiber)" }}>{fmtKg(mo)}/mois</span>}
                   </div>
                 )}
                 {ap && (
-                  <div className="flex items-center gap-1.5 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-[12px]">
                     <span style={{ color: "var(--border)" }}>·</span>
                     <IconRun size={13} stroke={1.6} />
                     <span style={{ color: "var(--text-muted)" }}>{ap.sessionsPerWeek} séances/sem</span>
@@ -501,7 +501,7 @@ export default function DashboardClient({
                 <p className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>
                   Tension artérielle
                 </p>
-                <p className="text-[11px]" style={{ color: "var(--danger)" }}>
+                <p className="text-[12px]" style={{ color: "var(--danger)" }}>
                   {bpWarningMsg}
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function DashboardClient({
                 <path d="M12 5a3 3 0 0 0-3 3c0 1 .5 1.8 1.2 2.3C8.5 11 7 12.8 7 15a5 5 0 0 0 10 0c0-2.2-1.5-4-3.2-4.7.7-.5 1.2-1.3 1.2-2.3a3 3 0 0 0-3-3z" />
                 <path d="M9 8.5C7.8 8.8 7 9.8 7 11" /><path d="M15 8.5c1.2.3 2 1.3 2 2.5" /><path d="M9 15c0 1.1.9 2 3 2s3-.9 3-2" />
               </svg>
-              <p className="text-[11px] font-medium flex-1" style={{ color: "var(--fit-indigo)" }}>
+              <p className="text-[12px] font-medium flex-1" style={{ color: "var(--fit-indigo)" }}>
                 Bien-être non rempli · humeur, énergie, stress
               </p>
               <IconChevronRight size={12} stroke={2} style={{ color: "var(--fit-indigo)", flexShrink: 0, opacity: 0.7 }} />
@@ -553,7 +553,7 @@ export default function DashboardClient({
             <button
               onClick={() => setShowSpider(x => !x)}
               title={showSpider ? "Vue anneaux" : "Vue radar"}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all active:scale-95"
               style={{
                 background: showSpider ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.05)",
                 border: `1px solid ${showSpider ? "rgba(249,115,22,0.35)" : "var(--border)"}`,
@@ -581,7 +581,7 @@ export default function DashboardClient({
                 {/* Score headline */}
                 <div className="flex items-center justify-center mb-3">
                   <div className="text-center">
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Score global du jour</p>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Score global du jour</p>
                     <p className="text-[26px] font-bold tabular-nums leading-none" style={{ color: "var(--calories)" }}>
                       {spiderTotal}<span className="text-[14px] font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>/36</span>
                     </p>
@@ -700,8 +700,8 @@ export default function DashboardClient({
                       return (
                         <div key={label} className="flex flex-col gap-1.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-medium" style={{ color }}>{label}</span>
-                            <span className="text-[11px] tabular-nums" style={{ color: over ? "var(--danger)" : levelColor(fraction) }}>
+                            <span className="text-[12px] font-medium" style={{ color }}>{label}</span>
+                            <span className="text-[12px] tabular-nums" style={{ color: over ? "var(--danger)" : levelColor(fraction) }}>
                               {Math.round(value)}g
                             </span>
                           </div>
@@ -714,7 +714,7 @@ export default function DashboardClient({
                               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                             />
                           </div>
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>/{goal}g</span>
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>/{goal}g</span>
                         </div>
                       );
                     })}
@@ -740,7 +740,7 @@ export default function DashboardClient({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setBilanMode(m => m === "%" ? "g" : "%")}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                className="px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-all"
                 style={{
                   background: bilanMode === "g" ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.06)",
                   color:      bilanMode === "g" ? "var(--calories)"        : "var(--text-muted)",
@@ -755,13 +755,13 @@ export default function DashboardClient({
             {bilanMetrics.map(({ label, pct, value, goalVal, unit }) => (
               <div key={label}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{label}</span>
                   {bilanMode === "%" ? (
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
                       {pct !== null ? `${Math.round(pct)}%` : "—"}
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
+                    <span className="text-[12px] font-semibold tabular-nums" style={{ color: levelColorPct(pct) }}>
                       {value !== null
                         ? unit === "" ? value.toLocaleString("fr-FR")
                           : `${value}${unit !== "kcal" ? "" : " "}${unit}`
@@ -820,7 +820,7 @@ export default function DashboardClient({
                 <IconShoe size={13} stroke={1.5} style={{ color: "var(--steps)" }} />
                 <span className="label-xs">Pas</span>
               </div>
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {stepsGoal.toLocaleString("fr-FR")}
               </span>
             </div>
@@ -838,7 +838,7 @@ export default function DashboardClient({
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {steps !== null
                   ? stepsPct >= 100 ? "Objectif atteint" : `${Math.round((1 - stepsPct / 100) * stepsGoal).toLocaleString("fr-FR")} restants`
                   : "Sync Google Fit"}
@@ -880,7 +880,7 @@ export default function DashboardClient({
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
+              <span className="text-[12px]" style={{ color: sleepOk ? levelColor(1) : "var(--text-muted)" }}>
                 {sleepMinutes ? (sleepOk ? "✓ Ok" : `/${sleepGoalH}h`) : "—"}
               </span>
               <IconChevronRight size={10} stroke={1.5} style={{ color: "var(--text-muted)" }} />
@@ -906,16 +906,16 @@ export default function DashboardClient({
               {heartRate ?? "—"}
             </span>
             {heartRate && zone ? (
-              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md self-start"
+              <span className="text-[12px] font-medium px-1.5 py-0.5 rounded-md self-start"
                 style={{ background: `color-mix(in srgb, ${zone.color} 13%, transparent)`, color: zone.color }}>
                 {zone.label}
               </span>
             ) : (
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {heartRate ? "bpm" : "—"}
               </span>
             )}
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
               {heartRate ? "bpm" : ""}
             </span>
           </Link>
@@ -937,7 +937,7 @@ export default function DashboardClient({
                 {activeMinutes ?? "—"}
               </span>
               {activeMinutes && (
-                <span className="text-[11px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
+                <span className="text-[12px] mb-0.5" style={{ color: "var(--text-muted)" }}>/30</span>
               )}
             </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
@@ -950,7 +950,7 @@ export default function DashboardClient({
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px]" style={{ color: activePct >= 100 ? levelColor(1) : "var(--text-muted)" }}>
+              <span className="text-[12px]" style={{ color: activePct >= 100 ? levelColor(1) : "var(--text-muted)" }}>
                 {activeMinutes
                   ? activePct >= 100 ? "✓ Ok" : `${30 - (activeMinutes ?? 0)} restantes`
                   : "—"}
@@ -978,7 +978,7 @@ export default function DashboardClient({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
-                    <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                       {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -1022,7 +1022,7 @@ export default function DashboardClient({
                         <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
                           Calories brûlées
                         </p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Détail de la dépense active</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Détail de la dépense active</p>
                       </div>
                     </div>
                     <button onClick={() => setBurnedDetailOpen(false)}
@@ -1055,7 +1055,7 @@ export default function DashboardClient({
                             style={{ background: "rgba(255,255,255,0.05)" }}><IconShoe size={13} stroke={1.6} /></div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Marche · {steps.toLocaleString("fr-FR")} pas</p>
-                            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>≈ 0.04 kcal/pas</p>
+                            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>≈ 0.04 kcal/pas</p>
                           </div>
                           <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
                             style={{ color: "var(--ok)" }}>~{stepKcal} kcal</span>
@@ -1073,7 +1073,7 @@ export default function DashboardClient({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.name}</p>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                             {new Date(s.startMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {s.durationMin} min
                           </p>
                         </div>
@@ -1092,7 +1092,7 @@ export default function DashboardClient({
                           style={{ background: "rgba(255,255,255,0.05)" }}><IconBolt size={13} stroke={1.6} /></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Minutes actives</p>
-                          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Intensité globale du jour</p>
+                          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Intensité globale du jour</p>
                         </div>
                         <span className="text-[12px] font-semibold tabular-nums flex-shrink-0"
                           style={{ color: "var(--text-secondary)" }}>{activeMinutes} min</span>
@@ -1101,7 +1101,7 @@ export default function DashboardClient({
                   </div>
 
                   {/* Note */}
-                  <p className="mt-3 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                     Valeur issue de Google Fit · Dépense basale (métabolisme de repos) non incluse
                   </p>
                 </div>
@@ -1145,7 +1145,7 @@ export default function DashboardClient({
                 <p className="text-[13px] font-semibold" style={{ color: "var(--protein)" }}>
                   Méditation · {todayMeditationMin} min
                 </p>
-                <p className="text-[11px]" style={{ color: "var(--accent)" }}>
+                <p className="text-[12px]" style={{ color: "var(--accent)" }}>
                   {todayMeditationSessions > 1
                     ? `${todayMeditationSessions} séances aujourd'hui`
                     : "Séance complétée aujourd'hui"}
@@ -1173,7 +1173,7 @@ export default function DashboardClient({
                   return (
                     <div key={key} className="flex items-center gap-2.5">
                       <Icon size={15} stroke={1.6} className="flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-                      <span className="text-[11px] w-[88px] flex-shrink-0 truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[12px] w-[88px] flex-shrink-0 truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
                       <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <motion.div
                           className="h-full rounded-full w-full"
@@ -1183,7 +1183,7 @@ export default function DashboardClient({
                           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         />
                       </div>
-                      <span className="text-[11px] font-semibold tabular-nums flex-shrink-0 w-[48px] text-right"
+                      <span className="text-[12px] font-semibold tabular-nums flex-shrink-0 w-[48px] text-right"
                         style={{ color: over && invertAlert ? "var(--danger)" : levelColor(fraction) }}>
                         {value}<span className="font-normal opacity-60">/{goal}{unit}</span>
                       </span>
@@ -1215,7 +1215,7 @@ export default function DashboardClient({
                 <Tooltip content={({ active, payload, label: lbl }) => {
                   if (!active || !payload?.length) return null;
                   return (
-                    <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                    <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                       style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                       <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                       <p style={{ color: "var(--calories)" }} className="font-bold">{payload[0]?.value} kcal</p>
@@ -1243,7 +1243,7 @@ export default function DashboardClient({
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2.5 py-1.5 rounded-lg text-[11px]"
+                        <div className="px-2.5 py-1.5 rounded-lg text-[12px]"
                           style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p style={{ color: "var(--steps)" }} className="font-bold">{(payload[0]?.value as number)?.toFixed(1)} kg</p>

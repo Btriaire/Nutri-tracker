@@ -71,7 +71,7 @@ export default function FunFactsBanner() {
     >
       <div className="flex items-start gap-2 relative z-10">
         <IconBulb size={13} stroke={2} style={{ color: "var(--carbs)", flexShrink: 0, marginTop: 2 }} />
-        <p className="text-[11px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "var(--carbs)", marginTop: 2 }}>
+        <p className="text-[12px] font-semibold uppercase tracking-wide flex-shrink-0" style={{ color: "var(--carbs)", marginTop: 2 }}>
           Le saviez-vous ?
         </p>
         <AnimatePresence mode="wait" initial={false}>
@@ -81,7 +81,7 @@ export default function FunFactsBanner() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -direction * 12 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className={`text-[11px] leading-snug pnum${expanded ? "" : " line-clamp-2"}`}
+            className={`text-[12px] leading-snug pnum${expanded ? "" : " line-clamp-2"}`}
             style={{ color: "var(--text-muted)" }}
           >
             {fact.text}

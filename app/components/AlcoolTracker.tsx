@@ -306,7 +306,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
           <div className="flex items-center gap-1.5 mb-2">
             <p className="label-xs">Alcool</p>
             {loading && (
-              <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>…</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>…</span>
             )}
           </div>
 
@@ -317,7 +317,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                 style={{ color: over ? "var(--danger)" : "var(--violet)" }}>
                 {totalUnits.toFixed(1)}
               </span>
-              <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
+              <span className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>unités</span>
             </div>
             {totalKcal > 0 && (
               <div className="flex flex-col">
@@ -325,7 +325,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
                   style={{ color: "var(--calories)" }}>
                   {totalKcal}
                 </span>
-                <span className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
+                <span className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
               </div>
             )}
           </div>
@@ -339,7 +339,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
-          <p className="text-[11px]" style={{ color: over ? "var(--danger)" : "var(--text-muted)" }}>
+          <p className="text-[12px]" style={{ color: over ? "var(--danger)" : "var(--text-muted)" }}>
             {over
               ? `+${(totalUnits - dailyGoal).toFixed(1)}u au-delà du seuil journalier`
               : `${totalUnits.toFixed(1)} / ${dailyGoal}u seuil jour (${weeklyGoal}u/sem.)`}
@@ -354,7 +354,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
             <motion.div key={d.id}
               initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px]"
               style={{ background: "rgba(192,132,252,0.10)", border: "1px solid rgba(192,132,252,0.25)" }}>
               <span>{d.emoji}</span>
               <span style={{ color: "var(--text-secondary)" }}>{d.type}</span>
@@ -380,11 +380,11 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all active:scale-95"
               style={{ background: "rgba(192,132,252,0.07)", border: "1px solid rgba(192,132,252,0.18)" }}>
               <DrinkIcon type={p.type} color="var(--violet)" />
-              <span className="text-[11px] text-center leading-tight w-full px-0.5 truncate"
+              <span className="text-[12px] text-center leading-tight w-full px-0.5 truncate"
                 style={{ color: "var(--text-muted)" }}>
                 {p.type.replace(" 25cl", "").replace(" 33cl", " 33")}
               </span>
-              <span className="text-[11px] font-bold tabular-nums" style={{ color: "var(--accent)" }}>
+              <span className="text-[12px] font-bold tabular-nums" style={{ color: "var(--accent)" }}>
                 {u.toFixed(1)}u
               </span>
             </button>
@@ -394,7 +394,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
 
       {/* ── Custom entry ── */}
       <button onClick={() => setShowCustom(v => !v)}
-        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-medium transition-all"
+        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-medium transition-all"
         style={{
           background: showCustom ? "rgba(192,132,252,0.10)" : "rgba(255,255,255,0.03)",
           border: `1px solid ${showCustom ? "rgba(192,132,252,0.3)" : "var(--border)"}`,
@@ -429,7 +429,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               <div className="flex gap-2">
                 {/* Volume */}
                 <div className="flex-1">
-                  <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Volume (ml)</p>
+                  <p className="text-[12px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Volume (ml)</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomMl(v => Math.max(10, v - 25))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -450,7 +450,7 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
 
                 {/* ABV */}
                 <div className="flex-1">
-                  <p className="text-[11px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Alcool (% vol)</p>
+                  <p className="text-[12px] mb-1.5 font-medium" style={{ color: "var(--text-muted)" }}>Alcool (% vol)</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCustomAbv(v => Math.max(0.5, Math.round((v - 0.5) * 10) / 10))}
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -473,10 +473,10 @@ export default function AlcoolTracker({ date, initialDrinks = [], weeklyGoalUnit
               {/* Live preview */}
               <div className="flex items-center justify-between px-3 py-2 rounded-xl"
                 style={{ background: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.20)" }}>
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                   {customType.trim() || "Boisson"} · {customMl} ml · {customAbv}%
                 </span>
-                <span className="text-[11px] font-bold" style={{ color: "var(--accent)" }}>
+                <span className="text-[12px] font-bold" style={{ color: "var(--accent)" }}>
                   {calcUnits(customMl, customAbv).toFixed(1)}u · {calcKcal(customMl, customAbv)} kcal
                 </span>
               </div>

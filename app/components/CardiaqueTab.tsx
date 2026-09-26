@@ -63,7 +63,7 @@ export default function CardiaqueTab({
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <div className="w-2 h-2 rounded-full" style={{ background: zone.color }} />
                       <span className="text-[12px] font-medium" style={{ color: zone.color }}>{zone.label}</span>
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>· {zone.desc}</span>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>· {zone.desc}</span>
                     </div>
                   )}
                   {!todayHr && (
@@ -82,7 +82,7 @@ export default function CardiaqueTab({
                       {delta < 0 ? <IconArrowDown size={12} /> : delta > 0 ? <IconArrowUp size={12} /> : <IconMinus size={12} />}
                       {Math.abs(delta)} bpm
                     </div>
-                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>vs hier</span>
                   </div>
                 )}
               </div>
@@ -151,7 +151,7 @@ export default function CardiaqueTab({
                   ].map(({ label, color }) => (
                     <div key={label} className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</span>
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -159,7 +159,7 @@ export default function CardiaqueTab({
 
               {/* BPM — line */}
               <div className="mb-0.5">
-                <p className="text-[11px] font-medium mb-0.5" style={{ color: "var(--fit-red)" }}>BPM</p>
+                <p className="text-[12px] font-medium mb-0.5" style={{ color: "var(--fit-red)" }}>BPM</p>
                 <ResponsiveContainer width="100%" height={68}>
                   <AreaChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }}>
                     <defs>
@@ -178,7 +178,7 @@ export default function CardiaqueTab({
                       if (!v) return null;
                       const z = hrZone(v, fcMax);
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: z.color }}>{v} bpm · {z.label}</p>
                         </div>
@@ -191,7 +191,7 @@ export default function CardiaqueTab({
 
               <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Calories — bar */}
-                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "var(--info)" }}>Calories actives (kcal)</p>
+                <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--info)" }}>Calories actives (kcal)</p>
                 <ResponsiveContainer width="100%" height={52}>
                   <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
                     <XAxis dataKey="label" hide />
@@ -199,7 +199,7 @@ export default function CardiaqueTab({
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--info)" }}>{payload[0]?.value} kcal</p>
                         </div>
@@ -212,7 +212,7 @@ export default function CardiaqueTab({
 
               <div className="mb-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Activité — bar */}
-                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-green)" }}>Activité (min)</p>
+                <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-green)" }}>Activité (min)</p>
                 <ResponsiveContainer width="100%" height={52}>
                   <BarChart syncId="hs" data={cardioChartData} margin={{ top: 2, right: 2, left: 0, bottom: 0 }} barSize={4}>
                     <XAxis dataKey="label" hide />
@@ -221,7 +221,7 @@ export default function CardiaqueTab({
                     <Tooltip content={({ active, payload, label: lbl }) => {
                       if (!active || !payload?.length) return null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--fit-green)" }}>{payload[0]?.value} min</p>
                         </div>
@@ -234,7 +234,7 @@ export default function CardiaqueTab({
 
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                 {/* Sommeil — bar avec X axis */}
-                <p className="text-[11px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-indigo)" }}>Sommeil (h) · — objectif 7h</p>
+                <p className="text-[12px] font-medium mt-1 mb-0.5" style={{ color: "var(--fit-indigo)" }}>Sommeil (h) · — objectif 7h</p>
                 <ResponsiveContainer width="100%" height={65}>
                   <BarChart syncId="hs"
                     data={cardioChartData.map(p => ({ ...p, sleepH: p.sleepMinutes != null ? Math.round(p.sleepMinutes / 60 * 10) / 10 : null }))}
@@ -248,7 +248,7 @@ export default function CardiaqueTab({
                       if (!active || !payload?.length) return null;
                       const v = payload[0]?.value as number | null;
                       return (
-                        <div className="px-2 py-1.5 rounded-lg text-[11px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
+                        <div className="px-2 py-1.5 rounded-lg text-[12px]" style={{ background: "rgba(13,13,17,0.96)", border: "1px solid var(--border)" }}>
                           <p style={{ color: "var(--text-muted)" }}>{lbl}</p>
                           <p className="font-bold" style={{ color: "var(--fit-indigo)" }}>{v != null ? `${v}h` : "—"}</p>
                         </div>
@@ -275,7 +275,7 @@ export default function CardiaqueTab({
                     return (
                       <div key={p.date} className="flex items-center gap-3 py-1.5"
                         style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <span className="text-[11px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                        <span className="text-[12px] w-[52px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                           {format(parseISO(p.date), "dd MMM", { locale: fr })}
                         </span>
                         <div className="flex items-center gap-1 w-[60px]">
@@ -283,7 +283,7 @@ export default function CardiaqueTab({
                           <span className="text-[12px] font-medium" style={{ color: z?.color ?? "var(--text-muted)" }}>
                             {p.hrAvg ? `${p.hrAvg}` : "—"}
                           </span>
-                          {p.hrAvg && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
+                          {p.hrAvg && <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>bpm</span>}
                         </div>
                         <div className="flex items-center gap-1 w-[52px]">
                           <IconBolt size={11} style={{ color: "var(--fit-green)" }} />
