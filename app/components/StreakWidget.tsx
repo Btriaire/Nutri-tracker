@@ -166,6 +166,11 @@ export default function StreakWidget() {
             <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
               Régularité · <span style={{ color: "var(--calories)" }}>{streakLabel}</span>
             </p>
+            {(data.restDaysUsed ?? 0) > 0 && (
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                dont {data.restDaysUsed} jour de repos protégé
+              </p>
+            )}
           </div>
         </div>
         {data.currentStreak >= 3 && (

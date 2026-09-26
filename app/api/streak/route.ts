@@ -6,6 +6,7 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { recordReads } from "@/app/lib/quota-tracker";
 import { format, subDays, parseISO, differenceInDays } from "date-fns";
 import type { DayLog } from "@/app/lib/types";
+import { computeCurrentStreak } from "@/app/lib/streak";
 
 const USER = "owner";
 
@@ -23,6 +24,7 @@ export interface StreakData {
   lastLoggedDate: string | null;
   heatmap:        HeatmapDay[];  // last 16 weeks = 112 days
   weeklyAvgDays:  number;        // avg logged days per week over last 4 weeks
+  restDaysUsed:   number;        // jours de repos proteges dans la serie en cours
 }
 
 export async function GET() {
@@ -70,18 +72,9 @@ export async function GET() {
     });
   }
 
-  // Current streak (from today going back)
-  let currentStreak = 0;
-  for (let i = 0; i < 365; i++) {
-    const d = format(subDays(new Date(), i), "yyyy-MM-dd");
-    // Allow today to be empty (day not over yet), start counting from yesterday if today empty
-    if (i === 0 && !logMap.has(d)) continue;
-    if (logMap.has(d) && (logMap.get(d) ?? 0) > 0) {
-      currentStreak++;
-    } else if (i > 0) {
-      break;
-    }
-  }
+  // Serie en cours (un jour de repos protege par fenetre de 7 jours, voir app/lib/streak.ts)
+  const loggedFlags = Array.from({ length: 365 }, (_, i) => (logMap.get(format(subDays(new Date(), i), "yyyy-MM-dd")) ?? 0) > 0);
+  const { currentStreak, restDaysUsed } = computeCurrentStreak(loggedFlags);
 
   // Longest streak (over full history). A day only ever *adds* to this, so it's
   // safe to cache on the profile doc and only re-scan the whole foodLog collection
@@ -128,6 +121,7 @@ export async function GET() {
       prevDate = date;
     }
 
+    longestStreak = Math.max(longestStreak, currentStreak);
     totalLoggedDays = allDates.length;
     lastLoggedDate  = allDates.length > 0 ? allDates[allDates.length - 1] : null;
 
@@ -151,5 +145,6 @@ export async function GET() {
     lastLoggedDate,
     heatmap,
     weeklyAvgDays,
+    restDaysUsed,
   } satisfies StreakData);
 }
