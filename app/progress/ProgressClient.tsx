@@ -1138,9 +1138,9 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
                   if (!w || w.actualDelta == null) return null;
                   const perWeek = Math.round((w.actualDelta / w.days) * 7 * 10) / 10;
                   const rate = `${perWeek > 0 ? "+" : perWeek < 0 ? "−" : ""}${Math.abs(perWeek).toFixed(1).replace(".", ",")} kg/sem`;
-                  const verdict = w.status === "on-track" ? "dans le plan" : w.status === "unknown" ? "sur les " + w.days + " derniers jours" : "en retrait du plan";
+                  const verdict = w.status === "onTrack" ? "dans le plan" : w.status === "unknown" ? "sur les " + w.days + " derniers jours" : "en retrait du plan";
                   return (
-                    <p className="text-[15px] font-semibold mb-2" style={{ color: w.status === "on-track" ? "var(--fiber)" : "var(--text-primary)" }}>
+                    <p className="text-[15px] font-semibold mb-2" style={{ color: w.status === "onTrack" ? "var(--fiber)" : "var(--text-primary)" }}>
                       {rate}, {verdict}
                     </p>
                   );
