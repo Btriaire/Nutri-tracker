@@ -147,6 +147,17 @@ html, body {
   font-family: inherit;
 }
 
+/* iOS : les champs date/heure ont une largeur intrinseque qui deborde des cartes a 16 px. */
+.input, input[type="date"], input[type="time"], input[type="datetime-local"] {
+  min-width: 0;
+  max-width: 100%;
+}
+input[type="date"], input[type="time"], input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px;
+}
+
 .input:focus {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--border-focus);

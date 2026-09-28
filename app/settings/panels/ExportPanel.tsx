@@ -131,10 +131,10 @@ export default function ExportPanel() {
         <p className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Période</p>
         <div className="flex gap-2 items-center">
           <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-            className="input text-[12px] flex-1" style={{ height: "36px" }} />
+            className="input flex-1 min-w-0" style={{ height: "44px" }} />
           <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>→</span>
           <input type="date" value={to} onChange={e => setTo(e.target.value)}
-            className="input text-[12px] flex-1" style={{ height: "36px" }} />
+            className="input flex-1 min-w-0" style={{ height: "44px" }} />
         </div>
         {/* Quick range presets */}
         <div className="flex gap-1.5 flex-wrap">

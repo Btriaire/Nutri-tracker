@@ -117,16 +117,16 @@ export default function ReportClient() {
             </div>
 
             {/* Custom range */}
-            <div className="flex gap-3 items-center">
-              <div className="flex-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
                 <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Du</p>
                 <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
-                  className="input text-[12px] w-full" style={{ height: 36 }} />
+                  className="input w-full" style={{ height: 44 }} />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0">
                 <p className="text-[12px] mb-1" style={{ color: "var(--text-muted)" }}>Au</p>
                 <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
-                  className="input text-[12px] w-full" style={{ height: 36 }} />
+                  className="input w-full" style={{ height: 44 }} />
               </div>
             </div>
 
