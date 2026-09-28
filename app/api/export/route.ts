@@ -9,7 +9,7 @@ const USER = "owner";
 const SCHEMA_VERSION = 2;
 
 // Exclues : jetons de connexion, photos base64 (sauvegardees a part par le cron), historique interne.
-const EXCLUDED = new Set(["oauthTokens", "dayPhotos", "mealPhotos", "faceScans", "_history"]);
+const EXCLUDED = new Set(["oauthTokens", "dayPhotos", "mealPhotos", "faceScans", "infographics", "_history"]);
 const DATE_ID = /^\d{4}-\d{2}-\d{2}$/;
 
 // ─── Timestamps → ISO ────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ const PUBLIC_PREFIXES = [
   "/api/apple-health/hae",
   "/report/print",
   "/api/report/generate",
+  "/api/infographic/upload",
   "/api/meditation",
   "/api/mental-health",
   "/api/vibefit",

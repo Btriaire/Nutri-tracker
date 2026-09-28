@@ -7,7 +7,7 @@ const USER = "owner";
 
 // Collections a images base64 : trop lourdes pour le budget de 60 s avec le reste,
 // sauvegardees une par une (/api/cron/backup?set=...).
-export const PHOTO_COLLECTIONS = ["dayPhotos", "mealPhotos", "faceScans"] as const;
+export const PHOTO_COLLECTIONS = ["dayPhotos", "mealPhotos", "faceScans", "infographics"] as const;
 // Jamais dans une sauvegarde : jetons OAuth (le blob est en acces public non listable).
 const SECRET_COLLECTIONS = ["oauthTokens"];
 

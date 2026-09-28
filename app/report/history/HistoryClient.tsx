@@ -3,14 +3,19 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { IconFileTypePdf, IconLoader2, IconRefresh, IconArrowLeft, IconDownload } from "@tabler/icons-react";
+import { IconFileTypePdf, IconLoader2, IconRefresh, IconArrowLeft, IconDownload, IconChartInfographic } from "@tabler/icons-react";
+import Sheet from "@/app/components/Sheet";
 import Link from "next/link";
 import type { ReportHistoryEntry } from "@/app/api/report/history/route";
+import type { InfographicMeta } from "@/app/lib/infographics";
 
 export default function HistoryClient() {
   const [reports, setReports] = useState<ReportHistoryEntry[] | null>(null);
   const [generating, setGenerating] = useState<"7d" | "30d" | null>(null);
   const [error, setError] = useState(false);
+  const [infographics, setInfographics] = useState<InfographicMeta[] | null>(null);
+  const [viewing, setViewing] = useState<InfographicMeta | null>(null);
+  const [showAllInfo, setShowAllInfo] = useState(false);
 
   const load = async () => {
     try {
@@ -23,6 +28,13 @@ export default function HistoryClient() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    fetch("/api/infographic")
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
+      .then((d: { infographics: InfographicMeta[] }) => setInfographics(d.infographics))
+      .catch(() => setInfographics([]));
+  }, []);
 
   const generateNow = async (period: "7d" | "30d") => {
     setGenerating(period);
@@ -49,6 +61,65 @@ export default function HistoryClient() {
         <p className="text-[12px] mb-5" style={{ color: "var(--text-muted)" }}>
           Générés automatiquement chaque dimanche (7 jours) et le 1ᵉʳ du mois (30 jours).
         </p>
+
+        {/* Infographies — generees chaque nuit par Ammanda (dimanche : semaine, 1er du mois : mois) */}
+        <section aria-label="Infographies" className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <IconChartInfographic size={18} style={{ color: "var(--protein)" }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Infographies</h2>
+          </div>
+          <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
+            Une par semaine (dimanche) et une par mois (le 1ᵉʳ), créées la nuit par Ammanda.
+          </p>
+          {infographics === null ? (
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</p>
+          ) : infographics.length === 0 ? (
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Aucune infographie pour le moment : la première arrivera dans la nuit de dimanche.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {(showAllInfo ? infographics : infographics.slice(0, 6)).map(g => (
+                  <button key={g.id} type="button" onClick={() => setViewing(g)}
+                    className="text-left rounded-2xl overflow-hidden active:scale-[0.98] transition-transform"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border-strong)" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/api/infographic/${g.id}`} alt={`Infographie ${g.period} du ${g.to}`} loading="lazy"
+                      className="w-full h-40 object-cover object-top" />
+                    <div className="px-3 py-2">
+                      <p className="text-[13px] font-semibold" style={{ color: g.period === "mois" ? "var(--carbs)" : "var(--protein)" }}>
+                        {g.period === "mois" ? "Mois" : "Semaine"}
+                      </p>
+                      <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                        au {format(new Date(g.to), "d MMM yyyy", { locale: fr })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {infographics.length > 6 && (
+                <button type="button" onClick={() => setShowAllInfo(v => !v)}
+                  className="mt-2 min-h-[44px] w-full text-[13px] font-medium" style={{ color: "var(--protein)" }}>
+                  {showAllInfo ? "Réduire" : `Voir les ${infographics.length} infographies`}
+                </button>
+              )}
+            </>
+          )}
+        </section>
+
+        <Sheet open={viewing !== null} onClose={() => setViewing(null)}
+          title={viewing ? `Infographie ${viewing.period === "mois" ? "du mois" : "de la semaine"} · ${format(new Date(viewing.to), "d MMM yyyy", { locale: fr })}` : "Infographie"}>
+          {viewing && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/infographic/${viewing.id}`} alt={`Infographie ${viewing.period} du ${viewing.to}`} className="w-full rounded-xl mb-3" />
+              <a href={`/api/infographic/${viewing.id}?download=1`}
+                className="flex items-center justify-center gap-2 min-h-[48px] rounded-2xl text-[14px] font-semibold"
+                style={{ background: "var(--layer-2)", border: "1px solid var(--border-strong)", color: "var(--text-primary)" }}>
+                <IconDownload size={16} /> Télécharger
+              </a>
+            </>
+          )}
+        </Sheet>
 
         {/* Manual triggers */}
         <div className="glass p-4 mb-5 flex gap-2">
