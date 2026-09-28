@@ -34,7 +34,7 @@ fi
 rc=0
 pull "" "$DEST/nutri-tracker-$DATE.json.gz" || rc=1
 if [ "$(date -u +%u)" = "7" ]; then
-  for s in dayPhotos mealPhotos faceScans; do pull "$s" "$DEST/photos/nutri-tracker-$s-$DATE.json.gz" || rc=1; done
+  for s in dayPhotos mealPhotos faceScans infographics; do pull "$s" "$DEST/photos/nutri-tracker-$s-$DATE.json.gz" || rc=1; done
 fi
 
 # Rotation : 60 jours de quotidiens, puis seulement les sauvegardes du 1er du mois.
