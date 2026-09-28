@@ -25,13 +25,14 @@ echo "Rapport prêt: $PDF_URL ($FROM -> $TO)"
 notebooklm -p nutri create "Nutri-Tracker — infographie ${LABEL} du ${TO}" --use --json
 notebooklm -p nutri source add "$PDF_URL" --title "Rapport Nutri-Tracker ${FROM} au ${TO}" --json
 
-DESCRIPTION="Crée une infographie personnelle et privée en français, à partir du rapport fourni, sur mes données ${SPAN}. TITRE : le titre principal, en haut, doit être exactement « Rapport NutriTracker PaLaMA », avec en sous-titre la période couverte. Un seul coup d'oeil doit suffire : le verdict de la période en une phrase courte ; les chiffres clés (calories moyennes par rapport à mon objectif, protéines, évolution du poids, activité, sommeil) avec de grands nombres lisibles et de petits graphiques ; mes 3 meilleurs progrès ; 1 point à améliorer ; UNE action concrète pour la période suivante. MISE EN PAGE : aucun texte ne doit dépasser de son cadre ni chevaucher un autre élément (texte, graphique, icône, bord) ; garde des marges généreuses à l'intérieur de chaque cadre et entre les cadres ; textes courts (une à deux lignes par cadre). Ton bienveillant, précis et honnête, sans jargon. N'ajoute aucun logo ni signature en bas de page, ne cite ni NotebookLM ni Google, ne mentionne pas l'observance des compléments alimentaires comme un point clé."
+DESCRIPTION="Crée une infographie personnelle et privée en français, à partir du rapport fourni, sur mes données ${SPAN}. TITRE : le titre principal, en haut, doit être exactement « Rapport NutriTracker PaLaMA », avec en sous-titre la période couverte. Un seul coup d'oeil doit suffire : le verdict de la période en une phrase courte ; les chiffres clés (calories moyennes par rapport à mon objectif, protéines, évolution du poids, activité, sommeil) avec de grands nombres lisibles et de petits graphiques ; mes 3 meilleurs progrès ; 1 point à améliorer ; UNE action concrète pour la période suivante. MISE EN PAGE : aucun texte ne doit dépasser de son cadre ni chevaucher un autre élément (texte, graphique, icône, bord) ; garde des marges généreuses à l'intérieur de chaque cadre et entre les cadres ; textes courts (une à deux lignes par cadre) ; relis chaque phrase : aucun mot répété deux fois de suite, aucune faute. Ton bienveillant, précis et honnête, sans jargon. N'ajoute aucun logo ni signature en bas de page, ne cite ni NotebookLM ni Google, ne mentionne pas l'observance des compléments alimentaires comme un point clé."
 
 notebooklm -p nutri generate infographic "$DESCRIPTION" \
   --orientation portrait --detail standard --style bento-grid --language fr \
   --wait --timeout 900 --json
 
 OUT="/output/nutri-infographie-${LABEL}-${TO}.png"
+rm -f "$OUT"
 notebooklm -p nutri download infographic "$OUT" --json
 echo "Infographie prête: $OUT"
 echo "Terminé."
