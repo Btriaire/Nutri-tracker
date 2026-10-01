@@ -247,6 +247,28 @@ export interface NutritionGoals {
   intermittentFasting?:   IntermittentFasting;
   alcoholTracking?:       boolean;
   weeklyAlcoolUnitsGoal?: number;
+  glucoseTracking?:       boolean;
+  glucoseTargetMinMmol?:  number;   // borne basse de la plage cible (mmol/L), defaut 3.9
+  glucoseTargetMaxMmol?:  number;   // borne haute (mmol/L), defaut 10.0 — reglable, ce n'est pas un avis medical
+}
+
+// ─── Glycemie (capteur type Dexcom, remonte via Google Fit) ──────────────────
+
+export type GlucoseMealRelation = "none" | "fasting" | "before_meal" | "after_meal";
+
+export interface GlucoseReading {
+  timeMs:       number;   // epoch ms
+  mmol:         number;
+  mealRelation: GlucoseMealRelation | null;
+  mealType:     MealType | null;
+  source:       "google_fit" | "manual";
+}
+
+export interface GlucoseDay {
+  date:     string;
+  readings: GlucoseReading[];   // flux brut du jour, trie par timeMs — seule source de verite ;
+                                 // moyenne/min/max/temps-dans-la-cible sont recalcules a la lecture
+                                 // (voir app/lib/glucose.ts) pour ne jamais figer un objectif perime.
 }
 
 export interface PlannedActivity {

@@ -1,7 +1,8 @@
 import { getAdminFirestore } from "./firebase-admin";
 import { encrypt, decrypt } from "./oauth";
 import { FieldValue } from "firebase-admin/firestore";
-import type { SleepSegment, SleepStage } from "./types";
+import type { SleepSegment, SleepStage, GlucoseDay, GlucoseReading } from "./types";
+import { mergeReadings } from "./glucose";
 
 interface RawTokens {
   accessToken:  string;
@@ -354,7 +355,15 @@ interface DayFitnessData {
   sleepSyncedAt:       string | null;      // ISO date of sleep session start
   sleepSegments:       SleepSegment[];     // chronological real stage transitions, for the hypnogram timeline
   bloodPressure:       GoogleFitBpReading[];
+  glucose:             GlucoseGoogleFitReading[];
   sessions:            WorkoutSession[];
+}
+
+interface GlucoseGoogleFitReading {
+  timeMs:       number;
+  mmol:         number;
+  mealRelation: "none" | "fasting" | "before_meal" | "after_meal" | null;
+  mealType:     "breakfast" | "lunch" | "dinner" | "snacks" | null;
 }
 
 // ─── Fitness data fetch ───────────────────────────────────────────────────────
@@ -373,7 +382,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   const endIso   = new Date(endMs).toISOString();
   const auth = `Bearer ${tokens.accessToken}`;
 
-  const [activityRes, sleepRes, sessionsRes, bpRes] = await Promise.all([
+  const [activityRes, sleepRes, sessionsRes, bpRes, glucoseRes] = await Promise.all([
     fetchFit("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -417,6 +426,15 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     // point's full value[] array (value[0]=systolic, value[1]=diastolic) untouched.
     fetchFit(
       `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_pressure:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
+      { headers: { Authorization: auth } },
+    ),
+    // Glycemie (capteur type Dexcom relaye par une appli de synchro vers Google Fit) — meme
+    // lecture en dataset brut que la tension : com.google.blood_glucose est multi-champs
+    // (niveau + contexte repas/sommeil), perdu par l'agregation. Champs confirmes dans la doc
+    // Google Fit : [0]=niveau mmol/L, [1]=relation au repas, [2]=type de repas,
+    // [3]=relation au sommeil (non utilise ici), [4]=source du specimen (non utilise ici).
+    fetchFit(
+      `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_glucose:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
       { headers: { Authorization: auth } },
     ),
   ]);
@@ -622,6 +640,33 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       .filter((r): r is GoogleFitBpReading => r !== null);
   }
 
+  // Glycemie : value[0]=niveau (mmol/L), [1]=relation au repas, [2]=type de repas
+  // (enums confirmes dans la doc Google Fit, voir le fetch ci-dessus). Un niveau
+  // absent ou nul est ignore plutot que stocke comme 0 mmol/L (biologiquement impossible).
+  const MEAL_RELATION_BY_CODE: Record<number, "none" | "fasting" | "before_meal" | "after_meal"> = {
+    1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal",
+  };
+  const MEAL_TYPE_BY_CODE: Record<number, "breakfast" | "lunch" | "dinner" | "snacks"> = {
+    2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks",
+  };
+  let glucose: GlucoseGoogleFitReading[] = [];
+  if (glucoseRes.ok) {
+    const glucoseJson = await glucoseRes.json() as { point?: GoogleFitSleepPoint[] };
+    glucose = (glucoseJson.point ?? [])
+      .map((p): GlucoseGoogleFitReading | null => {
+        const mmol = p.value?.[0]?.fpVal;
+        const timeMs = Number(p.startTimeNanos ?? 0) / 1_000_000;
+        if (!mmol || mmol <= 0) return null;
+        return {
+          timeMs,
+          mmol: Math.round(mmol * 10) / 10,
+          mealRelation: MEAL_RELATION_BY_CODE[p.value?.[1]?.intVal ?? -1] ?? null,
+          mealType:     MEAL_TYPE_BY_CODE[p.value?.[2]?.intVal ?? -1] ?? null,
+        };
+      })
+      .filter((r): r is GlucoseGoogleFitReading => r !== null);
+  }
+
   return {
     steps:               getInt(0),
     activeCaloriesBurned: Math.round(getFp(1)),
@@ -636,6 +681,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     remSleepMin,
     sleepSyncedAt,
     bloodPressure,
+    glucose,
     sessions,
   };
 }
@@ -704,6 +750,19 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
       { date, bloodPressure: FieldValue.arrayUnion(...readings), updatedAt: FieldValue.serverTimestamp() },
       { merge: true },
     );
+  }
+
+  // Glycemie : lue puis fusionnee (pas arrayUnion) pour dedupliquer par (horodatage, source) —
+  // un capteur CGM peut renvoyer une lecture deja connue avec un flottant legerement different
+  // d'un sync a l'autre, qu'arrayUnion (egalite stricte d'objet) laisserait dupliquer.
+  if (data.glucose.length > 0) {
+    const glucoseRef = db.doc(`users/${userId}/glucoseLog/${date}`);
+    const existingDoc = (await glucoseRef.get()).data() as GlucoseDay | undefined;
+    const incoming: GlucoseReading[] = data.glucose.map((r) => ({
+      timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType, source: "google_fit",
+    }));
+    const readings = mergeReadings(existingDoc?.readings ?? [], incoming);
+    await glucoseRef.set({ date, readings, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   }
 
   return true;
