@@ -102,6 +102,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const automated = isAutomatedRequest(req);
+  // The middleware deliberately leaves this route reachable by server-to-server
+  // callers. Keep the manual path authenticated here as well; otherwise any
+  // anonymous POST could write into the owner's mental-health log.
+  if (!automated && !(await getSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const body = await req.json() as Omit<MentalHealthEntry, "loggedAt">;
 
   // The automated path (Halcyon-PaLaMa) only ever sends {mood, tags} — no

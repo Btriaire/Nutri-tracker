@@ -9,7 +9,7 @@ import { computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
 import type { GlucoseDay, NutritionGoals } from "@/app/lib/types";
 
 type Range = "1j" | "7d" | "30d" | "3m" | "6m" | "1y" | "all";
-const RANGE_DAYS: Record<Range, number> = { "1j": 1, "7d": 7, "30d": 30, "3m": 90, "6m": 90, "1y": 90, all: 90 };
+const RANGE_DAYS: Record<Range, number> = { "1j": 1, "7d": 7, "30d": 30, "3m": 90, "6m": 180, "1y": 365, all: 365 };
 
 export default function GlucoseTrendSection({ goals, range }: { goals: NutritionGoals; range: Range }) {
   const [days, setDays] = useState<GlucoseDay[] | null>(null);

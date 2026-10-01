@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
-import { getTokens, activityLabel } from "@/app/lib/google-fit";
+import { getTokens, activityLabel, fetchGlucoseReadings } from "@/app/lib/google-fit";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { format } from "date-fns";
+import type { GlucoseDay, GlucoseReading } from "@/app/lib/types";
+import { mergeReadings } from "@/app/lib/glucose";
 
 export const maxDuration = 60;
 
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
   // or steps *during* the session. To capture all of that, fetch HR/calories/steps at
   // 1-minute resolution across the whole range in one extra request (not one per session,
   // which wouldn't scale with many workouts) and slice it per-session below.
-  const [activityRes, sleepRes, sessionsRes, minuteRes, bpRes] = await Promise.all([
+  const [activityRes, sleepRes, sessionsRes, minuteRes, bpRes, glucoseRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -94,6 +96,13 @@ export async function POST(req: NextRequest) {
       `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_pressure:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
       { headers: { Authorization: auth } },
     ),
+    // Raw glucose points preserve the meal relation/type fields that the
+    // aggregate endpoint drops. This used to be missing from range syncs,
+    // leaving daily sync and range sync with different data completeness.
+    fetch(
+      `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_glucose:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
+      { headers: { Authorization: auth } },
+    ),
   ]);
 
   // Flatten the minute-bucketed response into one point per non-empty minute.
@@ -133,6 +142,32 @@ export async function POST(req: NextRequest) {
         moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
         source:    "google_fit",
       });
+    }
+  }
+
+  const glucoseByDate: Record<string, GlucoseReading[]> = {};
+  if (glucoseRes.ok) {
+    const glucoseJson = await glucoseRes.json() as { point?: (Point & SleepPoint)[] };
+    const relation: Record<number, GlucoseReading["mealRelation"]> = { 1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal" };
+    const meal: Record<number, GlucoseReading["mealType"]> = { 2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks" };
+    for (const p of glucoseJson.point ?? []) {
+      const mmol = p.value?.[0]?.fpVal;
+      const timeMs = Number(p.startTimeNanos ?? 0) / 1_000_000;
+      if (typeof mmol !== "number" || !Number.isFinite(mmol) || mmol <= 0 || !Number.isFinite(timeMs) || timeMs <= 0) continue;
+      const d = format(new Date(timeMs), "yyyy-MM-dd");
+      (glucoseByDate[d] ??= []).push({
+        timeMs,
+        mmol: Math.round(mmol * 10) / 10,
+        mealRelation: relation[p.value?.[1]?.intVal ?? -1] ?? null,
+        mealType: meal[p.value?.[2]?.intVal ?? -1] ?? null,
+        source: "google_fit",
+      });
+    }
+  }
+  if (Object.keys(glucoseByDate).length === 0) {
+    for (const reading of await fetchGlucoseReadings(auth, startMs, endMs)) {
+      const date = format(new Date(reading.timeMs), "yyyy-MM-dd");
+      (glucoseByDate[date] ??= []).push(reading);
     }
   }
 
@@ -253,6 +288,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (opCount > 0) await batch.commit();
+
+  // Glucose readings are stored as a time series array so we merge them after
+  // the main batch. This keeps repeated range syncs idempotent and preserves
+  // manual readings while replacing a corrected Google Fit point.
+  for (const [date, incoming] of Object.entries(glucoseByDate)) {
+    const ref = db.doc(`users/owner/glucoseLog/${date}`);
+    const existing = (await ref.get()).data() as GlucoseDay | undefined;
+    await ref.set({ date, readings: mergeReadings(existing?.readings ?? [], incoming), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  }
 
   return NextResponse.json({ ok: true, days: written, from, to });
 }

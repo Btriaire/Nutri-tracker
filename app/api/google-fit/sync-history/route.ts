@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTokens, activityLabel } from "@/app/lib/google-fit";
+import { getTokens, activityLabel, fetchGlucoseReadings } from "@/app/lib/google-fit";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { format, subDays } from "date-fns";
+import type { GlucoseDay, GlucoseReading } from "@/app/lib/types";
+import { mergeReadings } from "@/app/lib/glucose";
 
 export const maxDuration = 60;
 
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
   const auth      = `Bearer ${tokens.accessToken}`;
 
   // Parallel API calls covering the full date range
-  const [activityRes, sleepRes, sessionsRes, bpRes] = await Promise.all([
+  const [activityRes, sleepRes, sessionsRes, bpRes, glucoseRes] = await Promise.all([
     fetch("https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate", {
       method:  "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
@@ -61,6 +63,10 @@ export async function POST(req: NextRequest) {
     // preserves each point's value[0]=systolic/value[1]=diastolic untouched.
     fetch(
       `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_pressure:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
+      { headers: { Authorization: auth } },
+    ),
+    fetch(
+      `https://www.googleapis.com/fitness/v1/users/me/dataSources/derived:com.google.blood_glucose:com.google.android.gms:merged/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
       { headers: { Authorization: auth } },
     ),
   ]);
@@ -113,6 +119,32 @@ export async function POST(req: NextRequest) {
         moment:    hour < 12 ? "morning" : hour >= 18 ? "evening" : "other",
         source:    "google_fit",
       });
+    }
+  }
+
+  const glucoseByDate: Record<string, GlucoseReading[]> = {};
+  if (glucoseRes.ok) {
+    const glucoseJson = await glucoseRes.json() as { point?: (Point & SleepPoint)[] };
+    const relation: Record<number, GlucoseReading["mealRelation"]> = { 1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal" };
+    const meal: Record<number, GlucoseReading["mealType"]> = { 2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks" };
+    for (const p of glucoseJson.point ?? []) {
+      const mmol = p.value?.[0]?.fpVal;
+      const timeMs = Number(p.startTimeNanos ?? 0) / 1_000_000;
+      if (typeof mmol !== "number" || !Number.isFinite(mmol) || mmol <= 0 || !Number.isFinite(timeMs) || timeMs <= 0) continue;
+      const date = format(new Date(timeMs), "yyyy-MM-dd");
+      (glucoseByDate[date] ??= []).push({
+        timeMs,
+        mmol: Math.round(mmol * 10) / 10,
+        mealRelation: relation[p.value?.[1]?.intVal ?? -1] ?? null,
+        mealType: meal[p.value?.[2]?.intVal ?? -1] ?? null,
+        source: "google_fit",
+      });
+    }
+  }
+  if (Object.keys(glucoseByDate).length === 0) {
+    for (const reading of await fetchGlucoseReadings(auth, startMs, endMs)) {
+      const date = format(new Date(reading.timeMs), "yyyy-MM-dd");
+      (glucoseByDate[date] ??= []).push(reading);
     }
   }
 
@@ -194,6 +226,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (opCount > 0) await batch.commit();
+
+  for (const [date, incoming] of Object.entries(glucoseByDate)) {
+    const ref = db.doc(`users/owner/glucoseLog/${date}`);
+    const existing = (await ref.get()).data() as GlucoseDay | undefined;
+    await ref.set({ date, readings: mergeReadings(existing?.readings ?? [], incoming), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  }
 
   return NextResponse.json({ ok: true, days: written });
 }

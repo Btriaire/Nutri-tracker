@@ -7,6 +7,7 @@ const SCOPES = [
   "https://www.googleapis.com/auth/fitness.sleep.read",
   "https://www.googleapis.com/auth/fitness.location.read",
   "https://www.googleapis.com/auth/fitness.blood_pressure.read",
+  "https://www.googleapis.com/auth/fitness.blood_glucose.read",
 ].join(" ");
 
 export async function GET() {

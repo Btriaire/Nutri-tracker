@@ -366,6 +366,57 @@ interface GlucoseGoogleFitReading {
   mealType:     "breakfast" | "lunch" | "dinner" | "snacks" | null;
 }
 
+/** Read glucose from the sources actually registered on the user's account.
+ * Google Fit does not guarantee that the synthetic `derived:...:merged` source
+ * exists for third-party CGM apps, so discover matching sources and try each
+ * one instead of silently returning an empty series. */
+export async function fetchGlucoseReadings(auth: string, startMs: number, endMs: number): Promise<GlucoseReading[]> {
+  const relation: Record<number, GlucoseReading["mealRelation"]> = { 1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal" };
+  const meal: Record<number, GlucoseReading["mealType"]> = { 2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks" };
+  const fallback = "derived:com.google.blood_glucose:com.google.android.gms:merged";
+  const ids = new Set<string>([fallback]);
+  try {
+    const list = await fetch("https://www.googleapis.com/fitness/v1/users/me/dataSources?dataTypeName=com.google.blood_glucose", {
+      headers: { Authorization: auth },
+    });
+    if (list.ok) {
+      const json = await list.json() as { dataSource?: { dataStreamId?: string; dataType?: { name?: string } }[] };
+      for (const source of json.dataSource ?? []) {
+        if (source.dataType?.name === "com.google.blood_glucose" && source.dataStreamId) ids.add(source.dataStreamId);
+      }
+    }
+  } catch (error) {
+    console.warn("Google Fit glucose source discovery failed:", error);
+  }
+
+  const all: GlucoseReading[] = [];
+  for (const sourceId of ids) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/fitness/v1/users/me/dataSources/${encodeURIComponent(sourceId)}/datasets/${startMs * 1_000_000}-${endMs * 1_000_000}`,
+        { headers: { Authorization: auth } },
+      );
+      if (!res.ok) continue;
+      const json = await res.json() as { point?: GoogleFitSleepPoint[] };
+      for (const point of json.point ?? []) {
+        const mmol = point.value?.[0]?.fpVal;
+        const timeMs = Number(point.startTimeNanos ?? 0) / 1_000_000;
+        if (typeof mmol !== "number" || !Number.isFinite(mmol) || mmol <= 0 || !Number.isFinite(timeMs) || timeMs <= 0) continue;
+        all.push({
+          timeMs,
+          mmol: Math.round(mmol * 10) / 10,
+          mealRelation: relation[point.value?.[1]?.intVal ?? -1] ?? null,
+          mealType: meal[point.value?.[2]?.intVal ?? -1] ?? null,
+          source: "google_fit",
+        });
+      }
+    } catch (error) {
+      console.warn(`Google Fit glucose source ${sourceId} failed:`, error);
+    }
+  }
+  return mergeReadings([], all);
+}
+
 // ─── Fitness data fetch ───────────────────────────────────────────────────────
 
 export async function fetchDayData(userId: string, date: string): Promise<DayFitnessData | null> {
@@ -665,6 +716,11 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
         };
       })
       .filter((r): r is GlucoseGoogleFitReading => r !== null);
+  }
+  if (glucose.length === 0) {
+    glucose = (await fetchGlucoseReadings(auth, startMs, endMs)).map((r) => ({
+      timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType,
+    }));
   }
 
   return {
