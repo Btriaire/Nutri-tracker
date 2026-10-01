@@ -28,6 +28,7 @@ import QuotaWarningBanner from "@/app/components/QuotaWarningBanner";
 import FastingTracker from "@/app/components/FastingTracker";
 import TodayView from "@/app/components/TodayView";
 import NutritionSection from "@/app/components/NutritionSection";
+import GlucoseTrendSection from "@/app/components/GlucoseTrendSection";
 import NutrientsEvolution from "@/app/components/NutrientsEvolution";
 import AlcoolWeekWidget from "@/app/components/AlcoolWeekWidget";
 
@@ -982,6 +983,8 @@ export default function ProgressClient({ goals, currentWeightKg, targetWeightKg,
 
             {/* Calories & Activité — fused card */}
             <NutritionSection chartData={chartData} goals={goals} range={range} loading={loading} calChart={calChart} setCalChart={setCalChart} />
+
+            <GlucoseTrendSection goals={goals} range={range} />
 
             {/* ── Dual-axis weight + simulation chart ── */}
             {(weightPtsFiltered.length > 0 || effectiveCurrentWeight) && (
