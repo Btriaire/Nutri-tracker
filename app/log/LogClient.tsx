@@ -1,5 +1,6 @@
 "use client";
 
+import GlucoseDayCard from "@/app/components/GlucoseDayCard";
 import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -820,6 +821,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               </motion.div>
             ))}
           </div>
+
+          {goals.glucoseTracking && <GlucoseDayCard date={date} entries={entries} goals={goals} />}
 
           {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
               Regroupés et repliés par défaut : ce sont des compléments au journal
