@@ -7,7 +7,7 @@ import { fr } from "date-fns/locale";
 import {
   AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import { IconPill, IconFlask } from "@tabler/icons-react";
+import { IconPill, IconFlask, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import type { SupplementProduct, MicronutrientCode } from "@/app/lib/types";
 import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 import { useCustomNutrients } from "@/app/lib/useCustomNutrients";
@@ -35,6 +35,8 @@ export default function SupplementsProgressSection() {
   const [data, setData] = useState<SupplementsProgressResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<7 | 14 | 30>(14);
+  const [open, setOpen] = useState(false);
+  const [micronutrientsOpen, setMicronutrientsOpen] = useState(false);
 
   useEffect(() => {
     const to = format(new Date(), "yyyy-MM-dd");
@@ -81,21 +83,21 @@ export default function SupplementsProgressSection() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }} className="glass p-5 mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-1.5">
+      <button type="button" className="w-full flex items-center justify-between text-left" onClick={() => setOpen(v => !v)}
+        aria-expanded={open} aria-controls="supplements-progress-content">
+        <span className="flex items-center gap-1.5">
           <IconPill size={15} style={{ color: "var(--fiber)" }} />
-          <p className="label-xs">Suppléments & Vitamines</p>
-        </div>
-        <div className="flex gap-1 p-0.5 rounded-lg"
-          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
+          <span className="label-xs">Suppléments &amp; Vitamines</span>
+        </span>
+        {open ? <IconChevronUp size={15} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={15} style={{ color: "var(--text-muted)" }} />}
+      </button>
+
+      {open && <div id="supplements-progress-content" className="pt-4">
+      <div className="flex justify-end mb-4">
+        <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           {([7, 14, 30] as const).map(d => (
-            <button key={d} onClick={() => setDays(d)}
-              className="px-2.5 py-1 rounded-md text-[12px] font-medium transition-all"
-              style={{
-                background: days === d ? "rgba(52,211,153,0.12)" : "transparent",
-                color:      days === d ? "var(--fiber)"          : "var(--text-muted)",
-                border:     days === d ? "1px solid rgba(52,211,153,0.35)" : "1px solid transparent",
-              }}>
+            <button key={d} onClick={() => setDays(d)} className="px-2.5 py-1 rounded-md text-[12px] font-medium transition-all"
+              style={{ background: days === d ? "rgba(52,211,153,0.12)" : "transparent", color: days === d ? "var(--fiber)" : "var(--text-muted)", border: days === d ? "1px solid rgba(52,211,153,0.35)" : "1px solid transparent" }}>
               {d}J
             </button>
           ))}
@@ -152,12 +154,17 @@ export default function SupplementsProgressSection() {
       {/* ── Micronutrient trends ────────────────────────────────────── */}
       {trackedCodes.length > 0 && (
         <div className="pt-4" style={{ borderTop: "1px solid var(--layer-2)" }}>
-          <div className="flex items-center gap-1.5 mb-3">
+          <button type="button" className="w-full flex items-center justify-between text-left" onClick={() => setMicronutrientsOpen(v => !v)}
+            aria-expanded={micronutrientsOpen} aria-controls="progress-micronutrients-content">
+            <span className="flex items-center gap-1.5">
             <IconFlask size={13} style={{ color: "var(--text-muted)" }} />
             <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
               Micronutriments
             </span>
-          </div>
+            </span>
+            {micronutrientsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />}
+          </button>
+          {micronutrientsOpen && <div id="progress-micronutrients-content" className="pt-3">
           <div className="grid grid-cols-2 gap-4">
             {trackedCodes.map(code => {
               const info = microInfo(code);
@@ -219,6 +226,7 @@ export default function SupplementsProgressSection() {
               );
             })}
           </div>
+          </div>}
         </div>
       )}
 
@@ -232,6 +240,7 @@ export default function SupplementsProgressSection() {
           />
         </div>
       )}
+      </div>}
     </motion.div>
   );
 }
