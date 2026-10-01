@@ -19,6 +19,7 @@ import DataSafetyBanner from "./panels/DataSafetyBanner";
 import BackupPanel from "./panels/BackupPanel";
 import ProfilePanel from "./panels/ProfilePanel";
 import AlcoolPanel from "./panels/AlcoolPanel";
+import GlycemiePanel from "./panels/GlycemiePanel";
 import ChartPrefsPanel from "./panels/ChartPrefsPanel";
 import TrackedNutrientsPanel from "./panels/TrackedNutrientsPanel";
 import DietProgramPanel from "./panels/DietProgramPanel";
@@ -231,6 +232,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Alcool */}
         <AlcoolPanel initialGoals={initialGoals} />
+        <GlycemiePanel initialGoals={initialGoals} />
 
         {/* Ma banque d'aliments */}
         <motion.div
