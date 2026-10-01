@@ -10,12 +10,20 @@ export const DEFAULT_GLUCOSE_TARGET = { min: 3.9, max: 10.0 };
 const PRE_MEAL_WINDOW_MS = 60 * 60_000;
 const POST_MEAL_TARGET_MS = 120 * 60_000;
 const POST_MEAL_WINDOW_MS = [90 * 60_000, 180 * 60_000] as const;
+export const MEAL_GRAPH_WINDOW_MS = [30 * 60_000, 150 * 60_000] as const;
 
 export interface MealGlucoseMatch {
   pre:  GlucoseReading | null;
   post: GlucoseReading | null;
   /** post.mmol - pre.mmol, seulement si les deux existent. */
   deltaMmol: number | null;
+}
+
+/** Lectures à afficher autour d'un repas : 30 min avant jusqu'à 2 h 30 après. */
+export function readingsAroundMeal(readings: GlucoseReading[], mealTimeMs: number): GlucoseReading[] {
+  const from = mealTimeMs - MEAL_GRAPH_WINDOW_MS[0];
+  const to = mealTimeMs + MEAL_GRAPH_WINDOW_MS[1];
+  return readings.filter((r) => r.timeMs >= from && r.timeMs <= to).sort((a, b) => a.timeMs - b.timeMs);
 }
 
 /** Associe a un horaire de repas la derniere lecture avant, et celle la plus proche de +2h apres.

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { IconDroplet, IconArrowUpRight, IconArrowDownRight, IconMinus } from "@tabler/icons-react";
 import {
   LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceArea, Tooltip,
+  ReferenceLine,
 } from "recharts";
-import { matchMealGlucose, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
+import { matchMealGlucose, readingsAroundMeal, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
 import type { FoodEntry, GlucoseDay, MealType, NutritionGoals } from "@/app/lib/types";
 
 const MEAL_LABEL: Record<MealType, string> = { breakfast: "Petit-déj", lunch: "Déjeuner", snacks: "Collation", dinner: "Dîner" };
@@ -51,7 +52,7 @@ export default function GlucoseDayCard({ date, entries, goals }: { date: string;
       if (times.length === 0) return null;
       const mealTimeMs = Math.min(...times);
       const carbsG = mealEntries.reduce((s, e) => s + (e.nutrition?.carbsG ?? 0), 0);
-      return { meal, carbsG, match: matchMealGlucose(readings, mealTimeMs) };
+      return { meal, carbsG, mealTimeMs, match: matchMealGlucose(readings, mealTimeMs), window: readingsAroundMeal(readings, mealTimeMs) };
     })
     .filter((m): m is NonNullable<typeof m> => m !== null);
 
@@ -101,21 +102,42 @@ export default function GlucoseDayCard({ date, entries, goals }: { date: string;
 
           {mealsWithFood.length > 0 && (
             <div className="mt-3 space-y-2">
-              {mealsWithFood.map(({ meal, carbsG, match }) => {
-                const delta = match.deltaMmol;
-                const Icon = delta === null ? IconMinus : delta > 0.3 ? IconArrowUpRight : delta < -0.3 ? IconArrowDownRight : IconMinus;
-                const color = delta === null ? "var(--text-muted)" : delta > 2.0 ? "var(--danger)" : "var(--fiber)";
-                return (
-                  <div key={meal} className="flex items-center justify-between text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                    <span className="font-medium" style={{ color: "var(--text-primary)" }}>{MEAL_LABEL[meal]}</span>
-                    <span>{Math.round(carbsG)} g glucides</span>
-                    <span className="flex items-center gap-1" style={{ color }}>
-                      {match.pre ? `${match.pre.mmol}` : "—"} → {match.post ? `${match.post.mmol}` : "—"}
-                      <Icon size={13} stroke={2} />
-                    </span>
-                  </div>
-                );
-              })}
+          {mealsWithFood.map(({ meal, carbsG, mealTimeMs, match, window }) => {
+            const delta = match.deltaMmol;
+            const Icon = delta === null ? IconMinus : delta > 0.3 ? IconArrowUpRight : delta < -0.3 ? IconArrowDownRight : IconMinus;
+            const color = delta === null ? "var(--text-muted)" : delta > 2.0 ? "var(--danger)" : "var(--fiber)";
+            const mealChart = window.map((r) => ({ t: r.timeMs, v: r.mmol }));
+            const minY = Math.min(target.min - 1, ...mealChart.map((p) => p.v));
+            const maxY = Math.max(target.max + 1, ...mealChart.map((p) => p.v));
+            return (
+              <div key={meal} className="rounded-xl p-3" style={{ background: "color-mix(in srgb, var(--surface-hover) 55%, transparent)", border: "1px solid var(--border)" }}>
+                <div className="flex items-center justify-between text-[12px] mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                  <span className="font-medium" style={{ color: "var(--text-primary)" }}>{MEAL_LABEL[meal]}</span>
+                  <span>{Math.round(carbsG)} g glucides</span>
+                  <span className="flex items-center gap-1" style={{ color }}>
+                    {match.pre ? `${match.pre.mmol}` : "—"} → {match.post ? `${match.post.mmol}` : "—"}
+                    <Icon size={13} stroke={2} />
+                  </span>
+                </div>
+                {mealChart.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={115}>
+                    <LineChart data={mealChart} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+                      <ReferenceArea x1={mealTimeMs - 30 * 60_000} x2={mealTimeMs} fill="var(--text-muted)" fillOpacity={0.06} />
+                      <ReferenceArea x1={mealTimeMs} x2={mealTimeMs + 150 * 60_000} fill="var(--fat)" fillOpacity={0.07} />
+                      <ReferenceLine x={mealTimeMs} stroke="var(--fat)" strokeDasharray="3 3" label={{ value: "Repas", position: "insideTop", fill: "var(--fat)", fontSize: 10 }} />
+                      <XAxis dataKey="t" type="number" domain={[mealTimeMs - 30 * 60_000, mealTimeMs + 150 * 60_000]} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickFormatter={(t) => `${Math.round((Number(t) - mealTimeMs) / 60_000)}′`} tickLine={false} axisLine={false} />
+                      <YAxis domain={[minY, maxY]} hide />
+                      <Tooltip labelFormatter={(t) => `${Math.round((Number(t) - mealTimeMs) / 60_000)} min`} formatter={(v) => [`${v} mmol/L`, "Glycémie"]} contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 11 }} />
+                      <Line type="monotone" dataKey="v" stroke="var(--fat)" strokeWidth={2} dot={{ r: 2, fill: "var(--fat)", strokeWidth: 0 }} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Pas de lecture dans les 30 min avant ou les 2 h 30 après.</p>
+                )}
+                <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>Minutes par rapport au repas · −30 à +150</p>
+              </div>
+            );
+          })}
             </div>
           )}
         </>
