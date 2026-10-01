@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { FieldPath } from "firebase-admin/firestore";
 import type { GlucoseDay } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +29,14 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getAdminFirestore();
-  const snap = await db.collection(`users/${session.userId}/glucoseLog`)
-    .where("__name__", ">=", from).where("__name__", "<=", to)
-    .limit(365)
-    .get();
+  const [snap, foodSnap] = await Promise.all([
+    db.collection(`users/${session.userId}/glucoseLog`)
+      .where(FieldPath.documentId(), ">=", from).where(FieldPath.documentId(), "<=", to)
+      .limit(365).get(),
+    db.collection(`users/${session.userId}/foodLog`)
+      .where(FieldPath.documentId(), ">=", from).where(FieldPath.documentId(), "<=", to)
+      .limit(365).get(),
+  ]);
 
   const days: GlucoseDay[] = snap.docs
     .map((d) => {
@@ -40,5 +45,16 @@ export async function GET(req: NextRequest) {
       return { date: raw.date ?? d.id, readings } as GlucoseDay;
     })
     .sort((a, b) => a.date.localeCompare(b.date));
-  return NextResponse.json({ days });
+  const meals = foodSnap.docs.flatMap((doc) => {
+    const data = doc.data() as { entries?: { meal?: string; loggedAt?: { seconds?: number; _seconds?: number } }[] };
+    const firstByMeal = new Map<string, number>();
+    for (const entry of data.entries ?? []) {
+      const seconds = entry.loggedAt?.seconds ?? entry.loggedAt?._seconds;
+      if (!entry.meal || !seconds) continue;
+      const current = firstByMeal.get(entry.meal);
+      if (current === undefined || seconds * 1000 < current) firstByMeal.set(entry.meal, seconds * 1000);
+    }
+    return [...firstByMeal.entries()].map(([meal, timeMs]) => ({ date: doc.id, meal, timeMs }));
+  });
+  return NextResponse.json({ days, meals });
 }
