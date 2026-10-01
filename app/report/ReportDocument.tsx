@@ -1063,6 +1063,58 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
+          GLYCÉMIE
+      ═══════════════════════════════════════════════════════════ */}
+      {data.glucose.enabled && data.glucose.daysWithData > 0 && (
+        <div className="glass p-5 mb-5">
+          <SectionTitle icon="🩸" title="Glycémie" color="var(--fat)" />
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <KpiCard icon={<span>📊</span>} label="Moyenne" value={fmtN(data.glucose.avgMmol, "", 1)} unit="mmol/L" color="var(--fat)" />
+            <KpiCard icon={<span>🎯</span>} label="Dans la cible" value={fmtN(data.glucose.timeInRangePct, "", 0)} unit="%"
+              sub={`${data.glucose.targetMinMmol}–${data.glucose.targetMaxMmol} mmol/L`} color="var(--fiber)" />
+            <KpiCard icon={<span>📅</span>} label="Jours suivis" value={String(data.glucose.daysWithData)} color="var(--protein)" />
+          </div>
+
+          {data.glucose.daily.length >= 2 && (
+            <TrendChartCard
+              title="Moyenne quotidienne"
+              unit=" mmol/L"
+              from={data.glucose.daily[0].date}
+              to={data.glucose.daily[data.glucose.daily.length - 1].date}
+              series={[{
+                points: data.glucose.daily.filter(d => d.avgMmol !== null).map(d => ({ date: d.date, value: d.avgMmol as number })),
+                color: "var(--fat)", label: "Glycémie",
+              }]}
+            />
+          )}
+
+          {data.glucose.notableMeals.length > 0 && (
+            <div className="mt-2">
+              <p className="text-[12px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+                Hausses post-prandiales notables
+              </p>
+              <div className="space-y-2">
+                {data.glucose.notableMeals.map((m, i) => (
+                  <div key={i} className="glass p-3 rounded-xl flex items-center justify-between">
+                    <div>
+                      <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
+                        {m.meal} · {fmtDate(m.date)}
+                      </p>
+                      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{m.carbsG} g de glucides</p>
+                    </div>
+                    <p className="text-[13px] font-bold" style={{ color: "var(--danger)" }}>
+                      {m.preMmol} → {m.postMmol} mmol/L (+{m.deltaMmol})
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
           HISTORIQUE DES SYMPTÔMES
       ═══════════════════════════════════════════════════════════ */}
       {data.health.symptomHistory.length > 0 && (

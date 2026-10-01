@@ -1,6 +1,8 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
+import { matchMealGlucose, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
+import type { GlucoseDay, MealType } from "@/app/lib/types";
 import { MICRONUTRIENT_DB, mergeCustomNutrients } from "@/app/lib/micronutrients";
 import { generateReportSynthesis, type ReportSynthesis } from "@/app/lib/report-synthesis";
 import type {
@@ -91,6 +93,36 @@ export interface SymptomHistoryDay {
   synthesis?: { alertLevel: string; alertLabel: string; summary: string } | null;
 }
 
+export interface GlucoseDailyRow {
+  date:           string;
+  avgMmol:        number | null;
+  minMmol:        number | null;
+  maxMmol:        number | null;
+  timeInRangePct: number | null;
+}
+
+export interface GlucoseMealRow {
+  date:      string;
+  meal:      string;
+  carbsG:    number;
+  preMmol:   number;
+  postMmol:  number;
+  deltaMmol: number;
+}
+
+export interface GlucoseSummary {
+  enabled:        boolean;
+  targetMinMmol:  number;
+  targetMaxMmol:  number;
+  daysWithData:   number;
+  avgMmol:        number | null;
+  minMmol:        number | null;
+  maxMmol:        number | null;
+  timeInRangePct: number | null;
+  daily:          GlucoseDailyRow[];
+  notableMeals:   GlucoseMealRow[];
+}
+
 export interface ReportData {
   meta: {
     from:        string;
@@ -178,6 +210,7 @@ export interface ReportData {
     delta:        Partial<Record<MeasurementField, number>> | null;
     entries:      MeasurementEntry[];
   };
+  glucose: GlucoseSummary;
   latestSynthesis: AISynthesisResult | null;
   reportSynthesis: ReportSynthesis | null;
 }
@@ -191,7 +224,7 @@ export async function buildReportData(userId: string, from: string, to: string):
   const [
     foodSnaps, fitnessSnaps, healthSnaps, profileSnap,
     supplementProductsSnap, supplementLogsSnap, micronutrientLogsSnap, faceScansSnap,
-    customNutrientsSnap, measurementsSnap,
+    customNutrientsSnap, measurementsSnap, glucoseSnap,
   ] = await Promise.all([
     db.collection(`users/${userId}/foodLog`)
       .where("date", ">=", from).where("date", "<=", to)
@@ -218,6 +251,9 @@ export async function buildReportData(userId: string, from: string, to: string):
     // from/to) pour toujours pouvoir montrer l'évolution "depuis le début", même sur un
     // rapport courte période.
     db.collection(`users/${userId}/measurements`).orderBy("month", "asc").limit(800).get(),
+    db.collection(`users/${userId}/glucoseLog`)
+      .where("__name__", ">=", from).where("__name__", "<=", to)
+      .get(),
   ]);
 
   // User-defined nutrients (see /api/custom-nutrients) — merged so the micronutrient
@@ -595,10 +631,64 @@ export async function buildReportData(userId: string, from: string, to: string):
       delta:        measurementsDelta,
       entries:      measurementEntries,
     },
+    glucose: buildGlucoseSummary(glucoseSnap.docs.map(d => d.data() as GlucoseDay), foodSnaps.docs.map(d => d.data() as DayLog), goals),
     latestSynthesis,
     reportSynthesis: null,
   };
 
   data.reportSynthesis = await generateReportSynthesis(data);
   return data;
+}
+
+// ─── Glycemie ──────────────────────────────────────────────────────────────
+
+const GLUCOSE_MEAL_LABEL: Record<MealType, string> = { breakfast: "Petit-déjeuner", lunch: "Déjeuner", dinner: "Dîner", snacks: "Collation" };
+
+function buildGlucoseSummary(glucoseDays: GlucoseDay[], foodLogs: DayLog[], goals: ReturnType<typeof defaultGoals>): GlucoseSummary {
+  const target = { min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min, max: goals.glucoseTargetMaxMmol ?? DEFAULT_GLUCOSE_TARGET.max };
+  const daysWithData = glucoseDays.filter(d => d.readings.length > 0);
+  const allReadings = daysWithData.flatMap(d => d.readings);
+  const overall = computeDayStats(allReadings, target);
+
+  const daily: GlucoseDailyRow[] = daysWithData
+    .map(d => ({ date: d.date, ...computeDayStats(d.readings, target) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Repas marquants : associe chaque aliment logue a la glycemie du meme jour, garde les 3
+  // plus fortes hausses post-prandiales (seuil de 2 mmol/L, au-dela du bruit normal).
+  const byDate = new Map(glucoseDays.map(d => [d.date, d.readings]));
+  const notableMeals: GlucoseMealRow[] = [];
+  for (const log of foodLogs) {
+    const readings = byDate.get(log.date);
+    if (!readings?.length) continue;
+    const byMeal = new Map<MealType, { carbsG: number; timeMs: number }>();
+    for (const e of log.entries ?? []) {
+      const ts = e.loggedAt as unknown as { seconds?: number };
+      if (!ts?.seconds) continue;
+      const cur = byMeal.get(e.meal) ?? { carbsG: 0, timeMs: ts.seconds * 1000 };
+      cur.carbsG += e.nutrition?.carbsG ?? 0;
+      cur.timeMs = Math.min(cur.timeMs, ts.seconds * 1000);
+      byMeal.set(e.meal, cur);
+    }
+    for (const [meal, { carbsG, timeMs }] of byMeal) {
+      const { pre, post, deltaMmol } = matchMealGlucose(readings, timeMs);
+      if (pre && post && deltaMmol !== null && deltaMmol >= 2.0) {
+        notableMeals.push({ date: log.date, meal: GLUCOSE_MEAL_LABEL[meal], carbsG: Math.round(carbsG), preMmol: pre.mmol, postMmol: post.mmol, deltaMmol });
+      }
+    }
+  }
+  notableMeals.sort((a, b) => b.deltaMmol - a.deltaMmol);
+
+  return {
+    enabled: !!goals.glucoseTracking,
+    targetMinMmol: target.min,
+    targetMaxMmol: target.max,
+    daysWithData: daysWithData.length,
+    avgMmol: overall.avgMmol,
+    minMmol: overall.minMmol,
+    maxMmol: overall.maxMmol,
+    timeInRangePct: overall.timeInRangePct,
+    daily,
+    notableMeals: notableMeals.slice(0, 3),
+  };
 }
