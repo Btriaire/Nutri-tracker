@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { matchMealGlucose, computeDayStats, mergeReadings, DEFAULT_GLUCOSE_TARGET } from "../app/lib/glucose";
-import type { GlucoseReading } from "../app/lib/types";
+import { matchMealGlucose, computeDayStats, mergeReadings, analyzeMealGlucose, mealGlucoseResponses, entryTimeMs, DEFAULT_GLUCOSE_TARGET } from "../app/lib/glucose";
+import type { FoodEntry, GlucoseReading } from "../app/lib/types";
 
 const r = (minutesFromMidnight: number, mmol: number): GlucoseReading => ({
   timeMs: minutesFromMidnight * 60_000,
@@ -53,5 +53,62 @@ describe("mergeReadings", () => {
     const merged = mergeReadings(existing, incoming);
     expect(merged.map((x) => x.timeMs)).toEqual([300000, 600000, 900000]);
     expect(merged.find((x) => x.timeMs === 600000)?.mmol).toBe(5.2);
+  });
+});
+
+describe("analyzeMealGlucose", () => {
+  // repas a 12:00 (720 min)
+  const day = [r(700, 5.2), r(715, 5.4), r(745, 8.8), r(765, 9.6), r(800, 8.1), r(840, 7.0), r(890, 6.2)];
+
+  it("trouve avant, pic, 2 h, hausse et delai du pic", () => {
+    const a = analyzeMealGlucose(day, 720 * 60_000, 60)!;
+    expect(a.pre?.mmol).toBe(5.4);
+    expect(a.peak?.mmol).toBe(9.6);
+    expect(a.minutesToPeak).toBe(45);
+    expect(a.riseMmol).toBe(4.2);
+    expect(a.post?.mmol).toBe(7.0);          // 14:00 exactement
+    expect(a.deltaMmol).toBe(1.6);
+    expect(a.risePer10gCarbs).toBe(0.7);     // 4,2 mmol pour 60 g
+  });
+
+  it("ne calcule pas de ratio pour un repas de moins de 10 g de glucides", () => {
+    expect(analyzeMealGlucose(day, 720 * 60_000, 6)!.risePer10gCarbs).toBeNull();
+  });
+
+  it("borne l'analyse au repas suivant : un pic apres un autre repas ne lui est pas attribue", () => {
+    const next = 780 * 60_000;                // collation a 13:00
+    const a = analyzeMealGlucose(day, 720 * 60_000, 60, next)!;
+    expect(a.peak?.mmol).toBe(9.6);           // 12:45, avant la collation
+    expect(a.post).toBeNull();                // la lecture a +2 h suit deja la collation
+  });
+
+  it("la hausse n'est jamais negative", () => {
+    const a = analyzeMealGlucose([r(715, 9.0), r(730, 8.0), r(840, 7.5)], 720 * 60_000, 40)!;
+    expect(a.riseMmol).toBe(0);
+  });
+
+  it("renvoie null sans aucune lecture exploitable", () => {
+    expect(analyzeMealGlucose([r(0, 5)], 720 * 60_000, 40)).toBeNull();
+  });
+});
+
+describe("mealGlucoseResponses", () => {
+  const entry = (meal: FoodEntry["meal"], minute: number, carbs: number) =>
+    ({ meal, loggedAt: { seconds: minute * 60 }, nutrition: { carbsG: carbs } }) as unknown as FoodEntry;
+
+  it("associe chaque repas a sa reponse, borne par le suivant", () => {
+    const readings = [r(470, 5.0), r(480, 5.1), r(520, 8.0), r(600, 6.0), r(715, 5.3), r(745, 9.0), r(840, 6.5)];
+    const out = mealGlucoseResponses([entry("lunch", 720, 70), entry("breakfast", 480, 40), entry("breakfast", 485, 10)], readings);
+    expect(out.breakfast?.carbsG).toBe(50);
+    expect(out.breakfast?.peak?.mmol).toBe(8.0);
+    expect(out.lunch?.pre?.mmol).toBe(5.3);
+    expect(out.lunch?.peak?.mmol).toBe(9.0);
+    expect(out.dinner).toBeUndefined();
+  });
+
+  it("entryTimeMs accepte seconds et _seconds", () => {
+    expect(entryTimeMs({ loggedAt: { seconds: 10 } } as unknown as FoodEntry)).toBe(10000);
+    expect(entryTimeMs({ loggedAt: { _seconds: 10 } } as unknown as FoodEntry)).toBe(10000);
+    expect(entryTimeMs({} as unknown as FoodEntry)).toBeNull();
   });
 });

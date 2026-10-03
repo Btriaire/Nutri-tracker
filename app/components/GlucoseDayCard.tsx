@@ -1,64 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { IconDroplet, IconArrowUpRight, IconArrowDownRight, IconMinus } from "@tabler/icons-react";
+import { IconDroplet } from "@tabler/icons-react";
 import {
-  LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceArea, Tooltip,
-  ReferenceLine,
+  LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceArea, ReferenceLine, ReferenceDot, Tooltip,
 } from "recharts";
-import { matchMealGlucose, readingsAroundMeal, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
-import type { FoodEntry, GlucoseDay, MealType, NutritionGoals } from "@/app/lib/types";
+import { computeDayStats, DEFAULT_GLUCOSE_TARGET, type MealGlucoseResponse } from "@/app/lib/glucose";
+import type { GlucoseReading, MealType, NutritionGoals } from "@/app/lib/types";
+import { MEAL_META } from "./meal-meta";
+import { GlucoseBars, responseBars, fmt, hhmm, levelColor } from "./GlucoseSigns";
 
-const MEAL_LABEL: Record<MealType, string> = { breakfast: "Petit-déj", lunch: "Déjeuner", snacks: "Collation", dinner: "Dîner" };
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const SHORT: Record<MealType, string> = { breakfast: "P.-déj", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
+const HOUR = 3_600_000;
 
-function entryTimeMs(e: FoodEntry): number | null {
-  const ts = e.loggedAt as unknown as { _seconds?: number; seconds?: number };
-  const sec = ts?._seconds ?? ts?.seconds;
-  return sec ? sec * 1000 : null;
+interface Props {
+  /** undefined = chargement, null = erreur, tableau = lectures du jour. */
+  readings: GlucoseReading[] | null | undefined;
+  responses: Partial<Record<MealType, MealGlucoseResponse>>;
+  goals: NutritionGoals;
 }
 
-export default function GlucoseDayCard({ date, entries, goals }: { date: string; entries: FoodEntry[]; goals: NutritionGoals }) {
-  const [day, setDay] = useState<GlucoseDay | null | undefined>(undefined); // undefined = chargement, null = erreur
+export default function GlucoseDayCard({ readings, responses, goals }: Props) {
   const target = { min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min, max: goals.glucoseTargetMaxMmol ?? DEFAULT_GLUCOSE_TARGET.max };
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/glucose?from=${date}&to=${date}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then((d: { days: GlucoseDay[] }) => { if (!cancelled) setDay(d.days[0] ?? { date, readings: [] }); })
-      .catch(() => { if (!cancelled) setDay(null); });
-    return () => { cancelled = true; };
-  }, [date]);
-
-  if (day === undefined) return null; // pas de squelette : evite un flash si la section reste vide
-  if (day === null) {
+  if (readings === undefined) return null; // pas de squelette : evite un flash si la section reste vide
+  if (readings === null) {
     return (
-      <div className="glass p-4 mb-5" role="alert">
+      <section aria-label="Glycémie" className="mb-5" role="alert">
         <p className="text-[12px]" style={{ color: "var(--danger)" }}>Glycémie indisponible pour l&apos;instant.</p>
-      </div>
+      </section>
     );
   }
 
-  const readings = day.readings;
   const stats = computeDayStats(readings, target);
   const chartData = readings.map((r) => ({ t: r.timeMs, v: r.mmol }));
 
-  const mealsWithFood = MEALS
-    .map((meal) => {
-      const mealEntries = entries.filter((e) => e.meal === meal);
-      if (mealEntries.length === 0) return null;
-      const times = mealEntries.map(entryTimeMs).filter((t): t is number => t !== null);
-      if (times.length === 0) return null;
-      const mealTimeMs = Math.min(...times);
-      const carbsG = mealEntries.reduce((s, e) => s + (e.nutrition?.carbsG ?? 0), 0);
-      return { meal, carbsG, mealTimeMs, match: matchMealGlucose(readings, mealTimeMs), window: readingsAroundMeal(readings, mealTimeMs) };
-    })
-    .filter((m): m is NonNullable<typeof m> => m !== null);
+  // Repères verticaux : un par repas, seulement s'il tombe dans la plage couverte par le capteur.
+  const first = readings[0]?.timeMs ?? 0;
+  const last = readings[readings.length - 1]?.timeMs ?? 0;
+  const markers = MEALS
+    .map((meal) => ({ meal, r: responses[meal] }))
+    .filter((m): m is { meal: MealType; r: MealGlucoseResponse } => !!m.r && m.r.mealTimeMs >= first - 30 * 60_000 && m.r.mealTimeMs <= last);
+  const xMin = Math.min(first, ...markers.map((m) => m.r.mealTimeMs));
+  const xMax = last;
+  const ticks: number[] = [];
+  if (readings.length > 1) {
+    const d = new Date(xMin); d.setMinutes(0, 0, 0);
+    for (let t = d.getTime() + HOUR; t < xMax; t += HOUR) if (new Date(t).getHours() % 3 === 0) ticks.push(t);
+  }
 
   return (
-    <section aria-label="Glycémie" className="glass p-4 mb-5">
-      <div className="flex items-center justify-between mb-3">
+    <section aria-label="Glycémie" className="mb-5">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <IconDroplet size={16} stroke={1.8} style={{ color: "var(--fat)" }} />
           <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Glycémie</p>
@@ -77,68 +70,72 @@ export default function GlucoseDayCard({ date, entries, goals }: { date: string;
         </p>
       ) : (
         <>
-          <div className="flex items-baseline gap-4 mb-2">
-            <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
-              Moy. <strong style={{ color: "var(--text-primary)" }}>{stats.avgMmol}</strong> mmol/L
-            </span>
-            <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
-              {stats.minMmol}–{stats.maxMmol} mmol/L
-            </span>
-          </div>
+          <p className="text-[12px] mb-1" style={{ color: "var(--text-secondary)" }}>
+            Moy. <strong style={{ color: "var(--text-primary)" }}>{fmt(stats.avgMmol)}</strong> mmol/L
+            <span style={{ color: "var(--text-muted)" }}> · {fmt(stats.minMmol)}–{fmt(stats.maxMmol)}</span>
+          </p>
 
-          <ResponsiveContainer width="100%" height={90}>
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <ReferenceArea y1={target.min} y2={target.max} fill="var(--fat)" fillOpacity={0.08} ifOverflow="extendDomain" />
-              <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} hide />
-              <YAxis domain={[(d: number) => Math.min(d, target.min - 1), (d: number) => Math.max(d, target.max + 1)]} hide />
+          <ResponsiveContainer width="100%" height={150}>
+            <LineChart data={chartData} margin={{ top: 22, right: 8, left: 8, bottom: 0 }}>
+              <ReferenceArea y1={target.min} y2={target.max} fill="var(--fat)" fillOpacity={0.07} ifOverflow="extendDomain" />
+              {/* Fenetre post-prandiale (2 h) de chaque repas, dans la couleur du repas */}
+              {markers.map(({ meal, r }) => (
+                <ReferenceArea key={`a-${meal}`} x1={r.mealTimeMs} x2={Math.min(r.mealTimeMs + 2 * HOUR, xMax)}
+                  fill={MEAL_META[meal].color} fillOpacity={0.12} ifOverflow="hidden" />
+              ))}
+              {/* Trait vertical a l'heure de chaque repas */}
+              {markers.map(({ meal, r }) => (
+                <ReferenceLine key={`l-${meal}`} x={r.mealTimeMs} stroke={MEAL_META[meal].color} strokeWidth={1.5} strokeDasharray="4 3"
+                  label={{ value: SHORT[meal], position: "top", fill: MEAL_META[meal].color, fontSize: 12, fontWeight: 600 }} />
+              ))}
+              <XAxis dataKey="t" type="number" scale="time" domain={[xMin, xMax]} ticks={ticks} tickFormatter={hhmm}
+                tick={{ fontSize: 12, fill: "var(--text-muted)" }} tickLine={false} axisLine={false} />
+              <YAxis domain={[(d: number) => Math.min(d, target.min - 1), (d: number) => Math.max(d + 2, target.max + 1)]} hide />
               <Tooltip
-                labelFormatter={(t) => new Date(t as number).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                formatter={(v) => [`${v} mmol/L`, ""]}
+                labelFormatter={(t) => hhmm(t as number)}
+                formatter={(v) => [`${fmt(Number(v))} mmol/L`, ""]}
                 contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 12 }}
               />
               <Line type="monotone" dataKey="v" stroke="var(--fat)" strokeWidth={2} dot={false} isAnimationActive={false} />
+              {/* Pic de chaque repas */}
+              {markers.filter((m) => m.r.peak).map(({ meal, r }) => (
+                <ReferenceDot key={`p-${meal}`} x={r.peak!.timeMs} y={r.peak!.mmol} r={4} fill={levelColor(r.peak!.mmol, target)}
+                  stroke="var(--bg)" strokeWidth={2}
+                  label={{ value: fmt(r.peak!.mmol), position: "top", fill: levelColor(r.peak!.mmol, target), fontSize: 12, fontWeight: 600 }} />
+              ))}
             </LineChart>
           </ResponsiveContainer>
 
-          {mealsWithFood.length > 0 && (
-            <div className="mt-3 space-y-2">
-          {mealsWithFood.map(({ meal, carbsG, mealTimeMs, match, window }) => {
-            const delta = match.deltaMmol;
-            const Icon = delta === null ? IconMinus : delta > 0.3 ? IconArrowUpRight : delta < -0.3 ? IconArrowDownRight : IconMinus;
-            const color = delta === null ? "var(--text-muted)" : delta > 2.0 ? "var(--danger)" : "var(--fiber)";
-            const mealChart = window.map((r) => ({ t: r.timeMs, v: r.mmol }));
-            const minY = Math.min(target.min - 1, ...mealChart.map((p) => p.v));
-            const maxY = Math.max(target.max + 1, ...mealChart.map((p) => p.v));
-            return (
-              <div key={meal} className="rounded-xl p-3" style={{ background: "color-mix(in srgb, var(--surface-hover) 55%, transparent)", border: "1px solid var(--border)" }}>
-                <div className="flex items-center justify-between text-[12px] mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  <span className="font-medium" style={{ color: "var(--text-primary)" }}>{MEAL_LABEL[meal]}</span>
-                  <span>{Math.round(carbsG)} g glucides</span>
-                  <span className="flex items-center gap-1" style={{ color }}>
-                    {match.pre ? `${match.pre.mmol}` : "—"} → {match.post ? `${match.post.mmol}` : "—"}
-                    <Icon size={13} stroke={2} />
-                  </span>
-                </div>
-                {mealChart.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={115}>
-                    <LineChart data={mealChart} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-                      <ReferenceArea x1={mealTimeMs - 30 * 60_000} x2={mealTimeMs} fill="var(--text-muted)" fillOpacity={0.06} />
-                      <ReferenceArea x1={mealTimeMs} x2={mealTimeMs + 150 * 60_000} fill="var(--fat)" fillOpacity={0.07} />
-                      <ReferenceLine x={mealTimeMs} stroke="var(--fat)" strokeDasharray="3 3" label={{ value: "Repas", position: "insideTop", fill: "var(--fat)", fontSize: 10 }} />
-                      <XAxis dataKey="t" type="number" domain={[mealTimeMs - 30 * 60_000, mealTimeMs + 150 * 60_000]} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickFormatter={(t) => `${Math.round((Number(t) - mealTimeMs) / 60_000)}′`} tickLine={false} axisLine={false} />
-                      <YAxis domain={[minY, maxY]} hide />
-                      <Tooltip labelFormatter={(t) => `${Math.round((Number(t) - mealTimeMs) / 60_000)} min`} formatter={(v) => [`${v} mmol/L`, "Glycémie"]} contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 11 }} />
-                      <Line type="monotone" dataKey="v" stroke="var(--fat)" strokeWidth={2} dot={{ r: 2, fill: "var(--fat)", strokeWidth: 0 }} isAnimationActive={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Pas de lecture dans les 30 min avant ou les 2 h 30 après.</p>
-                )}
-                <p className="text-[10px] mt-1" style={{ color: "var(--text-muted)" }}>Minutes par rapport au repas · −30 à +150</p>
-              </div>
-            );
-          })}
-            </div>
+          {MEALS.some((m) => responses[m]) && (
+            <ul className="mt-3 space-y-3">
+              {MEALS.filter((m) => responses[m]).map((meal) => {
+                const r = responses[meal]!;
+                const meta = MEAL_META[meal];
+                return (
+                  <li key={meal} className="flex items-center gap-3">
+                    <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg"
+                      style={{ background: `color-mix(in srgb, ${meta.color} 14%, transparent)`, color: meta.color }}>
+                      <meta.Icon size={15} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+                        {meta.fr} <span className="font-normal" style={{ color: "var(--text-muted)" }}>· {hhmm(r.mealTimeMs)} · {r.carbsG} g glucides</span>
+                      </p>
+                      <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                        {fmt(r.pre?.mmol)} → <strong style={{ color: levelColor(r.peak?.mmol, target) }}>{fmt(r.peak?.mmol)}</strong> → {fmt(r.post?.mmol)} mmol/L
+                      </p>
+                      {(r.riseMmol !== null && r.minutesToPeak !== null) && (
+                        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                          pic +{fmt(r.riseMmol)} à {r.minutesToPeak} min
+                          {r.risePer10gCarbs !== null && <> · +{fmt(r.risePer10gCarbs)} mmol / 10 g de glucides</>}
+                        </p>
+                      )}
+                    </div>
+                    <GlucoseBars values={responseBars(r)} target={target} height={30} />
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </>
       )}

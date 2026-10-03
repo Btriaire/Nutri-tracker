@@ -5,7 +5,10 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconPlus, IconChevronDown, IconCamera, IconTrash, IconChartBar, IconX, IconToolsKitchen2,
-  IconEggFried, IconSalad, IconMeat, IconApple, IconSparkles, IconBookmarkPlus, IconCheck } from "@tabler/icons-react";
+  IconSparkles, IconBookmarkPlus, IconCheck, IconDots } from "@tabler/icons-react";
+import { MEAL_META } from "./meal-meta";
+import { MealGlucoseStrip } from "./GlucoseSigns";
+import type { MealGlucoseResponse } from "@/app/lib/glucose";
 import FoodItem from "./FoodItem";
 import type { AddedInfo } from "./FoodSearchModal";
 import QualityScoreBadge from "./QualityScoreBadge";
@@ -21,12 +24,6 @@ import PhotoMealAnalyzer from "./PhotoMealAnalyzer";
 import type { FoodEntry, MealType, Lang, HungerLevel, NutritionGoals } from "@/app/lib/types";
 import type { DietMealReport, DietViolation } from "@/app/lib/diet-program";
 
-const MEAL_META: Record<MealType, { fr: string; en: string; Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; color: string; color2: string }> = {
-  breakfast: { fr: "Petit-déjeuner", en: "Breakfast", Icon: IconEggFried, color: "var(--carbs)", color2: "var(--calories)" },
-  lunch:     { fr: "Déjeuner",       en: "Lunch",     Icon: IconSalad,    color: "var(--calories)", color2: "var(--calories)" },
-  dinner:    { fr: "Dîner",          en: "Dinner",    Icon: IconMeat,     color: "var(--danger)", color2: "#f43f5e" },
-  snacks:    { fr: "Collations",     en: "Snacks",    Icon: IconApple,    color: "var(--fiber)", color2: "#22d3ee" },
-};
 
 
 interface Props {
@@ -45,6 +42,9 @@ interface Props {
   dietMealReport?: DietMealReport | null;
   dietViolationsByEntryId?: Record<string, DietViolation[]>;
   onDismissViolation?: (foodName: string) => void;
+  /** Reponse glycemique de ce repas (suivi de glycemie active) : affichee sous l'en-tete. */
+  glucose?: MealGlucoseResponse | null;
+  glucoseTarget?: { min: number; max: number };
 }
 
 export default function MealSection({
@@ -52,6 +52,7 @@ export default function MealSection({
   photoUrl, hunger, goals, alreadyKcal = 0,
   onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
   dietMealReport, dietViolationsByEntryId, onDismissViolation,
+  glucose, glucoseTarget,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
@@ -60,6 +61,7 @@ export default function MealSection({
   const [showNutrition, setShowNutrition] = useState(false);
   const [photoAnalyzer, setPhotoAnalyzer] = useState(false);
   const [saveMealOpen,  setSaveMealOpen]  = useState(false);
+  const [showTools,     setShowTools]     = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const meta = MEAL_META[meal];
@@ -196,6 +198,36 @@ export default function MealSection({
           </motion.span>
         </button>
 
+        {/* Outils secondaires (photo, analyse IA, detail, enregistrer) : derriere "..." pour que le nom du repas
+            reste lisible sur un telephone, meme quand le repas contient des aliments. */}
+        <button
+          onClick={() => setShowTools((x) => !x)}
+          aria-expanded={showTools}
+          aria-label={lang === "fr" ? "Plus d'actions" : "More actions"}
+          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+          style={{
+            background: showTools ? "var(--layer-2)" : "transparent",
+            color: showTools ? "var(--text-primary)" : "var(--text-muted)",
+          }}
+        >
+          <IconDots size={18} stroke={1.8} />
+        </button>
+
+        {/* Add food button */}
+        <button
+          onClick={() => setModal(true)}
+          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
+          style={{ background: meta.color, color: "#fff" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+          aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}
+        >
+          <IconPlus size={17} stroke={2} />
+        </button>
+      </div>
+
+      {showTools && (
+        <div className="flex items-center gap-2 px-4 pb-2.5 pt-1">
         {/* Camera button (meal photo) */}
         <button
           onClick={() => !uploading && cameraRef.current?.click()}
@@ -262,18 +294,10 @@ export default function MealSection({
           </button>
         )}
 
-        {/* Add food button */}
-        <button
-          onClick={() => setModal(true)}
-          className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all"
-          style={{ background: meta.color, color: "#fff" }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          aria-label={lang === "fr" ? "Ajouter un aliment" : "Add food"}
-        >
-          <IconPlus size={17} stroke={2} />
-        </button>
-      </div>
+        </div>
+      )}
+
+      {glucose && glucoseTarget && entries.length > 0 && <MealGlucoseStrip response={glucose} target={glucoseTarget} />}
 
       <AnimatePresence initial={false}>
         {open && (

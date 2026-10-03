@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { IconPlus, IconLoader2, IconTrash, IconClock, IconHistory, IconChevronDown, IconPencil, IconCheck } from "@tabler/icons-react";
+import { IconPlus, IconLoader2, IconTrash, IconClock, IconCheck } from "@tabler/icons-react";
+import Sheet from "./Sheet";
 import { format, subDays } from "date-fns";
 import type { SupplementProduct, SupplementLog, SupplementIntake, SupplementMoment } from "@/app/lib/types";
 
@@ -38,8 +38,6 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
   const [loading, setLoading] = useState(false);
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [showYesterday, setShowYesterday] = useState(false);
-  const [open, setOpen] = useState(false);
   const [editingIntakeId, setEditingIntakeId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -250,11 +248,10 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
     }
   };
 
-  const sortedIntakes = log?.intakes?.sort((a, b) => a.time.localeCompare(b.time)) || [];
+  const sortedIntakes = [...(log?.intakes ?? [])].sort((a, b) => a.time.localeCompare(b.time));
   const activeProducts = products.filter(p => p.active !== false);
 
-  // Dedup yesterday's intakes by supplement+moment, then exclude ones already logged today for the same pair
-  // and any supplement that's been paused since (cure terminée) — no point re-suggesting it.
+  // Suggestions "comme hier" : prises d'hier pas encore faites aujourd'hui, hors complements en pause (cure terminee).
   const todayKeys = new Set(sortedIntakes.map(i => `${i.supplementId}-${i.moment ?? ""}`));
   const activeProductIds = new Set(activeProducts.map(p => p.id));
   const yesterdaySuggestions = Array.from(
@@ -263,297 +260,172 @@ export default function SupplementLogger({ date, onIntakeLogged }: SupplementLog
     ).values()
   ).filter(i => !todayKeys.has(`${i.supplementId}-${i.moment ?? ""}`) && activeProductIds.has(i.supplementId));
 
+  const chip = "inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-full text-[13px] font-medium transition-transform active:scale-95 disabled:opacity-60";
+  const isEditing = editingIntakeId !== null;
+  const nothing = sortedIntakes.length === 0 && yesterdaySuggestions.length === 0;
+
   return (
-    <div className="space-y-3">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-1.5"
-      >
-        <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-          Suppléments & Compléments
-        </h3>
-        {sortedIntakes.length > 0 && (
-          <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "var(--fiber)", background: "rgba(52,211,153,0.15)" }}>
-            {sortedIntakes.length} prise{sortedIntakes.length > 1 ? "s" : ""}
-          </span>
-        )}
-        <IconChevronDown
-          size={14}
-          style={{ color: "var(--text-muted)", marginLeft: "auto", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-        />
-      </button>
+    <section aria-label="Compléments" className="mb-4">
+      {/* En-tete a plat : pas de carte, pas de cadre */}
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[12px] font-medium uppercase tracking-[0.06em]" style={{ color: "var(--text-muted)" }}>
+          Compléments{sortedIntakes.length > 0 && <span style={{ color: "var(--fiber)" }}> · {sortedIntakes.length} pris</span>}
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          aria-label="Ajouter une prise"
+          className="flex items-center gap-1 min-h-[44px] pl-3 -mr-2 pr-2 text-[13px] font-medium active:scale-95 transition-transform"
+          style={{ color: "var(--fiber)" }}
+        >
+          <IconPlus size={16} stroke={2.2} /> Ajouter
+        </button>
+      </div>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            style={{ overflow: "hidden" }}
-          >
-            <div className="space-y-4 pt-1">
-              <div className="flex justify-end">
-                <button
-                  onClick={() => (showForm ? resetForm() : setShowForm(true))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
-                  style={{
-                    background: "rgba(52,211,153,0.12)",
-                    border: "1px solid rgba(52,211,153,0.3)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  <IconPlus size={14} />
-                  Ajouter prise
-                </button>
-              </div>
-
-      {/* Comme hier — quick re-add from yesterday's intakes, collapsed by default */}
-      {yesterdaySuggestions.length > 0 && (
-        <div className="rounded-xl overflow-hidden" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-          <button
-            type="button"
-            onClick={() => setShowYesterday(v => !v)}
-            className="w-full flex items-center gap-1.5 px-3 py-2 transition-all"
-          >
-            <IconHistory size={13} style={{ color: "var(--text-muted)" }} />
-            <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
-              Comme hier ({yesterdaySuggestions.length})
-            </span>
-            <IconChevronDown
-              size={13}
-              style={{ color: "var(--text-muted)", marginLeft: "auto", transform: showYesterday ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-            />
-          </button>
-          <AnimatePresence>
-            {showYesterday && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+      {nothing ? (
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+          {loading ? "Chargement…" : products.length === 0 ? "Aucun complément configuré (Réglages)." : "Aucune prise aujourd'hui."}
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {/* Pris aujourd'hui : touche = modifier ou supprimer */}
+          {sortedIntakes.map(intake => (
+            <button
+              key={intake.id}
+              type="button"
+              onClick={() => handleEditIntake(intake)}
+              className={chip}
+              style={{ background: "color-mix(in srgb, var(--fiber) 16%, transparent)", color: "var(--fiber)" }}
+              aria-label={`${intake.supplementName}, pris à ${intake.time}. Modifier`}
+            >
+              <IconCheck size={14} stroke={2.6} />
+              {intake.supplementName}
+              <span className="font-normal tabular-nums" style={{ opacity: 0.75 }}>{intake.time}</span>
+            </button>
+          ))}
+          {/* Pas encore pris (comme hier) : touche = enregistrer maintenant */}
+          {yesterdaySuggestions.map(intake => {
+            const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
+            const isAdding = quickAdding === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => quickAddFromYesterday(intake)}
+                disabled={isAdding}
+                className={chip}
+                style={{ background: "var(--layer-1)", color: "var(--text-secondary)" }}
+                aria-label={`Enregistrer ${intake.supplementName} maintenant`}
               >
-                <div className="flex flex-wrap gap-1.5 px-3 pb-3">
-                  {yesterdaySuggestions.map(intake => {
-                    const key = `${intake.supplementId}-${intake.moment ?? intake.time}`;
-                    const isAdding = quickAdding === key;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => quickAddFromYesterday(intake)}
-                        disabled={isAdding}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all disabled:opacity-60 active:scale-95"
-                        style={{
-                          background: "rgba(52,211,153,0.1)",
-                          border: "1px solid rgba(52,211,153,0.3)",
-                          color: "var(--fiber)",
-                        }}
-                      >
-                        {isAdding ? <IconLoader2 size={12} className="animate-spin" /> : <IconPlus size={12} />}
-                        {intake.supplementName}
-                        {intake.moment && (
-                          <span style={{ color: "var(--text-muted)" }}>· {MOMENT_LABEL[intake.moment]}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {isAdding ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} stroke={2.2} />}
+                {intake.supplementName}
+                {intake.moment && <span className="font-normal" style={{ color: "var(--text-muted)" }}>{MOMENT_LABEL[intake.moment]}</span>}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* Form */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="rounded-xl p-4 overflow-hidden"
-            style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}
-          >
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {editingIntakeId && (
-                <p className="text-[12px] font-medium" style={{ color: "var(--fiber)" }}>
-                  Modifier l&apos;horaire de la prise
-                </p>
-              )}
-              <div>
-                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
-                  Supplément *
-                </label>
-                <select
-                  value={form.supplementId}
-                  onChange={e => handleSelectProduct(e.target.value)}
-                  disabled={!!editingIntakeId}
-                  className="w-full px-3 py-2 rounded-lg text-[12px] disabled:opacity-60"
-                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                >
-                  <option value="">Sélectionner un supplément</option>
-                  {(editingIntakeId && !activeProducts.some(p => p.id === form.supplementId)
-                    ? [...activeProducts, ...products.filter(p => p.id === form.supplementId)]
-                    : activeProducts
-                  ).map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
-                  Heure de prise *
-                </label>
-                <div className="flex items-center gap-2">
-                  <IconClock size={14} style={{ color: "var(--text-muted)" }} />
-                  <input
-                    type="time"
-                    value={form.time}
-                    onChange={e => {
-                      const time = e.target.value;
-                      const hour = parseInt(time.split(":")[0] || "0", 10);
-                      setForm(prev => ({ ...prev, time, moment: guessMoment(hour) }));
-                    }}
-                    className="flex-1 px-3 py-2 rounded-lg text-[12px]"
-                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
-                  Moment de la journée *
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {MOMENTS.map(m => {
-                    const selected = form.moment === m.value;
-                    return (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => setForm(prev => ({ ...prev, moment: m.value }))}
-                        className="px-2.5 py-1.5 rounded-full text-[12px] font-medium transition-all"
-                        style={{
-                          background: selected ? "rgba(52,211,153,0.18)" : "var(--layer-2)",
-                          border: `1px solid ${selected ? "rgba(52,211,153,0.45)" : "var(--border)"}`,
-                          color: selected ? "var(--fiber)" : "var(--text-muted)",
-                        }}
-                      >
-                        {m.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[12px] font-medium block mb-1" style={{ color: "var(--text-muted)" }}>
-                  Notes
-                </label>
-                <input
-                  type="text"
-                  value={form.notes}
-                  onChange={e => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Ex: Avec nourriture, avec jus d'orange"
-                  className="w-full px-3 py-2 rounded-lg text-[12px]"
-                  style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={loading || !form.supplementId}
-                  className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{
-                    background: "rgba(52,211,153,0.12)",
-                    border: "1px solid rgba(52,211,153,0.3)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {loading ? <IconLoader2 size={14} className="animate-spin" /> : <IconCheck size={14} />}
-                  {editingIntakeId ? "Enregistrer" : "Ajouter"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
-                  style={{
-                    background: "var(--layer-2)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* List */}
-      <div className="space-y-2">
-        {sortedIntakes.length === 0 ? (
-          <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            Aucune prise enregistrée pour aujourd&apos;hui
-          </p>
-        ) : (
-          sortedIntakes.map(intake => (
-            <motion.div
-              key={intake.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="rounded-lg p-3 flex items-start justify-between"
-              style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}
+      <Sheet open={showForm} onClose={resetForm} title={isEditing ? "Modifier la prise" : "Ajouter une prise"}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="supp-product" className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-muted)" }}>Complément</label>
+            <select
+              id="supp-product"
+              value={form.supplementId}
+              onChange={e => handleSelectProduct(e.target.value)}
+              disabled={isEditing}
+              className="input disabled:opacity-60"
+              style={{ height: 44 }}
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                    {intake.supplementName}
-                  </span>
-                  <span className="text-[12px] px-1.5 py-0.5 rounded-full font-mono" style={{ background: "rgba(99,102,241,0.15)", color: "var(--indigo)" }}>
-                    {intake.time}
-                  </span>
-                  {intake.moment && (
-                    <span className="text-[12px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.15)", color: "var(--fiber)" }}>
-                      {MOMENT_LABEL[intake.moment]}
-                    </span>
-                  )}
-                </div>
-                {intake.notes && (
-                  <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
-                    {intake.notes}
-                  </p>
-                )}
-              </div>
-              <div className="flex-shrink-0 flex items-center gap-1.5 ml-2">
-                <button
-                  onClick={() => handleEditIntake(intake)}
-                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
-                  style={{ background: "rgba(99,102,241,0.1)" }}
-                >
-                  <IconPencil size={14} style={{ color: "var(--indigo)" }} />
-                </button>
-                <button
-                  onClick={() => handleDelete(intake.id)}
-                  className="p-1.5 rounded-lg transition-all hover:opacity-70"
-                  style={{ background: "rgba(239,68,68,0.1)" }}
-                >
-                  <IconTrash size={14} style={{ color: "var(--error)" }} />
-                </button>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
+              <option value="">Sélectionner un complément</option>
+              {(isEditing && !activeProducts.some(p => p.id === form.supplementId)
+                ? [...activeProducts, ...products.filter(p => p.id === form.supplementId)]
+                : activeProducts
+              ).map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="supp-time" className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-muted)" }}>Heure de prise</label>
+            <div className="flex items-center gap-2">
+              <IconClock size={16} style={{ color: "var(--text-muted)" }} />
+              <input
+                id="supp-time"
+                type="time"
+                value={form.time}
+                onChange={e => {
+                  const time = e.target.value;
+                  const hour = parseInt(time.split(":")[0] || "0", 10);
+                  setForm(prev => ({ ...prev, time, moment: guessMoment(hour) }));
+                }}
+                className="input flex-1"
+                style={{ height: 44 }}
+              />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>Moment de la journée</p>
+            <div className="flex flex-wrap gap-2">
+              {MOMENTS.map(m => {
+                const selected = form.moment === m.value;
+                return (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, moment: m.value }))}
+                    aria-pressed={selected}
+                    className="min-h-[40px] px-3.5 rounded-full text-[13px] font-medium transition-colors"
+                    style={{
+                      background: selected ? "color-mix(in srgb, var(--fiber) 18%, transparent)" : "var(--layer-1)",
+                      color: selected ? "var(--fiber)" : "var(--text-secondary)",
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="supp-notes" className="text-[12px] font-medium block mb-1.5" style={{ color: "var(--text-muted)" }}>Notes</label>
+            <input
+              id="supp-notes"
+              type="text"
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+              placeholder="Ex : avec nourriture, avec jus d'orange"
+              className="input"
+              style={{ height: 44 }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !form.supplementId}
+            className="btn btn-primary w-full gap-2 disabled:opacity-50"
+            style={{ height: 48 }}
+          >
+            {loading ? <IconLoader2 size={16} className="animate-spin" /> : <IconCheck size={16} stroke={2.4} />}
+            {isEditing ? "Enregistrer" : "Ajouter"}
+          </button>
+
+          {isEditing && (
+            <button
+              type="button"
+              onClick={() => editingIntakeId && handleDelete(editingIntakeId)}
+              className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl text-[13px] font-medium"
+              style={{ color: "var(--danger)" }}
+            >
+              <IconTrash size={16} /> Supprimer cette prise
+            </button>
+          )}
+        </form>
+      </Sheet>
+    </section>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import GlucoseDayCard from "@/app/components/GlucoseDayCard";
+import { useGlucoseDay } from "@/app/lib/use-glucose-day";
+import { mealGlucoseResponses, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
 import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -304,6 +306,17 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       setValidated(true);
       setShowValidateModal(false);
     } finally { setValidating(false); }
+  };
+
+  // Glycemie : une requete par jour, la reponse de chaque repas se recalcule a chaque aliment ajoute.
+  const glucoseReadings = useGlucoseDay(date, !!goals.glucoseTracking);
+  const glucoseResponses = useMemo(
+    () => (glucoseReadings ? mealGlucoseResponses(entries, glucoseReadings) : {}),
+    [entries, glucoseReadings],
+  );
+  const glucoseTarget = {
+    min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min,
+    max: goals.glucoseTargetMaxMmol ?? DEFAULT_GLUCOSE_TARGET.max,
   };
 
   const totals: DayTotals = entries.reduce(
@@ -791,6 +804,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <div className="absolute inset-0 z-10" style={{ pointerEvents: "auto", cursor: "default" }} />
           )}
 
+          {/* Complements : en haut du journal, a plat (sans carte), juste avant les repas. */}
+          <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
+
           {/* Meal sections — primary action on this page, so it comes right after the
               lock banner instead of after the secondary trackers below. */}
           <div className="space-y-3 mb-5">
@@ -814,6 +830,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   onFoodAdded={showToast}
                   onPhotoChange={handlePhotoChange}
                   onHungerChange={handleHungerChange}
+                  glucose={glucoseResponses[meal] ?? null}
+                  glucoseTarget={glucoseTarget}
                   dietMealReport={dietReport?.perMeal[meal] ?? null}
                   dietViolationsByEntryId={dietReport?.violationsByEntryId}
                   onDismissViolation={handleDismissViolation}
@@ -822,7 +840,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             ))}
           </div>
 
-          {goals.glucoseTracking && <GlucoseDayCard date={date} entries={entries} goals={goals} />}
+          {goals.glucoseTracking && <GlucoseDayCard readings={glucoseReadings} responses={glucoseResponses} goals={goals} />}
 
           {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
               Regroupés et repliés par défaut : ce sont des compléments au journal
@@ -845,7 +863,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <div className="text-left">
                   <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Suivis complémentaires</p>
                   <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                    Eau, suppléments, micronutriments{goals.alcoholTracking ? ", alcool" : ""}
+                    Eau, micronutriments{goals.alcoholTracking ? ", alcool" : ""}
                   </p>
                 </div>
               </div>
@@ -871,15 +889,6 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                         goalMl={goals.waterMl ?? 2000}
                         onUpdate={setWaterMl}
                       />
-                    </div>
-
-                    <div className="rounded-2xl p-4 overflow-hidden"
-                      style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-                      }}
-                    >
-                      <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
                     </div>
 
                     <div className="rounded-2xl p-4 overflow-hidden"
