@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
   // ─── Withings: sync last 30 days ─────────────────────────────────────────────
   try {
     const to   = format(new Date(), "yyyy-MM-dd");
-    const from = format(subDays(new Date(), 30), "yyyy-MM-dd");
+    // ?withingsDays=N elargit la fenetre (rattrapage d'historique apres une correction de lecture),
+    // borne a 730 jours ; par defaut 30.
+    const requested = Number(req.nextUrl.searchParams.get("withingsDays"));
+    const days = Number.isFinite(requested) && requested > 0 ? Math.min(Math.floor(requested), 730) : 30;
+    const from = format(subDays(new Date(), days), "yyyy-MM-dd");
 
     const written = await withings.syncRange(USER, from, to);
     results.withings = { status: "ok", written, from, to };

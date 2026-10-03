@@ -41,6 +41,7 @@ const TABS: { id: Tab; label: string; Icon: TablerIcon; metrics?: MetricDef[] }[
       { key: "bodyFatPct",   label: "Graisse",         unit: "%",  color: "var(--calories)" },
       { key: "muscleMassKg", label: "Masse musculaire", unit: "kg", color: "var(--protein)", decimals: 1 },
       { key: "fatMassKg",    label: "Masse grasse",     unit: "kg", color: "var(--danger)", decimals: 1 },
+      { key: "visceralFat",  label: "Graisse viscérale", unit: "",  color: "var(--weight)", decimals: 0 },
     ],
   },
   {
@@ -254,6 +255,7 @@ export default function BodyCompChart({
     bodyFatPct:   6,   // percentage points
     muscleMassKg: 4,   // kg
     fatMassKg:    4,   // kg
+    visceralFat:  4,   // indice Withings (variation lente, bruit de mesure de +-1)
     restingHR:    20,  // bpm
   };
 

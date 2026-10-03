@@ -1,6 +1,7 @@
 import { getAdminFirestore } from "./firebase-admin";
 import { encrypt, decrypt } from "./oauth";
 import { FieldValue } from "firebase-admin/firestore";
+import { MEAS_TYPES, groupMeasures, type DayMeasure, type MeasureGroup } from "./withings-measures";
 
 interface RawTokens {
   accessToken:  string;
@@ -169,37 +170,9 @@ async function refreshWithRetry(refreshToken: string): Promise<RawTokens> {
 }
 
 // ─── Measures fetch ───────────────────────────────────────────────────────────
+// Codes, types et regroupement par jour : voir withings-measures.ts (module pur, teste).
 
-// meastype: 1=weight 6=fat% 8=fat-free-mass 9=diastolicBP 10=systolicBP 11=resting-HR
-//           41=hydration 42=bone-mass 54=SpO2 71=body-temp 76=muscle-mass 173=visceral-fat
-const MEAS_TYPES = "1,6,8,9,10,11,41,42,54,71,76,173";
-
-interface MeasureGroup {
-  date:     number;    // unix timestamp
-  measures: { value: number; type: number; unit: number }[];
-}
-
-interface DayMeasure {
-  date:          string;
-  weightKg:      number | null;
-  bodyFatPct:    number | null;
-  bmi:           number | null;
-  muscleMassKg:  number | null;
-  fatMassKg:     number | null;
-  boneMassKg:    number | null;
-  hydrationPct:  number | null;
-  visceralFat:   number | null;
-  spO2Pct:       number | null;
-  restingHR:     number | null;
-  tempCelsius:   number | null;
-  systolicBP:    number | null;
-  diastolicBP:   number | null;
-  measuredAt:    number | null; // unix ms
-}
-
-function scaleMeas(value: number, unit: number): number {
-  return value * Math.pow(10, unit);
-}
+const MEASURE_URL = "https://wbsapi.withings.net/measure";
 
 export async function fetchRange(userId: string, from: string, to: string): Promise<DayMeasure[]> {
   const tokens = await getTokens(userId);
@@ -207,37 +180,35 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
 
   const startdate = Math.floor(new Date(from + "T00:00:00").getTime() / 1000);
   const enddate   = Math.floor(new Date(to   + "T23:59:59").getTime() / 1000);
+  let accessToken = tokens.accessToken;
 
   // Withings measure API requires POST with form-encoded body (not GET)
-  const formBody = new URLSearchParams({
-    action:    "getmeas",
-    meastype:  MEAS_TYPES,
-    category:  "1",
-    startdate: String(startdate),
-    enddate:   String(enddate),
-  });
+  const post = async (offset?: number) => {
+    const body = new URLSearchParams({
+      action:    "getmeas",
+      meastype:  MEAS_TYPES,
+      category:  "1",
+      startdate: String(startdate),
+      enddate:   String(enddate),
+      ...(offset ? { offset: String(offset) } : {}),
+    });
+    const res = await fetch(MEASURE_URL, {
+      method:  "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    return await res.json() as WithingsMeasResponse;
+  };
 
-  let res = await fetch("https://wbsapi.withings.net/measure", {
-    method:  "POST",
-    headers: {
-      "Authorization":  `Bearer ${tokens.accessToken}`,
-      "Content-Type":   "application/x-www-form-urlencoded",
-    },
-    body: formBody,
-  });
-  let json = await res.json() as WithingsMeasResponse;
+  let json = await post();
   // Withings returns status 401 in the body when the access token is expired mid-call.
   // Force-refresh and retry once before giving up.
   if (json.status === 401) {
     try {
       const fresh = await refreshAccessToken(tokens.refreshToken);
       await saveTokens(userId, fresh);
-      res  = await fetch("https://wbsapi.withings.net/measure", {
-        method:  "POST",
-        headers: { "Authorization": `Bearer ${fresh.accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body: formBody,
-      });
-      json = await res.json() as WithingsMeasResponse;
+      accessToken = fresh.accessToken;
+      json = await post();
     } catch { return []; }
   }
   if (json.status !== 0) {
@@ -245,40 +216,15 @@ export async function fetchRange(userId: string, from: string, to: string): Prom
     return [];
   }
 
-  const groups: MeasureGroup[] = json.body?.measuregrps ?? [];
-
-  // Group by date string
-  const byDate: Record<string, DayMeasure> = {};
-  for (const grp of groups) {
-    const date = new Date(grp.date * 1000).toISOString().slice(0, 10);
-    if (!byDate[date]) {
-      byDate[date] = { date, weightKg: null, bodyFatPct: null, bmi: null, muscleMassKg: null, fatMassKg: null, boneMassKg: null, hydrationPct: null, visceralFat: null, spO2Pct: null, restingHR: null, tempCelsius: null, systolicBP: null, diastolicBP: null, measuredAt: grp.date * 1000 };
-    }
-    const day = byDate[date];
-    for (const m of grp.measures) {
-      const v = scaleMeas(m.value, m.unit);
-      if (m.type === 1)   day.weightKg     = Math.round(v * 100) / 100;
-      if (m.type === 6)   day.bodyFatPct   = Math.round(v * 10)  / 10;
-      if (m.type === 8)   day.fatMassKg    = null; // type 8 = fat-free mass, used below
-      if (m.type === 9)   day.diastolicBP  = Math.round(v);
-      if (m.type === 10)  day.systolicBP   = Math.round(v);
-      if (m.type === 11)  day.restingHR    = Math.round(v);
-      if (m.type === 41)  day.hydrationPct = Math.round(v * 10) / 10;
-      if (m.type === 42)  day.boneMassKg   = Math.round(v * 100) / 100;
-      if (m.type === 54)  day.spO2Pct      = Math.round(v * 10) / 10;
-      if (m.type === 71)  day.tempCelsius  = Math.round(v * 10) / 10;
-      if (m.type === 76)  day.muscleMassKg = Math.round(v * 100) / 100;
-      if (m.type === 173) day.visceralFat  = Math.round(v * 10) / 10;
-    }
-    // Compute fatMassKg from weight - fatFreeMass
-    const fatFree = grp.measures.find(m => m.type === 8);
-    if (fatFree && byDate[date].weightKg !== null) {
-      const ffkg = scaleMeas(fatFree.value, fatFree.unit);
-      byDate[date].fatMassKg = Math.round((byDate[date].weightKg! - ffkg) * 100) / 100;
-    }
+  // Un historique long est renvoye par pages : on suit `more`/`offset` (plafonne a 20 pages).
+  const groups: MeasureGroup[] = [...(json.body?.measuregrps ?? [])];
+  for (let page = 0; page < 20 && json.body?.more && json.body.offset; page++) {
+    json = await post(json.body.offset);
+    if (json.status !== 0) { console.error("Withings measure error (page):", json.status, json.error); break; }
+    groups.push(...(json.body?.measuregrps ?? []));
   }
 
-  return Object.values(byDate);
+  return groupMeasures(groups);
 }
 
 // ─── Sync helpers ─────────────────────────────────────────────────────────────
@@ -541,5 +487,7 @@ interface WithingsMeasResponse {
   error?: string;
   body?: {
     measuregrps: MeasureGroup[];
+    more?:   number;
+    offset?: number;
   };
 }

@@ -73,13 +73,16 @@ export default async function HealthPage() {
       });
 
       // Only push Withings point if there's at least one measurement
-      if (wt && (wt.weightKg || wt.bodyFatPct || wt.muscleMassKg || wt.fatMassKg)) {
+      if (wt && (wt.weightKg || wt.bodyFatPct || wt.muscleMassKg || wt.fatMassKg || wt.visceralFat)) {
         withingsPoints.push({
           date:         dateStr,
           weightKg:     wt.weightKg     ?? null,
           bodyFatPct:   wt.bodyFatPct   ?? null,
           muscleMassKg: wt.muscleMassKg ?? null,
           fatMassKg:    wt.fatMassKg    ?? null,
+          boneMassKg:   wt.boneMassKg   ?? null,
+          hydrationPct: wt.hydrationPct ?? null,
+          visceralFat:  wt.visceralFat  ?? null,
         });
       }
     }

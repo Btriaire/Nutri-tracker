@@ -22,6 +22,9 @@ export interface WithingsPoint {
   bodyFatPct:   number | null;
   muscleMassKg: number | null;
   fatMassKg:    number | null;
+  boneMassKg:   number | null;
+  hydrationPct: number | null;
+  visceralFat:  number | null;   // indice Withings (meastype 170), sans unite
 }
 
 export async function GET(req: NextRequest) {

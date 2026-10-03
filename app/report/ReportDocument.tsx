@@ -936,6 +936,22 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <span className="text-[12px] font-semibold" style={{ color: "var(--calories)" }}>{data.health.bodyFatEnd}%</span>
               </div>
             )}
+            {data.health.fatMassEnd && (
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Masse grasse</span>
+                <span className="text-[12px] font-semibold" style={{ color: "var(--danger)" }}>{data.health.fatMassEnd} kg</span>
+              </div>
+            )}
+            {data.health.visceralFatEnd !== null && (
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Indice de graisse viscérale (Withings)</span>
+                <span className="text-[12px] font-semibold" style={{ color: "var(--weight)" }}>
+                  {data.health.visceralFatStart !== null && data.health.visceralFatStart !== data.health.visceralFatEnd
+                    ? `${data.health.visceralFatStart} → ${data.health.visceralFatEnd}`
+                    : data.health.visceralFatEnd}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

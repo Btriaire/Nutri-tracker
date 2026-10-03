@@ -175,6 +175,9 @@ export interface ReportData {
     weightEnd:    number | null;
     weightDelta:  number | null;
     bodyFatEnd:   number | null;
+    fatMassEnd:   number | null;
+    visceralFatStart: number | null;   // indice Withings (meastype 170)
+    visceralFatEnd:   number | null;
     avgHR:        number | null;
     avgSys:       number | null;
     avgDia:       number | null;
@@ -360,11 +363,19 @@ export async function buildReportData(userId: string, from: string, to: string):
   const diaArr: number[] = [];
   let latestSpO2: number | null = null;
   let bodyFatEnd: number | null = null;
+  let fatMassEnd: number | null = null;
+  let visceralFatStart: number | null = null;
+  let visceralFatEnd: number | null = null;
 
   for (const d of fitnessSnaps.docs) {
     const fd = d.data() as FitnessDay;
     if (fd.withings?.weightKg)   weightPoints.push({ date: fd.date ?? d.id, kg: fd.withings.weightKg });
     if (fd.withings?.bodyFatPct) bodyFatEnd = fd.withings.bodyFatPct;
+    if (fd.withings?.fatMassKg)  fatMassEnd = fd.withings.fatMassKg;
+    if (fd.withings?.visceralFat != null) {
+      visceralFatStart ??= fd.withings.visceralFat;   // docs tries par date croissante : le premier = debut de periode
+      visceralFatEnd = fd.withings.visceralFat;
+    }
   }
 
   for (const d of healthSnaps.docs) {
@@ -596,6 +607,9 @@ export async function buildReportData(userId: string, from: string, to: string):
       weightEnd,
       weightDelta,
       bodyFatEnd,
+      fatMassEnd,
+      visceralFatStart,
+      visceralFatEnd,
       avgHR,
       avgSys,
       avgDia,

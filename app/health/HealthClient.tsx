@@ -475,6 +475,9 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
   const latestF  = [...withingsPoints].reverse().find(p => p.bodyFatPct   !== null);
   const latestM  = [...withingsPoints].reverse().find(p => p.muscleMassKg !== null);
   const latestFm = [...withingsPoints].reverse().find(p => p.fatMassKg    !== null);
+  const latestVf = [...withingsPoints].reverse().find(p => p.visceralFat  !== null);
+  const latestBn = [...withingsPoints].reverse().find(p => p.boneMassKg   !== null);
+  const latestHy = [...withingsPoints].reverse().find(p => p.hydrationPct !== null);
 
   // Most recent BP — today's entry first, then trend (most recent first)
   const latestBP = (() => {
@@ -681,6 +684,11 @@ export default function HealthClient({ date: initialDate, initialEntry, trend, c
                       { label: "% Graisse",       value: latestF?.bodyFatPct   ?? null, unit: "%",   color: "var(--calories)", fmt: (v: number) => v.toFixed(1) },
                       { label: "Masse musculaire",value: latestM?.muscleMassKg ?? null, unit: "kg",  color: "var(--fiber)", fmt: (v: number) => v.toFixed(1) },
                       { label: "Masse grasse",    value: latestFm?.fatMassKg   ?? null, unit: "kg",  color: "var(--danger)", fmt: (v: number) => v.toFixed(1) },
+                      // Indice de graisse viscerale mesure par la balance (Withings, sans unite) — toujours
+                      // affiche : un "—" indique que la balance ne le mesure pas, pas un oubli de l'appli.
+                      { label: "Graisse viscérale", value: latestVf?.visceralFat ?? null, unit: "",   color: "var(--weight)", fmt: (v: number) => v.toFixed(0) },
+                      ...(latestBn ? [{ label: "Masse osseuse", value: latestBn.boneMassKg ?? null, unit: "kg", color: "var(--carbs)", fmt: (v: number) => v.toFixed(1) }] : []),
+                      ...(latestHy ? [{ label: "Hydratation",   value: latestHy.hydrationPct ?? null, unit: "%", color: "var(--fat)",   fmt: (v: number) => v.toFixed(1) }] : []),
                     ].map(({ label, value, unit, color, fmt }) => (
                       <div key={label} className="rounded-xl p-3"
                         style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
