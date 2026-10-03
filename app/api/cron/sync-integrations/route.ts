@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as withings from "@/app/lib/withings";
+import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { subDays, format } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +35,21 @@ export async function POST(req: NextRequest) {
   // ─── Withings: sync last 30 days ─────────────────────────────────────────────
   try {
     const to   = format(new Date(), "yyyy-MM-dd");
-    // ?withingsDays=N elargit la fenetre (rattrapage d'historique apres une correction de lecture),
-    // borne a 730 jours ; par defaut 30.
+    // Fenetre : ?withingsDays=N (max 730) si fourni ; sinon 30 jours, sauf tant que la correction des
+    // codes de mesure Withings (graisse viscerale, masse grasse, hydratation, os) n'a pas ete
+    // rejouee sur l'historique : 400 jours, une seule fois (drapeau system/migrations).
+    const migRef = getAdminFirestore().doc("system/migrations");
+    const migrated = (await migRef.get()).data()?.withingsMeasuresV2 === true;
     const requested = Number(req.nextUrl.searchParams.get("withingsDays"));
-    const days = Number.isFinite(requested) && requested > 0 ? Math.min(Math.floor(requested), 730) : 30;
+    const days = Number.isFinite(requested) && requested > 0
+      ? Math.min(Math.floor(requested), 730)
+      : migrated ? 30 : 400;
     const from = format(subDays(new Date(), days), "yyyy-MM-dd");
 
     const written = await withings.syncRange(USER, from, to);
+    if (!migrated && days >= 400 && written > 0) {
+      await migRef.set({ withingsMeasuresV2: true, withingsMeasuresV2At: new Date().toISOString() }, { merge: true });
+    }
     results.withings = { status: "ok", written, from, to };
   } catch (e) {
     const err = e as Error;
