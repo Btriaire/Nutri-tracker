@@ -11,6 +11,7 @@ import type { FoodNutrition } from "./types";
 
 export interface CiqualLite {
   name: string;
+  category?: string;
   per100g: { fatG: number; saturatedFatG: number | null; sodiumMg: number | null };
 }
 
@@ -42,15 +43,37 @@ const CANON: Record<string, string> = {
   bouillie: "bouilli", bouillies: "bouilli", bouillis: "bouilli", rapee: "rape", rapees: "rape", rapes: "rape",
   hachee: "hache", hachees: "hache", fumee: "fume", fumees: "fume", fumes: "fume",
   frite: "frit", frites: "frit", frits: "frit", toaste: "grille", toastee: "grille",
+  grec: "grecque", grecs: "grecque", grecques: "grecque",
+  farcie: "farci", farcies: "farci", farcis: "farci",
 };
 
-/** Mots significatifs d'un nom d'aliment : sans accents, sans mots vides, sans nombres, pluriel retire. */
+// Pluriels a NE PAS depluraliser : "pates" (pasta) deviendrait "pate" et se confondrait avec le pate (charcuterie)
+// et la pate (a tarte).
+const KEEP_PLURAL = new Set(["pates"]);
+
+// Expressions a traiter comme UN mot : "pomme" ne doit pas retrouver "pomme de terre", ni "noix" la noix de muscade.
+const PHRASES: [RegExp, string][] = [
+  [/\bpommes? de terre\b/g, "pommedeterre"],
+  [/\bnoix de (muscade|coco|cajou|pecan|macadamia|bresil|ginkgo)\b/g, "noix$1"],
+];
+
+/** Racine commune au singulier/pluriel/feminin ("complètes" -> "complet", "tomates" -> "tomat"), appliquee des deux cotes. */
+function stem(w: string): string {
+  const c = CANON[w] ?? w;
+  if (KEEP_PLURAL.has(c)) return c;
+  if (c.length > 4 && c.endsWith("es")) return c.slice(0, -2);
+  if (c.length > 3 && /[sxe]$/.test(c)) return c.slice(0, -1);
+  return c;
+}
+
+/** Mots significatifs d'un nom d'aliment : sans accents, sans mots vides, sans nombres, ramenes a leur racine. */
 export function tokenize(name: string): string[] {
-  return normalizeToken(name)
-    .replace(/[^a-z0-9]+/g, " ")
+  let n = normalizeToken(name).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  for (const [re, rep] of PHRASES) n = n.replace(re, rep);
+  return n
     .split(" ")
     .filter((w) => w.length >= 2 && !/^\d+$/.test(w) && !STOPWORDS.has(w))
-    .map((w) => CANON[w] ?? (w.length > 3 && /[sx]$/.test(w) ? w.slice(0, -1) : w));
+    .map(stem);
 }
 
 interface IndexedDoc { doc: CiqualLite; tokens: string[]; set: Set<string>; head: string }
@@ -67,38 +90,51 @@ export interface Match { doc: CiqualLite; score: number }
 
 // Mots du nom saisi qui n'empechent pas l'appariement s'ils sont absents de la fiche CIQUAL
 // ("cafe noir" -> "Cafe, ... non sucre, pret a boire").
-const SOFT_QUERY_TOKENS = new Set(["noir", "noire", "chaud", "chaude", "froid", "froide", "frais", "fraiche", "bio", "entier", "nature"]);
+const SOFT_QUERY_TOKENS = new Set(["noir", "noire", "chaud", "chaude", "froid", "froide", "frais", "fraiche", "bio", "entier", "nature"].map(stem));
 
 // Formes transformees : penalisees quand le nom saisi ne les demande pas ("saumon" ne doit pas donner
 // du saumon fume a 1400 mg de sodium, ni "pain" du pain d'epices).
 const PROCESSED_TOKENS = new Set([
-  "fume", "sale", "seche", "sec", "appertise", "conserve", "preemballe", "pane", "sauce", "frit", "farci",
+  "fume", "seche", "appertise", "conserve", "preemballe", "pane", "sauce", "frit", "farci",
   "basquaise", "curry", "oseille", "perdu", "epice", "aromatise", "sucre", "allege", "mayonnaise", "assaisonne",
   "sandwich", "quiche", "gratin", "nugget", "chips", "cacao", "chocolat", "bayonne", "parme", "serrano",
-  "fourre", "croquette", "friture", "coco", "lardon", "poudre", "soluble", "enrichi", "moulu", "feuille",
-]);
+  "fourre", "croquette", "friture", "coco", "lardon", "poudre", "soluble", "enrichi", "moulu", "feuille", "puree",
+  "vinaigre", "confit", "marine", "saumure", "lyophilise", "deshydrate", "concentre", "nectar", "confiture", "compote",
+].map(stem));
 
 // Boissons : la fiche utile est "pret a boire" / "infuse", pas la poudre ni le grain.
-const DRINK_HEADS = new Set(["cafe", "the", "tisane", "infusion", "expresso"]);
+const DRINK_HEADS = new Set(["cafe", "the", "tisane", "infusion", "expresso"].map(stem));
 
 // Aliments dont la forme "cuite" est la forme consommee par defaut quand le nom ne precise rien.
 const COOKED_BY_DEFAULT = new Set([
-  "riz", "pate", "lentille", "quinoa", "boulgour", "semoule", "ble", "jambon", "poulet", "dinde", "boeuf", "porc",
+  "riz", "pates", "lentille", "quinoa", "boulgour", "semoule", "ble", "jambon", "poulet", "dinde", "boeuf", "porc",
   "veau", "agneau", "steak", "legume", "haricot", "brocoli", "chou", "epinard", "courgette", "carotte",
-]);
+].map(stem));
+
+// Mots reperes, ramenes a la meme racine que les tokens.
+const T = {
+  cuit: stem("cuit"), cru: stem("cru"), moyen: stem("moyen"), precision: stem("precision"), boire: stem("boire"),
+  infuse: stem("infuse"), standard: stem("standard"), non: stem("non"), sale: stem("sale"),
+};
+const COOKED_WORDS = new Set(["cuit", "roti", "grille", "saute", "vapeur"].map(stem));
+const T_FRAIS = new Set(["frais", "fraiche"].map(stem));
+const T_FROMAGE = stem("fromage");
 
 /** Meilleur aliment CIQUAL pour un nom libre, ou null si aucun n'est assez sur. */
 export function matchFood(index: CiqualIndex, name: string): Match | null {
   const all = tokenize(name);
   if (all.length === 0) return null;
-  const wantsCooked = all.includes("cuit") || all.includes("roti") || all.includes("grille") || all.includes("saute") || all.includes("vapeur");
-  const wantsRaw = all.includes("cru");
+  const wantsCooked = all.some((t) => COOKED_WORDS.has(t));
+  const wantsRaw = all.includes(T.cru);
   const wantsProcessed = new Set(all.filter((t) => PROCESSED_TOKENS.has(t)));
 
   let best: Match | null = null;
   for (const { doc, tokens, set } of index) {
-    // Mots "souples" absents de la fiche : ignores. Les autres doivent TOUS se retrouver.
-    const q = all.filter((t) => set.has(t) || !SOFT_QUERY_TOKENS.has(t));
+    // Mots "souples" absents de la fiche : ignores (couleur, temperature, mode de cuisson, cru). Les autres doivent TOUS
+    // se retrouver. "frais" est decisif pour un fromage ("fromage frais" n'est pas un fromage affine a 500 mg de sodium).
+    const isSoft = (t: string) =>
+      (SOFT_QUERY_TOKENS.has(t) || COOKED_WORDS.has(t) || t === T.cru) && !(T_FRAIS.has(t) && all.includes(T_FROMAGE));
+    const q = all.filter((t) => set.has(t) || !isSoft(t));
     if (q.length === 0) continue;
     if (!q.every((t) => set.has(t))) continue;
 
@@ -110,17 +146,27 @@ export function matchFood(index: CiqualIndex, name: string): Match | null {
     let score = 10 - tokens.length * 0.35;
     if (tokens[0] === q[0] || q.includes(tokens[0])) score += 3;
     else if (pos === 1) score += 1;
+    if (tokens[0] === all[0]) score += 2;                                    // meme mot de tete que le nom saisi ("huile d'olive")
+    const generic = set.has(T.moyen) || set.has(T.precision);
+    // Plats prepares : penalises pour un nom d'ingredient ("riz" ne doit pas donner "riz cantonais"),
+    // sauf les fiches generiques du plat lui-meme ("Pizza (aliment moyen)").
+    if (doc.category?.startsWith("entrées et plats") && !generic) score -= 3;
     // Fiches "aliment moyen" / "sans precision" : seulement si la fiche COMMENCE par l'aliment demande
     // (sinon "tomate" donnerait "Jus de tomate (aliment moyen)").
-    if ((set.has("moyen") || set.has("precision")) && q.includes(tokens[0])) score += 4;
-    if (q.some((t) => DRINK_HEADS.has(t)) && (set.has("boire") || set.has("infuse"))) score += 3;
-    if (wantsCooked && set.has("cuit")) score += 1.5;
-    if (wantsRaw && set.has("cru")) score += 1.5;
+    if (generic && q.includes(tokens[0])) score += 4;
+    if (q.some((t) => DRINK_HEADS.has(t)) && (set.has(T.boire) || set.has(T.infuse))) score += 3;
+    if (wantsCooked && set.has(T.cuit)) score += 1.5;
+    if (wantsRaw && set.has(T.cru)) score += 1.5;
     if (!wantsCooked && !wantsRaw) {
-      if (set.has("cru") && q.some((t) => COOKED_BY_DEFAULT.has(t))) score -= 2;
-      if (set.has("cuit") && q.some((t) => COOKED_BY_DEFAULT.has(t))) score += 1.5;
+      if (set.has(T.cru) && q.some((t) => COOKED_BY_DEFAULT.has(t))) score -= 2;
+      if (set.has(T.cuit) && q.some((t) => COOKED_BY_DEFAULT.has(t))) score += 1.5;
     }
-    for (const t of tokens) if (PROCESSED_TOKENS.has(t) && !wantsProcessed.has(t)) score -= 3;
+    if (!wantsCooked && !wantsRaw && (set.has(T.cru) || set.has(T.cuit))) score += 0.6;   // forme de base de l'ingredient : depart egal -> la plus simple
+    if (set.has(T.standard)) score += 1.5;                                   // "Pates seches standard" = la reference courante
+    for (const t of tokens) {
+      if (PROCESSED_TOKENS.has(t) && !wantsProcessed.has(t)) score -= 3;
+      if (t === T.sale && !set.has(T.non) && !wantsProcessed.has(T.sale)) score -= 3;   // "non sale" = forme nature
+    }
     if (doc.per100g.sodiumMg === null) score -= 2;                           // fiche sans donnee de sodium
     if (!best || score > best.score) best = { doc, score };
   }
@@ -142,7 +188,7 @@ const SAT_RATIO_RULES: [RegExp, number][] = [
 const DEFAULT_SAT_RATIO = 0.33;
 
 export function satRatioFor(name: string): number {
-  const n = tokenize(name).join(" ");
+  const n = normalizeToken(name).replace(/[^a-z0-9]+/g, " ");
   for (const [re, ratio] of SAT_RATIO_RULES) if (re.test(n)) return ratio;
   return DEFAULT_SAT_RATIO;
 }

@@ -9,9 +9,13 @@ const base = (over: Partial<FoodNutrition>): FoodNutrition => ({ calories: 100, 
 
 describe("tokenize", () => {
   it("retire accents, mots vides, nombres et pluriels, unifie cuit/cuite", () => {
-    expect(tokenize("Haricots verts cuits, 150 g")).toEqual(["haricot", "vert", "cuit"]);
-    expect(tokenize("Courgettes cuites sautées")).toEqual(["courgette", "cuit", "saute"]);
-    expect(tokenize("Œufs au plat")).toEqual(["oeuf", "plat"]);
+    // Singulier, pluriel, masculin et feminin donnent les memes mots : c'est ce qui permet l'appariement.
+    expect(tokenize("Haricots verts cuits, 150 g")).toEqual(tokenize("haricot vert cuit"));
+    expect(tokenize("Courgettes cuites sautées")).toEqual(tokenize("courgette cuite sauté"));
+    expect(tokenize("Pâtes complètes")).toEqual(tokenize("pâtes complet"));
+    expect(tokenize("Œufs au plat").length).toBe(2);               // "au" est un mot vide
+    expect(tokenize("Pomme de terre")).toHaveLength(1);            // une seule expression
+    expect(tokenize("pâtes")[0]).not.toBe(tokenize("pâté")[0]);
   });
 });
 
@@ -37,6 +41,42 @@ describe("matchFood", () => {
 
   it("reconnait un nom d'usage courant", () => {
     expect(name("baguette")).toMatch(/^Pain, baguette/);
+  });
+
+  it("ne confond pas pates, pate et pate a tarte", () => {
+    for (const q of ["pâtes", "pâtes complètes cuites"]) {
+      const m = matchFood(index, q)!;
+      expect(m.doc.name).toMatch(/^Pâtes/);
+      expect(m.doc.name).not.toMatch(/farcies|bolognaise|carbonara|sauce|préemballées/);   // pas un plat prepare
+      expect(m.doc.per100g.sodiumMg ?? 0).toBeLessThan(100);                                // des pates nature, pas un plat sale
+    }
+    expect(name("pâté")).toMatch(/^Pâté/);
+  });
+
+  it("prefere l'ingredient au plat prepare, mais garde les fiches generiques de plats", () => {
+    expect(name("riz")).not.toMatch(/cantonais|préemballé/);
+    expect(name("pizza")).toBe("Pizza (aliment moyen)");
+  });
+
+  it("respecte l'ordre des mots et les noms d'usage", () => {
+    expect(name("huile d'olive")).toBe("Huile d'olive vierge extra");
+    expect(name("yaourt grec")).toMatch(/^Yaourt à la grecque/);
+  });
+
+  it("un mode de cuisson absent de la fiche n'empeche pas de trouver l'aliment", () => {
+    expect(name("courgettes cuites sautées")).toMatch(/^Courgette/);
+  });
+
+  it("fromage frais n'est pas un fromage affine", () => {
+    const m = matchFood(index, "fromage frais")!;
+    expect(m.doc.per100g.sodiumMg ?? 0).toBeLessThan(200);
+  });
+
+  it("prefere l'ingredient nature a sa version conservee (oignon, pas oignon au vinaigre)", () => {
+    for (const q of ["oignon", "oignons", "concombre", "chou"]) {
+      expect(matchFood(index, q)!.doc.name).not.toMatch(/vinaigre|confit|saumure|marin/i);
+    }
+    expect(matchFood(index, "oignons")!.doc.per100g.sodiumMg ?? 0).toBeLessThan(50);
   });
 
   it("renvoie null quand rien de fiable n'existe", () => {
