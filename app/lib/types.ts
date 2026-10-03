@@ -30,6 +30,9 @@ export interface FoodNutrition {
   transFatG?:       number;
   cholesterolMg?:   number;
 
+  // Champs completes par estimation (CIQUAL / ratio) plutot que fournis par la source : ["sodiumMg","saturatedFatG"]
+  estimated?:       ("sodiumMg" | "saturatedFatG")[];
+
   // Minerals
   sodiumMg?:        number;
   saltG?:           number;

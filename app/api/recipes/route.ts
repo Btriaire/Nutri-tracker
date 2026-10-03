@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { getSession } from "@/app/lib/session";
 import type { FoodNutrition, Recipe, RecipeIngredient } from "@/app/lib/types";
+import { enrichNutrition } from "@/app/lib/nutrition-enrich";
 
 function sumNutrition(ingredients: RecipeIngredient[]): FoodNutrition {
   const sum: FoodNutrition = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 };
@@ -67,8 +68,11 @@ export async function POST(request: Request) {
   }
 
   const servings    = Math.max(1, body.servings ?? 1);
-  const totalGrams  = body.ingredients.reduce((s, i) => s + i.grams, 0);
-  const totalNutrition = sumNutrition(body.ingredients);
+  // Sodium et graisses saturees manquants completes ingredient par ingredient, AVANT la somme : sinon la recette
+  // n'additionne que les ingredients qui les avaient (les ingredients estimes par IA n'en ont aucun).
+  const ingredients = body.ingredients.map((ing) => ({ ...ing, nutrition: enrichNutrition(ing.name, ing.grams, ing.nutrition) }));
+  const totalGrams  = ingredients.reduce((s, i) => s + i.grams, 0);
+  const totalNutrition = sumNutrition(ingredients);
   const perServing     = divNutrition(totalNutrition, servings);
   const per100g        = divNutrition(totalNutrition, totalGrams / 100);
 
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
     servings,
     totalGrams,
     gramsPerServing:  Math.round(totalGrams / servings),
-    ingredients:      body.ingredients,
+    ingredients,
     nutrition:        perServing,
     nutritionPer100g: per100g,
     tags:             body.tags ?? [],

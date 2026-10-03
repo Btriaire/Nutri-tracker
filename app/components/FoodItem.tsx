@@ -35,7 +35,7 @@ const SOURCE_DOT: Record<string, string> = {
   custom: "var(--protein)",
 };
 
-interface MicroRow { label: string; value: number | undefined; unit: string; color?: string }
+interface MicroRow { label: string; value: number | undefined; unit: string; color?: string; estimated?: boolean }
 
 function formatLoggedTime(loggedAt: unknown): string {
   if (!loggedAt || typeof loggedAt !== "object") return "";
@@ -219,10 +219,10 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
 
   const microRows: MicroRow[] = [
     { label: "Sucres",       value: n.sugarG,        unit: "g",  color: "var(--carbs)" },
-    { label: "Sat. grasses", value: n.saturatedFatG,  unit: "g",  color: "var(--fat)" },
+    { label: "Sat. grasses", value: n.saturatedFatG,  unit: "g",  color: "var(--fat)", estimated: n.estimated?.includes("saturatedFatG") },
     { label: "Trans",        value: n.transFatG,       unit: "g" },
     { label: "Cholestérol",  value: n.cholesterolMg,   unit: "mg" },
-    { label: "Sodium",       value: n.sodiumMg,        unit: "mg" },
+    { label: "Sodium",       value: n.sodiumMg,        unit: "mg", estimated: n.estimated?.includes("sodiumMg") },
     { label: "Potassium",    value: n.potassiumMg,     unit: "mg" },
     { label: "Calcium",      value: n.calciumMg,       unit: "mg", color: "var(--text-secondary)" },
     { label: "Magnésium",    value: n.magneziumMg,     unit: "mg" },
@@ -509,12 +509,12 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   )}
                   {n.sodiumMg != null && n.sodiumMg > 0 && (
                     <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                      Sel <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{(n.sodiumMg / 393).toFixed(2)}g</span>
+                      Sel <span className="font-medium" style={{ color: "var(--text-secondary)" }} title={n.estimated?.includes("sodiumMg") ? "Estimé d'après la table CIQUAL" : undefined}>{n.estimated?.includes("sodiumMg") ? "≈ " : ""}{(n.sodiumMg / 393).toFixed(2)}g</span>
                     </span>
                   )}
                   {n.saturatedFatG != null && n.saturatedFatG > 0 && (
                     <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                      Gr. sat. <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{n.saturatedFatG.toFixed(1)}g</span>
+                      Gr. sat. <span className="font-medium" style={{ color: "var(--text-secondary)" }} title={n.estimated?.includes("saturatedFatG") ? "Estimé d'après la table CIQUAL ou la famille d'aliment" : undefined}>{n.estimated?.includes("saturatedFatG") ? "≈ " : ""}{n.saturatedFatG.toFixed(1)}g</span>
                     </span>
                   )}
                 </div>
@@ -524,12 +524,12 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               {hasMicros && microRows.length > 0 && (
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 p-2.5 rounded-xl mb-2"
                   style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-                  {microRows.map(({ label, value, unit, color }) => (
+                  {microRows.map(({ label, value, unit, color, estimated }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
                       <span className="text-[12px] font-medium tabular-nums"
                         style={{ color: color ?? "var(--text-secondary)" }}>
-                        {formatMicro(value, unit)}
+                        {estimated && value ? "≈ " : ""}{formatMicro(value, unit)}
                       </span>
                     </div>
                   ))}

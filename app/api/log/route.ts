@@ -6,6 +6,7 @@ import type { DayLog, FoodEntry } from "@/app/lib/types";
 import { nanoid } from "nanoid";
 import { Timestamp } from "firebase-admin/firestore";
 import { getCachedFoodImage } from "@/app/lib/food-image-library";
+import { enrichNutrition } from "@/app/lib/nutrition-enrich";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
 
   const newEntry: FoodEntry = {
     ...body.entry,
+    nutrition: enrichNutrition(body.entry.name, body.entry.servingGrams, body.entry.nutrition),
     ...(photoUrl ? { photoUrl } : {}),
     id: nanoid(),
     loggedAt: Timestamp.now(),

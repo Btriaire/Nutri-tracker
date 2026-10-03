@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
-import type { FoodSearchResult, FoodNutrition } from "@/app/lib/types";
+import type { FoodSearchResult } from "@/app/lib/types";
+import { aiScaleToGrams, AI_SODIUM_SAT_RULES, type AiPer100g } from "@/app/lib/ai-food";
 import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGroqFailure } from "@/app/lib/groq";
 
 export const dynamic = "force-dynamic";
@@ -10,24 +11,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 interface DetectedFood {
   name:          string;
   estimatedGrams: number;
-  per100g: {
-    calories: number;
-    proteinG: number;
-    carbsG:   number;
-    fatG:     number;
-    fiberG:   number;
-  };
-}
-
-function scaleToGrams(per100g: DetectedFood["per100g"], grams: number): FoodNutrition {
-  const r = grams / 100;
-  return {
-    calories: Math.round(per100g.calories * r),
-    proteinG: Math.round(per100g.proteinG * r * 10) / 10,
-    carbsG:   Math.round(per100g.carbsG   * r * 10) / 10,
-    fatG:     Math.round(per100g.fatG     * r * 10) / 10,
-    fiberG:   Math.round(per100g.fiberG   * r * 10) / 10,
-  };
+  per100g: AiPer100g;
 }
 
 export async function POST(req: NextRequest) {
@@ -49,8 +33,9 @@ export async function POST(req: NextRequest) {
 Réponds UNIQUEMENT avec un JSON valide, sans markdown ni texte autour.
 
 Format :
-{"foods":[{"name":"nom en français","estimatedGrams":150,"per100g":{"calories":200,"proteinG":15,"carbsG":10,"fatG":8,"fiberG":2}}]}
+{"foods":[{"name":"nom en français","estimatedGrams":150,"per100g":{"calories":200,"proteinG":15,"carbsG":10,"fatG":8,"fiberG":2,"sodiumMg":120,"saturatedFatG":2.5}}]}
 
+${AI_SODIUM_SAT_RULES}
 Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus pas.`;
 
   try {
@@ -100,7 +85,7 @@ Estime les grammes d'après la photo. Si tu ne vois pas clairement, ne l'inclus 
           { label: `${f.estimatedGrams}g (photo)`, grams: f.estimatedGrams, isDefault: true },
           { label: "100 g", grams: 100 },
         ],
-        nutrition: scaleToGrams(f.per100g, f.estimatedGrams),
+        nutrition: aiScaleToGrams(f.per100g, f.estimatedGrams),
       }));
 
     return NextResponse.json({ results });

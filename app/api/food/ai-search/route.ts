@@ -38,7 +38,8 @@ Chaque résultat a ces champs OBLIGATOIRES (valeurs pour 100g) :
 - carbs_100g: number (g)
 - sugar_100g: number (g)
 - fat_100g: number (g)
-- saturated_fat_100g: number (g)
+- saturated_fat_100g: number (g, toujours ≤ fat_100g)
+- sodium_100g: number (mg de SODIUM pour 100g, pas de sel : sel en g x 400 = sodium en mg ; ex. pain ≈ 500, fruit frais ≈ 2)
 - fiber_100g: number (g, 0 si inconnu)
 - serving_g: number (portion habituelle en g)
 - serving_label: string (ex: "1 steak (150g)", "1 tranche (30g)", "100g")
@@ -53,6 +54,7 @@ interface GroqResult {
   sugar_100g?:        number;
   fat_100g:           number;
   saturated_fat_100g?: number;
+  sodium_100g?:       number;
   fiber_100g:         number;
   serving_g:          number;
   serving_label:      string;
@@ -80,7 +82,10 @@ function toFoodResult(r: GroqResult, index: number): FoodSearchResult {
       fatG:          Math.round((r.fat_100g      ?? 0) * scale * 10) / 10,
       fiberG:        Math.round((r.fiber_100g    ?? 0) * scale * 10) / 10,
       sugarG:        r.sugar_100g          != null ? Math.round(r.sugar_100g          * scale * 10) / 10 : undefined,
-      saturatedFatG: r.saturated_fat_100g  != null ? Math.round(r.saturated_fat_100g  * scale * 10) / 10 : undefined,
+      saturatedFatG: r.saturated_fat_100g  != null && r.saturated_fat_100g >= 0 && r.saturated_fat_100g <= (r.fat_100g ?? 0) + 0.5
+        ? Math.round(r.saturated_fat_100g * scale * 10) / 10 : undefined,
+      sodiumMg:      r.sodium_100g != null && r.sodium_100g >= 0 && r.sodium_100g <= 39_340
+        ? Math.round(r.sodium_100g * scale) : undefined,
     },
   };
 }

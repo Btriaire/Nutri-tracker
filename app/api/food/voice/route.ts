@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
-import type { FoodSearchResult, FoodNutrition, MealType } from "@/app/lib/types";
+import type { FoodSearchResult, MealType } from "@/app/lib/types";
+import { aiScaleToGrams, AI_SODIUM_SAT_RULES, type AiPer100g } from "@/app/lib/ai-food";
 import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 export const dynamic = "force-dynamic";
@@ -13,24 +14,7 @@ interface DetectedFood {
   name:           string;
   estimatedGrams: number;
   meal?:          string;
-  per100g: {
-    calories: number;
-    proteinG: number;
-    carbsG:   number;
-    fatG:     number;
-    fiberG:   number;
-  };
-}
-
-function scaleToGrams(per100g: DetectedFood["per100g"], grams: number): FoodNutrition {
-  const r = grams / 100;
-  return {
-    calories: Math.round(per100g.calories * r),
-    proteinG: Math.round(per100g.proteinG * r * 10) / 10,
-    carbsG:   Math.round(per100g.carbsG   * r * 10) / 10,
-    fatG:     Math.round(per100g.fatG     * r * 10) / 10,
-    fiberG:   Math.round(per100g.fiberG   * r * 10) / 10,
-  };
+  per100g: AiPer100g;
 }
 
 const SYSTEM_PROMPT = `Tu es un nutritionniste expert francophone. L'utilisateur DÉCRIT À VOIX HAUTE ce qu'il a mangé, en langage naturel (ex: "ce midi j'ai mangé environ 150g de poulet rôti, du riz et une pomme").
@@ -40,9 +24,10 @@ Ta mission : extraire CHAQUE aliment distinct, estimer sa quantité en grammes, 
 Réponds UNIQUEMENT avec un JSON valide, sans markdown ni texte autour.
 
 Format :
-{"foods":[{"name":"nom en français","estimatedGrams":150,"meal":"lunch","per100g":{"calories":200,"proteinG":15,"carbsG":10,"fatG":8,"fiberG":2}}]}
+{"foods":[{"name":"nom en français","estimatedGrams":150,"meal":"lunch","per100g":{"calories":200,"proteinG":15,"carbsG":10,"fatG":8,"fiberG":2,"sodiumMg":120,"saturatedFatG":2.5}}]}
 
 Règles :
+${AI_SODIUM_SAT_RULES}
 - "meal" doit valoir exactement "breakfast", "lunch", "dinner" ou "snacks".
 - Déduis le repas du contexte ("ce matin"/"petit-déj" → breakfast, "ce midi"/"déjeuner" → lunch, "ce soir"/"dîner" → dinner, "goûter"/"en-cas"/"collation" → snacks).
 - Si le repas n'est pas précisé, utilise le repas par défaut fourni par l'utilisateur.
@@ -107,7 +92,7 @@ export async function POST(req: NextRequest) {
             { label: `${f.estimatedGrams}g (dicté)`, grams: f.estimatedGrams, isDefault: true },
             { label: "100 g", grams: 100 },
           ],
-          nutrition: scaleToGrams(f.per100g, f.estimatedGrams),
+          nutrition: aiScaleToGrams(f.per100g, f.estimatedGrams),
         };
         return { result, meal, per100g: f.per100g, grams: f.estimatedGrams };
       });

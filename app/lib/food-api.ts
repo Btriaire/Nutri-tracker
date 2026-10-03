@@ -119,7 +119,7 @@ function parseServingGrams(s: string | undefined): number | null {
   return m ? parseFloat(m[1].replace(",", ".")) : null;
 }
 
-function offToResult(product: Record<string, unknown>): FoodSearchResult | null {
+export function offToResult(product: Record<string, unknown>): FoodSearchResult | null {
   const nm = product.nutriments as Record<string, number> | undefined;
   if (!nm) return null;
   // Prefer kcal field; fall back to kJ converted to kcal (never use energy_100g which may be kJ)
@@ -138,10 +138,14 @@ function offToResult(product: Record<string, unknown>): FoodSearchResult | null 
     carbsG:         Math.round((nm.carbohydrates_100g     ?? 0) * ratio * 10) / 10,
     fatG:           Math.round((nm.fat_100g               ?? 0) * ratio * 10) / 10,
     fiberG:         Math.round((nm["fiber_100g"] ?? nm["fibers_100g"] ?? 0) * ratio * 10) / 10,
-    sugarG:         nm.sugars_100g            ? scaleN(nm.sugars_100g, ratio)                       : undefined,
-    saturatedFatG:  nm["saturated-fat_100g"]  ? scaleN(nm["saturated-fat_100g"], ratio)             : undefined,
-    sodiumMg:       nm.sodium_100g            ? scaleMg(nm.sodium_100g * 1000, ratio)               : undefined,
-    saltG:          nm.salt_100g              ? scaleN(nm.salt_100g, ratio)                         : undefined,
+    // `!= null` et non une verite : 0 est une valeur reelle (boisson sans graisses saturees, eau...), pas "inconnu".
+    sugarG:         nm.sugars_100g != null            ? scaleN(nm.sugars_100g, ratio)                       : undefined,
+    saturatedFatG:  nm["saturated-fat_100g"] != null  ? scaleN(nm["saturated-fat_100g"], ratio)             : undefined,
+    // Beaucoup de produits n'affichent que le sel : sodium (mg) = sel (g) x 400.
+    sodiumMg:       nm.sodium_100g != null            ? scaleMg(nm.sodium_100g * 1000, ratio)
+                    : nm.salt_100g != null            ? scaleMg(nm.salt_100g * 400, ratio)                  : undefined,
+    saltG:          nm.salt_100g != null              ? scaleN(nm.salt_100g, ratio)
+                    : nm.sodium_100g != null          ? scaleN(nm.sodium_100g * 2.5, ratio)                 : undefined,
     potassiumMg:    nm.potassium_100g         ? scaleMg(nm.potassium_100g * 1000, ratio)            : undefined,
     calciumMg:      nm.calcium_100g           ? scaleMg(nm.calcium_100g * 1000, ratio)              : undefined,
     ironMg:         nm.iron_100g              ? scaleN(nm.iron_100g * 1000, ratio)                  : undefined,
@@ -291,9 +295,9 @@ function nutritionixToResult(f: NxFood, branded: boolean): FoodSearchResult {
       carbsG:         Math.round((f.nf_total_carbohydrate  ?? 0) * 10) / 10,
       fatG:           Math.round((f.nf_total_fat           ?? 0) * 10) / 10,
       fiberG:         Math.round((f.nf_dietary_fiber       ?? 0) * 10) / 10,
-      sugarG:         f.nf_sugars       ? scaleN(f.nf_sugars, 1)       : undefined,
-      saturatedFatG:  f.nf_saturated_fat ? scaleN(f.nf_saturated_fat, 1) : undefined,
-      sodiumMg:       f.nf_sodium       ? scaleMg(f.nf_sodium, 1)      : undefined,
+      sugarG:         f.nf_sugars != null        ? scaleN(f.nf_sugars, 1)        : undefined,
+      saturatedFatG:  f.nf_saturated_fat != null ? scaleN(f.nf_saturated_fat, 1) : undefined,
+      sodiumMg:       f.nf_sodium != null        ? scaleMg(f.nf_sodium, 1)       : undefined,
       potassiumMg:    f.nf_potassium    ? scaleMg(f.nf_potassium, 1)   : undefined,
       cholesterolMg:  f.nf_cholesterol  ? scaleMg(f.nf_cholesterol, 1) : undefined,
     },

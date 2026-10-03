@@ -59,6 +59,7 @@ export function scaleNutrition(nutrition: FoodNutrition, servingGrams: number): 
     waterG:         sc(nutrition.waterG,        ratio, r1),
     alcoholG:       sc(nutrition.alcoholG,      ratio, r1),
     caffeineG:      sc(nutrition.caffeineG,     ratio, r1),
+    ...(nutrition.estimated ? { estimated: nutrition.estimated } : {}),
   };
 }
 

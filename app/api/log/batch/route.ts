@@ -1,3 +1,4 @@
+import { enrichNutrition } from "@/app/lib/nutrition-enrich";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { calcTotals } from "@/app/lib/nutrition";
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     const cachedPhoto = e.photoUrl ? null : await getCachedFoodImage(e.name);
     return {
       ...e,
+      nutrition: enrichNutrition(e.name, e.servingGrams, e.nutrition),
       ...(cachedPhoto ? { photoUrl: cachedPhoto } : {}),
       id:       nanoid(),
       loggedAt: Timestamp.now(),
