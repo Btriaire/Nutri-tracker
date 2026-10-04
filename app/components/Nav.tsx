@@ -38,6 +38,7 @@ const TITLES: [string, string][] = [
   ["/log",              "Journal"],
   ["/health",           "Santé"],
   ["/activity",         "Activité"],
+  ["/progress/glycemie", "Glycémie"],
   ["/progress",         "Progrès"],
   ["/settings",         "Réglages"],
   ["/dashboard",        "Tableau de bord"],

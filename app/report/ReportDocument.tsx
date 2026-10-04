@@ -1120,7 +1120,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                       <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>{m.carbsG} g de glucides</p>
                     </div>
                     <p className="text-[13px] font-bold" style={{ color: "var(--danger)" }}>
-                      {m.preMmol} → {m.postMmol} mmol/L (+{m.deltaMmol})
+                      {m.preMmol} → pic {m.peakMmol} mmol/L (+{m.deltaMmol} en {m.minutesToPeak} min)
                     </p>
                   </div>
                 ))}

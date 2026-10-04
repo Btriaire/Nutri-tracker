@@ -2,7 +2,8 @@
 
 import GlucoseDayCard from "@/app/components/GlucoseDayCard";
 import { useGlucoseDay } from "@/app/lib/use-glucose-day";
-import { mealGlucoseResponses, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
+import { mealGlucoseResponses, mealAnchors, DEFAULT_GLUCOSE_TARGET, type MealAnchor } from "@/app/lib/glucose";
+import MealTimeSheet from "@/app/components/MealTimeSheet";
 import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -238,6 +239,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const [showDietInfo, setShowDietInfo] = useState(false);
   const [dietExceptions, setDietExceptions] = useState<string[]>(dietProgram?.exceptions ?? []);
   const [dietPaused, setDietPaused] = useState(initialLog?.dietPaused ?? false);
+  // Heure reelle de chaque repas (epoch ms), quand elle differe de l'heure de saisie des aliments.
+  const [mealTimes, setMealTimes] = useState<Partial<Record<MealType, number>>>(initialLog?.mealTimes ?? {});
+  const [mealTimeSheet, setMealTimeSheet] = useState<MealType | null>(null);
   const [qualityDetailOpen, setQualityDetailOpen] = useState(false);
   const [trackersOpen, setTrackersOpen] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -281,6 +285,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     setValidated((initialLog as { validated?: boolean } | null)?.validated ?? false);
     setMealHunger((initialLog as (DayLog & { mealHunger?: Partial<Record<MealType, HungerLevel>> }) | null)?.mealHunger ?? {});
     setDietPaused(initialLog?.dietPaused ?? false);
+    setMealTimes(initialLog?.mealTimes ?? {});
     // Load meal photos for this date
     fetch(`/api/log/photos?date=${date}`)
       .then((r) => r.ok ? r.json() : {})
@@ -308,11 +313,27 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     } finally { setValidating(false); }
   };
 
+  // Heure de chaque repas : corrigee (mealTimes) ou premiere saisie. Sauvegardee sur le journal du jour.
+  const mealAnchorByMeal = useMemo(() => Object.fromEntries(mealAnchors(entries, mealTimes).map((a) => [a.meal, a])) as Partial<Record<MealType, MealAnchor>>, [entries, mealTimes]);
+  const loggedAnchorByMeal = useMemo(() => Object.fromEntries(mealAnchors(entries).map((a) => [a.meal, a])) as Partial<Record<MealType, MealAnchor>>, [entries]);
+  const saveMealTime = async (meal: MealType, timeMs: number | null) => {
+    const previous = mealTimes;
+    setMealTimes((m) => { const n = { ...m }; if (timeMs === null) delete n[meal]; else n[meal] = timeMs; return n; });
+    try {
+      const res = await fetch("/api/log", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date, mealTime: { meal, timeMs } }) });
+      if (!res.ok) throw new Error();
+    } catch {
+      setMealTimes(previous);
+      alert("Impossible d'enregistrer l'heure du repas. Réessaie.");
+    }
+  };
+
   // Glycemie : une requete par jour, la reponse de chaque repas se recalcule a chaque aliment ajoute.
-  const glucoseReadings = useGlucoseDay(date, !!goals.glucoseTracking);
+  const glucose = useGlucoseDay(date, !!goals.glucoseTracking);
+  const glucoseReadings = glucose.readings;
   const glucoseResponses = useMemo(
-    () => (glucoseReadings ? mealGlucoseResponses(entries, glucoseReadings) : {}),
-    [entries, glucoseReadings],
+    () => (glucoseReadings ? mealGlucoseResponses(entries, glucoseReadings, mealTimes) : {}),
+    [entries, glucoseReadings, mealTimes],
   );
   const glucoseTarget = {
     min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min,
@@ -832,6 +853,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   onHungerChange={handleHungerChange}
                   glucose={glucoseResponses[meal] ?? null}
                   glucoseTarget={glucoseTarget}
+                  mealTimeMs={mealAnchorByMeal[meal]?.timeMs ?? null}
+                  mealTimeOverridden={mealAnchorByMeal[meal]?.overridden ?? false}
+                  onEditMealTime={setMealTimeSheet}
                   dietMealReport={dietReport?.perMeal[meal] ?? null}
                   dietViolationsByEntryId={dietReport?.violationsByEntryId}
                   onDismissViolation={handleDismissViolation}
@@ -840,7 +864,19 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             ))}
           </div>
 
-          {goals.glucoseTracking && <GlucoseDayCard readings={glucoseReadings} responses={glucoseResponses} goals={goals} />}
+          {goals.glucoseTracking && (
+            <GlucoseDayCard readings={glucoseReadings} dayEndMs={glucose.dayEndMs} syncing={glucose.syncing} onRefresh={glucose.refresh}
+              responses={glucoseResponses} goals={goals} onEditMealTime={setMealTimeSheet} />
+          )}
+          <MealTimeSheet
+            meal={mealTimeSheet}
+            date={date}
+            currentMs={mealTimeSheet ? mealAnchorByMeal[mealTimeSheet]?.timeMs ?? null : null}
+            loggedMs={mealTimeSheet ? loggedAnchorByMeal[mealTimeSheet]?.timeMs ?? null : null}
+            overridden={mealTimeSheet ? mealAnchorByMeal[mealTimeSheet]?.overridden ?? false : false}
+            onSave={saveMealTime}
+            onClose={() => setMealTimeSheet(null)}
+          />
 
           {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
               Regroupés et repliés par défaut : ce sont des compléments au journal

@@ -54,6 +54,14 @@ export function responseBars(r: MealGlucoseResponse) {
 /** Ligne discrete sous l'en-tete d'un repas du journal : sa reponse glycemique, sans cadre. */
 export function MealGlucoseStrip({ response, target }: { response: MealGlucoseResponse; target: Target }) {
   const r = response;
+  if (r.status === "no-data") {
+    return (
+      <p className="px-4 pb-2.5 -mt-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
+        Pas de lecture de glycémie autour de ce repas
+        {r.firstReadingMs && r.lastReadingMs ? ` (capteur : ${hhmm(r.firstReadingMs)}–${hhmm(r.lastReadingMs)})` : ""}.
+      </p>
+    );
+  }
   return (
     <div className="flex items-center gap-2.5 px-4 pb-2.5 -mt-0.5" style={{ color: "var(--text-secondary)" }}>
       <GlucoseBars values={responseBars(r)} target={target} height={22} />
@@ -64,11 +72,12 @@ export function MealGlucoseStrip({ response, target }: { response: MealGlucoseRe
         {" → "}
         <span style={{ color: levelColor(r.post?.mmol, target) }}>{fmt(r.post?.mmol)}</span>
         <span style={{ color: "var(--text-muted)" }}> mmol/L</span>
-        {r.riseMmol !== null && r.minutesToPeak !== null && (
+        {r.status === "pending" ? (
+          <span style={{ color: "var(--text-muted)" }}> · en cours{r.lastReadingMs ? `, lecture ${hhmm(r.lastReadingMs)}` : ""}</span>
+        ) : r.riseMmol !== null && r.minutesToPeak !== null && (
           <span style={{ color: "var(--text-muted)" }}> · pic +{fmt(r.riseMmol)} à {r.minutesToPeak} min</span>
         )}
       </p>
     </div>
   );
 }
-

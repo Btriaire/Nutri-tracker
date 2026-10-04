@@ -691,32 +691,13 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
       .filter((r): r is GoogleFitBpReading => r !== null);
   }
 
-  // Glycemie : value[0]=niveau (mmol/L), [1]=relation au repas, [2]=type de repas
-  // (enums confirmes dans la doc Google Fit, voir le fetch ci-dessus). Un niveau
-  // absent ou nul est ignore plutot que stocke comme 0 mmol/L (biologiquement impossible).
-  const MEAL_RELATION_BY_CODE: Record<number, "none" | "fasting" | "before_meal" | "after_meal"> = {
-    1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal",
-  };
-  const MEAL_TYPE_BY_CODE: Record<number, "breakfast" | "lunch" | "dinner" | "snacks"> = {
-    2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks",
-  };
   let glucose: GlucoseGoogleFitReading[] = [];
   if (glucoseRes.ok) {
     const glucoseJson = await glucoseRes.json() as { point?: GoogleFitSleepPoint[] };
-    glucose = (glucoseJson.point ?? [])
-      .map((p): GlucoseGoogleFitReading | null => {
-        const mmol = p.value?.[0]?.fpVal;
-        const timeMs = Number(p.startTimeNanos ?? 0) / 1_000_000;
-        if (!mmol || mmol <= 0) return null;
-        return {
-          timeMs,
-          mmol: Math.round(mmol * 10) / 10,
-          mealRelation: MEAL_RELATION_BY_CODE[p.value?.[1]?.intVal ?? -1] ?? null,
-          mealType:     MEAL_TYPE_BY_CODE[p.value?.[2]?.intVal ?? -1] ?? null,
-        };
-      })
-      .filter((r): r is GlucoseGoogleFitReading => r !== null);
+    glucose = parseGlucosePoints(glucoseJson.point);
   }
+  // La source fusionnee "derived:...:merged" n'existe pas toujours pour un capteur tiers : on retombe sur les sources
+  // reellement enregistrees sur le compte (decouverte automatique) plutot que de renvoyer une serie vide.
   if (glucose.length === 0) {
     glucose = (await fetchGlucoseReadings(auth, startMs, endMs)).map((r) => ({
       timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType,
@@ -740,6 +721,66 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
     glucose,
     sessions,
   };
+}
+
+// ─── Glycemie ─────────────────────────────────────────────────────────────────
+
+// value[0]=niveau (mmol/L), [1]=relation au repas, [2]=type de repas (enums confirmes dans la doc Google Fit).
+// Un niveau absent ou nul est ignore plutot que stocke comme 0 mmol/L (biologiquement impossible).
+const MEAL_RELATION_BY_CODE: Record<number, "none" | "fasting" | "before_meal" | "after_meal"> = {
+  1: "none", 2: "fasting", 3: "before_meal", 4: "after_meal",
+};
+const MEAL_TYPE_BY_CODE: Record<number, "breakfast" | "lunch" | "dinner" | "snacks"> = {
+  2: "breakfast", 3: "lunch", 4: "dinner", 5: "snacks",
+};
+
+function parseGlucosePoints(points: GoogleFitSleepPoint[] | undefined): GlucoseGoogleFitReading[] {
+  return (points ?? [])
+    .map((p): GlucoseGoogleFitReading | null => {
+      const mmol = p.value?.[0]?.fpVal;
+      const timeMs = Number(p.startTimeNanos ?? 0) / 1_000_000;
+      if (!mmol || mmol <= 0) return null;
+      return {
+        timeMs,
+        mmol: Math.round(mmol * 10) / 10,
+        mealRelation: MEAL_RELATION_BY_CODE[p.value?.[1]?.intVal ?? -1] ?? null,
+        mealType:     MEAL_TYPE_BY_CODE[p.value?.[2]?.intVal ?? -1] ?? null,
+      };
+    })
+    .filter((r): r is GlucoseGoogleFitReading => r !== null);
+}
+
+// Lecture puis fusion (pas arrayUnion) pour dedupliquer par (horodatage, source) : un capteur CGM peut renvoyer une
+// lecture deja connue avec un flottant legerement different d'un sync a l'autre.
+async function writeGlucose(userId: string, date: string, data: GlucoseGoogleFitReading[]): Promise<number> {
+  const ref = getAdminFirestore().doc(`users/${userId}/glucoseLog/${date}`);
+  const existing = (await ref.get()).data() as GlucoseDay | undefined;
+  const incoming: GlucoseReading[] = data.map((r) => ({
+    timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType, source: "google_fit",
+  }));
+  const readings = mergeReadings(existing?.readings ?? [], incoming);
+  await ref.set({ date, readings, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  return readings.length;
+}
+
+/**
+ * Synchronisation LEGERE : seulement la glycemie d'un jour (le journal l'appelle pour que les dernieres lectures,
+ * et donc la reponse du diner, arrivent sans attendre le cron de 05:00 UTC). Meme fenetre de jour que fetchDayData
+ * pour que les deux ecritures fusionnent sans doublon.
+ */
+export async function syncGlucoseDay(userId: string, date: string): Promise<{ ok: boolean; readings: number }> {
+  const tokens = await getTokens(userId);   // renouvelle le jeton s'il approche de l'expiration
+  if (!tokens) return { ok: false, readings: 0 };
+
+  const startMs = new Date(date + "T00:00:00").getTime();
+  const endMs   = new Date(date + "T23:59:59").getTime();
+  const points = await fetchGlucoseReadings(`Bearer ${tokens.accessToken}`, startMs, endMs);
+  if (points.length === 0) return { ok: true, readings: 0 };
+
+  const total = await writeGlucose(userId, date, points.map((r) => ({
+    timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType,
+  })));
+  return { ok: true, readings: total };
 }
 
 // ─── Sync: write to Firestore fitnessData ────────────────────────────────────
@@ -808,18 +849,7 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
     );
   }
 
-  // Glycemie : lue puis fusionnee (pas arrayUnion) pour dedupliquer par (horodatage, source) —
-  // un capteur CGM peut renvoyer une lecture deja connue avec un flottant legerement different
-  // d'un sync a l'autre, qu'arrayUnion (egalite stricte d'objet) laisserait dupliquer.
-  if (data.glucose.length > 0) {
-    const glucoseRef = db.doc(`users/${userId}/glucoseLog/${date}`);
-    const existingDoc = (await glucoseRef.get()).data() as GlucoseDay | undefined;
-    const incoming: GlucoseReading[] = data.glucose.map((r) => ({
-      timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType, source: "google_fit",
-    }));
-    const readings = mergeReadings(existingDoc?.readings ?? [], incoming);
-    await glucoseRef.set({ date, readings, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  }
+  if (data.glucose.length > 0) await writeGlucose(userId, date, data.glucose);
 
   return true;
 }

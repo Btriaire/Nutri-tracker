@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { calcTotals } from "@/app/lib/nutrition";
-import type { DayLog, FoodEntry } from "@/app/lib/types";
+import type { DayLog, FoodEntry, MealType } from "@/app/lib/types";
+
+const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 import { nanoid } from "nanoid";
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getCachedFoodImage } from "@/app/lib/food-image-library";
 import { enrichNutrition } from "@/app/lib/nutrition-enrich";
 
@@ -98,6 +100,8 @@ export async function PATCH(req: NextRequest) {
     dayType?:    "work" | "rest" | "travel" | null;
     jetlag?:     boolean | null;
     dietPaused?: boolean | null;
+    /** Heure reelle d'un repas (epoch ms) ; null = revenir a l'heure de saisie des aliments. */
+    mealTime?:   { meal: string; timeMs: number | null };
   };
   try { dateKey(body.date); } catch {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
@@ -113,6 +117,13 @@ export async function PATCH(req: NextRequest) {
   if (body.dayType    !== undefined) update.dayType    = body.dayType;
   if (body.jetlag     !== undefined) update.jetlag     = body.jetlag;
   if (body.dietPaused !== undefined) update.dietPaused = body.dietPaused;
+  if (body.mealTime !== undefined) {
+    const { meal, timeMs } = body.mealTime ?? {};
+    if (!MEAL_TYPES.includes(meal as MealType) || (timeMs !== null && !(typeof timeMs === "number" && Number.isFinite(timeMs) && timeMs > 0))) {
+      return NextResponse.json({ error: "Invalid mealTime" }, { status: 400 });
+    }
+    update.mealTimes = { [meal]: timeMs === null ? FieldValue.delete() : timeMs };
+  }
 
   await ref.set(update, { merge: true });
 

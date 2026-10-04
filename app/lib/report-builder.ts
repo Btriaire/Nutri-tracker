@@ -1,7 +1,7 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
-import { matchMealGlucose, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
+import { mealGlucoseResponses, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
 import type { GlucoseDay, MealType } from "@/app/lib/types";
 import { MICRONUTRIENT_DB, mergeCustomNutrients } from "@/app/lib/micronutrients";
 import { generateReportSynthesis, type ReportSynthesis } from "@/app/lib/report-synthesis";
@@ -106,8 +106,9 @@ export interface GlucoseMealRow {
   meal:      string;
   carbsG:    number;
   preMmol:   number;
-  postMmol:  number;
-  deltaMmol: number;
+  peakMmol:  number;
+  minutesToPeak: number;
+  deltaMmol: number;      // hausse : pic - avant
 }
 
 export interface GlucoseSummary {
@@ -668,26 +669,17 @@ function buildGlucoseSummary(glucoseDays: GlucoseDay[], foodLogs: DayLog[], goal
     .map(d => ({ date: d.date, ...computeDayStats(d.readings, target) }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Repas marquants : associe chaque aliment logue a la glycemie du meme jour, garde les 3
-  // plus fortes hausses post-prandiales (seuil de 2 mmol/L, au-dela du bruit normal).
+  // Repas marquants : reponse de chaque repas (heure corrigee si saisie, pic borne par le repas suivant) ; on garde les 3
+  // plus fortes hausses (>= 2 mmol/L, au-dela du bruit normal).
   const byDate = new Map(glucoseDays.map(d => [d.date, d.readings]));
   const notableMeals: GlucoseMealRow[] = [];
   for (const log of foodLogs) {
     const readings = byDate.get(log.date);
     if (!readings?.length) continue;
-    const byMeal = new Map<MealType, { carbsG: number; timeMs: number }>();
-    for (const e of log.entries ?? []) {
-      const ts = e.loggedAt as unknown as { seconds?: number };
-      if (!ts?.seconds) continue;
-      const cur = byMeal.get(e.meal) ?? { carbsG: 0, timeMs: ts.seconds * 1000 };
-      cur.carbsG += e.nutrition?.carbsG ?? 0;
-      cur.timeMs = Math.min(cur.timeMs, ts.seconds * 1000);
-      byMeal.set(e.meal, cur);
-    }
-    for (const [meal, { carbsG, timeMs }] of byMeal) {
-      const { pre, post, deltaMmol } = matchMealGlucose(readings, timeMs);
-      if (pre && post && deltaMmol !== null && deltaMmol >= 2.0) {
-        notableMeals.push({ date: log.date, meal: GLUCOSE_MEAL_LABEL[meal], carbsG: Math.round(carbsG), preMmol: pre.mmol, postMmol: post.mmol, deltaMmol });
+    const responses = mealGlucoseResponses(log.entries ?? [], readings, log.mealTimes);
+    for (const [meal, r] of Object.entries(responses) as [MealType, NonNullable<ReturnType<typeof mealGlucoseResponses>[MealType]>][]) {
+      if (r.pre && r.peak && r.riseMmol !== null && r.riseMmol >= 2.0) {
+        notableMeals.push({ date: log.date, meal: GLUCOSE_MEAL_LABEL[meal], carbsG: r.carbsG, preMmol: r.pre.mmol, peakMmol: r.peak.mmol, minutesToPeak: r.minutesToPeak ?? 0, deltaMmol: r.riseMmol });
       }
     }
   }

@@ -45,6 +45,10 @@ interface Props {
   /** Reponse glycemique de ce repas (suivi de glycemie active) : affichee sous l'en-tete. */
   glucose?: MealGlucoseResponse | null;
   glucoseTarget?: { min: number; max: number };
+  /** Heure retenue du repas (reelle si corrigee, sinon premier aliment) et edition. */
+  mealTimeMs?: number | null;
+  mealTimeOverridden?: boolean;
+  onEditMealTime?: (meal: MealType) => void;
 }
 
 export default function MealSection({
@@ -52,7 +56,7 @@ export default function MealSection({
   photoUrl, hunger, goals, alreadyKcal = 0,
   onEntriesChange, onFoodAdded, onPhotoChange, onHungerChange,
   dietMealReport, dietViolationsByEntryId, onDismissViolation,
-  glucose, glucoseTarget,
+  glucose, glucoseTarget, mealTimeMs, mealTimeOverridden, onEditMealTime,
 }: Props) {
   const [open,          setOpen]          = useState(true);
   const [modal,         setModal]         = useState(false);
@@ -197,6 +201,21 @@ export default function MealSection({
             <IconChevronDown size={14} stroke={1.5} />
           </motion.span>
         </button>
+
+        {/* Heure du repas : touche = corriger (sert a relier le repas a la glycemie) */}
+        {mealTimeMs && onEditMealTime && entries.length > 0 && (
+          <button
+            onClick={() => onEditMealTime(meal)}
+            aria-label={`Heure du repas : ${new Date(mealTimeMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}. Modifier`}
+            className="shrink-0 flex items-center h-7 px-2 rounded-full text-[12px] font-medium tabular-nums transition-colors"
+            style={{
+              background: mealTimeOverridden ? "color-mix(in srgb, var(--fat) 16%, transparent)" : "var(--layer-1)",
+              color: mealTimeOverridden ? "var(--fat)" : "var(--text-secondary)",
+            }}
+          >
+            {new Date(mealTimeMs).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+          </button>
+        )}
 
         {/* Outils secondaires (photo, analyse IA, detail, enregistrer) : derriere "..." pour que le nom du repas
             reste lisible sur un telephone, meme quand le repas contient des aliments. */}

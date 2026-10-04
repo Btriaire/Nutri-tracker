@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchMealGlucose, computeDayStats, mergeReadings, analyzeMealGlucose, mealGlucoseResponses, entryTimeMs, DEFAULT_GLUCOSE_TARGET } from "../app/lib/glucose";
+import { matchMealGlucose, computeDayStats, mergeReadings, analyzeMealGlucose, mealGlucoseResponses, mealAnchors, mealTimeFromInput, entryTimeMs, DEFAULT_GLUCOSE_TARGET } from "../app/lib/glucose";
 import type { FoodEntry, GlucoseReading } from "../app/lib/types";
 
 const r = (minutesFromMidnight: number, mmol: number): GlucoseReading => ({
@@ -87,8 +87,25 @@ describe("analyzeMealGlucose", () => {
     expect(a.riseMmol).toBe(0);
   });
 
-  it("renvoie null sans aucune lecture exploitable", () => {
-    expect(analyzeMealGlucose([r(0, 5)], 720 * 60_000, 40)).toBeNull();
+  it("dit explicitement quand aucune lecture n'entoure le repas (status no-data)", () => {
+    const a = analyzeMealGlucose([r(0, 5)], 720 * 60_000, 40);
+    expect(a.status).toBe("no-data");
+    expect(a.peak).toBeNull();
+    expect(a.lastReadingMs).toBe(0);
+  });
+
+  it("repas recent : lectures arretees avant la fin des 2 h = reponse en cours (status pending)", () => {
+    // repas 12:00, derniere lecture 13:10 -> la lecture a +2 h n'existe pas encore
+    const a = analyzeMealGlucose([r(700, 5.2), r(715, 5.4), r(745, 8.8), r(790, 7.9)], 720 * 60_000, 60);
+    expect(a.status).toBe("pending");
+    expect(a.peak?.mmol).toBe(8.8);
+    expect(a.post).toBeNull();
+    expect(a.lastReadingMs).toBe(790 * 60_000);
+  });
+
+  it("un repas suivi d'un autre repas n'est jamais 'pending' : sa fenetre est bornee, pas incomplete", () => {
+    const a = analyzeMealGlucose([r(715, 5.4), r(745, 8.8), r(770, 7.9)], 720 * 60_000, 60, 780 * 60_000);
+    expect(a.status).toBe("ok");
   });
 });
 
@@ -104,6 +121,39 @@ describe("mealGlucoseResponses", () => {
     expect(out.lunch?.pre?.mmol).toBe(5.3);
     expect(out.lunch?.peak?.mmol).toBe(9.0);
     expect(out.dinner).toBeUndefined();
+  });
+
+  it("une heure de repas saisie remplace l'heure de saisie des aliments", () => {
+    const readings = [r(1190, 5.0), r(1200, 5.1), r(1250, 8.5), r(1320, 6.6)];   // dîner réel 20:00 (1200 min)
+    // les aliments ont été saisis à 22:30 (1350 min) : sans correction, ni "avant" ni "pic" ne sont trouvés
+    const loggedLate = [entry("dinner", 1350, 60)];
+    expect(mealGlucoseResponses(loggedLate, readings).dinner?.peak).toBeNull();
+    const fixed = mealGlucoseResponses(loggedLate, readings, { dinner: 1200 * 60_000 });
+    expect(fixed.dinner?.pre?.mmol).toBe(5.1);
+    expect(fixed.dinner?.peak?.mmol).toBe(8.5);
+    expect(fixed.dinner?.status).toBe("ok");
+  });
+
+  it("mealAnchors : heure retenue, macros cumulees, repas tries par heure", () => {
+    const e = (meal: FoodEntry["meal"], minute: number, n: { carbsG: number; fiberG: number; fatG: number }) =>
+      ({ meal, loggedAt: { seconds: minute * 60 }, nutrition: { ...n, proteinG: 10, calories: 200 } }) as unknown as FoodEntry;
+    const a = mealAnchors(
+      [e("dinner", 1200, { carbsG: 50, fiberG: 6, fatG: 20 }), e("breakfast", 480, { carbsG: 30, fiberG: 3, fatG: 5 }), e("breakfast", 490, { carbsG: 10, fiberG: 1, fatG: 2 })],
+      { dinner: 1230 * 60_000 },
+    );
+    expect(a.map((x) => x.meal)).toEqual(["breakfast", "dinner"]);
+    expect(a[0]).toMatchObject({ carbsG: 40, fiberG: 4, fatG: 7, proteinG: 20, kcal: 400, overridden: false });
+    expect(a[1]).toMatchObject({ timeMs: 1230 * 60_000, overridden: true });
+  });
+
+  it("mealTimeFromInput : heure locale ; dîner/collation entre 00:00 et 03:59 = le lendemain", () => {
+    const base = new Date("2026-10-03T12:30:00").getTime();
+    expect(mealTimeFromInput("2026-10-03", "12:30", "lunch")).toBe(base);
+    const late = mealTimeFromInput("2026-10-03", "00:30", "dinner")!;
+    expect(new Date(late).getDate()).toBe(4);
+    expect(new Date(mealTimeFromInput("2026-10-03", "00:30", "breakfast")!).getDate()).toBe(3);
+    expect(mealTimeFromInput("2026-10-03", "25:00", "lunch")).toBeNull();
+    expect(mealTimeFromInput("2026-10-03", "midi", "lunch")).toBeNull();
   });
 
   it("entryTimeMs accepte seconds et _seconds", () => {

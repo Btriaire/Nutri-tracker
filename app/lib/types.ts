@@ -208,6 +208,8 @@ export interface DayLog {
   waterMl:       number;
   alcoolDrinks?: AlcoolDrink[];
   mealHunger?:   Partial<Record<MealType, HungerLevel>>;
+  /** Heure reelle de chaque repas (epoch ms), quand elle differe de l'heure de saisie des aliments. */
+  mealTimes?:    Partial<Record<MealType, number>>;
   dayType?:      DayType;
   jetlag?:       boolean;
   dietPaused?:   boolean; // écarts non comptabilisés ce jour-là (jour "libre")

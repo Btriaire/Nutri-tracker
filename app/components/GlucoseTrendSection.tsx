@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { format, parseISO, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { IconDroplet, IconChartLine } from "@tabler/icons-react";
@@ -56,9 +57,14 @@ export default function GlucoseTrendSection({ goals, range }: { goals: Nutrition
 
   return (
     <div className="glass p-4 mb-5">
-      <div className="flex items-center gap-2 mb-3">
-        <IconDroplet size={14} stroke={1.8} style={{ color: "var(--fat)" }} />
-        <p className="label-xs">Glycémie</p>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <IconDroplet size={14} stroke={1.8} style={{ color: "var(--fat)" }} />
+          <p className="label-xs">Glycémie</p>
+        </div>
+        <Link href="/progress/glycemie" className="flex items-center min-h-[44px] -my-3 pl-3 text-[13px] font-medium" style={{ color: "var(--fat)" }}>
+          Vue détaillée →
+        </Link>
       </div>
 
       {failed && <p className="text-[12px]" style={{ color: "var(--danger)" }}>Impossible de charger la glycémie.</p>}
