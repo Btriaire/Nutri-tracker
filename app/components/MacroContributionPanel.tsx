@@ -29,7 +29,7 @@ interface Category {
 
 const CATEGORIES: Category[] = [
   { key: "protein",      label: "Protéines",     unit: "g",  color: "var(--protein)", Icon: IconMeat },
-  { key: "sodium",       label: "Sel",           unit: "mg", color: "var(--warn)",        Icon: IconSalt },
+  { key: "sodium",       label: "Sodium",        unit: "mg", color: "var(--warn)",        Icon: IconSalt },
   { key: "sugar",        label: "Sucres",        unit: "g",  color: "var(--weight)",        Icon: IconCandy },
   { key: "saturatedFat", label: "Lipides sat.",  unit: "g",  color: "var(--fat)",     Icon: IconAvocado },
 ];

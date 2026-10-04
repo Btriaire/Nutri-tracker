@@ -2,8 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
-
-const VPS_MANAGER_URL = process.env.VPS_MANAGER_URL || "http://46.202.131.240:9000";
+import { fetchVps, VPS_DOWN_MESSAGE } from "@/app/lib/podcasts";
 
 export async function GET(
   request: Request,
@@ -21,9 +20,12 @@ export async function GET(
   const inline = new URL(request.url).searchParams.get("inline") === "1";
 
   const range = request.headers.get("range");
-  const res = await fetch(`${VPS_MANAGER_URL}/api/notebooklm-nutri/download/${name}`, {
-    headers: range ? { Range: range } : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetchVps(`/api/notebooklm-nutri/download/${name}`, { headers: range ? { Range: range } : undefined }, 15_000);
+  } catch {
+    return NextResponse.json({ error: VPS_DOWN_MESSAGE }, { status: 504 });
+  }
   if (!res.ok || !res.body) {
     return NextResponse.json({ error: "Fichier introuvable" }, { status: 404 });
   }

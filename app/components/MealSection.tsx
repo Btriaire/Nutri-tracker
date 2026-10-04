@@ -70,6 +70,10 @@ export default function MealSection({
 
   const meta = MEAL_META[meal];
   const cal  = Math.round(entries.reduce((s, e) => s + e.nutrition.calories, 0));
+  // L'heure de chaque aliment n'apporte rien quand tout a ete saisi au meme moment (cas courant) :
+  // on ne l'affiche que si les heures different de plus de 20 min dans ce repas.
+  const entryMinutes = entries.map((e) => (e.loggedAt?.seconds ?? 0) / 60).filter((m) => m > 0);
+  const showEntryTimes = entryMinutes.length > 1 && Math.max(...entryMinutes) - Math.min(...entryMinutes) > 20;
 
   const quality = goals && cal > 0
     ? computeQualityScore(
@@ -165,21 +169,33 @@ export default function MealSection({
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-2.5 flex-1 py-3 text-left transition-colors min-w-0"
         >
-          <span className="shrink-0 flex items-center justify-center w-5 h-5 rounded-md"
+          <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg"
             style={{ background: `color-mix(in srgb, ${meta.color} 13%, transparent)`, color: meta.color }}>
-            <meta.Icon size={13} />
+            <meta.Icon size={17} />
           </span>
-          <span className="font-medium text-[13.5px] truncate" style={{ color: "var(--text-primary)" }}>
-            {meta[lang]}
-          </span>
-          {cal > 0 ? (
-            <span className="flex items-center gap-1.5 shrink-0">
-              {quality && <QualityScoreBadge score={quality.score} size={18} showValue={false} />}
-              <span className="text-[12px] font-medium" style={{ color: meta.color }}>{cal} kcal</span>
+          <span className="min-w-0 flex flex-col">
+            <span className="flex items-center gap-1.5">
+              <span className="font-semibold text-[15px] whitespace-nowrap" style={{ color: "var(--text-primary)" }}>
+                {meta[lang]}
+              </span>
+              <motion.span
+                animate={{ rotate: open ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: "inline-flex", color: "var(--text-muted)" }}
+                className="shrink-0"
+              >
+                <IconChevronDown size={14} stroke={1.5} />
+              </motion.span>
             </span>
-          ) : (
-            <span className="label-xs shrink-0">{lang === "fr" ? "Vide" : "Empty"}</span>
-          )}
+            {cal > 0 ? (
+              <span className="text-[12px] whitespace-nowrap tabular-nums">
+                <span className="font-semibold" style={{ color: meta.color }}>{cal} kcal</span>
+                {quality && <span style={{ color: quality.color }}> · {quality.label}</span>}
+              </span>
+            ) : (
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{lang === "fr" ? "Rien de noté" : "Empty"}</span>
+            )}
+          </span>
           {dietMealReport && dietMealReport.status !== "vide" && (
             <span
               className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
@@ -192,14 +208,6 @@ export default function MealSection({
               {dietMealReport.status === "ecarts" ? `⚠️ ${dietMealReport.violations.length}` : "✓"}
             </span>
           )}
-          <motion.span
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ display: "inline-flex", color: "var(--text-muted)" }}
-            className="shrink-0"
-          >
-            <IconChevronDown size={14} stroke={1.5} />
-          </motion.span>
         </button>
 
         {/* Heure du repas : touche = corriger (sert a relier le repas a la glycemie) */}
@@ -335,7 +343,8 @@ export default function MealSection({
             <div className="px-4 pb-3">
               {/* Hunger slider — inside expanded body */}
               {onHungerChange && (
-                <div className="pt-2 pb-1">
+                <div className="pt-2.5 pb-1 flex items-center gap-3">
+                  <span className="text-[12px] shrink-0" style={{ color: "var(--text-muted)" }}>Faim avant</span>
                   <HungerSlider
                     value={hunger}
                     onChange={(v) => onHungerChange(meal, v)}
@@ -347,7 +356,7 @@ export default function MealSection({
               {entries.length > 0 ? (
                 <div className="py-1">
                   {entries.map((entry) => (
-                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate}
+                    <FoodItem key={entry.id} entry={entry} date={date} onDelete={handleDelete} onUpdate={handleUpdate} showTime={showEntryTimes}
                       dietViolations={dietViolationsByEntryId?.[entry.id]} onDismissViolation={onDismissViolation} />
                   ))}
                 </div>
@@ -365,14 +374,8 @@ export default function MealSection({
               {goals && (
                 <button
                   onClick={() => setMenuModal(true)}
-                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[12px] font-medium mt-1 transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))",
-                    border: "1px solid rgba(139,92,246,0.25)",
-                    color: "var(--protein)",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.18), rgba(59,130,246,0.14))")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))")}
+                  className="flex items-center gap-1.5 min-h-[40px] text-[12px] font-medium mt-1"
+                  style={{ color: "var(--protein)" }}
                 >
                   <IconToolsKitchen2 size={14} stroke={1.5} />
                   Idées de repas IA

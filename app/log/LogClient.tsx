@@ -43,6 +43,8 @@ import QualityScoreDetail from "@/app/components/QualityScoreDetail";
 import { computeQualityScore } from "@/app/lib/meal-quality";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+/** Entier avec separateur de milliers francais : 2810 -> "2 810". */
+const int = (n: number) => Math.round(n).toLocaleString("fr-FR");
 
 // ─── SVG helpers for the daily summary ───────────────────────────────────────
 
@@ -78,13 +80,13 @@ function CalorieArc({ eaten, goal, size = 80 }: { eaten: number; goal: number; s
         return <circle cx={tx} cy={ty} r={4} fill={col} opacity={0.7} />;
       })()}
       {/* Center text */}
-      <text x={cx} y={cx - 3} textAnchor="middle" dominantBaseline="auto"
-        fontSize={over ? 13 : 15} fontWeight="700"
-        fill="var(--calories)" fontFamily="monospace">
-        {eaten >= 1000 ? `${(eaten / 1000).toFixed(1)}k` : eaten}
+      <text x={cx} y={cx + 1} textAnchor="middle" dominantBaseline="auto"
+        fontSize={eaten >= 10000 ? 13 : 16} fontWeight="700"
+        fill="var(--calories)" style={{ fontVariantNumeric: "tabular-nums" }}>
+        {int(eaten)}
       </text>
-      <text x={cx} y={cx + 10} textAnchor="middle" dominantBaseline="auto"
-        fontSize={9} fill="rgba(255,255,255,0.38)">
+      <text x={cx} y={cx + 15} textAnchor="middle" dominantBaseline="auto"
+        fontSize={11} fill="var(--text-muted)">
         kcal
       </text>
     </svg>
@@ -137,9 +139,9 @@ function MacroSVGBars({
   fat:     { val: number; goal: number };
 }) {
   const rows = [
-    { label: "Prot.",   color: "var(--info)", ...protein },
-    { label: "Gluc.",   color: "var(--carbs)", ...carbs },
-    { label: "Lip.",    color: "var(--protein)", ...fat },
+    { label: "Protéines", color: "var(--info)", ...protein },
+    { label: "Glucides",  color: "var(--carbs)", ...carbs },
+    { label: "Lipides",   color: "var(--protein)", ...fat },
   ];
   const W = 200; // viewBox plot width per bar
   const BH = 5;  // bar height
@@ -153,13 +155,11 @@ function MacroSVGBars({
         const col      = fraction > 1 ? "var(--danger)" : color;
         return (
           <div key={label}>
-            <div className="flex justify-between items-baseline mb-1">
-              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{label}</span>
-              <span className="text-[12px] font-semibold tabular-nums" style={{ color: col }}>
-                {Math.round(val)}
-                <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>g</span>
-              </span>
-            </div>
+            <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{label}</p>
+            <p className="mb-1 whitespace-nowrap tabular-nums">
+              <span className="text-[15px] font-semibold" style={{ color: col }}>{Math.round(val)}</span>
+              <span className="text-[12px]" style={{ color: "var(--text-muted)" }}> / {goal} g</span>
+            </p>
             <svg viewBox={`0 0 ${W} ${BH}`} width="100%" height={BH} style={{ display: "block" }}>
               <rect x={0} y={0} width={W} height={BH} rx={BH / 2} fill="var(--layer-2)" />
               <motion.rect
@@ -170,7 +170,6 @@ function MacroSVGBars({
                 transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
               />
             </svg>
-            <p className="text-[12px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}g</p>
           </div>
         );
       })}
@@ -188,19 +187,17 @@ function TrackedNutrientPill({
   const fraction = goal > 0 ? value / goal : 0;
   const over = fraction > 1;
   return (
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-1 mb-1">
-        <Icon size={12} stroke={1.6} style={{ color, flexShrink: 0 }} />
-        <span className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
-        <span className="ml-auto text-[12px] font-semibold tabular-nums flex-shrink-0" style={{ color: over && invertAlert ? "var(--danger)" : levelColor(fraction) }}>
-          {value}<span className="font-normal text-[12px]">{unit}</span>
-        </span>
-      </div>
-      <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
+    <div className="flex items-center gap-2">
+      <Icon size={14} stroke={1.6} style={{ color, flexShrink: 0 }} />
+      <span className="text-[12px] w-[92px] flex-shrink-0" style={{ color: "var(--text-secondary)" }}>{label}</span>
+      <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
         <div className="h-full rounded-full w-full"
           style={levelBarStyle(over && invertAlert ? 1.1 : fraction)} />
       </div>
-      <p className="text-[12px] mt-0.5 text-right" style={{ color: "var(--text-muted)" }}>/{goal}{unit}</p>
+      <span className="flex-shrink-0 text-right whitespace-nowrap tabular-nums" style={{ minWidth: 104 }}>
+        <span className="text-[13px] font-semibold" style={{ color: over && invertAlert ? "var(--danger)" : levelColor(fraction) }}>{int(value)}</span>
+        <span className="text-[12px]" style={{ color: "var(--text-muted)" }}> / {int(goal)} {unit}</span>
+      </span>
     </div>
   );
 }
@@ -565,10 +562,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         >
           <DayPhotos date={date} initialPhotos={dayPhotos} />
           {/* Day type selector — compact row below photos */}
-          <div className="flex items-center gap-2 mt-2 px-0.5">
-            <span className="text-[12px] flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-              Journée
-            </span>
+          <div className="mt-3 px-0.5">
+            <p className="text-[12px] mb-1.5" style={{ color: "var(--text-muted)" }}>
+              Type de journée
+            </p>
             <DayTypeSelector
               date={date}
               initialType={initialDayType}
@@ -593,22 +590,18 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <div className="flex items-center gap-4 mb-4">
             <CalorieArc eaten={Math.round(totals.calories)} goal={goals.dailyCalories} size={80} />
             <div className="flex-1 min-w-0">
-              {/* Budget bar SVG */}
+              <p className="text-[15px] font-semibold tabular-nums mb-1.5"
+                style={{ color: remaining >= 0 ? "var(--text-primary)" : "var(--danger)" }}>
+                {remaining >= 0 ? `Reste ${int(remaining)} kcal` : `${int(-remaining)} kcal en trop`}
+              </p>
               <CalorieBudgetBar
                 eaten={Math.round(totals.calories)}
                 goal={goals.dailyCalories}
                 remaining={remaining}
               />
-              {/* Stats under bar */}
-              <div className="flex justify-between mt-1.5">
-                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                  Objectif {goals.dailyCalories} kcal
-                </span>
-                <span className="text-[12px] font-semibold tabular-nums"
-                  style={{ color: remaining >= 0 ? "var(--text-secondary)" : "var(--danger)" }}>
-                  {remaining >= 0 ? `−${remaining}` : `+${Math.abs(remaining)}`} kcal
-                </span>
-              </div>
+              <p className="text-[12px] mt-1.5 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                {int(totals.calories)} / {int(goals.dailyCalories)} kcal
+              </p>
             </div>
             {dayQuality && (
               <button
@@ -697,11 +690,11 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.065 }}
-            className="glass px-3 py-2.5 mb-5"
+            className="glass px-4 py-3 mb-5"
           >
-            <div className="flex items-stretch gap-2.5">
+            <div className="space-y-2.5">
               {trackedNutrients.sodium && (
-                <TrackedNutrientPill Icon={IconSalt} label="Sel" unit="mg"
+                <TrackedNutrientPill Icon={IconSalt} label="Sodium" unit="mg"
                   value={Math.round(totals.sodiumMg ?? 0)} goal={goals.sodiumMg ?? 2000} color="#f59e0b" invertAlert />
               )}
               {trackedNutrients.sugar && (
@@ -709,12 +702,12 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   value={Math.round(totals.sugarG ?? 0)} goal={goals.sugarGrams ?? 50} color="#ec4899" invertAlert />
               )}
               {trackedNutrients.saturatedFat && (
-                <TrackedNutrientPill Icon={IconAvocado} label="Lip.sat." unit="g"
+                <TrackedNutrientPill Icon={IconAvocado} label="Graisses sat." unit="g"
                   value={Math.round(totals.saturatedFatG ?? 0)} goal={goals.saturatedFatGrams ?? 20} color="var(--fat)" invertAlert />
               )}
             </div>
 
-            <div className="mt-2.5">
+            <div className="mt-3">
               <MacroContributionPanel entries={entries} trackedNutrients={trackedNutrients} />
             </div>
           </motion.div>
@@ -960,18 +953,17 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <MealMicronutrientsPanel entries={entries} micronutrientData={micronutrientData} />
           </motion.div>
 
-          {/* Hunger timeline */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.35 }}
-            className="mt-3"
-          >
-            <HungerTimeline
-              mealHunger={mealHunger}
-              onSetHunger={handleHungerChange}
-            />
-          </motion.div>
+          {/* Courbe de la faim : seulement si au moins un repas a une faim notee (saisie dans chaque repas) */}
+          {Object.values(mealHunger).some((v) => v != null) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.35 }}
+              className="mt-3"
+            >
+              <HungerTimeline mealHunger={mealHunger} />
+            </motion.div>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,8 @@ import type { MealGlucoseResponse } from "@/app/lib/glucose";
 export interface Target { min: number; max: number }
 
 export const fmt = (v: number | null | undefined) => (v == null ? "—" : String(v).replace(".", ","));
+/** Glycemie : toujours une decimale (5 -> "5,0") pour que les valeurs s'alignent et se comparent d'un coup d'oeil. */
+export const mmol = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1).replace(".", ","));
 export const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 /** Couleur d'une valeur : dans la cible, au-dessus (rouge) ou en dessous (ambre). */
@@ -22,7 +24,7 @@ const SCALE_MIN = 3, SCALE_MAX = 14;
  * coloree selon la cible. Lisible d'un coup d'oeil, sans cadre.
  */
 export function GlucoseBars({ values, target, height = 30 }: { values: { label: string; mmol: number | null }[]; target: Target; height?: number }) {
-  const aria = values.map((v) => `${v.label} ${v.mmol == null ? "inconnu" : fmt(v.mmol) + " mmol/L"}`).join(", ");
+  const aria = values.map((v) => `${v.label} ${v.mmol == null ? "inconnu" : mmol(v.mmol) + " mmol/L"}`).join(", ");
   return (
     <span role="img" aria-label={aria} className="inline-flex items-end gap-[3px] flex-shrink-0" style={{ height }}>
       {values.map((v) => {
@@ -30,7 +32,7 @@ export function GlucoseBars({ values, target, height = 30 }: { values: { label: 
         return (
           <span
             key={v.label}
-            title={`${v.label} : ${v.mmol == null ? "—" : fmt(v.mmol) + " mmol/L"}`}
+            title={`${v.label} : ${v.mmol == null ? "—" : mmol(v.mmol) + " mmol/L"}`}
             style={{
               width: 7, height: h, borderRadius: 3,
               background: v.mmol == null ? "var(--layer-2)" : levelColor(v.mmol, target),
@@ -66,16 +68,16 @@ export function MealGlucoseStrip({ response, target }: { response: MealGlucoseRe
     <div className="flex items-center gap-2.5 px-4 pb-2.5 -mt-0.5" style={{ color: "var(--text-secondary)" }}>
       <GlucoseBars values={responseBars(r)} target={target} height={22} />
       <p className="text-[12px] leading-tight min-w-0">
-        <span style={{ color: levelColor(r.pre?.mmol, target) }}>{fmt(r.pre?.mmol)}</span>
+        <span style={{ color: levelColor(r.pre?.mmol, target) }}>{mmol(r.pre?.mmol)}</span>
         {" → "}
-        <strong style={{ color: levelColor(r.peak?.mmol, target) }}>{fmt(r.peak?.mmol)}</strong>
+        <strong style={{ color: levelColor(r.peak?.mmol, target) }}>{mmol(r.peak?.mmol)}</strong>
         {" → "}
-        <span style={{ color: levelColor(r.post?.mmol, target) }}>{fmt(r.post?.mmol)}</span>
+        <span style={{ color: levelColor(r.post?.mmol, target) }}>{mmol(r.post?.mmol)}</span>
         <span style={{ color: "var(--text-muted)" }}> mmol/L</span>
         {r.status === "pending" ? (
           <span style={{ color: "var(--text-muted)" }}> · en cours{r.lastReadingMs ? `, lecture ${hhmm(r.lastReadingMs)}` : ""}</span>
         ) : r.riseMmol !== null && r.minutesToPeak !== null && (
-          <span style={{ color: "var(--text-muted)" }}> · pic +{fmt(r.riseMmol)} à {r.minutesToPeak} min</span>
+          <span style={{ color: "var(--text-muted)" }}> · pic +{mmol(r.riseMmol)} à {r.minutesToPeak} min</span>
         )}
       </p>
     </div>

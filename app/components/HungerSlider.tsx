@@ -57,8 +57,8 @@ export default function HungerSlider({ value, onChange, label, compact = false }
                 aria-label={HUNGER_CFG[l].label}
                 style={{
                   flex:         1,
-                  height:       3,
-                  borderRadius: 2,
+                  height:       6,
+                  borderRadius: 3,
                   background:   filled ? color : "var(--layer-3)",
                   border:       "none",
                   padding:      0,
@@ -69,13 +69,20 @@ export default function HungerSlider({ value, onChange, label, compact = false }
             );
           })}
         </div>
+        {/* Niveau choisi, en clair */}
+        {compact && (
+          <span className="text-[12px] font-medium whitespace-nowrap text-right" aria-live="polite"
+            style={{ width: 64, flexShrink: 0, color: isSet ? HUNGER_CFG[value!].color : "var(--text-muted)" }}>
+            {isSet ? HUNGER_CFG[value!].label : "—"}
+          </span>
+        )}
         {/* − et + pour décrémenter / incrémenter */}
         <button
           type="button"
           onClick={() => handleClick(Math.max(1, (value ?? 1) - 1) as HungerLevel)}
           aria-label="Moins faim"
           style={{
-            width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
+            width: 24, height: 24, borderRadius: 6, border: "none", padding: 0,
             background: "var(--layer-3)",
             color: "var(--text-muted)",
             fontSize: 13, fontWeight: 700, lineHeight: 1,
@@ -88,7 +95,7 @@ export default function HungerSlider({ value, onChange, label, compact = false }
           onClick={() => handleClick(Math.min(5, (value ?? 0) + 1) as HungerLevel)}
           aria-label="Plus faim"
           style={{
-            width: 16, height: 16, borderRadius: 4, border: "none", padding: 0,
+            width: 24, height: 24, borderRadius: 6, border: "none", padding: 0,
             background: "var(--layer-3)",
             color: "var(--text-muted)",
             fontSize: 13, fontWeight: 700, lineHeight: 1,

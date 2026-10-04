@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { IconMicrophone, IconLoader2, IconDownload, IconAlertCircle, IconChevronDown, IconFolder, IconSparkles } from "@tabler/icons-react";
+import { useState } from "react";
+import { IconMicrophone, IconLoader2, IconAlertCircle, IconSparkles } from "@tabler/icons-react";
+import PodcastLibrary, { usePodcasts } from "@/app/components/PodcastLibrary";
 
-type PodcastFile = { name: string; mtime: string; sizeKb: number };
-type Status = { success: boolean; running: boolean; files: PodcastFile[] };
 type PeriodKey = "7d" | "30d" | "90d" | "all";
 type LengthKey = "short" | "long";
 
@@ -15,44 +14,11 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
   { key: "all", label: "Depuis le début" },
 ];
 
-const isLongFile = (name: string) => name.includes("-long-");
-
 export default function PodcastButton() {
   const [period, setPeriod] = useState<PeriodKey>("7d");
   const [length, setLength] = useState<LengthKey>("short");
-  const [running, setRunning] = useState(false);
-  const [files, setFiles] = useState<PodcastFile[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const { state, files, running, setRunning, refresh } = usePodcasts();
   const [error, setError] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const fetchStatus = async () => {
-    try {
-      const res = await fetch("/api/podcast/status", { cache: "no-store" });
-      const data = await res.json() as Status;
-      if (data.success) {
-        setRunning(data.running);
-        setFiles(data.files || []);
-      }
-    } catch { /* silencieux — VPS injoignable temporairement */ }
-  };
-
-  const latest = files[0] ?? null;
-  const history = files.slice(1);
-
-  useEffect(() => {
-    fetchStatus();
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, []);
-
-  useEffect(() => {
-    if (running) {
-      pollRef.current = setInterval(fetchStatus, 5000);
-    } else if (pollRef.current) {
-      clearInterval(pollRef.current);
-    }
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [running]);
 
   const launch = async () => {
     setError(null);
@@ -66,16 +32,24 @@ export default function PodcastButton() {
       if (data.success) setRunning(true);
       else setError(data.error || "Échec du lancement");
     } catch {
-      setError("VPS injoignable");
+      setError("Le serveur des podcasts (VPS) ne répond pas");
     }
   };
+  const offline = state === "offline";
 
   return (
     <div className="glass p-4 mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <IconMicrophone size={14} style={{ color: "var(--text-muted)" }} />
-        <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Podcast audio</p>
+      <div className="flex items-center gap-2 mb-1">
+        <IconMicrophone size={16} style={{ color: "var(--calories)" }} />
+        <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Podcasts</h2>
       </div>
+      <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>
+        Un bilan audio chaque samedi matin, ou à la demande (5 à 10 min de génération).
+      </p>
+
+      <PodcastLibrary state={state} files={files} onRetry={refresh} />
+
+      <p className="text-[12px] font-semibold mt-4 mb-1.5" style={{ color: "var(--text-secondary)" }}>Générer un nouveau podcast</p>
 
       {/* Version courte / longue */}
       <div className="flex gap-1 p-0.5 rounded-lg mb-3"
@@ -117,15 +91,17 @@ export default function PodcastButton() {
         </p>
       )}
 
-      <button onClick={launch} disabled={running}
+      <button onClick={launch} disabled={running || offline}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all"
         style={{
-          background: running ? "rgba(148,163,184,0.1)" : "linear-gradient(135deg,rgba(249,115,22,0.18),rgba(251,191,36,0.15))",
-          border: running ? "1px solid var(--border)" : "1px solid rgba(249,115,22,0.4)",
-          color: running ? "var(--text-muted)" : "var(--calories)",
+          background: running || offline ? "rgba(148,163,184,0.1)" : "linear-gradient(135deg,rgba(249,115,22,0.18),rgba(251,191,36,0.15))",
+          border: running || offline ? "1px solid var(--border)" : "1px solid rgba(249,115,22,0.4)",
+          color: running || offline ? "var(--text-muted)" : "var(--calories)",
         }}>
         {running
-          ? <><IconLoader2 size={14} className="animate-spin" />Génération en cours…</>
+          ? <><IconLoader2 size={14} className="animate-spin" />Génération en cours… (5 à 10 min)</>
+          : offline
+          ? <>Indisponible tant que le serveur ne répond pas</>
           : <><IconMicrophone size={14} />{length === "long" ? "Générer le bilan complet" : "Générer le podcast maintenant"}</>
         }
       </button>
@@ -134,72 +110,6 @@ export default function PodcastButton() {
         <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-xl text-[12px]"
           style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)", color: "var(--danger)" }}>
           <IconAlertCircle size={12} /> {error}
-        </div>
-      )}
-
-      {latest && (
-        <div className="mt-3 px-3 py-2.5 rounded-xl"
-          style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
-              <IconMicrophone size={12} />
-              Dernier podcast prêt · {new Date(latest.mtime).toLocaleDateString("fr-FR")}
-              {isLongFile(latest.name) && (
-                <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                  style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
-                  <IconSparkles size={9} stroke={2} />Bilan complet
-                </span>
-              )}
-            </span>
-            <a href={`/api/podcast/download/${latest.name}`} title="Télécharger"
-              style={{ color: "var(--text-muted)" }}>
-              <IconDownload size={13} />
-            </a>
-          </div>
-          <audio controls preload="none" className="w-full" style={{ height: 32 }}
-            src={`/api/podcast/download/${latest.name}?inline=1`}>
-          </audio>
-        </div>
-      )}
-
-      {history.length > 0 && (
-        <div className="mt-2">
-          <button onClick={() => setShowHistory((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 py-2 text-[12px]"
-            style={{ color: "var(--text-muted)" }}>
-            <span className="flex items-center gap-1.5">
-              <IconFolder size={12} />
-              Historique ({history.length})
-            </span>
-            <IconChevronDown size={13} style={{ transform: showHistory ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
-          </button>
-          {showHistory && (
-            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
-              {history.map((f) => (
-                <div key={f.name} className="px-3 py-2 rounded-xl"
-                  style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-muted)" }}>
-                      {new Date(f.mtime).toLocaleDateString("fr-FR")} · {f.sizeKb} Ko
-                      {isLongFile(f.name) && (
-                        <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
-                          style={{ background: "rgba(249,115,22,0.12)", color: "var(--calories)" }}>
-                          <IconSparkles size={9} stroke={2} />Bilan complet
-                        </span>
-                      )}
-                    </span>
-                    <a href={`/api/podcast/download/${f.name}`} title="Télécharger"
-                      style={{ color: "var(--text-muted)" }}>
-                      <IconDownload size={12} />
-                    </a>
-                  </div>
-                  <audio controls preload="none" className="w-full" style={{ height: 28 }}
-                    src={`/api/podcast/download/${f.name}?inline=1`}>
-                  </audio>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

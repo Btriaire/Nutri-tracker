@@ -28,13 +28,6 @@ async function compressThumbnail(file: File, maxSide = 120): Promise<string> {
   });
 }
 
-const SOURCE_DOT: Record<string, string> = {
-  ciqual: "var(--fiber)",
-  off:    "var(--steps)",
-  usda:   "var(--carbs)",
-  custom: "var(--protein)",
-};
-
 interface MicroRow { label: string; value: number | undefined; unit: string; color?: string; estimated?: boolean }
 
 function formatLoggedTime(loggedAt: unknown): string {
@@ -57,11 +50,13 @@ interface Props {
   onUpdate?: (id: string, updated: FoodEntry) => void;
   dietViolations?: DietViolation[];
   onDismissViolation?: (foodName: string) => void;
+  /** Afficher l'heure de saisie (utile seulement si les aliments du repas n'ont pas tous la meme heure). */
+  showTime?: boolean;
 }
 
 const SNAP = 76; // px revealed when swiped open
 
-export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolations, onDismissViolation }: Props) {
+export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolations, onDismissViolation, showTime = false }: Props) {
   const [expanded,   setExpanded]   = useState(false);
   const [deleting,   setDeleting]   = useState(false);
   const [editing,    setEditing]    = useState(false);
@@ -308,28 +303,22 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
 
             {/* Food info — click to toggle expanded */}
             <button className="flex-1 min-w-0 text-left" onClick={toggleExpand}>
-              <div className="flex items-baseline gap-1.5">
+              <div className="flex items-start gap-1.5">
                 {dietViolations && dietViolations.length > 0 && (
                   <span
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 mt-0.5"
                     style={{ color: "var(--danger)" }}
                     title="Hors régime — toucher pour le détail"
                   >
                     <IconExclamationCircle size={13} stroke={2} />
                   </span>
                 )}
-                <p className="text-[13px] font-medium truncate flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>
+                <p className="text-[14px] font-medium leading-snug line-clamp-2 flex-1 min-w-0" style={{ color: "var(--text-primary)" }}>
                   {entry.name}
                 </p>
-                {formatLoggedTime(entry.loggedAt) && (
-                  <span className="text-[12px] tabular-nums flex-shrink-0"
-                    style={{ color: "var(--text-muted)", opacity: 0.7 }}>
-                    {formatLoggedTime(entry.loggedAt)}
-                  </span>
-                )}
               </div>
-              <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-                {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}`}
+              <p className="text-[12px] flex items-center gap-1 tabular-nums" style={{ color: "var(--text-muted)" }}>
+                {`${entry.servingLabel ?? `${entry.servingQty} ${entry.servingUnit}`}${entry.brand ? ` · ${entry.brand}` : ""}${showTime && formatLoggedTime(entry.loggedAt) ? ` · ${formatLoggedTime(entry.loggedAt)}` : ""}`}
                 {entry.weightVerified && (
                   <IconRosetteDiscountCheckFilled size={12} style={{ color: "var(--fiber)", flexShrink: 0 }} title="Poids moyen vérifié" />
                 )}
@@ -338,18 +327,16 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
 
             {/* Calories */}
             <div className="text-right flex-shrink-0">
-              <p className="text-[13px] font-semibold t-calories tabular-nums">
+              <p className="text-[14px] font-semibold t-calories tabular-nums">
                 {Math.round(n.calories)} kcal
               </p>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[12px] tabular-nums" style={{ color: "var(--text-muted)" }}>
                 P{Math.round(n.proteinG)} · G{Math.round(n.carbsG)} · L{Math.round(n.fatG)}
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              <div className="w-1.5 h-1.5 rounded-full mx-1"
-                style={{ background: SOURCE_DOT[entry.source] ?? "var(--text-muted)" }} />
+            <div className="flex items-center flex-shrink-0">
               <button
                 onClick={handleDelete}
                 className="p-1.5 rounded-lg transition-colors"

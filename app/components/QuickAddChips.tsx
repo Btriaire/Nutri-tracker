@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { IconDroplet, IconRuler } from "@tabler/icons-react";
+import { IconDroplet } from "@tabler/icons-react";
 
 interface Props {
   date: string;
@@ -39,22 +38,27 @@ export default function QuickAddChips({ date, waterMl, goalMl, onWaterUpdate }: 
 
   return (
     <div className="mb-5">
-      <div className="flex flex-wrap gap-2 items-center">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
+            <IconDroplet size={14} stroke={1.8} style={{ color: "var(--fat)" }} /> Eau
+          </p>
+          <p className="text-[14px] font-semibold tabular-nums whitespace-nowrap" style={{ color: "var(--text-primary)" }}>
+            {(waterMl / 1000).toFixed(2).replace(".", ",")}
+            <span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}> / {(goalMl / 1000).toFixed(1).replace(".", ",")} L</span>
+          </p>
+          <div className="h-[4px] mt-1 rounded-full overflow-hidden" style={{ background: "var(--layer-2)" }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (waterMl / Math.max(1, goalMl)) * 100)}%`, background: "var(--fat)" }} />
+          </div>
+        </div>
         <button type="button" disabled={busy} onClick={() => addWater(250)} aria-label="Ajouter 250 ml d'eau"
           className={chip} style={{ background: "var(--fat)", color: "var(--bg)" }}>
-          <IconDroplet size={16} stroke={2} /> +250 ml
+          +250 ml
         </button>
         <button type="button" disabled={busy} onClick={() => addWater(500)} aria-label="Ajouter 500 ml d'eau"
           className={chip} style={{ background: "var(--surface-active)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }}>
           +500 ml
         </button>
-        <span className="text-[12px] tabular-nums" style={{ color: "var(--text-secondary)" }}>
-          {(waterMl / 1000).toFixed(2).replace(".", ",")} / {(goalMl / 1000).toFixed(1).replace(".", ",")} L
-        </span>
-        <Link href="/health" className={`${chip} ml-auto`}
-          style={{ background: "var(--surface-active)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }}>
-          <IconRuler size={16} stroke={2} /> Mesurer
-        </Link>
       </div>
       {error && (
         <p role="alert" className="text-[12px] mt-2" style={{ color: "var(--danger)" }}>

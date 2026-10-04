@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { IconFileTypePdf, IconLoader2, IconRefresh, IconArrowLeft, IconDownload, IconChartInfographic } from "@tabler/icons-react";
+import { IconFileTypePdf, IconLoader2, IconRefresh, IconArrowLeft, IconDownload, IconChartInfographic, IconMicrophone } from "@tabler/icons-react";
+import PodcastLibrary, { usePodcasts } from "@/app/components/PodcastLibrary";
 import Sheet from "@/app/components/Sheet";
 import Link from "next/link";
 import type { ReportHistoryEntry } from "@/app/api/report/history/route";
@@ -16,6 +17,7 @@ export default function HistoryClient() {
   const [infographics, setInfographics] = useState<InfographicMeta[] | null>(null);
   const [viewing, setViewing] = useState<InfographicMeta | null>(null);
   const [showAllInfo, setShowAllInfo] = useState(false);
+  const podcasts = usePodcasts();
 
   const load = async () => {
     try {
@@ -56,11 +58,23 @@ export default function HistoryClient() {
         </Link>
 
         <h1 className="text-[22px] font-semibold tracking-tight mb-1" style={{ color: "var(--text-primary)" }}>
-          Historique des rapports
+          Historique
         </h1>
         <p className="text-[12px] mb-5" style={{ color: "var(--text-muted)" }}>
-          Générés automatiquement chaque dimanche (7 jours) et le 1ᵉʳ du mois (30 jours).
+          Podcasts, infographies et rapports PDF générés pour toi.
         </p>
+
+        {/* Podcasts — generes par NotebookLM sur le VPS (samedi matin, ou a la demande depuis Rapport) */}
+        <section id="podcasts" aria-label="Podcasts" className="mb-6 scroll-mt-20">
+          <div className="flex items-center gap-2 mb-2">
+            <IconMicrophone size={18} style={{ color: "var(--calories)" }} />
+            <h2 className="text-[15px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>Podcasts</h2>
+            <Link href="/report" className="text-[12px] font-medium min-h-[40px] flex items-center" style={{ color: "var(--calories)" }}>
+              Générer →
+            </Link>
+          </div>
+          <PodcastLibrary state={podcasts.state} files={podcasts.files} onRetry={podcasts.refresh} />
+        </section>
 
         {/* Infographies — generees chaque nuit par Ammanda (dimanche : semaine, 1er du mois : mois) */}
         <section aria-label="Infographies" className="mb-6">
@@ -120,6 +134,14 @@ export default function HistoryClient() {
             </>
           )}
         </Sheet>
+
+        <div className="flex items-center gap-2 mb-2">
+          <IconFileTypePdf size={18} style={{ color: "var(--calories)" }} />
+          <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Rapports PDF</h2>
+        </div>
+        <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
+          Générés automatiquement chaque dimanche (7 jours) et le 1ᵉʳ du mois (30 jours).
+        </p>
 
         {/* Manual triggers */}
         <div className="glass p-4 mb-5 flex gap-2">

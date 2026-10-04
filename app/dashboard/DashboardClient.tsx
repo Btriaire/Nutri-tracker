@@ -1160,7 +1160,7 @@ export default function DashboardClient({
         {trackedNutrients && Object.values(trackedNutrients).some(Boolean) && (() => {
           const rows: { key: keyof TrackedNutrients; Icon: typeof IconBarbell; label: string; unit: string; value: number; goal: number; color: string; invertAlert?: boolean }[] = [];
           if (trackedNutrients.protein)      rows.push({ key: "protein",      Icon: IconBarbell, label: "Protéines",     unit: "g",  value: Math.round(consumed.proteinG),       goal: goals.proteinGrams,         color: "var(--protein)"  });
-          if (trackedNutrients.sodium)       rows.push({ key: "sodium",       Icon: IconSalt, label: "Sel",           unit: "mg", value: Math.round(consumed.sodiumMg ?? 0),   goal: goals.sodiumMg ?? 2000,     color: "var(--warn)", invertAlert: true });
+          if (trackedNutrients.sodium)       rows.push({ key: "sodium",       Icon: IconSalt, label: "Sodium",        unit: "mg", value: Math.round(consumed.sodiumMg ?? 0),   goal: goals.sodiumMg ?? 2000,     color: "var(--warn)", invertAlert: true });
           if (trackedNutrients.sugar)        rows.push({ key: "sugar",        Icon: IconCandy, label: "Sucres",        unit: "g",  value: Math.round(consumed.sugarG ?? 0),     goal: goals.sugarGrams ?? 50,     color: "var(--weight)", invertAlert: true });
           if (trackedNutrients.saturatedFat) rows.push({ key: "saturatedFat", Icon: IconDroplet, label: "Lip. saturés",  unit: "g",  value: Math.round(consumed.saturatedFatG ?? 0), goal: goals.saturatedFatGrams ?? 20, color: "var(--fat)", invertAlert: true });
           return (

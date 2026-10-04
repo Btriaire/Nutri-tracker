@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconDroplet, IconRefresh, IconPencil } from "@tabler/icons-react";
+import { IconDroplet, IconRefresh, IconPencil, IconChevronDown } from "@tabler/icons-react";
 import {
   LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceArea, ReferenceLine, ReferenceDot, Tooltip,
 } from "recharts";
 import { computeDayStats, DEFAULT_GLUCOSE_TARGET, type MealGlucoseResponse } from "@/app/lib/glucose";
 import type { GlucoseReading, MealType, NutritionGoals } from "@/app/lib/types";
 import { MEAL_META } from "./meal-meta";
-import { GlucoseBars, responseBars, fmt, hhmm, levelColor } from "./GlucoseSigns";
+import { GlucoseBars, responseBars, mmol, hhmm, levelColor } from "./GlucoseSigns";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 const SHORT: Record<MealType, string> = { breakfast: "P.-déj", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
@@ -45,6 +45,8 @@ interface Props {
 export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh, responses, goals, onEditMealTime }: Props) {
   const target = { min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min, max: goals.glucoseTargetMaxMmol ?? DEFAULT_GLUCOSE_TARGET.max };
   const now = useNow(60_000);
+  // Le resume par repas est deja sous chaque repas : ici le detail complet est replie par defaut.
+  const [detailOpen, setDetailOpen] = useState(false);
 
   if (readings === undefined) return null; // pas de squelette : evite un flash si la section reste vide
   if (readings === null) {
@@ -87,7 +89,7 @@ export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh,
           {stats.timeInRangePct !== null && (
             <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full"
               style={{ color: "var(--fat)", background: "color-mix(in srgb, var(--fat) 14%, transparent)" }}>
-              {stats.timeInRangePct}% dans la cible
+              {stats.timeInRangePct} % dans la cible
             </span>
           )}
           {onRefresh && (
@@ -109,8 +111,8 @@ export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh,
       ) : (
         <>
           <p className="text-[12px] mb-1" style={{ color: "var(--text-secondary)" }}>
-            Moy. <strong style={{ color: "var(--text-primary)" }}>{fmt(stats.avgMmol)}</strong> mmol/L
-            <span style={{ color: "var(--text-muted)" }}> · {fmt(stats.minMmol)}–{fmt(stats.maxMmol)}</span>
+            Moy. <strong style={{ color: "var(--text-primary)" }}>{mmol(stats.avgMmol)}</strong> mmol/L
+            <span style={{ color: "var(--text-muted)" }}> · {mmol(stats.minMmol)}–{mmol(stats.maxMmol)}</span>
           </p>
 
           <ResponsiveContainer width="100%" height={150}>
@@ -129,14 +131,14 @@ export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh,
               <YAxis domain={[(d: number) => Math.min(d, target.min - 1), (d: number) => Math.max(d + 2, target.max + 1)]} hide />
               <Tooltip
                 labelFormatter={(t) => hhmm(t as number)}
-                formatter={(v) => [`${fmt(Number(v))} mmol/L`, ""]}
+                formatter={(v) => [`${mmol(Number(v))} mmol/L`, ""]}
                 contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 12 }}
               />
               <Line type="monotone" dataKey="v" stroke="var(--fat)" strokeWidth={2} dot={false} isAnimationActive={false} />
               {markers.filter((m) => m.r.peak).map(({ meal, r }) => (
                 <ReferenceDot key={`p-${meal}`} x={r.peak!.timeMs} y={r.peak!.mmol} r={4} fill={levelColor(r.peak!.mmol, target)}
                   stroke="var(--bg)" strokeWidth={2}
-                  label={{ value: fmt(r.peak!.mmol), position: "top", fill: levelColor(r.peak!.mmol, target), fontSize: 12, fontWeight: 600 }} />
+                  label={{ value: mmol(r.peak!.mmol), position: "top", fill: levelColor(r.peak!.mmol, target), fontSize: 12, fontWeight: 600 }} />
               ))}
             </LineChart>
           </ResponsiveContainer>
@@ -144,7 +146,15 @@ export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh,
       )}
 
       {rows.length > 0 && (
-        <ul className="mt-3 space-y-3">
+        <button type="button" onClick={() => setDetailOpen((v) => !v)} aria-expanded={detailOpen}
+          className="mt-2 w-full flex items-center justify-between min-h-[40px] text-[12px] font-medium"
+          style={{ color: "var(--text-secondary)" }}>
+          <span>Détail par repas ({rows.length}) · heure, glucides, pic</span>
+          <IconChevronDown size={15} style={{ transform: detailOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        </button>
+      )}
+      {rows.length > 0 && detailOpen && (
+        <ul className="mt-1 space-y-3">
           {rows.map((meal) => {
             const r = responses[meal]!;
             const meta = MEAL_META[meal];
@@ -175,13 +185,13 @@ export default function GlucoseDayCard({ readings, dayEndMs, syncing, onRefresh,
                   ) : (
                     <>
                       <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                        {fmt(r.pre?.mmol)} → <strong style={{ color: levelColor(r.peak?.mmol, target) }}>{fmt(r.peak?.mmol)}</strong> → {fmt(r.post?.mmol)} mmol/L
+                        {mmol(r.pre?.mmol)} → <strong style={{ color: levelColor(r.peak?.mmol, target) }}>{mmol(r.peak?.mmol)}</strong> → {mmol(r.post?.mmol)} mmol/L
                       </p>
                       <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                         {r.status === "pending"
                           ? `Réponse en cours — dernière lecture ${r.lastReadingMs ? hhmm(r.lastReadingMs) : "?"}`
                           : r.riseMmol !== null && r.minutesToPeak !== null && (
-                            <>pic +{fmt(r.riseMmol)} à {r.minutesToPeak} min{r.risePer10gCarbs !== null && <> · +{fmt(r.risePer10gCarbs)} mmol / 10 g de glucides</>}</>
+                            <>pic +{mmol(r.riseMmol)} à {r.minutesToPeak} min{r.risePer10gCarbs !== null && <> · +{mmol(r.risePer10gCarbs)} mmol / 10 g de glucides</>}</>
                           )}
                       </p>
                     </>

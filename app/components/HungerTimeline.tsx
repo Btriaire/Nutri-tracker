@@ -2,23 +2,23 @@
 
 import { alpha } from "@/app/lib/color";
 import { useEffect, useRef } from "react";
-import { IconEggFried, IconSalad, IconMeat, IconApple } from "@tabler/icons-react";
+import { IconGauge } from "@tabler/icons-react";
 import type { HungerLevel, MealType } from "@/app/lib/types";
-import HungerSlider, { HUNGER_CFG } from "./HungerSlider";
+import { HUNGER_CFG } from "./HungerSlider";
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
-const MEALS: { key: MealType; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
-  { key: "breakfast", label: "Petit-déjeuner", Icon: IconEggFried },
-  { key: "lunch",     label: "Déjeuner",       Icon: IconSalad    },
-  { key: "snacks",    label: "Collations",     Icon: IconApple    },
-  { key: "dinner",    label: "Dîner",          Icon: IconMeat     },
+const MEALS: { key: MealType; label: string }[] = [
+  { key: "breakfast", label: "P.-déj." },
+  { key: "lunch",     label: "Déjeuner" },
+  { key: "snacks",    label: "Collation" },
+  { key: "dinner",    label: "Dîner" },
 ];
 
 // ─── SVG geometry ──────────────────────────────────────────────────────────────
 
 const SVG_W   = 320;
-const SVG_H   = 130;
+const SVG_H   = 140;
 const PAD_X   = 40;
 const PAD_TOP = 22;
 const PAD_BOT = 24;
@@ -61,10 +61,10 @@ function fillPath(pts: { x: number; y: number }[]): string {
 
 interface Props {
   mealHunger: Partial<Record<MealType, HungerLevel>>;
-  onSetHunger: (meal: MealType, level: HungerLevel | null) => void;
 }
 
-export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
+/** Courbe de la faim avant chaque repas (la saisie se fait dans chaque repas). */
+export default function HungerTimeline({ mealHunger }: Props) {
   const pathRef  = useRef<SVGPathElement>(null);
   const fillRef  = useRef<SVGPathElement>(null);
 
@@ -95,9 +95,9 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
     <div className="glass p-4 space-y-3">
       {/* Title */}
       <div className="flex items-center gap-2">
-        <span className="text-base">🌡️</span>
+        <IconGauge size={16} stroke={1.7} style={{ color: "var(--calories)" }} />
         <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-          Évolution de la faim
+          Faim avant chaque repas
         </p>
         {hasAny && (
           <span className="ml-auto text-[12px] px-2 py-0.5 rounded-full"
@@ -127,7 +127,7 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
                   stroke={cfg.color} strokeWidth={0.5} strokeOpacity={0.18} strokeDasharray="3 4"
                 />
                 <text x={PAD_X - 6} y={y + 4} textAnchor="end"
-                  fontSize={8} fill={cfg.color} fillOpacity={0.55}>
+                  fontSize={11} fill={cfg.color}>
                   {lvl}
                 </text>
               </g>
@@ -181,12 +181,18 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
             return (
               <g key={idx}>
                 <circle cx={x} cy={y} r={8} fill={alpha(cfg.color, 20)} stroke={cfg.color} strokeWidth={1.5} />
-                <text x={x} y={y + 1} textAnchor="middle" fontSize={8} fontWeight="700" dominantBaseline="middle" fill={cfg.color}>
+                <text x={x} y={y + 1} textAnchor="middle" fontSize={10} fontWeight="700" dominantBaseline="middle" fill={cfg.color}>
                   {level}
                 </text>
               </g>
             );
           })}
+
+          {MEALS.map((m, i) => (
+            <text key={`l-${m.key}`} x={xFor(i)} y={SVG_H - 6} textAnchor="middle" fontSize={11} fill="var(--text-muted)">
+              {m.label}
+            </text>
+          ))}
 
           {/* Tick marks on x-axis for meals without data (no dots — avoid false zero impression) */}
           {MEALS.map((m, i) => {
@@ -201,41 +207,9 @@ export default function HungerTimeline({ mealHunger, onSetHunger }: Props) {
         </svg>
       </div>
 
-      {/* One slider per meal */}
-      <div className="space-y-3 pt-1">
-        {MEALS.map((m) => (
-          <div key={m.key} className="flex items-center gap-3">
-            {/* Meal icon + label */}
-            <div className="flex items-center gap-1.5 shrink-0" style={{ width: 90 }}>
-              <span className="flex items-center justify-center w-5 h-5 rounded-md flex-shrink-0"
-                style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}>
-                <m.Icon size={12} />
-              </span>
-              <span className="text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                {m.label}
-              </span>
-            </div>
-            {/* Slider */}
-            <div className="flex-1">
-              <HungerSlider
-                value={mealHunger[m.key]}
-                onChange={(v) => onSetHunger(m.key, v)}
-                compact
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mini legend */}
-      <div className="flex justify-between px-1 pt-0.5">
-        {([1, 2, 3, 4, 5] as HungerLevel[]).map((lvl) => (
-          <span key={lvl} className="text-[12px] font-medium tabular-nums"
-            style={{ color: "var(--text-muted)", opacity: 0.45 }}>
-            {lvl}
-          </span>
-        ))}
-      </div>
+      <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+        1 = pas faim · 3 = modéré · 5 = très faim. À noter dans chaque repas (« Faim avant »).
+      </p>
     </div>
   );
 }
