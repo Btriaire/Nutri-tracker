@@ -1215,7 +1215,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       {/* ═══════════════════════════════════════════════════════════
           SCAN VISAGE
       ═══════════════════════════════════════════════════════════ */}
-      {data.faceScan.scansCount > 0 && (
+      {(data.faceScan.scansCount > 0 || data.faceScan.objective) && (
         <div className="glass p-4 mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
@@ -1240,6 +1240,19 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
             Scores visuels indicatifs (1-5, non diagnostiques) — évolution du {data.faceScan.first ? fmtDate(data.faceScan.first.date) : "—"} au {data.faceScan.latest ? fmtDate(data.faceScan.latest.date) : "—"}.
           </p>
+          {data.faceScan.objective && (
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+              <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                Mesures objectives · {data.faceScan.objective.count} photos depuis le début
+              </p>
+              <p className="text-[12px] mb-1" style={{ color: "var(--text-secondary)" }}>
+                Index du {fmtDate(data.faceScan.objective.latestDate)} (50 = ton habitude) : volume {data.faceScan.objective.indexes.volume ?? "—"} · fatigue {data.faceScan.objective.indexes.fatigue ?? "—"} · teint {data.faceScan.objective.indexes.teint ?? "—"}
+              </p>
+              {[...data.faceScan.objective.notable, ...data.faceScan.objective.trend].map((l) => (
+                <p key={l} className="text-[12px]" style={{ color: "var(--text-muted)" }}>• {l}</p>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

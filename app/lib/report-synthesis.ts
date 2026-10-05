@@ -109,6 +109,13 @@ function buildUserMessage(data: ReportData): string {
     const d = data.faceScan.delta;
     lines.push(`Évolution 1er→dernier: amaigrissement ${d.amaigrissement >= 0 ? "+" : ""}${d.amaigrissement}, fatigue ${d.fatigue >= 0 ? "+" : ""}${d.fatigue}, teint ${d.teint >= 0 ? "+" : ""}${d.teint}, hydratation ${d.hydratation >= 0 ? "+" : ""}${d.hydratation} (échelle 1-5)`);
   }
+  const fo = data.faceScan.objective;
+  if (fo) {
+    lines.push(`\n— Visage, mesures objectives (${fo.count} photos depuis le début, dernière le ${fo.latestDate}) —`);
+    lines.push(`Index vs sa propre référence (50 = habitude) : volume ${fo.indexes.volume ?? "?"}, fatigue ${fo.indexes.fatigue ?? "?"}, teint ${fo.indexes.teint ?? "?"}`);
+    if (fo.notable.length) lines.push(`Dernier scan : ${fo.notable.join(" ; ")}`);
+    if (fo.trend.length) lines.push(`Tendance de fond : ${fo.trend.join(" ; ")}`);
+  }
 
   if (data.measurements.entriesCount > 0) {
     lines.push(`\n— Mensurations (${data.measurements.entriesCount} relevé${data.measurements.entriesCount > 1 ? "s" : ""}, ${data.measurements.first?.month} → ${data.measurements.latest?.month}) —`);

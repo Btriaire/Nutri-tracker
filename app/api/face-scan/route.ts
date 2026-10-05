@@ -7,6 +7,7 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding, FaceScanScorecard } from "@/app/lib/types";
 import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGroqFailure } from "@/app/lib/groq";
+import { sanitizeMetrics, metricsContext, type FaceMetrics } from "@/app/lib/face-metrics";
 
 const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -39,12 +40,13 @@ Passe en revue CHACUN de ces traits, pas seulement les plus évidents :
 3. Hydratation cutanée (réf. BatesGuide) : sécheresse/desquamation visible, lèvres gercées ou craquelées, aspect terne vs éclatant/rebondi de la peau, ridules de déshydratation. Signe distinct du teint — évalue-le spécifiquement, ne le fusionne pas avec le point 4.
 4. Teint/santé cutanée (réf. BatesGuide sauf mention) : pâleur cutanée (Sheth1997 si zone périoculaire), ictère peau/yeux, xanthélasma/arc cornéen (Christoffersen2011), rougeurs diffuses/rosacée, cyanose péribuccale, éruption malaire, texture (grain de peau, imperfections notables), sourcils clairsemés (tiers externe).
 5. Asymétrie faciale (réf. ASA_FAST) : à signaler factuellement et avec prudence si net et nouveau, sans dramatiser à tort si léger/habituel.
-6. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (volume joues/tempes, mâchoire, cernes, teint, hydratation) est un vrai signal de changement dans le temps.
+6. Mesures objectives (si fournies) : elles sont calculées par algorithme sur 478 points du visage et la couleur de la peau, et comparées à la RÉFÉRENCE PERSONNELLE de la personne (médiane de tous ses scans). C'est ta base la plus fiable : la scorecard et les findings doivent être cohérents avec elles (ex. "Cernes : nettement plus marqués" → fatigue plus élevée que d'habitude ; "Volume du bas du visage : un peu plus affiné" → amaigrissement plus marqué). Cite-les concrètement dans les observations ("les cernes mesurés sont plus marqués que ta référence"). Ne les contredis pas sans l'expliquer (ex. ombre, angle). Si la qualité de la photo est basse, baisse la confiance.
+7. Comparaison (si photo précédente fournie) : LE signal le plus fiable — un visage isolé varie trop entre individus, mais l'évolution du MÊME visage (volume joues/tempes, mâchoire, cernes, teint, hydratation) est un vrai signal de changement dans le temps.
 
 Sois exhaustif : un visage a presque toujours plusieurs observations pertinentes (souvent 3 à 6), pas juste 1. Pour chaque "finding", cite la référence dont l'observation se rapproche le plus, choisie EXACTEMENT parmi : ${REFERENCE_KEYS.join(", ")}. N'invente jamais d'autre référence.
 
 JSON uniquement, sans markdown :
-{"summary":"3-4 phrases détaillées, ton neutre","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"description précise et concrète de ce qui est visible","relevance":"lien avec la littérature scientifique","confidence":"faible"|"modérée"|"élevée","source":"une des clés ci-dessus"}],"conseil":"1 phrase courte, bienveillante et actionnable de bien-être général (sommeil/hydratation/repos) directement liée à l'observation la plus marquante — jamais de conseil médical ou esthétique"}
+{"summary":"3-4 phrases détaillées, ton neutre, qui s'appuient sur les mesures","trendNote":"1-2 phrases sur l'évolution de fond sur tout l'historique d'après la section Tendance (omets le champ si elle est absente)","scorecard":{"amaigrissement":1-5,"fatigue":1-5,"teint":1-5,"hydratation":1-5},"findings":[{"indicator":"","observation":"description précise et concrète de ce qui est visible","relevance":"lien avec la littérature scientifique","confidence":"faible"|"modérée"|"élevée","source":"une des clés ci-dessus"}],"conseil":"1 phrase courte, bienveillante et actionnable de bien-être général (sommeil/hydratation/repos) directement liée à l'observation la plus marquante — jamais de conseil médical ou esthétique"}
 
 Scorecard = intensité VISUELLE 1-5 (pas clinique) : amaigrissement 1=plein/5=très creusé ; fatigue 1=reposé/5=cernes marqués ; teint 1=sain/5=irrégulier ; hydratation 1=éclatant-rebondi/5=très sec-terne. Toujours les 4, cohérents avec findings/summary.
 
@@ -56,8 +58,11 @@ export async function GET() {
 
   try {
     const db = getAdminFirestore();
-    const snap = await db.collection(`users/${USER}/faceScans`).orderBy("date", "desc").limit(30).get();
-    const scans: FaceScanEntry[] = snap.docs.map(d => d.data() as FaceScanEntry);
+    // Tout l'historique depuis le premier scan, SANS les photos (servies une par une par /api/face-scan/image) :
+    // la liste reste legere meme avec des centaines de scans.
+    const snap = await db.collection(`users/${USER}/faceScans`).orderBy("date", "desc")
+      .select("id", "date", "analysis", "metrics", "createdAt").get();
+    const scans = snap.docs.map(d => ({ ...(d.data() as Omit<FaceScanEntry, "faceImageUrl">), id: d.id }));
     return NextResponse.json({ scans });
   } catch (e) {
     console.error("[face-scan GET]", e);
@@ -78,6 +83,8 @@ export async function POST(req: NextRequest) {
   // "previous" = most recent prior scan (day-to-day change, noisy);
   // "first"    = the very first scan ever (cumulative change, more meaningful over time)
   const compareMode = formData.get("compareMode") as "none" | "previous" | "first" | null;
+  let metrics: FaceMetrics | null = null;
+  try { metrics = sanitizeMetrics(JSON.parse(String(formData.get("metrics") ?? "null"))); } catch { metrics = null; }
 
   if (!date || !faceFile) {
     return NextResponse.json({ error: "Missing date or face image" }, { status: 400 });
@@ -106,7 +113,15 @@ export async function POST(req: NextRequest) {
       if (!snap.empty) referenceScan = snap.docs[0].data() as FaceScanEntry;
     }
 
+    // Historique complet des mesures (sans photos) : reference personnelle + tendance depuis le debut
+    const histSnap = await db.collection(`users/${USER}/faceScans`).select("date", "metrics").get();
+    const history = histSnap.docs
+      .map(d => d.data() as { date: string; metrics?: FaceMetrics })
+      .filter((h): h is { date: string; metrics: FaceMetrics } => !!h.metrics);
+    const context = metricsContext(metrics, metrics ? [...history, { date, metrics }] : history);
+
     const userContent: Array<Record<string, unknown>> = [
+      ...(context ? [{ type: "text", text: context }] : []),
       { type: "text", text: `Photo du visage :` },
       { type: "image_url", image_url: { url: faceImageUrl } },
     ];
@@ -156,6 +171,7 @@ export async function POST(req: NextRequest) {
       findings?: FaceScanFinding[];
       comparisonNote?: string;
       conseil?: string;
+      trendNote?: string;
     };
 
     const clamp = (v: unknown): number => {
@@ -184,12 +200,14 @@ export async function POST(req: NextRequest) {
       findings,
       ...(parsed.comparisonNote ? { comparisonNote: parsed.comparisonNote, comparisonMode: compareMode as "previous" | "first" } : {}),
       ...(parsed.conseil ? { conseil: parsed.conseil } : {}),
+      ...(parsed.trendNote ? { trendNote: parsed.trendNote } : {}),
       disclaimer: DISCLAIMER,
     };
 
     const id = db.collection(`users/${USER}/faceScans`).doc().id;
     const entry: FaceScanEntry = {
       id, date, faceImageUrl, analysis,
+      ...(metrics ? { metrics } : {}),
       createdAt: Timestamp.now(),
     };
 
@@ -199,6 +217,25 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error("[face-scan POST]", e);
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
+  }
+}
+
+// PATCH { id, metrics } : enregistre les mesures recalculees d'un scan existant (rien d'autre n'est modifie).
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json().catch(() => null) as { id?: unknown; metrics?: unknown } | null;
+  const id = typeof body?.id === "string" && /^[\w-]{1,64}$/.test(body.id) ? body.id : null;
+  const metrics = sanitizeMetrics(body?.metrics);
+  if (!id || !metrics) return NextResponse.json({ error: "Invalid id or metrics" }, { status: 400 });
+  try {
+    const ref = getAdminFirestore().collection(`users/${USER}/faceScans`).doc(id);
+    if (!(await ref.get()).exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await ref.update({ metrics });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[face-scan PATCH]", e);
+    return NextResponse.json({ error: "Failed to save metrics" }, { status: 500 });
   }
 }
 

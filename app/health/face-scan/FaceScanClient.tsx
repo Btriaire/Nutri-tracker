@@ -13,8 +13,20 @@ import type { FaceScanEntry, FaceScanConfidence, FaceScanScorecard } from "@/app
 import FaceZoneDiagram from "@/app/components/FaceZoneDiagram";
 import FaceScanTrendChart from "@/app/components/FaceScanTrendChart";
 import FaceOvalCamera from "@/app/components/FaceOvalCamera";
+import FaceIndexPanel from "@/app/components/FaceIndexPanel";
+import FaceMetricsTrend from "@/app/components/FaceMetricsTrend";
+import FaceCompare from "@/app/components/FaceCompare";
+import { measureFace } from "@/app/lib/face-landmarker";
+import { FACE_METRICS_VERSION, type FaceMetrics } from "@/app/lib/face-metrics";
 
-async function compressImage(file: File, maxSide = 480): Promise<Blob> {
+/** Scan tel que renvoye par la liste : sans la photo (servie par /api/face-scan/image). */
+type ScanItem = Omit<FaceScanEntry, "faceImageUrl"> & { faceImageUrl?: string };
+type WithMetrics = ScanItem & { metrics: FaceMetrics };
+const hasMetrics = (s: ScanItem): s is WithMetrics => !!s.metrics && s.metrics.version === FACE_METRICS_VERSION;
+const imageUrl = (id: string) => `/api/face-scan/image?id=${encodeURIComponent(id)}`;
+
+// 768 px (au lieu de 480) : la peau, les cernes et le contour sont nettement plus lisibles pour l'IA et les mesures.
+async function compressImage(file: File, maxSide = 768): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -26,7 +38,7 @@ async function compressImage(file: File, maxSide = 480): Promise<Blob> {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8);
+      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.85);
     };
     img.src = url;
   });
@@ -77,9 +89,13 @@ export default function FaceScanClient() {
   const [faceBlob, setFaceBlob] = useState<Blob | null>(null);
   const [facePreview, setFacePreview] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<FaceScanEntry | null>(null);
+  const [result, setResult] = useState<ScanItem | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<FaceScanEntry[]>([]);
+  const [history, setHistory] = useState<ScanItem[]>([]);
+  // Mesures de la photo en cours (null = pas encore mesuree, "none" = aucun visage trouve)
+  const [captureMetrics, setCaptureMetrics] = useState<FaceMetrics | "none" | null>(null);
+  const [measuring, setMeasuring] = useState(false);
+  const [backfill, setBackfill] = useState<{ done: number; total: number } | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
@@ -88,24 +104,43 @@ export default function FaceScanClient() {
 
   const galleryRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
-    setLoadingHistory(true);
-    try {
-      const res = await fetch("/api/face-scan", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json() as { scans: FaceScanEntry[] };
-        setHistory(data.scans ?? []);
+  // Toutes les photos depuis le premier scan sont en base : on calcule leurs mesures une fois (en local),
+  // puis on les enregistre. Les scans deja mesures avec la version courante ne sont pas retraites.
+  const measureHistory = async (scans: ScanItem[]) => {
+    const todo = scans.filter((s) => !hasMetrics(s));
+    if (todo.length === 0) return;
+    setBackfill({ done: 0, total: todo.length });
+    for (let i = 0; i < todo.length; i++) {
+      const s = todo[i];
+      const m = await measureFace(imageUrl(s.id));
+      if (m.ok) {
+        const res = await fetch("/api/face-scan", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: s.id, metrics: m.metrics }) }).catch(() => null);
+        if (res?.ok) setHistory((prev) => prev.map((h) => (h.id === s.id ? { ...h, metrics: m.metrics } : h)));
       }
-    } catch (e) {
-      console.error("Failed to fetch face-scan history:", e);
-    } finally {
-      setLoadingHistory(false);
+      setBackfill({ done: i + 1, total: todo.length });
     }
+    setBackfill(null);
   };
+
+  // Chargement de tout l'historique (sans photos), puis mesure des scans qui n'en ont pas encore.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/face-scan", { cache: "no-store" });
+        if (res.ok && !cancelled) {
+          const data = await res.json() as { scans: ScanItem[] };
+          setHistory(data.scans ?? []);
+          void measureHistory(data.scans ?? []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch face-scan history:", e);
+      } finally {
+        if (!cancelled) setLoadingHistory(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []); // chargement unique a l'ouverture de la page
 
   const handleCapture = async (file: File) => {
     const blob = await compressImage(file);
@@ -113,6 +148,11 @@ export default function FaceScanClient() {
     setFacePreview(URL.createObjectURL(blob));
     setResult(null);
     setError(null);
+    setCaptureMetrics(null);
+    setMeasuring(true);
+    const m = await measureFace(blob);
+    setCaptureMetrics(m.ok ? m.metrics : m.reason === "no-face" ? "none" : null);
+    setMeasuring(false);
   };
 
   const handleAnalyze = async () => {
@@ -124,14 +164,18 @@ export default function FaceScanClient() {
       form.append("date", format(new Date(), "yyyy-MM-dd"));
       form.append("face", faceBlob, "face.jpg");
       form.append("compareMode", compareMode);
+      if (captureMetrics && captureMetrics !== "none") form.append("metrics", JSON.stringify(captureMetrics));
 
       const res = await fetch("/api/face-scan", { method: "POST", body: form });
       if (res.ok) {
         const data = await res.json() as { scan: FaceScanEntry };
-        setResult(data.scan);
-        setHistory(prev => [data.scan, ...prev]);
+        const { faceImageUrl: _img, ...scan } = data.scan;
+        void _img;
+        setResult(scan);
+        setHistory(prev => [scan, ...prev]);
         setFaceBlob(null);
         setFacePreview(null);
+        setCaptureMetrics(null);
       } else {
         const err = await res.json().catch(() => ({}));
         setError(err.error || "L'analyse a échoué. Réessaie.");
@@ -157,7 +201,7 @@ export default function FaceScanClient() {
     }
   };
 
-  const renderAnalysis = (scan: FaceScanEntry) => (
+  const renderAnalysis = (scan: ScanItem) => (
     <div className="space-y-3">
       {scan.analysis.scorecard && (
         <div className="flex items-center gap-4 rounded-lg p-3" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
@@ -196,6 +240,13 @@ export default function FaceScanClient() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {scan.analysis.trendNote && (
+        <div className="rounded-lg p-3" style={{ background: "color-mix(in srgb, var(--fit-indigo, var(--indigo)) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--indigo) 25%, transparent)" }}>
+          <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--indigo)" }}>Évolution depuis le début</p>
+          <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{scan.analysis.trendNote}</p>
         </div>
       )}
 
@@ -281,6 +332,20 @@ export default function FaceScanClient() {
             </div>
           </div>
 
+          {facePreview && (
+            <p role="status" className="text-[12px] mb-3 rounded-lg p-2" style={{
+              background: "var(--layer-1)",
+              color: captureMetrics === "none" ? "var(--danger)" : captureMetrics && captureMetrics.quality.warnings.length ? "var(--warn)" : "var(--text-secondary)",
+            }}>
+              {measuring ? "Mesure du visage en cours…"
+                : captureMetrics === "none" ? "Aucun visage détecté : reprends la photo de face, bien éclairée."
+                : captureMetrics ? (captureMetrics.quality.warnings.length
+                  ? `Qualité ${captureMetrics.quality.score}/100 : ${captureMetrics.quality.warnings.join(" ; ")}. Tu peux reprendre la photo pour des mesures plus fiables.`
+                  : `Visage mesuré (478 points) · qualité ${captureMetrics.quality.score}/100.`)
+                : "Mesures indisponibles (modèle non chargé) : l'analyse IA reste possible."}
+            </p>
+          )}
+
           <input ref={galleryRef} type="file" accept="image/*" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleCapture(f); e.target.value = ""; }} />
 
@@ -348,6 +413,27 @@ export default function FaceScanClient() {
           </motion.div>
         )}
 
+        {backfill && (
+          <p role="status" className="flex items-center gap-2 text-[12px] mb-4 rounded-xl p-3" style={{ background: "var(--layer-1)", color: "var(--text-secondary)" }}>
+            <IconLoader2 size={14} className="animate-spin shrink-0" />
+            Mesure de tes photos depuis le premier scan : {backfill.done}/{backfill.total}. Reste sur la page, c&apos;est fait une seule fois.
+          </p>
+        )}
+
+        {(() => {
+          const measured = history.filter(hasMetrics);
+          const latest = (result && hasMetrics(result) ? result : null) ?? measured[0];
+          if (!latest) return null;
+          return (
+            <>
+              <FaceIndexPanel current={latest.metrics} all={measured.map((h) => h.metrics)}
+                dateLabel={format(new Date(latest.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })} />
+              <FaceMetricsTrend scans={measured} />
+              <FaceCompare scans={measured} />
+            </>
+          );
+        })()}
+
         {/* Sources */}
         <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
           <button type="button" onClick={() => setShowSources(v => !v)} className="w-full flex items-center gap-1.5 px-3 py-2.5">
@@ -390,13 +476,14 @@ export default function FaceScanClient() {
                       className="w-full flex items-center gap-3 p-3"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={scan.faceImageUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                      <img src={imageUrl(scan.id)} alt="" loading="lazy" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0 text-left">
                         <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                           {format(new Date(scan.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })}
                         </p>
                         <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>
                           {scan.analysis.findings.length} observation{scan.analysis.findings.length > 1 ? "s" : ""}
+                          {scan.metrics ? ` · qualité ${scan.metrics.quality.score}/100` : ""}
                         </p>
                       </div>
                       <IconChevronDown size={14} style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />

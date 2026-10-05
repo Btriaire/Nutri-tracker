@@ -835,13 +835,16 @@ export interface FaceScanAnalysis {
   comparisonNote?: string;               // vs the reference scan below, if any existed at analysis time
   comparisonMode?: "previous" | "first"; // which reference scan comparisonNote is against
   conseil?:        string;               // 1 short actionable general-wellness tip tied to the findings
+  trendNote?:      string;               // evolution de fond sur tout l'historique (a partir des mesures objectives)
   disclaimer:      string;
 }
 
 export interface FaceScanEntry {
   id:            string;
   date:          string;           // "YYYY-MM-DD"
-  faceImageUrl:  string;           // base64 data URL, small thumbnail
+  faceImageUrl:  string;           // base64 data URL, small thumbnail (absent des listes : servie par /api/face-scan/image)
   analysis:      FaceScanAnalysis;
+  /** Mesures objectives (points du visage + couleur), calculees dans le navigateur ; recalculees pour les anciens scans. */
+  metrics?:      import("./face-metrics").FaceMetrics;
   createdAt:     Timestamp;
 }

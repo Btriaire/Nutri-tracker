@@ -6,7 +6,7 @@ import { fr } from "date-fns/locale";
 import type { FaceScanEntry } from "@/app/lib/types";
 
 interface Props {
-  scans: FaceScanEntry[]; // most-recent-first, as returned by GET /api/face-scan
+  scans: Pick<FaceScanEntry, "date" | "analysis">[]; // most-recent-first, as returned by GET /api/face-scan
 }
 
 const AXES: { key: keyof FaceScanEntry["analysis"]["scorecard"]; label: string; color: string }[] = [

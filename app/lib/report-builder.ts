@@ -1,4 +1,5 @@
 import { FieldPath } from "firebase-admin/firestore";
+import { summarizeForReport, FACE_METRICS_VERSION, type FaceMetrics, type FaceReportSummary } from "./face-metrics";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import { mealGlucoseResponses, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
@@ -206,6 +207,8 @@ export interface ReportData {
     latest:     FaceScanRow | null;
     delta:      { amaigrissement: number; fatigue: number; teint: number; hydratation: number } | null;
     entries:    FaceScanRow[];
+    /** Mesures objectives (points du visage + couleur) sur TOUT l'historique, pas seulement la periode. */
+    objective?: FaceReportSummary | null;
   };
   measurements: {
     entriesCount: number;
@@ -530,6 +533,11 @@ export async function buildReportData(userId: string, from: string, to: string):
         && typeof s.teint === "number" && typeof s.hydratation === "number";
     })
     .map(e => ({ date: e.date, scorecard: e.analysis.scorecard }));
+  // Mesures objectives : tout l'historique (la reference personnelle a besoin de toutes les photos)
+  const faceMetricsSnap = await db.collection(`users/${userId}/faceScans`).select("date", "metrics").get();
+  const faceObjective = summarizeForReport(faceMetricsSnap.docs
+    .map(d => d.data() as { date: string; metrics?: FaceMetrics })
+    .filter((h): h is { date: string; metrics: FaceMetrics } => h.metrics?.version === FACE_METRICS_VERSION && h.date <= to));
   const faceScanFirst  = faceScanEntries[0] ?? null;
   const faceScanLatest = faceScanEntries[faceScanEntries.length - 1] ?? null;
   const faceScanDelta = (faceScanFirst && faceScanLatest && faceScanFirst !== faceScanLatest)
@@ -638,6 +646,7 @@ export async function buildReportData(userId: string, from: string, to: string):
       latest: faceScanLatest,
       delta:  faceScanDelta,
       entries: faceScanEntries,
+      objective: faceObjective,
     },
     measurements: {
       entriesCount: measurementEntries.length,
