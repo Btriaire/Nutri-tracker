@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconDroplet } from "@tabler/icons-react";
+import { queueWater } from "@/app/lib/offline-meals";
 
 interface Props {
   date: string;
@@ -15,12 +16,16 @@ const chip = "flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded
 export default function QuickAddChips({ date, waterMl, goalMl, onWaterUpdate }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [queued, setQueued] = useState(false);
 
   const addWater = async (delta: number) => {
     if (busy) return;
     const next = waterMl + delta;
     setBusy(true);
     setError(false);
+    // Hors ligne : gardee sur le telephone, envoyee au retour du reseau.
+    const keepOffline = () => { queueWater(date, next); onWaterUpdate(next); setQueued(true); };
+    if (!navigator.onLine) { keepOffline(); setBusy(false); return; }
     try {
       const res = await fetch("/api/log/water", {
         method: "PATCH",
@@ -29,8 +34,10 @@ export default function QuickAddChips({ date, waterMl, goalMl, onWaterUpdate }: 
       });
       if (!res.ok) throw new Error();
       onWaterUpdate(next);
-    } catch {
-      setError(true);
+      setQueued(false);
+    } catch (e) {
+      if (e instanceof TypeError) keepOffline();   // reseau coupe pendant l'envoi
+      else setError(true);
     } finally {
       setBusy(false);
     }
@@ -60,6 +67,11 @@ export default function QuickAddChips({ date, waterMl, goalMl, onWaterUpdate }: 
           +500 ml
         </button>
       </div>
+      {queued && (
+        <p role="status" className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
+          Pas de réseau : gardé sur le téléphone, envoyé au retour du réseau.
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-[12px] mt-2" style={{ color: "var(--danger)" }}>
           Impossible d&apos;enregistrer l&apos;eau, réessaie.

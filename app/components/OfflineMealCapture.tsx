@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { format } from "date-fns";
-import { IconWifiOff, IconCloudUpload, IconTrash, IconAlertTriangle, IconRefresh, IconCheck } from "@tabler/icons-react";
-import { enqueueMeal, readQueue, removeQueued, retryQueued, flushQueue, QUEUE_EVENT, type QueuedMeal } from "@/app/lib/offline-meals";
+import { IconWifiOff, IconCloudUpload, IconTrash, IconAlertTriangle, IconRefresh, IconCheck, IconSearch, IconMinus, IconPlus, IconX } from "@tabler/icons-react";
+import {
+  enqueueMeal, readQueue, removeQueued, retryQueued, flushQueue, QUEUE_EVENT, type QueuedMeal,
+  readOfflineFoods, refreshOfflineFoods, rankFoods, entryFromFood, readWater,
+} from "@/app/lib/offline-meals";
+import type { RecentFood } from "@/app/api/food/recent/route";
 import { MEAL_META } from "./meal-meta";
 import type { MealType } from "@/app/lib/types";
 
@@ -38,6 +42,16 @@ export function useOfflineQueue(): QueuedMeal[] {
     return cache.q;
   }, () => EMPTY);
 }
+let foodsCache: { n: number; first: string; foods: RecentFood[] } = { n: 0, first: "", foods: [] };
+const NO_FOODS: RecentFood[] = [];
+function useOfflineFoods(): RecentFood[] {
+  return useSyncExternalStore(subscribeQueue, () => {
+    const f = readOfflineFoods();
+    if (f.length !== foodsCache.n || (f[0]?.name ?? "") !== foodsCache.first) foodsCache = { n: f.length, first: f[0]?.name ?? "", foods: f };
+    return foodsCache.foods;
+  }, () => NO_FOODS);
+}
+const kcalOf = (f: RecentFood, grams: number) => Math.round((f.nutritionPer100g.calories * grams) / 100);
 
 interface Props {
   /** Afficher le formulaire meme en ligne (page /offline). */
@@ -52,6 +66,9 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
   const [meal, setMeal] = useState<MealType>(() => guessMeal(new Date().getHours()));
   const [time, setTime] = useState(() => format(new Date(), "HH:mm"));
   const [text, setText] = useState("");
+  const foods = useOfflineFoods();
+  const [query, setQuery] = useState("");
+  const [basket, setBasket] = useState<{ food: RecentFood; grams: number }[]>([]);
   const [saved, setSaved] = useState<"ok" | "error" | null>(null);
   const [sending, setSending] = useState(false);
 
@@ -66,12 +83,19 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
 
   const save = () => {
     const t = text.trim();
-    if (!t) return;
-    const ok = enqueueMeal({ date: format(new Date(), "yyyy-MM-dd"), meal, time, text: t });
+    if (!t && basket.length === 0) return;
+    const picks = basket.map((b) => entryFromFood(b.food, b.grams, meal));
+    const ok = enqueueMeal({ date: format(new Date(), "yyyy-MM-dd"), meal, time, text: t, picks });
     setSaved(ok ? "ok" : "error");
-    if (ok) setText("");
+    if (ok) { setText(""); setBasket([]); setQuery(""); }
     if (ok && navigator.onLine) void flushQueue();
   };
+
+  const inBasket = new Set(basket.map((b) => b.food.name));
+  const suggestions = rankFoods(foods, meal, query).filter((f) => !inBasket.has(f.name)).slice(0, query ? 8 : 6);
+  const setGrams = (name: string, g: number) =>
+    setBasket((bs) => bs.map((b) => (b.food.name === name ? { ...b, grams: Math.max(5, Math.min(2000, Math.round(g))) } : b)));
+  const basketKcal = basket.reduce((s, b) => s + kcalOf(b.food, b.grams), 0);
 
   const sendNow = async () => { setSending(true); try { await flushQueue(); } finally { setSending(false); } };
 
@@ -85,8 +109,8 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
             {online ? "Noter un repas" : "Pas de réseau : note ton repas"}
           </p>
           <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
-            Repas d&apos;aujourd&apos;hui : décris ce que tu as mangé, avec les quantités si tu les connais. Il sera
-            analysé et ajouté au journal automatiquement dès que le réseau revient.
+            Repas d&apos;aujourd&apos;hui : choisis tes aliments habituels ou décris ce que tu as mangé. Tout est ajouté
+            au journal automatiquement dès que le réseau revient.
           </p>
 
           <div className="flex flex-wrap gap-1.5 mb-2" role="radiogroup" aria-label="Repas">
@@ -113,13 +137,81 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
               style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
           </label>
 
-          <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3}
+          {/* Aliments habituels : valeurs exactes, sans IA, disponibles hors ligne */}
+          {foods.length > 0 ? (
+            <div className="mb-3">
+              <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>Tes aliments habituels</p>
+              <label className="flex items-center gap-2 px-3 min-h-[44px] rounded-xl mb-2"
+                style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
+                <IconSearch size={16} style={{ color: "var(--text-muted)" }} />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Chercher (ex. yaourt)"
+                  aria-label="Chercher dans tes aliments habituels"
+                  className="flex-1 bg-transparent outline-none text-[15px]" style={{ color: "var(--text-primary)" }} />
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {suggestions.map((f) => (
+                  <button key={f.name} type="button" onClick={() => setBasket((bs) => [...bs, { food: f, grams: f.usualGrams || 100 }])}
+                    className="flex items-center gap-1 min-h-[40px] px-3 rounded-full text-[13px] text-left"
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                    <IconPlus size={13} style={{ color: "var(--warn)" }} />
+                    {f.name}
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{f.usualGrams || 100} g</span>
+                  </button>
+                ))}
+                {suggestions.length === 0 && (
+                  <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Rien de trouvé : décris-le plus bas.</p>
+                )}
+              </div>
+
+              {basket.length > 0 && (
+                <ul className="mt-2.5 rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                  {basket.map((b, i) => (
+                    <li key={b.food.name} className="flex items-center gap-2 px-3 py-2" style={{ borderTop: i ? "1px solid var(--border)" : "none", background: "var(--layer-1)" }}>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-[14px] leading-snug" style={{ color: "var(--text-primary)" }}>{b.food.name}</span>
+                        <span className="block text-[12px] tabular-nums" style={{ color: "var(--calories)" }}>{kcalOf(b.food, b.grams)} kcal</span>
+                      </span>
+                      <button type="button" onClick={() => setGrams(b.food.name, b.grams - 10)} aria-label={`10 g de moins de ${b.food.name}`}
+                        className="flex items-center justify-center w-9 h-9 rounded-full" style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
+                        <IconMinus size={14} />
+                      </button>
+                      <input type="number" inputMode="numeric" value={b.grams} onChange={(e) => setGrams(b.food.name, Number(e.target.value) || 5)}
+                        aria-label={`Grammes de ${b.food.name}`}
+                        className="w-14 min-h-[36px] text-center rounded-lg text-[14px] tabular-nums"
+                        style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }} />
+                      <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>g</span>
+                      <button type="button" onClick={() => setGrams(b.food.name, b.grams + 10)} aria-label={`10 g de plus de ${b.food.name}`}
+                        className="flex items-center justify-center w-9 h-9 rounded-full" style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
+                        <IconPlus size={14} />
+                      </button>
+                      <button type="button" onClick={() => setBasket((bs) => bs.filter((x) => x.food.name !== b.food.name))} aria-label={`Retirer ${b.food.name}`}
+                        className="flex items-center justify-center w-9 h-9 rounded-full" style={{ color: "var(--text-muted)" }}>
+                        <IconX size={15} />
+                      </button>
+                    </li>
+                  ))}
+                  <li className="flex justify-between px-3 py-2 text-[13px] font-semibold" style={{ borderTop: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                    <span>Total</span><span className="tabular-nums" style={{ color: "var(--calories)" }}>{basketKcal} kcal</span>
+                  </li>
+                </ul>
+              )}
+            </div>
+          ) : !online && (
+            <p className="text-[12px] mb-2" style={{ color: "var(--text-muted)" }}>
+              Tes aliments habituels seront proposés ici hors ligne après la prochaine ouverture de l&apos;appli avec du réseau.
+            </p>
+          )}
+
+          <p className="text-[13px] font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
+            {foods.length > 0 ? "Autre chose ? Décris-le" : "Décris ton repas"}
+          </p>
+          <textarea value={text} onChange={(e) => setText(e.target.value)} rows={foods.length > 0 ? 2 : 3}
             placeholder="Ex. : 2 œufs brouillés, 1 tranche de pain complet beurrée, 1 café"
             aria-label="Description du repas"
             className="w-full p-3 rounded-xl text-[15px] mb-2 resize-y"
             style={{ background: "var(--layer-1)", border: "1px solid var(--border-strong)", color: "var(--text-primary)" }} />
 
-          <button type="button" onClick={save} disabled={!text.trim()}
+          <button type="button" onClick={save} disabled={!text.trim() && basket.length === 0}
             className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold disabled:opacity-50"
             style={{ background: "var(--warn)", color: "var(--bg)" }}>
             Enregistrer le repas
@@ -159,14 +251,16 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
                     <p className="text-[12px] font-medium" style={{ color: MEAL_META[q.meal].color }}>
                       {MEAL_META[q.meal].fr} · {q.time} · {format(new Date(`${q.date}T12:00:00`), "dd/MM")}
                     </p>
-                    <p className="text-[13px] break-words" style={{ color: "var(--text-primary)" }}>{q.text}</p>
+                    <p className="text-[13px] break-words" style={{ color: "var(--text-primary)" }}>
+                      {[...(q.items ?? []).map((it) => `${it.entry.name} (${it.entry.servingGrams} g)`), q.text].filter(Boolean).join(" · ")}
+                    </p>
                     {q.status === "failed" ? (
                       <p className="flex items-center gap-1 text-[12px] mt-0.5" style={{ color: "var(--danger)" }}>
                         <IconAlertTriangle size={13} /> {q.error}
                       </p>
                     ) : (
                       <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {q.status === "parsed" ? "Analysé, ajout au journal en cours" : online ? "En attente d'analyse" : "En attente du réseau"}
+                        {!online ? "En attente du réseau" : q.error ? q.error : q.status === "parsed" ? "Envoi au journal en cours" : "En attente d'analyse"}
                       </p>
                     )}
                   </div>
@@ -176,7 +270,7 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
                       <IconRefresh size={16} />
                     </button>
                   )}
-                  {q.status !== "parsed" && (
+                  {!(q.items ?? []).some((it) => it.done) && (
                     <button type="button" onClick={() => { if (confirm("Supprimer ce repas en attente ?")) removeQueued(q.id); }}
                       aria-label="Supprimer ce repas en attente"
                       className="shrink-0 flex items-center justify-center w-10 h-10 rounded-full" style={{ color: "var(--text-muted)" }}>
@@ -196,7 +290,11 @@ export default function OfflineMealCapture({ alwaysShowForm = false }: Props) {
 /** Monte une fois dans le layout : envoie la file au chargement, au retour du reseau et toutes les minutes. */
 export function OfflineSync() {
   useEffect(() => {
-    const run = () => { if (readQueue().length) void flushQueue(); };
+    const run = () => {
+      if (!navigator.onLine) return;
+      void refreshOfflineFoods();   // garde les aliments habituels a jour pour le prochain passage hors ligne
+      if (readQueue().length || Object.keys(readWater()).length) void flushQueue();
+    };
     run();
     window.addEventListener("online", run);
     const t = setInterval(run, 60_000);

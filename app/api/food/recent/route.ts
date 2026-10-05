@@ -15,6 +15,10 @@ export interface RecentFood {
   nutritionPer100g: FoodNutrition;
   lastLoggedAt:     string;
   timesLogged:      number;
+  /** Derniere portion saisie (g) : sert de portion par defaut, notamment pour la saisie hors ligne. */
+  usualGrams:       number;
+  /** Nombre de fois par repas : pour proposer d'abord ce qu'on mange a ce repas-la. */
+  mealCounts:       Partial<Record<MealType, number>>;
 }
 
 const LOOKBACK_DAYS = 60;
@@ -51,7 +55,13 @@ export async function GET(req: NextRequest) {
       if (meal && entry.meal !== meal) continue;
       const key = entry.name.trim().toLowerCase();
       const existing = byName.get(key);
-      if (existing) { existing.timesLogged += 1; existing.lastLoggedAt = doc.id; continue; }
+      if (existing) {
+        existing.timesLogged += 1;
+        existing.lastLoggedAt = doc.id;
+        existing.usualGrams = entry.servingGrams;
+        existing.mealCounts[entry.meal] = (existing.mealCounts[entry.meal] ?? 0) + 1;
+        continue;
+      }
       byName.set(key, {
         name:             entry.name,
         brand:            entry.brand,
@@ -59,6 +69,8 @@ export async function GET(req: NextRequest) {
         nutritionPer100g: nutritionPer100gFromServing(entry.nutrition, entry.servingGrams),
         lastLoggedAt:     doc.id,
         timesLogged:      1,
+        usualGrams:       entry.servingGrams,
+        mealCounts:       { [entry.meal]: 1 },
       });
     }
   }

@@ -2,7 +2,8 @@
 // - Pages : reseau d'abord (6 s max), sinon la derniere version gardee, sinon le journal, sinon /offline.
 // - Fichiers statiques Next (/_next/static, immuables), images, polices : cache d'abord.
 // - API : jamais en cache (donnees toujours fraiches) ; la saisie hors ligne passe par la file locale de l'appli.
-const CACHE_NAME = 'nutritracker-v2';
+const CACHE_NAME = 'nutritracker-v3';
+const MAX_ENTRIES = 400;
 const OFFLINE_URL = '/offline';
 const PRECACHE = [OFFLINE_URL, '/log'];
 const NAV_TIMEOUT_MS = 6000;
@@ -60,7 +61,17 @@ async function handleStatic(request) {
   const cached = await cache.match(request);
   if (cached) return cached;
   const response = await fetch(request);
-  if (response.ok) await cache.put(request, response.clone());
+  if (response.ok) {
+    await cache.put(request, response.clone());
+    // Les fichiers des anciennes versions s'accumulent a chaque deploiement : on retire les plus anciens.
+    const keys = await cache.keys();
+    if (keys.length > MAX_ENTRIES) {
+      const keep = new Set([OFFLINE_URL, '/log']);
+      await Promise.all(keys.slice(0, keys.length - MAX_ENTRIES + 50)
+        .filter(k => !keep.has(new URL(k.url).pathname))
+        .map(k => cache.delete(k)));
+    }
+  }
   return response;
 }
 
