@@ -18,9 +18,10 @@ const KINDS: Record<string, string> = {
 
 /** "nutri-semaine-2026-09-26.m4a" -> { kind: "Semaine", date: "2026-09-26", long: false } */
 export function podcastInfo(name: string): { kind: string; date: string | null; long: boolean } {
-  const m = /^nutri-([a-z]+)-(\d{4}-\d{2}-\d{2})/.exec(name);
+  const m = /^nutri-(?:([a-z]+)-)?(\d{4}-\d{2}-\d{2})/.exec(name);
   if (!m) return { kind: "Podcast", date: null, long: false };
   const raw = m[1];
+  if (!raw) return { kind: "Podcast", date: m[2], long: false };   // anciens fichiers sans type : nutri-2026-08-25.m4a
   return { kind: KINDS[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1), date: m[2], long: raw === "long" };
 }
 

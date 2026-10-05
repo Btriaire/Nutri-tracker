@@ -11,5 +11,6 @@ describe("podcastInfo", () => {
   it("reste lisible pour un nom inconnu", () => {
     expect(podcastInfo("nutri-special-2026-01-02.m4a").kind).toBe("Special");
     expect(podcastInfo("autre.m4a")).toEqual({ kind: "Podcast", date: null, long: false });
+    expect(podcastInfo("nutri-2026-08-25.m4a")).toEqual({ kind: "Podcast", date: "2026-08-25", long: false });
   });
 });

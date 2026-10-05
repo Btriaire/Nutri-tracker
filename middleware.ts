@@ -3,6 +3,9 @@ import { sessionSecret, verifySession } from "@/app/lib/session-crypto";
 
 const PUBLIC_PREFIXES = [
   "/login",
+  "/offline",        // page de secours hors ligne (aucune donnee)
+  "/sw.js",
+  "/manifest.json",
   "/api/auth/",
   "/api/withings/auth",
   "/api/withings/callback",

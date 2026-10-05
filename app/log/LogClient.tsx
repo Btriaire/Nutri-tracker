@@ -4,6 +4,8 @@ import GlucoseDayCard from "@/app/components/GlucoseDayCard";
 import { useGlucoseDay } from "@/app/lib/use-glucose-day";
 import { mealGlucoseResponses, mealAnchors, DEFAULT_GLUCOSE_TARGET, type MealAnchor } from "@/app/lib/glucose";
 import MealTimeSheet from "@/app/components/MealTimeSheet";
+import OfflineMealCapture from "@/app/components/OfflineMealCapture";
+import { SYNCED_EVENT } from "@/app/lib/offline-meals";
 import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -458,6 +460,21 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   // handleMealChange) it needs to diff against the *whole* day's entries, not just one
   // meal's. Previously this only called router.refresh() — the calorie/macro totals
   // updated, but the micronutrient-extraction step was silently skipped entirely.
+  // Repas notes hors ligne puis envoyes : on recharge la journee (aliments + heures de repas).
+  useEffect(() => {
+    const reload = async () => {
+      try {
+        const res = await fetch(`/api/log?date=${date}`);
+        if (!res.ok) return;
+        const { dayLog } = await res.json() as { dayLog: { entries?: FoodEntry[]; mealTimes?: Partial<Record<MealType, number>> } | null };
+        setEntries(dayLog?.entries ?? []);
+        setMealTimes(dayLog?.mealTimes ?? {});
+      } catch { /* reseau encore instable : le prochain envoi rechargera */ }
+    };
+    window.addEventListener(SYNCED_EVENT, reload);
+    return () => window.removeEventListener(SYNCED_EVENT, reload);
+  }, [date]);
+
   const handleVoiceAdded = async () => {
     setShowVoice(false);
     try {
@@ -544,6 +561,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <IconArrowsExchange size={17} stroke={1.8} />
           </button>
         </motion.div>
+
+        {/* Hors ligne : saisie minimale d'un repas, envoyee au retour du reseau */}
+        <OfflineMealCapture />
 
         <MeasurementReminderBanner />
         <FaceScanReminderBanner />

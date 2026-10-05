@@ -5,6 +5,7 @@ import NavWrapper from "./components/NavWrapper";
 import NavSpacer from "./components/NavSpacer";
 import ThemeProvider from "./components/ThemeProvider";
 import SwRegister from "./components/SwRegister";
+import { OfflineSync } from "./components/OfflineMealCapture";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ color: "var(--text-primary)", minHeight: "100vh" }}>
         <ThemeProvider>
           <SwRegister />
+          <OfflineSync />
           <NavWrapper />
           <NavSpacer />
           {children}
