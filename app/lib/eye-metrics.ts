@@ -18,6 +18,15 @@ export interface EyeSide {
   rednessA: number | null;       // a* moyen du blanc de l'oeil (rougeur)
   scleraB: number | null;        // b* median du blanc de l'oeil (jaunissement)
   arcus: number | null;          // L* bord de l'iris - L* milieu de l'iris (anneau clair = arc corneen)
+  // ── Analyse detaillee (v1.1, champs optionnels : absents des premiers scans) ──
+  fissureWidthMm?: number;       // largeur de la fente palpebrale (coin interne -> externe)
+  scleralShowUpperMm?: number;   // blanc visible au-dessus de l'iris (yeux ecarquilles)
+  scleralShowLowerMm?: number;   // blanc visible sous l'iris (fatigue, paupiere inferieure relachee)
+  rednessNasal?: number | null;  // rougeur cote nez
+  rednessTemporal?: number | null; // rougeur cote tempe
+  limbalRing?: number | null;    // contraste de l'anneau sombre au bord de l'iris (s'estompe avec l'age)
+  cernes?: number | null;        // L* joue - L* sous l'oeil, de ce cote
+  catchlight?: { dxMm: number; dyMm: number } | null; // reflet de l'ecran par rapport au centre de l'iris (test de Hirschberg)
 }
 
 export interface EyeMetrics {
@@ -25,13 +34,18 @@ export interface EyeMetrics {
   A: EyeSide;
   B: EyeSide;
   anisocoriaMm: number | null;
+  /** Ecart entre les deux yeux de la position du reflet (Hirschberg) : 1 mm ~ 7 degres de deviation. */
+  hirschbergMm?: number | null;
+  /** Symetrie entre les deux yeux, 100 = identiques (ouverture, pupilles, rougeur). */
+  symmetryScore?: number;
   quality: { score: number; warnings: string[] };
 }
 
 const EYES = {
-  A: { iris: 468, ring: [469, 470, 471, 472], inner: 133, outer: 33, upper: 159, lower: 145 },
-  B: { iris: 473, ring: [474, 475, 476, 477], inner: 362, outer: 263, upper: 386, lower: 374 },
+  A: { iris: 468, ring: [469, 470, 471, 472], inner: 133, outer: 33, upper: 159, lower: 145, under: [111, 117, 118, 119, 120, 121], cheek: 205 },
+  B: { iris: 473, ring: [474, 475, 476, 477], inner: 362, outer: 263, upper: 386, lower: 374, under: [340, 346, 347, 348, 349, 350], cheek: 425 },
 } as const;
+const RADIUS_MM = HVID_MM / 2;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 const median = (xs: number[]) => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -103,7 +117,8 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
 
   // Blanc de l'oeil : petites zones entre le bord de l'iris et chaque coin
   const scl: [number, number, number][] = [];
-  for (const corner of [P[e.inner], P[e.outer]]) {
+  const zone: Record<"nasal" | "temporal", [number, number, number][]> = { nasal: [], temporal: [] };
+  for (const [zk, corner] of [["nasal", P[e.inner]], ["temporal", P[e.outer]]] as const) {
     const d = dist(c, corner);
     if (d < R * 1.4) continue;
     for (const f of [0.35, 0.55, 0.75]) {
@@ -112,7 +127,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
       const rad = Math.max(1, Math.round(R * 0.12));
       for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
         const xi = Math.round(px.x + dx), yi = Math.round(px.y + dy);
-        if (xi >= 0 && yi >= 0 && xi < w && yi < h) scl.push(rgbToLab(read(xi, yi)));
+        if (xi >= 0 && yi >= 0 && xi < w && yi < h) { const v = rgbToLab(read(xi, yi)); scl.push(v); zone[zk].push(v); }
       }
     }
   }
@@ -124,6 +139,34 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   // Arc corneen : anneau exterieur de l'iris nettement plus clair que son milieu
   const outer = ringL(read, c, R * 0.92, w, h), midI = ringL(read, c, R * 0.6, w, h);
   const arcus = Number.isFinite(outer) && Number.isFinite(midI) ? outer - midI : null;
+  // Anneau limbique : bord de l'iris plus sombre que sa partie moyenne (net chez le sujet jeune)
+  const edge = ringL(read, c, R * 0.97, w, h), inside = ringL(read, c, R * 0.72, w, h);
+  const limbalRing = Number.isFinite(edge) && Number.isFinite(inside) ? inside - edge : null;
+
+  const zoneRed = (z: [number, number, number][]) => { const v = z.filter((x) => x[0] >= 35); return v.length >= 4 ? round(mean(v.map((x) => x[1]))) : null; };
+
+  // Cernes de ce cote : sous l'oeil vs joue
+  const patchL = (p: Pt, rad: number) => {
+    const vals: number[] = [];
+    const rr = Math.max(1, Math.round(rad));
+    for (let dy = -rr; dy <= rr; dy += 2) for (let dx = -rr; dx <= rr; dx += 2) {
+      const v = lumAt(read, p.x + dx, p.y + dy, w, h);
+      if (v !== null) vals.push(v);
+    }
+    return vals.length ? mean(vals) : NaN;
+  };
+  const underC = { x: mean(e.under.map((i) => P[i].x)), y: mean(e.under.map((i) => P[i].y)) };
+  const cer = patchL(P[e.cheek], R * 0.35) - patchL(underC, R * 0.25);
+
+  // Reflet de l'ecran sur la cornee : centre des pixels tres clairs dans l'iris (test de Hirschberg)
+  let sx = 0, sy = 0, sn = 0;
+  const rr = Math.round(R * 0.9);
+  for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
+    if (dx * dx + dy * dy > rr * rr) continue;
+    const v = lumAt(read, c.x + dx, c.y + dy, w, h);
+    if (v !== null && v >= 88) { sx += dx; sy += dy; sn++; }
+  }
+  const catchlight = sn >= 2 && sn < Math.PI * rr * rr * 0.25 ? { dxMm: round((sx / sn) * mmPerPx), dyMm: round((sy / sn) * mmPerPx) } : null;
 
   return {
     irisPx: round(irisPx, 1),
@@ -133,6 +176,14 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     rednessA: rednessA === null ? null : round(rednessA),
     scleraB: scleraB === null ? null : round(scleraB),
     arcus: arcus === null ? null : round(arcus, 1),
+    fissureWidthMm: round(dist(P[e.inner], P[e.outer]) * mmPerPx),
+    scleralShowUpperMm: round(Math.max(0, mrd1Mm - RADIUS_MM)),
+    scleralShowLowerMm: round(Math.max(0, mrd2Mm - RADIUS_MM)),
+    rednessNasal: zoneRed(zone.nasal),
+    rednessTemporal: zoneRed(zone.temporal),
+    limbalRing: limbalRing === null ? null : round(limbalRing, 1),
+    cernes: Number.isFinite(cer) ? round(cer, 1) : null,
+    catchlight,
   };
 }
 
@@ -150,9 +201,17 @@ export function computeEyeMetrics(inp: EyeInput): EyeMetrics | null {
   if (Math.abs(A.irisPx - B.irisPx) / Math.max(A.irisPx, B.irisPx) > 0.12) { warnings.push("Tête tournée : regarde l'écran bien en face"); score -= 25; }
   if (A.pupilMm === null || B.pupilMm === null) { warnings.push("Pupille peu visible (iris foncé ou flou) : mesures de pupille indisponibles"); score -= 10; }
   if (A.mrd1Mm < 0.5 && B.mrd1Mm < 0.5) { warnings.push("Yeux trop fermés : ouvre grand les yeux"); score -= 30; }
+  // Symetrie : 100 - penalites sur les ecarts entre les deux yeux (ouverture, pupilles, rougeur)
+  const dPupil = A.pupilMm !== null && B.pupilMm !== null ? Math.abs(A.pupilMm - B.pupilMm) : 0;
+  const dRed = A.rednessA !== null && B.rednessA !== null ? Math.abs(A.rednessA - B.rednessA) : 0;
+  const symmetryScore = Math.round(Math.max(0, 100 - Math.abs(A.mrd1Mm - B.mrd1Mm) * 20 - dPupil * 25 - dRed * 3));
+  const hirschbergMm = A.catchlight && B.catchlight
+    ? round(Math.hypot(A.catchlight.dxMm - B.catchlight.dxMm, A.catchlight.dyMm - B.catchlight.dyMm)) : null;
   return {
     version: EYE_METRICS_VERSION, A, B,
     anisocoriaMm: A.pupilMm !== null && B.pupilMm !== null ? round(Math.abs(A.pupilMm - B.pupilMm)) : null,
+    hirschbergMm,
+    symmetryScore,
     quality: { score: Math.max(0, score), warnings },
   };
 }
@@ -244,6 +303,10 @@ export const scanValue = {
   constriction: (s: EyeScanData) => s.plr?.constrictionPct ?? null,
   pallor: (s: EyeScanData) => s.conjunctiva?.pallorIndex ?? null,
   mbi: (s: EyeScanData) => s.mbiS ?? null,
+  fente: (s: EyeScanData) => avg2(s.metrics.A.mrd1Mm + s.metrics.A.mrd2Mm, s.metrics.B.mrd1Mm + s.metrics.B.mrd2Mm),
+  sclereBas: (s: EyeScanData) => avg2(s.metrics.A.scleralShowLowerMm ?? null, s.metrics.B.scleralShowLowerMm ?? null),
+  cernes: (s: EyeScanData) => avg2(s.metrics.A.cernes ?? null, s.metrics.B.cernes ?? null),
+  pir: (s: EyeScanData) => { const p = avg2(s.metrics.A.pupilMm, s.metrics.B.pupilMm); return p === null ? null : Math.round((p / HVID_MM) * 1000) / 1000; },
 };
 export type EyeValueKey = keyof typeof scanValue;
 
@@ -260,7 +323,7 @@ function robust(values: number[], minSpread: number) {
   return { median: md, spread: Math.max(mad, minSpread) };
 }
 
-const MIN_SPREAD: Record<EyeValueKey, number> = { pupille: 0.3, mrd1: 0.3, rougeur: 0.8, jaune: 0.8, arcus: 2, constriction: 4, pallor: 1, mbi: 2 };
+const MIN_SPREAD: Record<EyeValueKey, number> = { pupille: 0.3, mrd1: 0.3, rougeur: 0.8, jaune: 0.8, arcus: 2, constriction: 4, pallor: 1, mbi: 2, fente: 0.4, sclereBas: 0.3, cernes: 0.8, pir: 0.025 };
 
 export type EyeBaselines = Partial<Record<EyeValueKey, { median: number; spread: number; n: number }>>;
 
@@ -305,6 +368,10 @@ export function eyeIndexesFrom(current: EyeScanData, b: EyeBaselines) {
     secheresse: idx([[neg(z("mbi")), 0.6], [z("rougeur"), 0.4]]),
     fatigue: idx([[neg(z("mrd1")), 0.4], [neg(z("constriction")), 0.3], [z("rougeur"), 0.3]]),
     coloration: idx([[neg(z("pallor")), 0.6], [zJ === null ? null : Math.max(0, zJ), 0.4]]),
+    // Ouverture / eveil : plus haut = yeux plus ouverts que d'habitude
+    ouverture: idx([[z("mrd1"), 0.5], [z("fente"), 0.3], [neg(z("sclereBas")), 0.2]]),
+    // Cernes : plus haut = cernes plus marques que d'habitude
+    cernes: idx([[z("cernes"), 1]]),
   };
 }
 
@@ -335,6 +402,11 @@ export function eyeSignalsFrom(current: EyeScanData, b: EyeBaselines): EyeSignal
     : { level: "ok", text: "Pas de jaunissement du blanc de l'œil" });
   const zP = zFrom("pallor", current, b);
   if (zP !== null && zP <= -2) out.push({ level: "watch", text: "Conjonctive plus pâle que d'habitude : surveille tes apports en fer et B12 ; bilan sanguin si fatigue." });
+  if (m.hirschbergMm != null && m.quality.score >= 60) out.push(m.hirschbergMm >= 0.7
+    ? { level: "watch", text: `Reflets lumineux décalés entre les deux yeux (${String(m.hirschbergMm).replace(".", ",")} mm, test de Hirschberg) : regard peut-être pas parfaitement aligné. Refais le scan en fixant le point ; si ça persiste ou si tu vois double, consulte un orthoptiste.` }
+    : { level: "ok", text: "Regard aligné (test de Hirschberg)" });
+  const lowShow = Math.max(m.A.scleralShowLowerMm ?? 0, m.B.scleralShowLowerMm ?? 0);
+  if (lowShow >= 1 && m.quality.score >= 60) out.push({ level: "watch", text: `Blanc visible sous l'iris (${String(lowShow).replace(".", ",")} mm) : signe fréquent de fatigue ou de paupière inférieure relâchée.` });
   if (current.mbiS != null && current.mbiS < 10) out.push({ level: "watch", text: `Yeux ouverts ${current.mbiS} s sans cligner (< 10 s) : sécheresse oculaire probable (Inomata 2019).` });
   return out;
 }

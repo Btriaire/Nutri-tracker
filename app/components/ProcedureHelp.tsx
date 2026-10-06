@@ -73,9 +73,9 @@ export const EYE_PROCEDURE: Procedure = {
     "Mains propres pour l'étape de la paupière.",
   ],
   steps: [
-    { title: "Yeux grands ouverts (3 s)", detail: "Regarde le centre de l'écran, tête droite, sans sourire ni plisser les yeux. Le cadre devient vert quand ton visage est détecté." },
-    { title: "Réflexe pupillaire (4 s)", detail: "L'écran devient noir puis flashe en blanc : garde les yeux ouverts et fixes, sans cligner, jusqu'au message suivant." },
-    { title: "Paupière inférieure (3 s pour te préparer)", detail: "Avec l'index, tire doucement la peau sous un œil vers le bas pour montrer l'intérieur rose de la paupière, et regarde vers le haut. Garde la position jusqu'à « Ne bouge pas ». Un seul œil suffit." },
+    { title: "Fixe le point en haut (3 s)", detail: "Un point s'anime en haut de l'écran, juste sous la caméra : fixe-le et ouvre bien les yeux, sans forcer ni plisser, tête droite. Regarder ce point aligne ton regard sur l'objectif et dégage l'iris des paupières. Le cadre devient vert quand ton visage est détecté." },
+    { title: "Réflexe pupillaire (4 s)", detail: "L'écran devient noir puis flashe en blanc : continue de fixer le point, sans cligner, jusqu'au message suivant." },
+    { title: "Paupière inférieure (3 s pour te préparer)", detail: "Avec l'index, tire doucement la peau sous un œil vers le bas pour montrer l'intérieur rose de la paupière, et regarde vers le haut. Regarde la flèche en haut et garde la position jusqu'à « Ne bouge pas ». Un seul œil suffit." },
     { title: "Test de sécheresse (optionnel)", detail: "Appuie sur « Commencer », puis garde les yeux ouverts naturellement, sans forcer. Cligne dès que c'est inconfortable : le chronomètre s'arrête au premier clignement. « Passer » si tu ne veux pas le faire." },
   ],
   tips: [

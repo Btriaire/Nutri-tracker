@@ -33,7 +33,17 @@ for d in docs:
             w.write(base64.b64decode(m.group(1)))
         os.replace(jpg + ".tmp", jpg)
         new_photos += 1
-    meta = {k: v for k, v in d.items() if k != field}
+    # Oeil : photos isolees de chaque oeil, en plus de la photo des deux yeux
+    if kind == "eye":
+        for f, suffix in (("imageA", "_oeil-droit"), ("imageB", "_oeil-gauche")):
+            mm = re.match(r"^data:image/[\w.+-]+;base64,(.+)$", d.get(f) or "")
+            pth = os.path.join(out, base + suffix + ".jpg")
+            if mm and not os.path.exists(pth):
+                with open(pth + ".tmp", "wb") as w:
+                    w.write(base64.b64decode(mm.group(1)))
+                os.replace(pth + ".tmp", pth)
+                new_photos += 1
+    meta = {k: v for k, v in d.items() if k not in (field, "imageA", "imageB")}
     side = os.path.join(out, base + ".json")
     text = json.dumps(meta, ensure_ascii=False, indent=1, sort_keys=True)
     old = open(side, encoding="utf-8").read() if os.path.exists(side) else None

@@ -4,7 +4,7 @@ import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSigna
 const W = 500, H = 400, R = 40;
 const CA = { x: 150, y: 200 }, CB = { x: 350, y: 200 };
 
-function landmarks(opts: { lidUp?: number; lowerA?: number } = {}) {
+function landmarks(opts: { lidUp?: number; lowerA?: number; lowerAll?: number } = {}) {
   const pts = Array.from({ length: 478 }, () => ({ x: 0.5, y: 0.9 }));
   const set = (i: number, x: number, y: number) => { pts[i] = { x: x / W, y: y / H }; };
   for (const [c, iris, ring, inner, outer, upper, lower] of [
@@ -15,17 +15,25 @@ function landmarks(opts: { lidUp?: number; lowerA?: number } = {}) {
     set(ring[0], c.x + R, c.y); set(ring[1], c.x, c.y - R); set(ring[2], c.x - R, c.y); set(ring[3], c.x, c.y + R);
     set(c === CA ? 133 : 362, inner, c.y); set(c === CA ? 33 : 263, outer, c.y);
     set(upper, c.x, c.y - (opts.lidUp ?? 25));
-    set(lower, c.x, c.y + (c === CA && opts.lowerA ? opts.lowerA : 35));
+    set(lower, c.x, c.y + (c === CA && opts.lowerA ? opts.lowerA : opts.lowerAll ?? 35));
   }
+  // Sous l'oeil et joue (cernes) : sous-oeil a y=330 cote A, joue a y=380
+  for (const i of [111, 117, 118, 119, 120, 121]) set(i, 150, 330);
+  for (const i of [340, 346, 347, 348, 349, 350]) set(i, 350, 330);
+  set(205, 150, 380); set(425, 350, 380);
   return pts;
 }
 
 type RGB = [number, number, number];
-function eyeImage(o: { pupilA?: number; pupilB?: number; iris?: RGB; sclera?: RGB; arcus?: boolean; conj?: RGB }) {
+function eyeImage(o: { pupilA?: number; pupilB?: number; iris?: RGB; sclera?: RGB; arcus?: boolean; conj?: RGB; catchB?: number; nasalRed?: boolean; underDark?: boolean }) {
   return (x: number, y: number): RGB => {
+    // Cernes : zone sous l'oeil A plus sombre que la joue
+    if (o.underDark && Math.abs(y - 330) < 12 && Math.abs(x - 150) < 20) return [150, 115, 100];
     for (const [c, pr] of [[CA, o.pupilA ?? 15], [CB, o.pupilB ?? 15]] as const) {
       const d = Math.hypot(x - c.x, y - c.y);
-      if (Math.hypot(x - (c.x + 4), y - (c.y - 4)) < 3) return [250, 250, 250];   // reflet de l'ecran
+      const cdx = c === CB && o.catchB !== undefined ? o.catchB : 4;
+      if (Math.hypot(x - (c.x + cdx), y - (c.y - 4)) < 3) return [250, 250, 250];   // reflet de l'ecran
+      if (o.nasalRed && d >= R && d < 90 && Math.abs(y - c.y) < 8 && (c === CA ? x > c.x : x < c.x)) return [230, 175, 175];
       if (d < pr) return [18, 16, 15];
       if (d < R) return o.arcus && d > R * 0.85 ? [200, 200, 205] : (o.iris ?? [120, 80, 50]);
       if (o.conj && c === CA && y > c.y + R * 1.3 && Math.abs(x - c.x) < R) return o.conj;
@@ -120,5 +128,31 @@ describe("index et validation", () => {
     expect(sanitizeEyeScan(JSON.parse(JSON.stringify(d)))).toEqual(JSON.parse(JSON.stringify(d)));
     expect(sanitizeEyeScan({ ...d, metrics: { ...base, version: 9 } })).toBeNull();
     expect(sanitizeEyeScan({ ...d, conjunctiva: { eye: "Z", pallorIndex: 1, bandMm: 2 } })).toBeNull();
+  });
+});
+
+describe("analyse detaillee par oeil", () => {
+  it("reflets alignes = Hirschberg ~0 ; reflet decale sur un oeil = signal", () => {
+    const ok = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
+    expect(ok.hirschbergMm!).toBeLessThan(0.2);
+    expect(ok.A.catchlight!.dxMm).toBeCloseTo((4 * 11.7) / 80, 1);
+    const off = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ catchB: -6 }) })!;
+    expect(off.hirschbergMm!).toBeGreaterThan(1.2);
+    expect(eyeSignals({ date: "2026-10-07", metrics: off }, []).some((x) => /Hirschberg/.test(x.text) && x.level === "watch")).toBe(true);
+  });
+  it("rougeur cote nez plus forte que cote tempe", () => {
+    const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ nasalRed: true }) })!;
+    expect(m.A.rednessNasal!).toBeGreaterThan(m.A.rednessTemporal! + 5);
+  });
+  it("blanc visible sous l'iris en mm, largeur de la fente, cernes de chaque cote", () => {
+    const m = computeEyeMetrics({ landmarks: landmarks({ lowerAll: 52 }), width: W, height: H, read: eyeImage({ underDark: true }) })!;
+    expect(m.A.scleralShowLowerMm!).toBeCloseTo((52 * 11.7) / 80 - 5.85, 1);
+    expect(m.A.fissureWidthMm!).toBeCloseTo((150 * 11.7) / 80, 0);
+    expect(m.A.cernes!).toBeGreaterThan(10);
+    expect(Math.abs(m.B.cernes!)).toBeLessThan(1);
+  });
+  it("symetrie : 100 si les deux yeux sont identiques, plus bas si les pupilles different", () => {
+    expect(computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!.symmetryScore).toBeGreaterThanOrEqual(95);
+    expect(computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ pupilB: 22 }) })!.symmetryScore!).toBeLessThan(70);
   });
 });

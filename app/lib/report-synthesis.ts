@@ -119,7 +119,8 @@ function buildUserMessage(data: ReportData): string {
   const fe = data.faceScan.eye;
   if (fe) {
     lines.push(`\n— Œil (${fe.count} scan${fe.count > 1 ? "s" : ""}, dernier le ${fe.latestDate}) —`);
-    lines.push(`Index vs habitude (50) : sécheresse ${fe.indexes.secheresse ?? "?"}, fatigue ${fe.indexes.fatigue ?? "?"}, coloration ${fe.indexes.coloration ?? "?"}${fe.mbiS != null ? ` · yeux ouverts sans cligner ${fe.mbiS} s` : ""}`);
+    const ix = fe.indexes as Record<string, number | null>;
+    lines.push(`Index vs habitude (50) : sécheresse ${ix.secheresse ?? "?"}, fatigue ${ix.fatigue ?? "?"}, coloration ${ix.coloration ?? "?"}, ouverture ${ix.ouverture ?? "?"}, cernes ${ix.cernes ?? "?"}${fe.mbiS != null ? ` · yeux ouverts sans cligner ${fe.mbiS} s` : ""}`);
     if (fe.signals.length) lines.push(`À surveiller : ${fe.signals.join(" ; ")}`);
   }
 

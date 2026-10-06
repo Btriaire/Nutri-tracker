@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { IconX, IconLoader2 } from "@tabler/icons-react";
+import { IconX, IconLoader2, IconArrowUp } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
 import { computeEyeMetrics, computeConjunctiva, analyzePlr, type EyeMetrics, type Conjunctiva, type PlrResult, type PlrSample } from "@/app/lib/eye-metrics";
 import type { PixelReader } from "@/app/lib/face-metrics";
@@ -13,6 +13,9 @@ export interface EyeCaptureResult {
   conjunctiva: Conjunctiva | null;
   mbiS: number | null;
   image: string | null;
+  /** Chaque oeil isole (carre centre sur l'iris), pour l'analyse detaillee. */
+  imageA: string | null;
+  imageB: string | null;
 }
 
 type Phase = "loading" | "eyes" | "plr-dark" | "plr-flash" | "conj-ready" | "conj" | "mbi-ready" | "mbi" | "error";
@@ -40,7 +43,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
     const go = (p: Phase) => { phaseRef.current = p; setPhase(p); };
 
     // Resultats accumules
-    let best: { m: EyeMetrics; iris: number; image: string | null } | null = null;
+    let best: { m: EyeMetrics; iris: number; image: string | null; imageA: string | null; imageB: string | null } | null = null;
     const plrSamples: PlrSample[] = [];
     let conj: Conjunctiva | null = null;
     let mbiS: number | null = null;
@@ -52,7 +55,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
       cancelAnimationFrame(raf);
       stream?.getTracks().forEach((t) => t.stop());
       if (!best) { setError("Yeux non mesurés : rapproche le téléphone (25-30 cm), bien en face."); go("error"); return; }
-      onDone({ metrics: best.m, plr: analyzePlr(plrSamples, flashT), conjunctiva: conj, mbiS, image: best.image });
+      onDone({ metrics: best.m, plr: analyzePlr(plrSamples, flashT), conjunctiva: conj, mbiS, image: best.image, imageA: best.imageA, imageB: best.imageB });
     };
 
     startMbi.current = () => { go("mbi"); phaseStart = performance.now(); eyesClosedSince = 0; };
@@ -92,8 +95,9 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
           const xs = EYE_PTS.map((i) => pts[i].x * w), ys = EYE_PTS.map((i) => pts[i].y * h);
           const span = Math.max(...xs) - Math.min(...xs);
           const x0 = Math.max(0, Math.floor(Math.min(...xs) - span * 0.25)), x1 = Math.min(w, Math.ceil(Math.max(...xs) + span * 0.25));
-          const y0 = Math.max(0, Math.floor(Math.min(...ys) - span * 0.25)), y1 = Math.min(h, Math.ceil(Math.max(...ys) + span * 0.45));
-          const read = (): { reader: PixelReader; crop: () => string | null } => {
+          // Zone lue : les yeux + les joues en dessous (cernes)
+          const y0 = Math.max(0, Math.floor(Math.min(...ys) - span * 0.25)), y1 = Math.min(h, Math.ceil(Math.max(...ys) + span * 0.9));
+          const read = (): { reader: PixelReader; crop: () => string | null; cropEye: (iris: number, irisPx: number) => string | null } => {
             ctx.drawImage(video, 0, 0, w, h);
             const rw = x1 - x0, rh = y1 - y0;
             const { data } = ctx.getImageData(x0, y0, rw, rh);
@@ -111,6 +115,18 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
                 out.getContext("2d")!.drawImage(canvas, x0, y0, rw, rh, 0, 0, out.width, out.height);
                 return out.toDataURL("image/jpeg", 0.8);
               },
+              // Un oeil isole : carre de 6 rayons d'iris centre sur l'iris (l'analyse dessine ses mesures dessus)
+              cropEye: (iris, irisPx) => {
+                const side = irisPx * 3;
+                const cx = pts[iris].x * w, cy = pts[iris].y * h;
+                if (!(side > 8)) return null;
+                const out = document.createElement("canvas");
+                out.width = 320; out.height = 320;
+                const g = out.getContext("2d")!;
+                g.fillStyle = "#000"; g.fillRect(0, 0, 320, 320);
+                g.drawImage(canvas, cx - side / 2, cy - side / 2, side, side, 0, 0, 320, 320);
+                return out.toDataURL("image/jpeg", 0.85);
+              },
             };
           };
 
@@ -118,11 +134,11 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
             if (!phaseStart) phaseStart = now;
             if (blink < 0.3 && now - lastEval > 180) {
               lastEval = now;
-              const { reader, crop } = read();
+              const { reader, crop, cropEye } = read();
               const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader });
               const iris = m ? Math.min(m.A.irisPx, m.B.irisPx) : 0;
               if (m && (!best || m.quality.score > best.m.quality.score || (m.quality.score === best.m.quality.score && iris > best.iris))) {
-                best = { m, iris, image: crop() };
+                best = { m, iris, image: crop(), imageA: cropEye(468, m.A.irisPx), imageB: cropEye(473, m.B.irisPx) };
               }
             }
             setLeft(Math.ceil((EYES_MS - (now - phaseStart)) / 1000));
@@ -177,10 +193,10 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
   const fg = bg === "#fff" ? "#111" : "#fff";
   const message: Record<Phase, string> = {
     loading: "Préparation de la caméra…",
-    eyes: face ? `Regarde l'écran, yeux grands ouverts · ${Math.max(0, left)} s` : "Place ton visage à 25-30 cm, de face",
-    "plr-dark": "Garde les yeux ouverts…",
-    "plr-flash": "Flash : ne cligne pas",
-    "conj-ready": `Tire doucement ta paupière inférieure vers le bas et regarde vers le haut · ${Math.max(0, left)} s`,
+    eyes: face ? `Fixe le point en haut et ouvre bien les yeux, sans forcer · ${Math.max(0, left)} s` : "Place ton visage à 25-30 cm, de face",
+    "plr-dark": "Continue de fixer le point…",
+    "plr-flash": "Flash : fixe le point, ne cligne pas",
+    "conj-ready": `Tire doucement ta paupière inférieure vers le bas et regarde la flèche en haut · ${Math.max(0, left)} s`,
     conj: "Ne bouge pas…",
     "mbi-ready": "Dernier test (optionnel) : garde les yeux ouverts le plus longtemps possible, sans forcer.",
     mbi: `Yeux ouverts : ${Math.floor(mbiElapsed / 1000)} s · cligne quand tu ne peux plus`,
@@ -193,6 +209,24 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
         style={{ top: "max(16px, env(safe-area-inset-top))", background: bg === "#fff" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)", color: fg }}>
         <IconX size={20} />
       </button>
+
+      {/* Cible de fixation juste sous la camera : le regard vise l'objectif, les yeux s'ouvrent bien et l'iris
+          reste centre (necessaire aux mesures en mm et au test des reflets). */}
+      {(phase === "eyes" || phase === "plr-dark" || phase === "plr-flash") && (
+        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ top: "max(56px, calc(env(safe-area-inset-top) + 40px))" }} aria-hidden>
+          <span className="relative flex items-center justify-center w-12 h-12">
+            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: dark ? "rgba(255,255,255,0.12)" : "rgba(99,102,241,0.25)" }} />
+            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ border: `2px solid ${dark ? "#555" : "#6366f1"}` }}>
+              <span className="w-3 h-3 rounded-full" style={{ background: dark ? "#666" : "#6366f1" }} />
+            </span>
+          </span>
+        </div>
+      )}
+      {(phase === "conj-ready" || phase === "conj") && (
+        <div className="absolute left-1/2 -translate-x-1/2 animate-bounce" style={{ top: "max(56px, calc(env(safe-area-inset-top) + 40px))", color: "#6366f1" }} aria-hidden>
+          <IconArrowUp size={44} stroke={2.5} />
+        </div>
+      )}
 
       <div className="relative w-[300px] h-[150px] rounded-2xl overflow-hidden" style={{ opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
         <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)", objectPosition: "50% 38%" }} />

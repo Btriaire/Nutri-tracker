@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { IconEye, IconCircleCheck, IconAlertTriangle, IconAlertOctagon, IconTrash, IconDroplet, IconFish, IconChevronDown } from "@tabler/icons-react";
 import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanCapture";
 import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
+import EyeDetailCard from "@/app/components/EyeDetailCard";
 import { eyeIndexes, eyeSignals, rednessGrade, scanValue, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
@@ -27,12 +28,18 @@ const PARAMS: { key: EyeValueKey; label: string; unit: string; hint: string }[] 
   { key: "mrd1", label: "Ouverture paupière (MRD1)", unit: "mm", hint: "plus bas = paupière plus basse" },
   { key: "pallor", label: "Couleur de la conjonctive", unit: "", hint: "plus bas = plus pâle" },
   { key: "jaune", label: "Jaune du blanc de l'œil", unit: "b*", hint: "à comparer à ton habitude" },
+  { key: "fente", label: "Hauteur de la fente", unit: "mm", hint: "ouverture totale de l'œil" },
+  { key: "sclereBas", label: "Blanc sous l'iris", unit: "mm", hint: "plus haut = paupière inférieure plus basse" },
+  { key: "cernes", label: "Cernes", unit: "L*", hint: "plus haut = cernes plus marqués" },
+  { key: "pir", label: "Pupille / iris", unit: "", hint: "rapport, suit l'éveil et la lumière" },
 ];
 
 const INDEX_META = [
   { key: "secheresse" as const, label: "Sécheresse", color: "var(--warn)" },
   { key: "fatigue" as const, label: "Fatigue de l'œil", color: "var(--indigo)" },
   { key: "coloration" as const, label: "Coloration", color: "var(--danger)" },
+  { key: "ouverture" as const, label: "Ouverture", color: "var(--ok)" },
+  { key: "cernes" as const, label: "Cernes", color: "var(--calories)" },
 ];
 
 export default function EyeScanClient() {
@@ -69,7 +76,7 @@ export default function EyeScanClient() {
     const now = new Date();
     const res = await fetch("/api/eye-scan", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm"), image: r.image, data: { metrics: r.metrics, plr: r.plr, conjunctiva: r.conjunctiva, mbiS: r.mbiS } }),
+      body: JSON.stringify({ date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm"), image: r.image, imageA: r.imageA, imageB: r.imageB, data: { metrics: r.metrics, plr: r.plr, conjunctiva: r.conjunctiva, mbiS: r.mbiS } }),
     }).catch(() => null);
     if (res?.ok) {
       const { scan } = await res.json() as { scan: EyeScanEntry };
@@ -108,9 +115,9 @@ export default function EyeScanClient() {
             <ProcedureHelp procedure={EYE_PROCEDURE} />
           </div>
           <ol className="text-[12px] space-y-1 mb-3" style={{ color: "var(--text-secondary)" }}>
-            <li>1. Les deux yeux grands ouverts, téléphone à 25-30 cm (3 s)</li>
+            <li>1. Fixe le point en haut de l&apos;écran, yeux bien ouverts, téléphone à 25-30 cm (3 s)</li>
             <li>2. Réflexe pupillaire : l&apos;écran passe au noir puis flashe en blanc (4 s)</li>
-            <li>3. Paupière inférieure doucement tirée vers le bas, regard vers le haut</li>
+            <li>3. Paupière inférieure doucement tirée vers le bas, regard vers la flèche</li>
             <li>4. Option : garder les yeux ouverts sans cligner (test de sécheresse)</li>
           </ol>
           <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>Pièce plutôt sombre, sans lunettes ni lentilles colorées. L&apos;écran sert d&apos;éclairage.</p>
@@ -134,10 +141,18 @@ export default function EyeScanClient() {
                 {INDEX_META.map((i) => (
                   <div key={i.key} className="rounded-xl p-2.5 text-center" style={{ background: "var(--layer-1)" }}>
                     <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{i.label}</p>
-                    <p className="text-[22px] font-semibold tabular-nums" style={{ color: idx[i.key] === null ? "var(--text-muted)" : i.color }}>{idx[i.key] ?? "—"}</p>
+                    <p className="text-[22px] font-semibold tabular-nums" style={{ color: (idx as Record<string, number | null>)[i.key] == null ? "var(--text-muted)" : i.color }}>{(idx as Record<string, number | null>)[i.key] ?? "—"}</p>
                   </div>
                 ))}
+                <div className="rounded-xl p-2.5 text-center" style={{ background: "var(--layer-1)" }}>
+                  <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>Symétrie</p>
+                  <p className="text-[22px] font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{m.symmetryScore ?? "—"}<span className="text-[12px] font-normal" style={{ color: "var(--text-muted)" }}>/100</span></p>
+                </div>
               </div>
+              <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>
+                Sécheresse, fatigue, coloration, ouverture et cernes : 50 = ton habitude. Symétrie : 100 = deux yeux identiques.
+                {m.hirschbergMm != null && ` Alignement du regard : ${n(m.hirschbergMm)} mm d'écart entre les reflets (moins de 0,7 mm = aligné).`}
+              </p>
               {Object.values(idx).every((v) => v === null) && (
                 <p className="text-[12px] mt-2" style={{ color: "var(--text-muted)" }}>Index disponibles après 3 scans de bonne qualité (référence personnelle).</p>
               )}
@@ -146,6 +161,17 @@ export default function EyeScanClient() {
                   <IconAlertTriangle size={14} className="shrink-0 mt-0.5" /> Qualité {m.quality.score}/100 : {m.quality.warnings.join(" ; ")}
                 </p>
               )}
+            </section>
+
+            <section className="glass p-4 mb-4" aria-label="Analyse détaillée par œil">
+              <h2 className="text-[15px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Analyse détaillée par œil</h2>
+              <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
+                Chaque œil est isolé et mesuré séparément ; les traits montrent ce qui a été mesuré sur la photo.
+              </p>
+              <div className="space-y-3">
+                <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A` : null} />
+                <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B` : null} />
+              </div>
             </section>
 
             <section className="glass p-4 mb-4" aria-label="Mesures">
