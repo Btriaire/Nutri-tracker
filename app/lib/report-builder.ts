@@ -1,6 +1,5 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { summarizeForReport, FACE_METRICS_VERSION, type FaceMetrics, type FaceReportSummary } from "./face-metrics";
-import { FACE_VITALS_VERSION, type FaceVitals } from "./face-vitals";
 import { EYE_METRICS_VERSION, eyeIndexes, eyeSignals, type EyeScanData } from "./eye-metrics";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
@@ -211,8 +210,6 @@ export interface ReportData {
     entries:    FaceScanRow[];
     /** Mesures objectives (points du visage + couleur) sur TOUT l'historique, pas seulement la periode. */
     objective?: FaceReportSummary | null;
-    /** Constantes mesurees par la camera sur la periode (medianes des mesures de confiance suffisante). */
-    vitals?: { count: number; heartRate: number | null; respRate: number | null; blinksPerMin: number | null; perclosMax: number | null } | null;
     /** Scans de l'oeil de la periode : index du dernier et signaux a surveiller. */
     eye?: { count: number; latestDate: string; indexes: { secheresse: number | null; fatigue: number | null; coloration: number | null }; mbiS: number | null; signals: string[] } | null;
   };
@@ -544,16 +541,6 @@ export async function buildReportData(userId: string, from: string, to: string):
   const faceObjective = summarizeForReport(faceMetricsSnap.docs
     .map(d => d.data() as { date: string; metrics?: FaceMetrics })
     .filter((h): h is { date: string; metrics: FaceMetrics } => h.metrics?.version === FACE_METRICS_VERSION && h.date <= to));
-  const vitalsSnap = await db.collection(`users/${userId}/faceVitals`).where("date", ">=", from).where("date", "<=", to).get();
-  const vitalsList = vitalsSnap.docs.map(d => (d.data() as { vitals: FaceVitals }).vitals).filter(v => v?.version === FACE_VITALS_VERSION);
-  const med = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return Math.round(s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2); };
-  const faceVitals = vitalsList.length ? {
-    count: vitalsList.length,
-    heartRate: med(vitalsList.filter(v => v.heartRate !== null && v.heartConfidence !== "faible").map(v => v.heartRate!)),
-    respRate: med(vitalsList.filter(v => v.respRate !== null).map(v => v.respRate!)),
-    blinksPerMin: med(vitalsList.map(v => v.blinksPerMin)),
-    perclosMax: Math.max(...vitalsList.map(v => v.perclos)),
-  } : null;
   const eyeSnap = await db.collection(`users/${userId}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS").get();
   const eyeAll = eyeSnap.docs.map(d => d.data() as EyeScanData & { time: string })
     .filter(e => e.metrics?.version === EYE_METRICS_VERSION && e.date <= to)
@@ -676,7 +663,6 @@ export async function buildReportData(userId: string, from: string, to: string):
       delta:  faceScanDelta,
       entries: faceScanEntries,
       objective: faceObjective,
-      vitals: faceVitals,
       eye: eyeSummary,
     },
     measurements: {

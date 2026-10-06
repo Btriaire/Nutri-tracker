@@ -122,11 +122,6 @@ function buildUserMessage(data: ReportData): string {
     lines.push(`Index vs habitude (50) : sécheresse ${fe.indexes.secheresse ?? "?"}, fatigue ${fe.indexes.fatigue ?? "?"}, coloration ${fe.indexes.coloration ?? "?"}${fe.mbiS != null ? ` · yeux ouverts sans cligner ${fe.mbiS} s` : ""}`);
     if (fe.signals.length) lines.push(`À surveiller : ${fe.signals.join(" ; ")}`);
   }
-  const fv = data.faceScan.vitals;
-  if (fv) {
-    lines.push(`\n— Constantes par la caméra (${fv.count} mesure${fv.count > 1 ? "s" : ""} par la caméra au repos) —`);
-    lines.push(`Pouls médian ${fv.heartRate ?? "?"} bpm · respiration ≈ ${fv.respRate ?? "?"} /min · clignements ${fv.blinksPerMin ?? "?"} /min · PERCLOS max ${fv.perclosMax ?? "?"} % (≥ 15 % = somnolence)`);
-  }
 
   if (data.measurements.entriesCount > 0) {
     lines.push(`\n— Mensurations (${data.measurements.entriesCount} relevé${data.measurements.entriesCount > 1 ? "s" : ""}, ${data.measurements.first?.month} → ${data.measurements.latest?.month}) —`);

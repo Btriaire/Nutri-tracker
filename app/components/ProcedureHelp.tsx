@@ -89,26 +89,6 @@ export const EYE_PROCEDURE: Procedure = {
   ],
 };
 
-export const VITALS_PROCEDURE: Procedure = {
-  title: "Mesurer ton pouls par la caméra",
-  before: [
-    "Assieds-toi et reste au calme 2 à 3 minutes avant (pas juste après un effort, un café ou un escalier).",
-    "Lumière stable et de face (fenêtre ou lampe devant toi), pas de contre-jour ni de lumière qui clignote.",
-    "Téléphone posé ou tenu à deux mains, à 30-40 cm, à hauteur du visage.",
-  ],
-  steps: [
-    { title: "Lance « Mesurer mon pouls »", detail: "Place ton visage dans l'ovale : le contour devient vert." },
-    { title: "Ne bouge pas, ne parle pas", detail: "Respire normalement. Le pouls se lit dans les micro-variations de couleur de la peau : le moindre mouvement brouille le signal." },
-    { title: "Arrêt automatique (10 à 20 s)", detail: "La mesure s'arrête seule dès que le pouls est stable. Tu peux aussi appuyer sur « Terminer maintenant » à partir de 10 s." },
-    { title: "Option : mesure longue (25 s)", detail: "Seulement si tu veux aussi la respiration : il faut plusieurs cycles respiratoires pour l'estimer." },
-  ],
-  tips: [
-    "Le matin au réveil, assis, donne le pouls de repos le plus fiable et le plus comparable.",
-    "Compare de temps en temps avec ta montre : l'appli affiche sa moyenne du jour à côté.",
-    "Si l'appli indique une confiance faible, refais la mesure avec plus de lumière.",
-  ],
-};
-
 export const FACE_PROCEDURE: Procedure = {
   title: "Photo du visage",
   before: [
