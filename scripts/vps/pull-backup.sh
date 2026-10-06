@@ -33,11 +33,20 @@ fi
 
 rc=0
 pull "" "$DEST/nutri-tracker-$DATE.json.gz" || rc=1
+# Visage et oeil : chaque jour, puis archive permanente photo par photo (JPEG + mesures/index en JSON)
+for s in faceScans eyeScans; do
+  f="$DEST/photos/nutri-tracker-$s-$DATE.json.gz"
+  if pull "$s" "$f"; then
+    kind=face; [ "$s" = "eyeScans" ] && kind=eye
+    python3 "$DEST/extract-photos.py" "$f" "$DEST/archive/$kind" "$kind" >> "$LOG" 2>&1 || rc=1
+  else rc=1; fi
+done
 if [ "$(date -u +%u)" = "7" ]; then
-  for s in dayPhotos mealPhotos faceScans infographics; do pull "$s" "$DEST/photos/nutri-tracker-$s-$DATE.json.gz" || rc=1; done
+  for s in dayPhotos mealPhotos infographics; do pull "$s" "$DEST/photos/nutri-tracker-$s-$DATE.json.gz" || rc=1; done
 fi
 
 # Rotation : 60 jours de quotidiens, puis seulement les sauvegardes du 1er du mois.
+# (Le dossier archive/ n'est jamais concerne : les photos du visage et de l'oeil y restent pour toujours.)
 find "$DEST" -maxdepth 1 -name "nutri-tracker-20*.json.gz" -mtime +60 ! -name "*-01.json.gz" -delete
 find "$DEST/photos" -name "*.json.gz" -mtime +60 ! -name "*-01.json.gz" -delete
 exit $rc

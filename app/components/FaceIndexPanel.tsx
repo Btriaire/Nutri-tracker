@@ -1,7 +1,7 @@
 "use client";
 
 import { IconArrowUpRight, IconArrowDownRight, IconMinus, IconAlertTriangle, IconAlertOctagon } from "@tabler/icons-react";
-import { METRICS, computeBaselines, faceIndexes, zScore, describeZ, type FaceMetrics, type MetricInfo } from "@/app/lib/face-metrics";
+import { METRICS, computeBaselines, faceIndexes, zScore, describeZ, type FaceMetrics, type MetricInfo, type MetricKey, type Baseline, type FaceIndexes } from "@/app/lib/face-metrics";
 
 const GROUPS: { key: MetricInfo["group"]; label: string }[] = [
   { key: "volume", label: "Volume du visage" },
@@ -34,11 +34,15 @@ interface Props {
   /** Mesures de tous les scans (y compris le courant) : la reference personnelle. */
   all: FaceMetrics[];
   dateLabel: string;
+  /** Reference memorisee cote serveur (faceStats) : evite de la recalculer. */
+  baselines?: Partial<Record<MetricKey, Baseline>> | null;
+  /** Index memorises du scan affiche. */
+  indexes?: FaceIndexes | null;
 }
 
-export default function FaceIndexPanel({ current, all, dateLabel }: Props) {
-  const baselines = computeBaselines(all);
-  const idx = faceIndexes(current, baselines);
+export default function FaceIndexPanel({ current, all, dateLabel, baselines: stored, indexes: storedIdx }: Props) {
+  const baselines = stored ?? computeBaselines(all);
+  const idx = storedIdx ?? faceIndexes(current, baselines);
   const n = Math.max(0, ...Object.values(baselines).map((b) => b?.n ?? 0));
   // Protocole FAST : une asymetrie nettement inhabituelle sur une photo de bonne qualite merite d'etre signalee.
   const zSym = zScore(current.symetrie, baselines.symetrie);

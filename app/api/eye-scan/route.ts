@@ -4,22 +4,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
-import { sanitizeEyeScan, type EyeScanData } from "@/app/lib/eye-metrics";
+import { sanitizeEyeScan, type EyeScanData, type EyeSignal } from "@/app/lib/eye-metrics";
+import { refreshEyeStats } from "@/app/lib/scan-stats";
 
 // Scans de l'oeil : users/owner/eyeScans/{id} (mesures + petite photo recadree des yeux)
 const COL = "users/owner/eyeScans";
 const MAX_IMAGE_CHARS = 120_000; // ~90 Ko de JPEG en base64
 
-export type EyeScanEntry = EyeScanData & { id: string; time: string };
+export type EyeScanEntry = EyeScanData & {
+  id: string; time: string;
+  /** Index et signaux du jour (vs scans anterieurs), memorises a l'enregistrement. */
+  indexes?: { secheresse: number | null; fatigue: number | null; coloration: number | null };
+  signals?: EyeSignal[];
+};
 
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const snap = await getAdminFirestore().collection(COL).orderBy("date", "desc")
-    .select("date", "time", "metrics", "plr", "conjunctiva", "mbiS").get();
+  const db = getAdminFirestore();
+  const [snap, stats] = await Promise.all([
+    db.collection(COL).orderBy("date", "desc").select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals").get(),
+    db.doc("users/owner/eyeStats/current").get(),
+  ]);
   const scans = snap.docs.map((d) => ({ ...(d.data() as Omit<EyeScanEntry, "id">), id: d.id }))
     .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-  return NextResponse.json({ scans });
+  return NextResponse.json({ scans, stats: stats.exists ? stats.data() : null });
 }
 
 export async function POST(req: NextRequest) {
@@ -31,10 +40,13 @@ export async function POST(req: NextRequest) {
   const data = sanitizeEyeScan(body?.data);
   const image = typeof body?.image === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(body.image) && body.image.length <= MAX_IMAGE_CHARS ? body.image : null;
   if (!date || !time || !data) return NextResponse.json({ error: "Invalid eye scan" }, { status: 400 });
-  const ref = getAdminFirestore().collection(COL).doc();
+  const db = getAdminFirestore();
+  const ref = db.collection(COL).doc();
   const entry: EyeScanEntry = { id: ref.id, date, time, ...data };
   await ref.set({ ...entry, ...(image ? { image } : {}), createdAt: Timestamp.now() });
-  return NextResponse.json({ scan: entry }, { status: 201 });
+  await refreshEyeStats(db).catch((e) => console.error("[eye-scan stats]", e));
+  const saved = (await ref.get()).data() as EyeScanEntry;
+  return NextResponse.json({ scan: { ...entry, indexes: saved.indexes, signals: saved.signals } }, { status: 201 });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -42,6 +54,8 @@ export async function DELETE(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = req.nextUrl.searchParams.get("id");
   if (!id || !/^[\w-]{1,64}$/.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
-  await getAdminFirestore().collection(COL).doc(id).delete();
+  const db = getAdminFirestore();
+  await db.collection(COL).doc(id).delete();
+  await refreshEyeStats(db).catch((e) => console.error("[eye-scan stats]", e));
   return NextResponse.json({ ok: true });
 }

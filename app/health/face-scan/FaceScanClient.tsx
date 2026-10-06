@@ -18,7 +18,7 @@ import FaceMetricsTrend from "@/app/components/FaceMetricsTrend";
 import FaceCompare from "@/app/components/FaceCompare";
 import ProcedureHelp, { FACE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import { measureFace } from "@/app/lib/face-landmarker";
-import { FACE_METRICS_VERSION, type FaceMetrics } from "@/app/lib/face-metrics";
+import { FACE_METRICS_VERSION, type FaceMetrics, type MetricKey, type Baseline } from "@/app/lib/face-metrics";
 
 /** Scan tel que renvoye par la liste : sans la photo (servie par /api/face-scan/image). */
 type ScanItem = Omit<FaceScanEntry, "faceImageUrl"> & { faceImageUrl?: string };
@@ -97,6 +97,8 @@ export default function FaceScanClient() {
   const [captureMetrics, setCaptureMetrics] = useState<FaceMetrics | "none" | null>(null);
   const [measuring, setMeasuring] = useState(false);
   const [backfill, setBackfill] = useState<{ done: number; total: number } | null>(null);
+  // Reference personnelle memorisee cote serveur (users/owner/faceStats/current)
+  const [stats, setStats] = useState<{ version: number; baselines: Partial<Record<MetricKey, Baseline>> } | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
@@ -107,9 +109,21 @@ export default function FaceScanClient() {
 
   // Toutes les photos depuis le premier scan sont en base : on calcule leurs mesures une fois (en local),
   // puis on les enregistre. Les scans deja mesures avec la version courante ne sont pas retraites.
+  const remember = async () => {
+    const res = await fetch("/api/face-scan/stats", { method: "POST" }).catch(() => null);
+    if (!res?.ok) return;
+    const fresh = await fetch("/api/face-scan", { cache: "no-store" }).then((r) => r.json()).catch(() => null) as { scans?: ScanItem[]; stats?: { version: number; baselines: Partial<Record<MetricKey, Baseline>> } | null } | null;
+    if (fresh?.scans) setHistory(fresh.scans);
+    if (fresh?.stats?.version === FACE_METRICS_VERSION) setStats(fresh.stats);
+  };
+
   const measureHistory = async (scans: ScanItem[]) => {
     const todo = scans.filter((s) => !hasMetrics(s));
-    if (todo.length === 0) return;
+    if (todo.length === 0) {
+      // Scans deja mesures mais index pas encore memorises (scans anterieurs a cette memoire)
+      if (scans.some((s) => hasMetrics(s) && !s.indexes)) await remember();
+      return;
+    }
     setBackfill({ done: 0, total: todo.length });
     for (let i = 0; i < todo.length; i++) {
       const s = todo[i];
@@ -120,6 +134,8 @@ export default function FaceScanClient() {
       }
       setBackfill({ done: i + 1, total: todo.length });
     }
+    // Memorise une fois la reference et les index de chaque scan, puis recharge la liste a jour
+    await remember();
     setBackfill(null);
   };
 
@@ -130,8 +146,9 @@ export default function FaceScanClient() {
       try {
         const res = await fetch("/api/face-scan", { cache: "no-store" });
         if (res.ok && !cancelled) {
-          const data = await res.json() as { scans: ScanItem[] };
+          const data = await res.json() as { scans: ScanItem[]; stats?: { version: number; baselines: Partial<Record<MetricKey, Baseline>> } | null };
           setHistory(data.scans ?? []);
+          if (data.stats?.version === FACE_METRICS_VERSION) setStats(data.stats);
           void measureHistory(data.scans ?? []);
         }
       } catch (e) {
@@ -141,7 +158,9 @@ export default function FaceScanClient() {
       }
     })();
     return () => { cancelled = true; };
-  }, []); // chargement unique a l'ouverture de la page
+    // Chargement unique a l'ouverture de la page (measureHistory ne doit pas relancer l'effet)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCapture = async (file: File) => {
     const blob = await compressImage(file);
@@ -434,6 +453,7 @@ export default function FaceScanClient() {
           return (
             <>
               <FaceIndexPanel current={latest.metrics} all={measured.map((h) => h.metrics)}
+                baselines={stats?.baselines} indexes={latest.indexes}
                 dateLabel={format(new Date(latest.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })} />
               <FaceMetricsTrend scans={measured} />
               <FaceCompare scans={measured} />

@@ -6,6 +6,7 @@ import { DocumentReference, Timestamp, type DocumentData } from "firebase-admin/
 // seule fois sur le prototype de DocumentReference, donc couvre aussi les futures routes.
 
 const SKIP_KEYS = new Set(["updatedAt", "loggedAt", "syncedAt"]);
+const IMAGE_FIELDS = ["faceImageUrl", "image"];
 const SKIP_PATH = /^users\/[^/]+\/(_history|oauthTokens)\/|^(debug|system)\//;
 const MAX_BYTES = 900_000;
 
@@ -51,8 +52,17 @@ async function archive(ref: DocumentReference, kind: Kind, incoming: DocumentDat
     if (!m) return;
     const snap = await ref.get();
     if (!snap.exists) return;
-    const data = snap.data() as DocumentData;
+    let data = snap.data() as DocumentData;
     if (!changes(data, kind, incoming, merge)) return;
+    // Photo inchangee (ex. ajout des mesures d'un scan) : inutile de la recopier dans l'historique a chaque
+    // modification. Sur une suppression, la photo est archivee en entier.
+    if (kind !== "delete") {
+      for (const f of IMAGE_FIELDS) {
+        if (typeof data[f] === "string" && (data[f] as string).startsWith("data:") && !(incoming && f in incoming)) {
+          data = { ...data, [f]: "[photo inchangée : conservée dans le document]" };
+        }
+      }
+    }
     if (JSON.stringify(plain(data)).length > MAX_BYTES) {
       console.error(`[write-guard] ${ref.path}: trop volumineux pour l'historique`);
       return;

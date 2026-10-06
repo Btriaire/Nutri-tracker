@@ -18,3 +18,11 @@ Copie de référence dans `scripts/vps/notebooklm/` ; actifs dans `/opt/notebook
 - Stockage : Firestore `users/owner/infographics/{semaine|mois}-AAAA-MM-JJ` (privé), visible dans Rapports > Historique
 - Un seul job NotebookLM à la fois (`flock /tmp/notebooklm-nutri.lock`) ; journaux : `infographic-cron.log`, `infographic-last*.log`
 - Manuel : `/opt/notebooklm-nutri/run-infographic.sh 7d|30d`
+
+## Archive permanente visage / œil
+
+`pull-backup.sh` tire chaque nuit les collections `faceScans` et `eyeScans`, puis `extract-photos.py`
+écrit chaque photo en JPEG dans `/root/nutri-tracker-backups/archive/{face,eye}/` avec sa fiche JSON
+(mesures, index mémorisés, analyse) et un `index.csv`. Ce dossier n'est jamais purgé par la rotation :
+une photo supprimée dans l'appli reste archivée ici. Déploiement : copier les deux scripts dans
+`/root/nutri-tracker-backups/`.

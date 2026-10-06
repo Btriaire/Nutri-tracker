@@ -84,8 +84,9 @@ export default function EyeScanClient() {
   };
 
   const history = scans ?? [];
-  const idx = latest ? eyeIndexes(latest, history) : null;
-  const signals = latest ? eyeSignals(latest, history) : [];
+  // Index et signaux memorises a l'enregistrement (sinon calcules ici pour les anciens scans)
+  const idx = latest ? latest.indexes ?? eyeIndexes(latest, history) : null;
+  const signals = latest ? latest.signals ?? eyeSignals(latest, history) : [];
   const m = latest?.metrics;
   const chart = [...history].reverse().map((s) => ({ t: parseISO(`${s.date}T${s.time}:00`).getTime(), v: scanValue[param](s) })).filter((d) => d.v !== null);
   const paramInfo = PARAMS.find((p) => p.key === param)!;

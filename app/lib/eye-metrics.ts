@@ -262,11 +262,27 @@ function robust(values: number[], minSpread: number) {
 
 const MIN_SPREAD: Record<EyeValueKey, number> = { pupille: 0.3, mrd1: 0.3, rougeur: 0.8, jaune: 0.8, arcus: 2, constriction: 4, pallor: 1, mbi: 2 };
 
+export type EyeBaselines = Partial<Record<EyeValueKey, { median: number; spread: number; n: number }>>;
+
+/** Reference personnelle par parametre (mediane + MAD des scans de qualite), en excluant `exclude`. */
+export function eyeBaselines(history: EyeScanData[], exclude?: EyeScanData): EyeBaselines {
+  const out: EyeBaselines = {};
+  const good = history.filter((h) => h !== exclude && h.metrics.quality.score >= 60);
+  for (const key of Object.keys(scanValue) as EyeValueKey[]) {
+    const vals = good.map((h) => scanValue[key](h)).filter((x): x is number => x !== null);
+    const b = robust(vals, MIN_SPREAD[key]);
+    if (b) out[key] = { ...b, n: vals.length };
+  }
+  return out;
+}
+
+export function zFrom(key: EyeValueKey, current: EyeScanData, b: EyeBaselines): number | null {
+  const v = scanValue[key](current), base = b[key];
+  return v === null || !base ? null : (v - base.median) / base.spread;
+}
+
 export function eyeZ(key: EyeValueKey, current: EyeScanData, history: EyeScanData[]): number | null {
-  const v = scanValue[key](current);
-  if (v === null) return null;
-  const base = robust(history.filter((h) => h !== current && h.metrics.quality.score >= 60).map((h) => scanValue[key](h)).filter((x): x is number => x !== null), MIN_SPREAD[key]);
-  return base ? (v - base.median) / base.spread : null;
+  return zFrom(key, current, eyeBaselines(history, current));
 }
 
 const idx = (parts: [number | null, number][]) => {
@@ -278,7 +294,11 @@ const idx = (parts: [number | null, number][]) => {
 
 /** Index 0-100, 50 = ton habitude. Plus haut = plus marque (plus sec, plus fatigue, plus de changement de couleur). */
 export function eyeIndexes(current: EyeScanData, history: EyeScanData[]) {
-  const z = (k: EyeValueKey) => eyeZ(k, current, history);
+  return eyeIndexesFrom(current, eyeBaselines(history, current));
+}
+
+export function eyeIndexesFrom(current: EyeScanData, b: EyeBaselines) {
+  const z = (k: EyeValueKey) => zFrom(k, current, b);
   const neg = (v: number | null) => (v === null ? null : -v);
   const zJ = z("jaune");
   return {
@@ -290,6 +310,10 @@ export function eyeIndexes(current: EyeScanData, history: EyeScanData[]) {
 
 /** Signaux a surveiller, avec des regles prudentes et non diagnostiques. */
 export function eyeSignals(current: EyeScanData, history: EyeScanData[]): EyeSignal[] {
+  return eyeSignalsFrom(current, eyeBaselines(history, current));
+}
+
+export function eyeSignalsFrom(current: EyeScanData, b: EyeBaselines): EyeSignal[] {
   const m = current.metrics;
   const out: EyeSignal[] = [];
   if (m.anisocoriaMm !== null) {
@@ -305,11 +329,11 @@ export function eyeSignals(current: EyeScanData, history: EyeScanData[]): EyeSig
   out.push(arc >= 12
     ? { level: "watch", text: "Anneau clair possible autour de l'iris (arc cornéen) : parles-en à ton médecin, un bilan lipidique peut être utile." }
     : { level: "ok", text: "Pas d'arc cornéen visible" });
-  const zJ = eyeZ("jaune", current, history);
+  const zJ = zFrom("jaune", current, b);
   if (zJ !== null) out.push(zJ >= 3
     ? { level: "watch", text: "Blanc de l'œil plus jaune que d'habitude : refais la photo à la même lumière ; si ça persiste, consulte." }
     : { level: "ok", text: "Pas de jaunissement du blanc de l'œil" });
-  const zP = eyeZ("pallor", current, history);
+  const zP = zFrom("pallor", current, b);
   if (zP !== null && zP <= -2) out.push({ level: "watch", text: "Conjonctive plus pâle que d'habitude : surveille tes apports en fer et B12 ; bilan sanguin si fatigue." });
   if (current.mbiS != null && current.mbiS < 10) out.push({ level: "watch", text: `Yeux ouverts ${current.mbiS} s sans cligner (< 10 s) : sécheresse oculaire probable (Inomata 2019).` });
   return out;

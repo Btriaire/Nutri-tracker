@@ -7,7 +7,8 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import type { FaceScanEntry, FaceScanAnalysis, FaceScanFinding, FaceScanScorecard } from "@/app/lib/types";
 import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGroqFailure } from "@/app/lib/groq";
-import { sanitizeMetrics, metricsContext, type FaceMetrics } from "@/app/lib/face-metrics";
+import { sanitizeMetrics, metricsContext, type FaceMetrics, type FaceIndexes } from "@/app/lib/face-metrics";
+import { refreshFaceStats } from "@/app/lib/scan-stats";
 
 const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -60,10 +61,12 @@ export async function GET() {
     const db = getAdminFirestore();
     // Tout l'historique depuis le premier scan, SANS les photos (servies une par une par /api/face-scan/image) :
     // la liste reste legere meme avec des centaines de scans.
-    const snap = await db.collection(`users/${USER}/faceScans`).orderBy("date", "desc")
-      .select("id", "date", "analysis", "metrics", "createdAt").get();
+    const [snap, stats] = await Promise.all([
+      db.collection(`users/${USER}/faceScans`).orderBy("date", "desc").select("id", "date", "analysis", "metrics", "indexes", "createdAt").get(),
+      db.doc(`users/${USER}/faceStats/current`).get(),
+    ]);
     const scans = snap.docs.map(d => ({ ...(d.data() as Omit<FaceScanEntry, "faceImageUrl">), id: d.id }));
-    return NextResponse.json({ scans });
+    return NextResponse.json({ scans, stats: stats.exists ? stats.data() : null });
   } catch (e) {
     console.error("[face-scan GET]", e);
     return NextResponse.json({ error: "Failed to fetch scans" }, { status: 500 });
@@ -212,8 +215,11 @@ export async function POST(req: NextRequest) {
     };
 
     await db.collection(`users/${USER}/faceScans`).doc(id).set(entry);
+    // Memorise la nouvelle reference et les index du jour de ce scan
+    await refreshFaceStats(db).catch((e) => console.error("[face-scan stats]", e));
+    const indexes = (await db.collection(`users/${USER}/faceScans`).doc(id).get()).get("indexes") as FaceIndexes | undefined;
 
-    return NextResponse.json({ scan: entry }, { status: 201 });
+    return NextResponse.json({ scan: { ...entry, ...(indexes ? { indexes } : {}) } }, { status: 201 });
   } catch (e) {
     console.error("[face-scan POST]", e);
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
@@ -250,6 +256,7 @@ export async function DELETE(req: NextRequest) {
 
     const db = getAdminFirestore();
     await db.collection(`users/${USER}/faceScans`).doc(id).delete();
+    await refreshFaceStats(db).catch((e) => console.error("[face-scan stats]", e));
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[face-scan DELETE]", e);

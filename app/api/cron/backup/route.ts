@@ -11,7 +11,7 @@ const CRON_SECRET = process.env.CRON_SECRET || "";
 /**
  * Sauvegarde Firestore renvoyee en JSON gzippe a l'appelant authentifie (le VPS la tire chaque
  * jour, voir /root/nutri-tracker-backups/pull-backup.sh) : rien n'est publie. Sans parametre :
- * tout sauf les collections a photos. `?set=dayPhotos|mealPhotos|faceScans` : une collection photo.
+ * tout sauf les collections a photos. `?set=dayPhotos|mealPhotos|faceScans|eyeScans|infographics` : une collection photo.
  * Le resultat est consigne dans system/cronStatus (affiche dans Reglages).
  * Manuel : curl -H "X-Cron-Secret: $CRON_SECRET" -o backup.json.gz https://nutri-tracker-mocha.vercel.app/api/cron/backup
  */

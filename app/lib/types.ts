@@ -846,5 +846,7 @@ export interface FaceScanEntry {
   analysis:      FaceScanAnalysis;
   /** Mesures objectives (points du visage + couleur), calculees dans le navigateur ; recalculees pour les anciens scans. */
   metrics?:      import("./face-metrics").FaceMetrics;
+  /** Index du jour (vs reference des scans jusqu'a cette date), memorises pour ne pas tout recalculer. */
+  indexes?:      import("./face-metrics").FaceIndexes;
   createdAt:     Timestamp;
 }
