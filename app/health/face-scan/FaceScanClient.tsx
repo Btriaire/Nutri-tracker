@@ -283,6 +283,9 @@ export default function FaceScanClient() {
           <Link href="/log" className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
             ← Journal
           </Link>
+          <Link href="/health/eye" className="ml-auto text-[12px] font-medium min-h-[40px] flex items-center" style={{ color: "var(--indigo)" }}>
+            Scan de l&apos;œil →
+          </Link>
         </div>
 
         <div className="mb-5">

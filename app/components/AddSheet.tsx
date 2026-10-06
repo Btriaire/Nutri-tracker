@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ComponentType } from "react";
 import {
   IconSalad, IconScale, IconBarbell, IconMoodSmile, IconFlame,
-  IconSettings2, IconFileText, IconBooks, IconTrendingUp, IconChecklist, IconChartInfographic, IconMicrophone,
+  IconSettings2, IconFileText, IconBooks, IconTrendingUp, IconChecklist, IconChartInfographic, IconMicrophone, IconEye,
 } from "@tabler/icons-react";
 import Sheet from "./Sheet";
 
@@ -21,6 +21,7 @@ const GO: Item[] = [
   { href: "/activity", label: "Activité",    hint: "", color: "var(--fiber)",          Icon: IconFlame },
   { href: "/review",   label: "Bilan de la semaine", hint: "", color: "var(--steps)", Icon: IconChecklist },
   { href: "/progress", label: "Progrès",     hint: "", color: "var(--protein)",        Icon: IconTrendingUp },
+  { href: "/health/eye", label: "Œil", hint: "", color: "var(--indigo)", Icon: IconEye },
   { href: "/report/history#podcasts", label: "Podcasts", hint: "", color: "var(--calories)", Icon: IconMicrophone },
   { href: "/report/history", label: "Infographies", hint: "", color: "var(--protein)", Icon: IconChartInfographic },
   { href: "/report",   label: "Rapport",     hint: "", color: "var(--fat)",            Icon: IconFileText },

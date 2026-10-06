@@ -1215,7 +1215,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       {/* ═══════════════════════════════════════════════════════════
           SCAN VISAGE
       ═══════════════════════════════════════════════════════════ */}
-      {(data.faceScan.scansCount > 0 || data.faceScan.objective || data.faceScan.vitals) && (
+      {(data.faceScan.scansCount > 0 || data.faceScan.objective || data.faceScan.vitals || data.faceScan.eye) && (
         <div className="glass p-4 mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
@@ -1252,6 +1252,12 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <p key={l} className="text-[12px]" style={{ color: "var(--text-muted)" }}>• {l}</p>
               ))}
             </div>
+          )}
+          {data.faceScan.eye && (
+            <p className="text-[12px] mt-2" style={{ color: "var(--text-secondary)" }}>
+              Œil ({data.faceScan.eye.count} scan{data.faceScan.eye.count > 1 ? "s" : ""}) : sécheresse {data.faceScan.eye.indexes.secheresse ?? "—"} · fatigue {data.faceScan.eye.indexes.fatigue ?? "—"} · coloration {data.faceScan.eye.indexes.coloration ?? "—"}
+              {data.faceScan.eye.signals.map((s) => <span key={s} className="block" style={{ color: "var(--text-muted)" }}>• {s}</span>)}
+            </p>
           )}
           {data.faceScan.vitals && (
             <p className="text-[12px] mt-2" style={{ color: "var(--text-secondary)" }}>

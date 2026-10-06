@@ -1,6 +1,7 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { summarizeForReport, FACE_METRICS_VERSION, type FaceMetrics, type FaceReportSummary } from "./face-metrics";
 import { FACE_VITALS_VERSION, type FaceVitals } from "./face-vitals";
+import { EYE_METRICS_VERSION, eyeIndexes, eyeSignals, type EyeScanData } from "./eye-metrics";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import { mealGlucoseResponses, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
@@ -212,6 +213,8 @@ export interface ReportData {
     objective?: FaceReportSummary | null;
     /** Constantes mesurees par la camera sur la periode (medianes des mesures de confiance suffisante). */
     vitals?: { count: number; heartRate: number | null; respRate: number | null; blinksPerMin: number | null; perclosMax: number | null } | null;
+    /** Scans de l'oeil de la periode : index du dernier et signaux a surveiller. */
+    eye?: { count: number; latestDate: string; indexes: { secheresse: number | null; fatigue: number | null; coloration: number | null }; mbiS: number | null; signals: string[] } | null;
   };
   measurements: {
     entriesCount: number;
@@ -551,6 +554,19 @@ export async function buildReportData(userId: string, from: string, to: string):
     blinksPerMin: med(vitalsList.map(v => v.blinksPerMin)),
     perclosMax: Math.max(...vitalsList.map(v => v.perclos)),
   } : null;
+  const eyeSnap = await db.collection(`users/${userId}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS").get();
+  const eyeAll = eyeSnap.docs.map(d => d.data() as EyeScanData & { time: string })
+    .filter(e => e.metrics?.version === EYE_METRICS_VERSION && e.date <= to)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const eyePeriod = eyeAll.filter(e => e.date >= from);
+  const eyeLatest = eyePeriod[eyePeriod.length - 1];
+  const eyeSummary = eyeLatest ? {
+    count: eyePeriod.length,
+    latestDate: eyeLatest.date,
+    indexes: eyeIndexes(eyeLatest, eyeAll),
+    mbiS: eyeLatest.mbiS ?? null,
+    signals: eyeSignals(eyeLatest, eyeAll).filter(s => s.level !== "ok").map(s => s.text),
+  } : null;
   const faceScanFirst  = faceScanEntries[0] ?? null;
   const faceScanLatest = faceScanEntries[faceScanEntries.length - 1] ?? null;
   const faceScanDelta = (faceScanFirst && faceScanLatest && faceScanFirst !== faceScanLatest)
@@ -661,6 +677,7 @@ export async function buildReportData(userId: string, from: string, to: string):
       entries: faceScanEntries,
       objective: faceObjective,
       vitals: faceVitals,
+      eye: eyeSummary,
     },
     measurements: {
       entriesCount: measurementEntries.length,

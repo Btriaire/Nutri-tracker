@@ -116,6 +116,12 @@ function buildUserMessage(data: ReportData): string {
     if (fo.notable.length) lines.push(`Dernier scan : ${fo.notable.join(" ; ")}`);
     if (fo.trend.length) lines.push(`Tendance de fond : ${fo.trend.join(" ; ")}`);
   }
+  const fe = data.faceScan.eye;
+  if (fe) {
+    lines.push(`\n— Œil (${fe.count} scan${fe.count > 1 ? "s" : ""}, dernier le ${fe.latestDate}) —`);
+    lines.push(`Index vs habitude (50) : sécheresse ${fe.indexes.secheresse ?? "?"}, fatigue ${fe.indexes.fatigue ?? "?"}, coloration ${fe.indexes.coloration ?? "?"}${fe.mbiS != null ? ` · yeux ouverts sans cligner ${fe.mbiS} s` : ""}`);
+    if (fe.signals.length) lines.push(`À surveiller : ${fe.signals.join(" ; ")}`);
+  }
   const fv = data.faceScan.vitals;
   if (fv) {
     lines.push(`\n— Constantes par la caméra (${fv.count} mesure${fv.count > 1 ? "s" : ""} par la caméra au repos) —`);

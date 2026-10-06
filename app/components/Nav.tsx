@@ -33,6 +33,7 @@ const TITLES: [string, string][] = [
   ["/activity/sleep",   "Sommeil"],
   ["/activity/steps",   "Pas"],
   ["/health/face-scan", "Scan du visage"],
+  ["/health/eye",       "Œil"],
   ["/report/history",   "Historique"],
   ["/review",           "Bilan de la semaine"],
   ["/log",              "Journal"],
