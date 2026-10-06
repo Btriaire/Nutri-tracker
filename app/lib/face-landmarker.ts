@@ -11,28 +11,40 @@ const WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VERSION}/wa
 const MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
 let landmarkerPromise: Promise<FaceLandmarker> | null = null;
+let videoLandmarkerPromise: Promise<FaceLandmarker> | null = null;
+
+/** Instance dediee a la video (mode VIDEO : suivi image par image, plus rapide). */
+export function getVideoLandmarker(): Promise<FaceLandmarker> {
+  if (!videoLandmarkerPromise) {
+    videoLandmarkerPromise = create("VIDEO");
+    videoLandmarkerPromise.catch(() => { videoLandmarkerPromise = null; });
+  }
+  return videoLandmarkerPromise;
+}
 
 async function getLandmarker(): Promise<FaceLandmarker> {
   if (!landmarkerPromise) {
-    landmarkerPromise = (async () => {
-      const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-      const files = await FilesetResolver.forVisionTasks(WASM);
-      const opts = (delegate: "GPU" | "CPU") => ({
-        baseOptions: { modelAssetPath: MODEL, delegate },
-        runningMode: "IMAGE" as const,
-        numFaces: 1,
-        outputFaceBlendshapes: true,
-        outputFacialTransformationMatrixes: true,
-      });
-      try {
-        return await FaceLandmarker.createFromOptions(files, opts("GPU"));
-      } catch {
-        return await FaceLandmarker.createFromOptions(files, opts("CPU"));
-      }
-    })();
+    landmarkerPromise = create("IMAGE");
     landmarkerPromise.catch(() => { landmarkerPromise = null; }); // permet de reessayer apres un echec reseau
   }
   return landmarkerPromise;
+}
+
+async function create(runningMode: "IMAGE" | "VIDEO"): Promise<FaceLandmarker> {
+  const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+  const files = await FilesetResolver.forVisionTasks(WASM);
+  const opts = (delegate: "GPU" | "CPU") => ({
+    baseOptions: { modelAssetPath: MODEL, delegate },
+    runningMode,
+    numFaces: 1,
+    outputFaceBlendshapes: true,
+    outputFacialTransformationMatrixes: true,
+  });
+  try {
+    return await FaceLandmarker.createFromOptions(files, opts("GPU"));
+  } catch {
+    return await FaceLandmarker.createFromOptions(files, opts("CPU"));
+  }
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {

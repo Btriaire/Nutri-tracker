@@ -19,6 +19,9 @@ function face(opts: { mouthDrop?: number; shiftOne?: number; cheekScale?: number
     [19, 0.58], [94, 0.6], [2, 0.61], [164, 0.63], [0, 0.66], [11, 0.67], [12, 0.68], [13, 0.69], [14, 0.71], [15, 0.72], [16, 0.73], [17, 0.75], [18, 0.77], [200, 0.79], [199, 0.8], [175, 0.86], [152, 0.89]];
   mid.forEach(([i, y]) => { pts[i] = { x: 0.5, y }; });
   if (opts.shiftOne) pts[61] = { x: pts[61].x, y: pts[61].y + opts.shiftOne };
+  // Iris : centre et bord (le blanc de l'oeil est echantillonne entre l'iris et les coins)
+  pts[468] = { x: 0.39, y: 0.40 }; pts[469] = { x: 0.405, y: 0.40 };
+  pts[473] = { x: 0.61, y: 0.40 }; pts[474] = { x: 0.625, y: 0.40 };
   return pts;
 }
 const skin: [number, number, number] = [200, 160, 140];
@@ -148,5 +151,32 @@ describe("summarizeForReport", () => {
     expect(s.notable.join()).toMatch(/Cernes : nettement plus marqués/);
     expect(s.trend.join()).toMatch(/Volume du bas du visage : plus affiné depuis le début/);
     expect(summarizeForReport([])).toBeNull();
+  });
+});
+
+describe("teint doré (caroténoïdes)", () => {
+  const W = 500;
+  const scleraX = [208.75, 181.25, 291.25, 318.75];
+  const reader = (skinRgb: [number, number, number], tint = 1) => (x: number, y: number): [number, number, number] => {
+    const white = Math.abs(y - 200) < 4 && scleraX.some((sx) => Math.abs(x - sx) < 5);
+    const c: [number, number, number] = white ? [235, 232, 228] : skinRgb;
+    return [c[0], c[1], Math.min(255, c[2] * tint)];
+  };
+  it("peau plus jaune que le blanc de l'oeil = valeur positive, plus doree = plus haute", () => {
+    const pale = computeFaceMetrics({ landmarks: face(), width: W, height: W, read: reader([200, 165, 150]) })!;
+    const golden = computeFaceMetrics({ landmarks: face(), width: W, height: W, read: reader([205, 165, 120]) })!;
+    expect(pale.carotenoides).not.toBeNull();
+    expect(golden.carotenoides!).toBeGreaterThan(pale.carotenoides! + 5);
+  });
+  it("une lumiere plus bleue change peu la valeur (blanc de l'oeil comme reference)", () => {
+    const a = computeFaceMetrics({ landmarks: face(), width: W, height: W, read: reader([205, 165, 120]) })!;
+    const b = computeFaceMetrics({ landmarks: face(), width: W, height: W, read: reader([205, 165, 120], 1.12) })!;
+    const skinOnly = (t: number) => rgbToLab([205, 165, Math.min(255, 120 * t)])[2];
+    const rawShift = Math.abs(skinOnly(1.12) - skinOnly(1));
+    expect(Math.abs(a.carotenoides! - b.carotenoides!)).toBeLessThan(rawShift / 2);
+  });
+  it("blanc de l'oeil invisible = non mesurable (null)", () => {
+    const m = computeFaceMetrics({ landmarks: face(), width: W, height: W, read: () => [90, 60, 50] })!;
+    expect(m.carotenoides).toBeNull();
   });
 });

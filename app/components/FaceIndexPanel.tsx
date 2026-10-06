@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowUpRight, IconArrowDownRight, IconMinus, IconAlertTriangle } from "@tabler/icons-react";
+import { IconArrowUpRight, IconArrowDownRight, IconMinus, IconAlertTriangle, IconAlertOctagon } from "@tabler/icons-react";
 import { METRICS, computeBaselines, faceIndexes, zScore, describeZ, type FaceMetrics, type MetricInfo } from "@/app/lib/face-metrics";
 
 const GROUPS: { key: MetricInfo["group"]; label: string }[] = [
@@ -40,6 +40,9 @@ export default function FaceIndexPanel({ current, all, dateLabel }: Props) {
   const baselines = computeBaselines(all);
   const idx = faceIndexes(current, baselines);
   const n = Math.max(0, ...Object.values(baselines).map((b) => b?.n ?? 0));
+  // Protocole FAST : une asymetrie nettement inhabituelle sur une photo de bonne qualite merite d'etre signalee.
+  const zSym = zScore(current.symetrie, baselines.symetrie);
+  const fastAlert = zSym !== null && zSym >= 3 && current.quality.score >= 70;
 
   return (
     <section aria-label="Index visage" className="glass p-4 mb-4">
@@ -57,6 +60,17 @@ export default function FaceIndexPanel({ current, all, dateLabel }: Props) {
           <IconAlertTriangle size={14} className="shrink-0 mt-0.5" />
           Photo {current.quality.score}/100 : {current.quality.warnings.join(" ; ")}. Les mesures sont moins fiables.
         </p>
+      )}
+
+      {fastAlert && (
+        <div role="alert" className="flex items-start gap-2 text-[12px] mb-3 rounded-lg p-3" style={{ color: "var(--text-primary)", background: "color-mix(in srgb, var(--danger) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--danger) 40%, transparent)" }}>
+          <IconAlertOctagon size={16} className="shrink-0 mt-0.5" style={{ color: "var(--danger)" }} />
+          <span>
+            <strong>Asymétrie nettement inhabituelle sur cette photo.</strong>{" "}Le plus souvent c&apos;est l&apos;angle, l&apos;expression ou
+            l&apos;éclairage : reprends une photo bien de face, visage détendu. Si une asymétrie du visage apparaît
+            <strong> soudainement</strong>, avec une faiblesse d&apos;un bras ou un trouble de la parole : appelle le <strong>15</strong> immédiatement (protocole FAST).
+          </span>
+        </div>
       )}
 
       <div className="space-y-3 mb-4">
@@ -79,14 +93,17 @@ export default function FaceIndexPanel({ current, all, dateLabel }: Props) {
             <p className="text-[12px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>{g.label}</p>
             <ul className="space-y-1">
               {METRICS.filter((i) => i.group === g.key).map((info) => {
-                const z = zScore(current[info.key] as number, baselines[info.key]);
+                const value = current[info.key];
+                const z = zScore(value as number | null, baselines[info.key]);
                 const Icon = z === null || Math.abs(z) < 0.6 ? IconMinus : z > 0 ? IconArrowUpRight : IconArrowDownRight;
                 const strong = z !== null && Math.abs(z) >= 1.5;
                 return (
                   <li key={info.key} className="flex items-center gap-2 text-[13px]">
                     <Icon size={15} style={{ color: strong ? "var(--warn)" : "var(--text-muted)", flexShrink: 0 }} />
                     <span className="flex-1 min-w-0" style={{ color: "var(--text-secondary)" }}>{info.label}</span>
-                    <span className="text-right" style={{ color: strong ? "var(--warn)" : "var(--text-primary)" }}>{describeZ(z, info)}</span>
+                    <span className="text-right" style={{ color: strong ? "var(--warn)" : "var(--text-primary)" }}>
+                      {typeof value === "number" ? describeZ(z, info) : "non mesurable sur cette photo"}
+                    </span>
                   </li>
                 );
               })}

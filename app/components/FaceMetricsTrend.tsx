@@ -6,8 +6,8 @@ import { format, parseISO, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { METRICS, computeBaselines, pearson, type FaceMetrics, type MetricKey } from "@/app/lib/face-metrics";
 
-type Overlay = "none" | "weight" | "sleep";
-type ProgressPoint = { date: string; weightKg?: number; sleepMinutes?: number };
+type Overlay = "none" | "weight" | "sleep" | "fiber";
+type ProgressPoint = { date: string; weightKg?: number; sleepMinutes?: number; fiberG?: number };
 
 interface Props {
   /** Scans avec mesures, dans n'importe quel ordre. */
@@ -29,7 +29,7 @@ export default function FaceMetricsTrend({ scans }: Props) {
   useEffect(() => {
     if (!from || !to) return;
     let cancelled = false;
-    fetch(`/api/progress?from=${format(addDays(parseISO(from), -3), "yyyy-MM-dd")}&to=${to}`)
+    fetch(`/api/progress?from=${format(addDays(parseISO(from), -28), "yyyy-MM-dd")}&to=${to}`)
       .then((r) => (r.ok ? r.json() : { points: [] }))
       .then((d: { points?: ProgressPoint[] }) => { if (!cancelled) setPoints(d.points ?? []); })
       .catch(() => { if (!cancelled) setPoints([]); });
@@ -44,6 +44,12 @@ export default function FaceMetricsTrend({ scans }: Props) {
   // Poids : mesure du jour ou la plus proche dans les 3 jours precedents ; sommeil : la nuit du jour du scan.
   const byDate = new Map((points ?? []).map((p) => [p.date, p]));
   const overlayFor = (date: string): number | undefined => {
+    if (overlay === "fiber") {
+      // Fibres : moyenne des 28 jours precedant le scan (le teint suit l'alimentation sur plusieurs semaines)
+      const vals: number[] = [];
+      for (let k = 0; k < 28; k++) { const f = byDate.get(format(addDays(parseISO(date), -k), "yyyy-MM-dd"))?.fiberG; if (f) vals.push(f); }
+      return vals.length >= 7 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : undefined;
+    }
     if (overlay === "sleep") { const s = byDate.get(date)?.sleepMinutes; return s ? Math.round((s / 60) * 10) / 10 : undefined; }
     if (overlay === "weight") {
       for (let k = 0; k <= 3; k++) { const w = byDate.get(format(addDays(parseISO(date), -k), "yyyy-MM-dd"))?.weightKg; if (w) return w; }
@@ -53,13 +59,14 @@ export default function FaceMetricsTrend({ scans }: Props) {
 
   const data = sorted.map((s) => ({
     t: parseISO(s.date).getTime(),
-    v: s.metrics[key] as number,
+    v: typeof s.metrics[key] === "number" ? (s.metrics[key] as number) : null,
     low: s.metrics.quality.score < 60,
     o: overlay === "none" ? undefined : overlayFor(s.date),
   }));
-  const pairs = data.filter((d) => !d.low && d.o !== undefined).map((d) => [d.v, d.o!] as [number, number]);
+  const pairs = data.filter((d) => !d.low && d.o !== undefined && d.v !== null).map((d) => [d.v!, d.o!] as [number, number]);
   const r = overlay === "none" ? null : pearson(pairs);
-  const overlayLabel = overlay === "weight" ? "poids" : "sommeil";
+  const overlayLabel = overlay === "weight" ? "poids" : overlay === "fiber" ? "fibres (moy. 4 sem.)" : "sommeil";
+  const overlayUnit = overlay === "weight" ? "kg" : overlay === "fiber" ? "g/j" : "h";
 
   return (
     <section aria-label="Évolution des mesures du visage" className="glass p-4 mb-4">
@@ -85,11 +92,11 @@ export default function FaceMetricsTrend({ scans }: Props) {
 
       <div className="flex items-center gap-1.5 mb-2" role="radiogroup" aria-label="Afficher en regard">
         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>En regard :</span>
-        {(["weight", "sleep", "none"] as Overlay[]).map((o) => (
+        {(["weight", "sleep", "fiber", "none"] as Overlay[]).map((o) => (
           <button key={o} type="button" role="radio" aria-checked={o === overlay} onClick={() => setOverlay(o)}
             className="min-h-[32px] px-2.5 rounded-lg text-[12px]"
             style={{ background: o === overlay ? "var(--layer-2)" : "transparent", color: o === overlay ? "var(--text-primary)" : "var(--text-muted)" }}>
-            {o === "weight" ? "Poids" : o === "sleep" ? "Sommeil" : "Rien"}
+            {o === "weight" ? "Poids" : o === "sleep" ? "Sommeil" : o === "fiber" ? "Fibres" : "Rien"}
           </button>
         ))}
       </div>
@@ -108,9 +115,9 @@ export default function FaceMetricsTrend({ scans }: Props) {
           <Tooltip
             contentStyle={{ background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 12 }}
             labelFormatter={(t) => format(new Date(t as number), "d MMM yyyy", { locale: fr })}
-            formatter={(v, name) => [name === "o" ? `${v} ${overlay === "weight" ? "kg" : "h"}` : fmt(Number(v)), name === "o" ? overlayLabel : info.label]}
+            formatter={(v, name) => [name === "o" ? `${v} ${overlayUnit}` : fmt(Number(v)), name === "o" ? overlayLabel : info.label]}
           />
-          <Line yAxisId="m" type="monotone" dataKey="v" stroke="var(--indigo)" strokeWidth={2} isAnimationActive={false}
+          <Line yAxisId="m" type="monotone" dataKey="v" stroke="var(--indigo)" strokeWidth={2} isAnimationActive={false} connectNulls
             dot={(p) => <circle key={`d-${p.index}`} cx={p.cx} cy={p.cy} r={3.5} stroke="var(--indigo)" strokeWidth={1.5} fill={p.payload.low ? "var(--bg)" : "var(--indigo)"} />} />
           {overlay !== "none" && (
             <Line yAxisId="o" type="monotone" dataKey="o" stroke="var(--calories)" strokeWidth={1.5} strokeDasharray="5 4" dot={false} connectNulls isAnimationActive={false} />
@@ -120,6 +127,7 @@ export default function FaceMetricsTrend({ scans }: Props) {
 
       <p className="text-[12px] mt-2" style={{ color: "var(--text-secondary)" }}>
         <strong style={{ color: "var(--text-primary)" }}>{info.label}</strong> : valeur haute = {info.higher}.
+        {key === "carotenoides" && " Corrigé par le blanc de l'œil ; reflète surtout les fruits et légumes des dernières semaines (Stephen et al. 2011) : compare avec tes fibres."}
         {overlay !== "none" && (r === null
           ? ` Pas encore assez de scans avec ${overlayLabel} le même jour pour mesurer un lien.`
           : ` Lien avec le ${overlayLabel} : r = ${r.toFixed(2).replace(".", ",")} sur ${pairs.length} scans (${Math.abs(r) < 0.3 ? "faible" : Math.abs(r) < 0.6 ? "modéré" : "fort"}). Une corrélation n'est pas une preuve de cause.`)}

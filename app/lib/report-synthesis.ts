@@ -116,6 +116,11 @@ function buildUserMessage(data: ReportData): string {
     if (fo.notable.length) lines.push(`Dernier scan : ${fo.notable.join(" ; ")}`);
     if (fo.trend.length) lines.push(`Tendance de fond : ${fo.trend.join(" ; ")}`);
   }
+  const fv = data.faceScan.vitals;
+  if (fv) {
+    lines.push(`\n— Constantes par la caméra (${fv.count} mesure${fv.count > 1 ? "s" : ""} de 30 s au repos) —`);
+    lines.push(`Pouls médian ${fv.heartRate ?? "?"} bpm · respiration ≈ ${fv.respRate ?? "?"} /min · clignements ${fv.blinksPerMin ?? "?"} /min · PERCLOS max ${fv.perclosMax ?? "?"} % (≥ 15 % = somnolence)`);
+  }
 
   if (data.measurements.entriesCount > 0) {
     lines.push(`\n— Mensurations (${data.measurements.entriesCount} relevé${data.measurements.entriesCount > 1 ? "s" : ""}, ${data.measurements.first?.month} → ${data.measurements.latest?.month}) —`);

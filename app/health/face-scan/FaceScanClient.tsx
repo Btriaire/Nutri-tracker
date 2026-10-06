@@ -16,6 +16,7 @@ import FaceOvalCamera from "@/app/components/FaceOvalCamera";
 import FaceIndexPanel from "@/app/components/FaceIndexPanel";
 import FaceMetricsTrend from "@/app/components/FaceMetricsTrend";
 import FaceCompare from "@/app/components/FaceCompare";
+import FaceVitalsPanel from "@/app/components/FaceVitalsPanel";
 import { measureFace } from "@/app/lib/face-landmarker";
 import { FACE_METRICS_VERSION, type FaceMetrics } from "@/app/lib/face-metrics";
 
@@ -289,7 +290,7 @@ export default function FaceScanClient() {
             Scan Visage
           </h1>
           <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-            Fatigue, amaigrissement visage, teint — suivi bien-être basé sur des traits documentés scientifiquement, pas un diagnostic médical
+            Mesures du visage (volume, fatigue, teint, caroténoïdes, symétrie) et constantes par la caméra (pouls, respiration, somnolence). Suivi bien-être fondé sur la littérature scientifique, pas un diagnostic médical.
           </p>
         </div>
 
@@ -433,6 +434,8 @@ export default function FaceScanClient() {
             </>
           );
         })()}
+
+        <FaceVitalsPanel />
 
         {/* Sources */}
         <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>

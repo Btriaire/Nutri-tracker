@@ -1,5 +1,6 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { summarizeForReport, FACE_METRICS_VERSION, type FaceMetrics, type FaceReportSummary } from "./face-metrics";
+import { FACE_VITALS_VERSION, type FaceVitals } from "./face-vitals";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import { mealGlucoseResponses, computeDayStats, DEFAULT_GLUCOSE_TARGET } from "@/app/lib/glucose";
@@ -209,6 +210,8 @@ export interface ReportData {
     entries:    FaceScanRow[];
     /** Mesures objectives (points du visage + couleur) sur TOUT l'historique, pas seulement la periode. */
     objective?: FaceReportSummary | null;
+    /** Constantes mesurees par la camera sur la periode (medianes des mesures de confiance suffisante). */
+    vitals?: { count: number; heartRate: number | null; respRate: number | null; blinksPerMin: number | null; perclosMax: number | null } | null;
   };
   measurements: {
     entriesCount: number;
@@ -538,6 +541,16 @@ export async function buildReportData(userId: string, from: string, to: string):
   const faceObjective = summarizeForReport(faceMetricsSnap.docs
     .map(d => d.data() as { date: string; metrics?: FaceMetrics })
     .filter((h): h is { date: string; metrics: FaceMetrics } => h.metrics?.version === FACE_METRICS_VERSION && h.date <= to));
+  const vitalsSnap = await db.collection(`users/${userId}/faceVitals`).where("date", ">=", from).where("date", "<=", to).get();
+  const vitalsList = vitalsSnap.docs.map(d => (d.data() as { vitals: FaceVitals }).vitals).filter(v => v?.version === FACE_VITALS_VERSION);
+  const med = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return Math.round(s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2); };
+  const faceVitals = vitalsList.length ? {
+    count: vitalsList.length,
+    heartRate: med(vitalsList.filter(v => v.heartRate !== null && v.heartConfidence !== "faible").map(v => v.heartRate!)),
+    respRate: med(vitalsList.filter(v => v.respRate !== null).map(v => v.respRate!)),
+    blinksPerMin: med(vitalsList.map(v => v.blinksPerMin)),
+    perclosMax: Math.max(...vitalsList.map(v => v.perclos)),
+  } : null;
   const faceScanFirst  = faceScanEntries[0] ?? null;
   const faceScanLatest = faceScanEntries[faceScanEntries.length - 1] ?? null;
   const faceScanDelta = (faceScanFirst && faceScanLatest && faceScanFirst !== faceScanLatest)
@@ -647,6 +660,7 @@ export async function buildReportData(userId: string, from: string, to: string):
       delta:  faceScanDelta,
       entries: faceScanEntries,
       objective: faceObjective,
+      vitals: faceVitals,
     },
     measurements: {
       entriesCount: measurementEntries.length,

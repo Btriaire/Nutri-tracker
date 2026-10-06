@@ -1215,7 +1215,7 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       {/* ═══════════════════════════════════════════════════════════
           SCAN VISAGE
       ═══════════════════════════════════════════════════════════ */}
-      {(data.faceScan.scansCount > 0 || data.faceScan.objective) && (
+      {(data.faceScan.scansCount > 0 || data.faceScan.objective || data.faceScan.vitals) && (
         <div className="glass p-4 mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
@@ -1252,6 +1252,11 @@ export default function ReportDocument({ data }: { data: ReportData }) {
                 <p key={l} className="text-[12px]" style={{ color: "var(--text-muted)" }}>• {l}</p>
               ))}
             </div>
+          )}
+          {data.faceScan.vitals && (
+            <p className="text-[12px] mt-2" style={{ color: "var(--text-secondary)" }}>
+              Constantes caméra ({data.faceScan.vitals.count} mesure{data.faceScan.vitals.count > 1 ? "s" : ""}) : pouls {data.faceScan.vitals.heartRate ?? "—"} bpm · respiration ≈ {data.faceScan.vitals.respRate ?? "—"} /min · clignements {data.faceScan.vitals.blinksPerMin ?? "—"} /min
+            </p>
           )}
         </div>
       )}

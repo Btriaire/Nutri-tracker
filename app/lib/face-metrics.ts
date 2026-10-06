@@ -7,7 +7,9 @@
 //   resister a l'eclairage ; les rares mesures absolues sont signalees comme telles.
 // - Aucune norme "medicale" : chaque mesure est comparee a TA propre reference (mediane de tes scans).
 
-export const FACE_METRICS_VERSION = 1;
+// v2 : ajout du teint dore (carotenoides) calibre sur le blanc de l'oeil. Changer la version
+// relance automatiquement la mesure de toutes les photos de l'historique.
+export const FACE_METRICS_VERSION = 2;
 
 export interface Pt { x: number; y: number }
 /** Lit un pixel (coordonnees image en px) -> [r, g, b] 0-255. */
@@ -39,6 +41,10 @@ export interface FaceMetrics {
   uniformite: number;            // ecart-type de L* entre front, joues, menton : plus bas = teint plus uniforme
   levres: number;                // a* levres - a* joues : plus bas = levres plus pales
   luminosite: number;            // L* des joues (absolu, depend surtout de l'eclairage)
+  /** b* de la peau - b* du blanc de l'oeil (reference de blanc dans la meme photo) : coloration
+   *  jaune-orangee liee aux carotenoides des fruits et legumes (Stephen et al. 2011, Whitehead et al. 2012).
+   *  null si le blanc de l'oeil n'est pas assez visible. */
+  carotenoides: number | null;
   // Expressions MediaPipe (0-1), si disponibles
   plisserYeux?: number;          // eyeSquint moyen
   moue?: number;                 // mouthFrown moyen
@@ -70,6 +76,8 @@ const L = {
   underEyeB: [340, 346, 347, 348, 349, 350],
   cheekA: 205, cheekB: 425, forehead: 151, chinSkin: 199,
   lowerLip: [14, 17],
+  // Iris (maillage 478) : centre et un point du bord, pour situer le blanc de l'oeil
+  irisA: { center: 468, edge: 469 }, irisB: { center: 473, edge: 474 },
 } as const;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -114,9 +122,14 @@ function fitLine(pts: Pt[]): { a: Pt; u: Pt } {
 }
 
 // ─── Couleur : sRGB -> CIELAB (D65) ────────────────────────────────────────────────────────────
+const toLinear = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+
 export function rgbToLab([R, G, B]: [number, number, number]): [number, number, number] {
-  const lin = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-  const rl = lin(R), gl = lin(G), bl = lin(B);
+  return linearToLab([toLinear(R), toLinear(G), toLinear(B)]);
+}
+
+/** RGB lineaire (0-1) -> CIELAB D65. */
+export function linearToLab([rl, gl, bl]: [number, number, number]): [number, number, number] {
   const x = (rl * 0.4124 + gl * 0.3576 + bl * 0.1805) / 0.95047;
   const y = (rl * 0.2126 + gl * 0.7152 + bl * 0.0722) / 1.0;
   const z = (rl * 0.0193 + gl * 0.1192 + bl * 0.9505) / 1.08883;
@@ -138,6 +151,23 @@ function patchLab(read: PixelReader, c: Pt, radius: number, w: number, h: number
       if (x < 0 || y < 0 || x >= w || y >= h) continue;
       const lab = rgbToLab(read(x, y));
       acc[0] += lab[0]; acc[1] += lab[1]; acc[2] += lab[2]; n++;
+    }
+  }
+  return n ? [acc[0] / n, acc[1] / n, acc[2] / n] : [NaN, NaN, NaN];
+}
+
+/** Moyenne RGB lineaire d'un disque (pour la balance des blancs). */
+function patchLinear(read: PixelReader, c: Pt, radius: number, w: number, h: number): [number, number, number] {
+  const acc = [0, 0, 0];
+  let n = 0;
+  const rr = Math.max(1, Math.round(radius));
+  for (let dy = -rr; dy <= rr; dy++) {
+    for (let dx = -rr; dx <= rr; dx++) {
+      if (dx * dx + dy * dy > rr * rr) continue;
+      const x = Math.round(c.x + dx), y = Math.round(c.y + dy);
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const [R, G, B] = read(x, y);
+      acc[0] += toLinear(R); acc[1] += toLinear(G); acc[2] += toLinear(B); n++;
     }
   }
   return n ? [acc[0] / n, acc[1] / n, acc[2] / n] : [NaN, NaN, NaN];
@@ -212,6 +242,33 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
   const uniformite = std([forehead[0], cheekA[0], cheekB[0], chin[0]]);
   const levres = lip[1] - cheekAstar;
 
+  // Blanc de l'oeil (de part et d'autre de l'iris) : reference de blanc. La couleur de la peau est corrigee
+  // canal par canal (adaptation de von Kries, en RGB lineaire) pour que ce blanc devienne neutre : la teinte
+  // de l'eclairage (lampe chaude, lumiere bleue) est ainsi neutralisee avant de lire le jaune de la peau (b*).
+  let carotenoides: number | null = null;
+  if (P.length >= 478) {
+    const sclera: [number, number, number][] = [];   // RGB lineaire
+    for (const [iris, eye] of [[L.irisA, L.eyeA], [L.irisB, L.eyeB]] as const) {
+      const c = P[iris.center];
+      const ir = Math.max(1, dist(c, P[iris.edge]));
+      for (const corner of [P[eye.inner], P[eye.outer]]) {
+        const at = { x: c.x + (corner.x - c.x) * 0.55, y: c.y + (corner.y - c.y) * 0.55 };
+        if (dist(at, c) < ir * 1.15) continue;                 // encore sur l'iris (oeil peu ouvert)
+        const v = patchLinear(inp.read, at, Math.max(1, ir * 0.25), inp.width, inp.height);
+        if (linearToLab(v)[0] >= 45) sclera.push(v);           // trop sombre = cils ou ombre
+      }
+    }
+    if (sclera.length >= 2) {
+      const S = [0, 1, 2].map((c) => mean(sclera.map((v) => v[c])));
+      const gray = (S[0] + S[1] + S[2]) / 3;
+      const skins = [P[L.cheekA], P[L.cheekB], P[L.forehead]].map((c) => patchLinear(inp.read, c, rad * 1.4, inp.width, inp.height));
+      const K = [0, 1, 2].map((c) => mean(skins.map((v) => v[c])));
+      if (S.every((x) => x > 0) && K.every(Number.isFinite)) {
+        carotenoides = linearToLab([K[0] * gray / S[0], K[1] * gray / S[1], K[2] * gray / S[2]])[2];
+      }
+    }
+  }
+
   // Qualite de la photo
   const warnings: string[] = [];
   let score = 100;
@@ -245,6 +302,7 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
     uniformite: r(uniformite, 2),
     levres: r(levres, 2),
     luminosite: r(cheekL, 1),
+    carotenoides: carotenoides === null ? null : r(carotenoides, 2),
     ...(bs ? {
       plisserYeux: r(((bs.eyeSquintLeft ?? 0) + (bs.eyeSquintRight ?? 0)) / 2),
       moue: r(((bs.mouthFrownLeft ?? 0) + (bs.mouthFrownRight ?? 0)) / 2),
@@ -257,7 +315,7 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
 
 export type MetricKey =
   | "volumeBasVisage" | "largeurJoues" | "ratioJoues" | "ratioMachoire" | "ouvertureYeux" | "coinsBouche"
-  | "symetrie" | "cernes" | "rougeur" | "uniformite" | "levres";
+  | "symetrie" | "cernes" | "rougeur" | "uniformite" | "levres" | "carotenoides";
 
 export interface MetricInfo {
   key: MetricKey;
@@ -279,6 +337,7 @@ export const METRICS: MetricInfo[] = [
   { key: "coinsBouche", label: "Coins de la bouche", higher: "plus tombants", lower: "plus relevés", minSpread: 0.6, group: "fatigue" },
   { key: "uniformite", label: "Uniformité du teint", higher: "moins uniforme", lower: "plus uniforme", minSpread: 0.5, group: "teint" },
   { key: "rougeur", label: "Rougeur des joues", higher: "plus rouges", lower: "moins rouges", minSpread: 0.8, group: "teint" },
+  { key: "carotenoides", label: "Teint doré (caroténoïdes)", higher: "plus doré", lower: "moins doré", minSpread: 0.8, group: "teint" },
   { key: "levres", label: "Couleur des lèvres", higher: "plus colorées", lower: "plus pâles", minSpread: 0.8, group: "teint" },
   { key: "symetrie", label: "Asymétrie", higher: "moins symétrique", lower: "plus symétrique", minSpread: 0.25, group: "symetrie" },
 ];
@@ -302,8 +361,8 @@ export function computeBaselines(all: FaceMetrics[], minQuality = 60): Partial<R
 }
 
 /** Ecart a la reference en "ecarts habituels" (z robuste). */
-export function zScore(value: number, b: Baseline | undefined): number | null {
-  if (!b) return null;
+export function zScore(value: number | null | undefined, b: Baseline | undefined): number | null {
+  if (!b || typeof value !== "number" || !Number.isFinite(value)) return null;
   return (value - b.median) / b.spread;
 }
 
@@ -393,6 +452,8 @@ export function sanitizeMetrics(x: unknown): FaceMetrics | null {
     anchors: { le: a.le as [number, number], re: a.re as [number, number], chin: a.chin as [number, number] },
   } as FaceMetrics;
   for (const k of numeric) (out as unknown as Record<string, number>)[k] = m[k] as number;
+  if (!(m.carotenoides === null || num(m.carotenoides))) return null;
+  out.carotenoides = m.carotenoides as number | null;
   if (num(m.plisserYeux)) out.plisserYeux = m.plisserYeux as number;
   if (num(m.moue)) out.moue = m.moue as number;
   return out;
@@ -407,8 +468,9 @@ export function metricsContext(current: FaceMetrics | null, history: { date: str
     lines.push(`Qualité de la photo : ${current.quality.score}/100${current.quality.warnings.length ? ` (${current.quality.warnings.join(" ; ")})` : ""}.`);
     lines.push(`Mesures objectives de CETTE photo, comparées à la référence personnelle (médiane de ses scans) :`);
     for (const info of METRICS) {
-      const v = current[info.key] as number;
+      const v = current[info.key] as number | null;
       const base = b[info.key];
+      if (typeof v !== "number") { lines.push(`- ${info.label} : non mesurable sur cette photo`); continue; }
       lines.push(`- ${info.label} : ${fmt(v)}${base ? ` (référence ${fmt(base.median)}, ${describeZ(zScore(v, base), info)})` : " (référence en construction)"}`);
     }
     const idx = faceIndexes(current, b);
@@ -420,7 +482,9 @@ export function metricsContext(current: FaceMetrics | null, history: { date: str
     const first = sorted.slice(0, k), last = sorted.slice(-k);
     lines.push(`Tendance sur tout l'historique (${sorted.length} photos exploitables, du ${sorted[0].date} au ${sorted[sorted.length - 1].date}), moyenne des ${k} premières vs des ${k} dernières :`);
     for (const info of METRICS) {
-      const a = mean(first.map((h) => h.metrics[info.key] as number)), z = mean(last.map((h) => h.metrics[info.key] as number));
+      const vals = (hs: typeof first) => hs.map((h) => h.metrics[info.key]).filter((x): x is number => typeof x === "number");
+      if (vals(first).length === 0 || vals(last).length === 0) continue;
+      const a = mean(vals(first)), z = mean(vals(last));
       const base = b[info.key];
       const shift = base ? (z - a) / base.spread : 0;
       lines.push(`- ${info.label} : ${fmt(a)} → ${fmt(z)}${Math.abs(shift) >= 0.6 ? ` (${shift > 0 ? info.higher : info.lower})` : " (stable)"}`);
@@ -455,8 +519,10 @@ export function summarizeForReport(history: { date: string; metrics: FaceMetrics
     for (const info of METRICS) {
       const base = b[info.key];
       if (!base) continue;
-      const a = mean(good.slice(0, k).map((h) => h.metrics[info.key] as number));
-      const z = mean(good.slice(-k).map((h) => h.metrics[info.key] as number));
+      const vals = (hs: typeof good) => hs.map((h) => h.metrics[info.key]).filter((x): x is number => typeof x === "number");
+      if (vals(good.slice(0, k)).length === 0 || vals(good.slice(-k)).length === 0) continue;
+      const a = mean(vals(good.slice(0, k)));
+      const z = mean(vals(good.slice(-k)));
       const shift = (z - a) / base.spread;
       if (Math.abs(shift) >= 0.6) trend.push(`${info.label} : ${shift > 0 ? info.higher : info.lower} depuis le début`);
     }
