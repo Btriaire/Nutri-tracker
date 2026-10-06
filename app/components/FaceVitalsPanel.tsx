@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { IconHeartbeat, IconTrash, IconAlertTriangle, IconLungs, IconEye } from "@tabler/icons-react";
 import FaceVitalsCapture from "./FaceVitalsCapture";
+import ProcedureHelp, { VITALS_PROCEDURE } from "./ProcedureHelp";
 import type { FaceVitals } from "@/app/lib/face-vitals";
 import type { FaceVitalsEntry } from "@/app/api/face-vitals/route";
 
@@ -93,7 +94,8 @@ export default function FaceVitalsPanel() {
     <section aria-label="Constantes par la caméra" className="glass p-4 mb-4">
       <div className="flex items-center gap-2 mb-1">
         <IconHeartbeat size={18} style={{ color: "var(--danger)" }} />
-        <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Constantes par la caméra</h2>
+        <h2 className="text-[15px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>Constantes par la caméra</h2>
+        <ProcedureHelp procedure={VITALS_PROCEDURE} />
       </div>
       <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
         Quelques secondes de vidéo du visage : le pouls se lit dans les micro-variations de couleur de la peau à chaque

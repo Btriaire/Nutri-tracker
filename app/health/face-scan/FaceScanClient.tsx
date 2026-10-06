@@ -17,6 +17,7 @@ import FaceIndexPanel from "@/app/components/FaceIndexPanel";
 import FaceMetricsTrend from "@/app/components/FaceMetricsTrend";
 import FaceCompare from "@/app/components/FaceCompare";
 import FaceVitalsPanel from "@/app/components/FaceVitalsPanel";
+import ProcedureHelp, { FACE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import { measureFace } from "@/app/lib/face-landmarker";
 import { FACE_METRICS_VERSION, type FaceMetrics } from "@/app/lib/face-metrics";
 
@@ -313,9 +314,12 @@ export default function FaceScanClient() {
               )}
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
-                {facePreview ? "Photo prête" : "Photo du visage"}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
+                  {facePreview ? "Photo prête" : "Photo du visage"}
+                </p>
+                <ProcedureHelp procedure={FACE_PROCEDURE} />
+              </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <button
                   onClick={() => setShowCamera(true)}

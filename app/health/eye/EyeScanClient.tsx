@@ -7,6 +7,7 @@ import { fr } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { IconEye, IconCircleCheck, IconAlertTriangle, IconAlertOctagon, IconTrash, IconDroplet, IconFish, IconChevronDown } from "@tabler/icons-react";
 import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanCapture";
+import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import { eyeIndexes, eyeSignals, rednessGrade, scanValue, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
@@ -101,7 +102,10 @@ export default function EyeScanClient() {
         </p>
 
         <section className="glass p-4 mb-4" aria-label="Scan guidé">
-          <p className="text-[14px] font-semibold mb-2" style={{ color: "var(--text-primary)" }}>Scan guidé (≈ 10 s + test optionnel)</p>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Scan guidé (≈ 10 s + test optionnel)</p>
+            <ProcedureHelp procedure={EYE_PROCEDURE} />
+          </div>
           <ol className="text-[12px] space-y-1 mb-3" style={{ color: "var(--text-secondary)" }}>
             <li>1. Les deux yeux grands ouverts, téléphone à 25-30 cm (3 s)</li>
             <li>2. Réflexe pupillaire : l&apos;écran passe au noir puis flashe en blanc (4 s)</li>
