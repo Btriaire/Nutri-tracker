@@ -45,7 +45,7 @@ export default function FaceCompare({ scans }: { scans: Scan[] }) {
 
   const picker = (value: Scan, set: (id: string) => void, aria: string) => (
     <select value={value.id} onChange={(e) => set(e.target.value)} aria-label={aria}
-      className="min-h-[40px] px-2 rounded-lg text-[13px] max-w-[46%]"
+      className="min-h-[44px] px-2 rounded-lg text-[13px] max-w-[46%]"
       style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
       {pool.map((s) => <option key={s.id} value={s.id}>{label(s)}</option>)}
     </select>
@@ -73,7 +73,7 @@ export default function FaceCompare({ scans }: { scans: Scan[] }) {
         <div className="absolute pointer-events-none" style={{ left: 0, right: 0, top: `${(TARGET.le.y / H) * 100}%`, borderTop: "1px dashed rgba(255,255,255,.25)" }} />
       </div>
       <input type="range" min={0} max={100} value={pos} onChange={(e) => setPos(Number(e.target.value))}
-        aria-label="Balayer entre les deux photos" className="w-full mt-3" />
+        aria-label="Balayer entre les deux photos" className="w-full mt-2 h-11 cursor-pointer" style={{ accentColor: "var(--indigo)" }} />
     </section>
   );
 }

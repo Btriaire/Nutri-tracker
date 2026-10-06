@@ -120,7 +120,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
         <button
           onClick={handleCapture}
           disabled={!ready}
-          className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-90 disabled:opacity-40"
+          className="w-16 h-16 rounded-full flex items-center justify-center transition-[transform,opacity] active:scale-90 disabled:opacity-40"
           style={{ background: "rgba(255,255,255,0.15)", border: "3px solid white" }}
         >
           <div className="w-12 h-12 rounded-full bg-white" />

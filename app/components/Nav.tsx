@@ -98,7 +98,7 @@ export default function Nav() {
           style={{ color: "var(--text-primary)" }}>
           {pageTitle(path)}
         </span>
-        <Link href="/dashboard" className="flex items-center flex-shrink-0 opacity-70 active:opacity-100">
+        <Link href="/dashboard" aria-label="Accueil Nutri-Tracker" className="flex items-center flex-shrink-0 min-h-[44px] opacity-70 active:opacity-100">
           <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-6 w-auto" priority />
         </Link>
       </div>

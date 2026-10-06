@@ -299,10 +299,10 @@ export default function FaceScanClient() {
       <div className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px]">
 
         <div className="flex items-center gap-2 mb-5">
-          <Link href="/log" className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
+          <Link href="/log" className="inline-flex items-center min-h-[44px] pr-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
             ← Journal
           </Link>
-          <Link href="/health/eye" className="ml-auto text-[12px] font-medium min-h-[40px] flex items-center" style={{ color: "var(--indigo)" }}>
+          <Link href="/health/eye" className="ml-auto text-[13px] font-medium min-h-[44px] flex items-center pl-3" style={{ color: "var(--indigo)" }}>
             Scan de l&apos;œil →
           </Link>
         </div>
@@ -321,7 +321,8 @@ export default function FaceScanClient() {
           <div className="flex items-center gap-3 mb-3">
             <button
               onClick={() => setShowCamera(true)}
-              className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center transition-all active:scale-[0.95] overflow-hidden relative"
+              aria-label={facePreview ? "Reprendre la photo du visage" : "Prendre une photo du visage"}
+              className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center transition-transform active:scale-[0.95] overflow-hidden relative"
               style={{ background: "rgba(99,102,241,0.06)", border: "2px dashed rgba(99,102,241,0.3)" }}
             >
               {facePreview ? (
@@ -341,7 +342,7 @@ export default function FaceScanClient() {
               <div className="flex items-center gap-2 mt-0.5">
                 <button
                   onClick={() => setShowCamera(true)}
-                  className="text-[12px] font-medium"
+                  className="min-h-[44px] pr-2 text-[13px] font-medium"
                   style={{ color: "var(--indigo)" }}
                 >
                   {facePreview ? "Reprendre la photo" : "Prendre une photo"}
@@ -349,8 +350,8 @@ export default function FaceScanClient() {
                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>·</span>
                 <button
                   onClick={() => galleryRef.current?.click()}
-                  className="text-[12px] font-medium"
-                  style={{ color: "var(--text-muted)" }}
+                  className="min-h-[44px] px-2 text-[13px] font-medium"
+                  style={{ color: "var(--text-secondary)" }}
                 >
                   Galerie
                 </button>
@@ -393,7 +394,7 @@ export default function FaceScanClient() {
                       key={opt.key}
                       type="button"
                       onClick={() => setCompareMode(opt.key)}
-                      className="px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                      className="min-h-[44px] px-3 rounded-lg text-[13px] font-medium transition-colors"
                       style={{
                         background: compareMode === opt.key ? "rgba(99,102,241,0.18)" : "var(--layer-2)",
                         border: `1px solid ${compareMode === opt.key ? "rgba(99,102,241,0.45)" : "var(--border)"}`,
@@ -420,8 +421,8 @@ export default function FaceScanClient() {
           <button
             onClick={handleAnalyze}
             disabled={!faceBlob || analyzing}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all disabled:opacity-40"
-            style={{ background: "var(--indigo)", color: "#fff" }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-opacity disabled:opacity-40"
+            style={{ background: "var(--indigo)", color: "var(--bg)" }}
           >
             {analyzing ? <IconLoader2 size={15} className="animate-spin" /> : <IconSparkles size={15} />}
             {analyzing ? "Analyse en cours…" : "Analyser"}
@@ -463,7 +464,7 @@ export default function FaceScanClient() {
 
         {/* Sources */}
         <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-          <button type="button" onClick={() => setShowSources(v => !v)} className="w-full flex items-center gap-1.5 px-3 py-2.5">
+          <button type="button" onClick={() => setShowSources(v => !v)} aria-expanded={showSources} className="w-full flex items-center gap-1.5 px-3 min-h-[44px]">
             <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Sources</span>
             <IconChevronDown size={13} style={{ color: "var(--text-muted)", marginLeft: "auto", transform: showSources ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
           </button>
@@ -503,7 +504,7 @@ export default function FaceScanClient() {
                       className="w-full flex items-center gap-3 p-3"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imageUrl(scan.id)} alt="" loading="lazy" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                      <img src={imageUrl(scan.id)} alt="" width={36} height={36} loading="lazy" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0 text-left">
                         <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
                           {format(new Date(scan.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })}

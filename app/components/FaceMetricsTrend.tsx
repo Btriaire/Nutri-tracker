@@ -79,7 +79,7 @@ export default function FaceMetricsTrend({ scans }: Props) {
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2 -mx-1 px-1" role="radiogroup" aria-label="Mesure">
         {METRICS.map((m) => (
           <button key={m.key} type="button" role="radio" aria-checked={m.key === key} onClick={() => setKey(m.key)}
-            className="shrink-0 min-h-[36px] px-3 rounded-full text-[12px] font-medium whitespace-nowrap"
+            className="shrink-0 min-h-[44px] px-3.5 rounded-full text-[13px] font-medium whitespace-nowrap"
             style={{
               background: m.key === key ? "color-mix(in srgb, var(--indigo) 18%, transparent)" : "var(--layer-1)",
               border: `1px solid ${m.key === key ? "var(--indigo)" : "var(--border)"}`,
@@ -94,7 +94,7 @@ export default function FaceMetricsTrend({ scans }: Props) {
         <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>En regard :</span>
         {(["weight", "sleep", "fiber", "none"] as Overlay[]).map((o) => (
           <button key={o} type="button" role="radio" aria-checked={o === overlay} onClick={() => setOverlay(o)}
-            className="min-h-[32px] px-2.5 rounded-lg text-[12px]"
+            className="min-h-[44px] px-3 rounded-lg text-[13px]"
             style={{ background: o === overlay ? "var(--layer-2)" : "transparent", color: o === overlay ? "var(--text-primary)" : "var(--text-muted)" }}>
             {o === "weight" ? "Poids" : o === "sleep" ? "Sommeil" : o === "fiber" ? "Fibres" : "Rien"}
           </button>

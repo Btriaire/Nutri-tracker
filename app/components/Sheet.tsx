@@ -66,6 +66,7 @@ export default function Sheet({ open, onClose, title, children }: Props) {
                 boxShadow: "0 -12px 40px rgba(0,0,0,0.45)",
                 maxHeight: "85dvh",
                 overflowY: "auto",
+                overscrollBehavior: "contain",
                 paddingBottom: "calc(20px + env(safe-area-inset-bottom))",
               }}>
               <div className="mx-auto mb-3 h-1 w-10 rounded-full" style={{ background: "var(--border-strong)" }} />

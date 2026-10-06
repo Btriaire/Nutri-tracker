@@ -102,7 +102,7 @@ export default function EyeScanClient() {
     <div className="relative min-h-screen" style={{ paddingBottom: "80px" }}>
       <div className="bg-orbs" />
       <div className="relative z-10 max-w-md mx-auto px-4 py-6 md:ml-[220px]">
-        <Link href="/health/face-scan" className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>← Scan visage</Link>
+        <Link href="/health/face-scan" className="inline-flex items-center min-h-[44px] pr-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>← Scan visage</Link>
         <h1 className="text-[20px] font-semibold tracking-tight mt-4 mb-1" style={{ color: "var(--text-primary)" }}>Œil</h1>
         <p className="text-[12px] mb-4" style={{ color: "var(--text-secondary)" }}>
           Pupilles, paupières, rougeur, conjonctive et sécheresse, mesurées en millimètres (l&apos;iris de 11,7 mm sert de règle)
@@ -121,10 +121,10 @@ export default function EyeScanClient() {
             <li>4. Option : garder les yeux ouverts sans cligner (test de sécheresse)</li>
           </ol>
           <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>Pièce plutôt sombre, sans lunettes ni lentilles colorées. L&apos;écran sert d&apos;éclairage.</p>
-          <button type="button" onClick={() => setCapturing(true)} className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold" style={{ background: "var(--indigo)", color: "#fff" }}>
+          <button type="button" onClick={() => setCapturing(true)} className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold" style={{ background: "var(--indigo)", color: "var(--bg)" }}>
             Commencer le scan
           </button>
-          {saveError && <p role="alert" className="text-[12px] mt-2" style={{ color: "var(--danger)" }}>Le scan n&apos;a pas pu être enregistré.</p>}
+          {saveError && <p role="alert" className="text-[12px] mt-2" style={{ color: "var(--danger)" }}>Le scan n&apos;a pas pu être enregistré : vérifie ta connexion, puis refais-le.</p>}
         </section>
 
         {scans === null && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</p>}
@@ -237,7 +237,7 @@ export default function EyeScanClient() {
                 <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2 -mx-1 px-1" role="radiogroup" aria-label="Paramètre">
                   {PARAMS.map((p) => (
                     <button key={p.key} type="button" role="radio" aria-checked={p.key === param} onClick={() => setParam(p.key)}
-                      className="shrink-0 min-h-[36px] px-3 rounded-full text-[12px] font-medium whitespace-nowrap"
+                      className="shrink-0 min-h-[44px] px-3.5 rounded-full text-[13px] font-medium whitespace-nowrap"
                       style={{ background: p.key === param ? "color-mix(in srgb, var(--indigo) 18%, transparent)" : "var(--layer-1)", border: `1px solid ${p.key === param ? "var(--indigo)" : "var(--border)"}`, color: p.key === param ? "var(--indigo)" : "var(--text-secondary)" }}>
                       {p.label}
                     </button>
@@ -263,7 +263,7 @@ export default function EyeScanClient() {
                 {history.map((s) => (
                   <li key={s.id} className="flex items-center gap-3 rounded-xl p-2" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/api/eye-scan/image?id=${encodeURIComponent(s.id)}`} alt="" loading="lazy" className="w-20 h-9 rounded-md object-cover shrink-0" style={{ background: "var(--layer-2)" }} />
+                    <img src={`/api/eye-scan/image?id=${encodeURIComponent(s.id)}`} alt="" width={80} height={36} loading="lazy" className="w-20 h-9 rounded-md object-cover shrink-0" style={{ background: "var(--layer-2)" }} />
                     <div className="flex-1 min-w-0 text-[12px]">
                       <p style={{ color: "var(--text-primary)" }}>{format(parseISO(s.date), "d MMM yyyy", { locale: fr })} · {s.time}</p>
                       <p className="tabular-nums" style={{ color: "var(--text-muted)" }}>
@@ -281,7 +281,7 @@ export default function EyeScanClient() {
         )}
 
         <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-          <button type="button" onClick={() => setShowSources((v) => !v)} className="w-full flex items-center gap-1.5 px-3 min-h-[44px]">
+          <button type="button" onClick={() => setShowSources((v) => !v)} aria-expanded={showSources} className="w-full flex items-center gap-1.5 px-3 min-h-[44px]">
             <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>Méthodes et sources</span>
             <IconChevronDown size={13} style={{ color: "var(--text-muted)", marginLeft: "auto", transform: showSources ? "rotate(180deg)" : "none" }} />
           </button>

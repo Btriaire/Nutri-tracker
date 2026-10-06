@@ -3,6 +3,7 @@
 /* ─── AuthKit-inspired design tokens ────────────────────────────────────────── */
 
 :root {
+  color-scheme: dark;
   /* Base surfaces — near-black like AuthKit's #09090b */
   --bg:              #07060F;
   --bg-subtle:       #0D0B1A;
@@ -244,6 +245,7 @@ input[type="date"], input[type="time"], input[type="datetime-local"] {
 
 html[data-theme="lumiere"],
 html.light {
+  color-scheme: light;
   /* Surfaces — blanc cassé chaud, plus propre que le gris-violet d'origine */
   --bg:              #f7f8fa;
   --bg-subtle:       #eef0f4;
@@ -704,4 +706,15 @@ html:not([data-theme="lumiere"]):not(.light) body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─── Accessibilite et confort tactile (Web Interface Guidelines) ──────────── */
+/* Contour visible pour la navigation au clavier, sans halo au toucher ni au clic */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+/* Pas de delai de double-tap (zoom) sur les controles */
+a, button, input, select, textarea, label, [role="button"], [role="radio"] {
+  touch-action: manipulation;
 }
