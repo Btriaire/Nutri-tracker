@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeVitals, sanitizeVitals, resample, type VitalsFrame } from "../app/lib/face-vitals";
+import { computeVitals, sanitizeVitals, resample, shouldStop, type VitalsFrame } from "../app/lib/face-vitals";
 
 // Generateur pseudo-aleatoire deterministe
 function rng(seed: number) { return () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 - 0.5; }; }
@@ -75,5 +75,27 @@ describe("outils", () => {
     expect(sanitizeVitals(JSON.parse(JSON.stringify(v)))).toEqual(JSON.parse(JSON.stringify(v)));
     expect(sanitizeVitals({ ...v, heartRate: 400 })).toBeNull();
     expect(sanitizeVitals({ ...v, version: 9 })).toBeNull();
+  });
+});
+
+describe("mesure courte", () => {
+  it("10 s suffisent pour le pouls (72 et 95 bpm)", () => {
+    for (const bpm of [72, 95]) {
+      const v = computeVitals(frames({ bpm, brpm: 15, seconds: 10.5 }))!;
+      expect(Math.abs(v.heartRate! - bpm)).toBeLessThanOrEqual(3);
+    }
+  });
+  it("pas de respiration sur une mesure courte (fenetre trop breve)", () => {
+    expect(computeVitals(frames({ bpm: 72, brpm: 15, seconds: 12 }))!.respRate).toBeNull();
+  });
+  it("arret automatique : 10 s minimum, puis 3 estimations stables, plafond 20 s", () => {
+    const e = (bpm: number | null, confidence: "faible" | "modérée" | "bonne" = "bonne") => ({ tMs: 0, bpm, confidence });
+    const stable = [e(71), e(72), e(73)];
+    expect(shouldStop(stable, 9000)).toBe(false);
+    expect(shouldStop(stable, 11000)).toBe(true);
+    expect(shouldStop([e(65), e(72), e(78)], 12000)).toBe(false);
+    expect(shouldStop([e(71), e(null), e(72)], 12000)).toBe(false);
+    expect(shouldStop([e(71), e(72, "faible"), e(72)], 12000)).toBe(false);
+    expect(shouldStop([], 20000)).toBe(true);
   });
 });

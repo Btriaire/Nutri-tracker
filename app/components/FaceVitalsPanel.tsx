@@ -39,7 +39,7 @@ function readings(v: FaceVitals) {
 
 export default function FaceVitalsPanel() {
   const [entries, setEntries] = useState<FaceVitalsEntry[] | null>(null);
-  const [capturing, setCapturing] = useState(false);
+  const [capturing, setCapturing] = useState<"quick" | "long" | null>(null);
   const [watchHr, setWatchHr] = useState<number | null>(null);
   const [saveError, setSaveError] = useState(false);
 
@@ -66,7 +66,7 @@ export default function FaceVitalsPanel() {
   }, [latest]);
 
   const save = async (v: FaceVitals) => {
-    setCapturing(false);
+    setCapturing(null);
     setSaveError(false);
     const now = new Date();
     const res = await fetch("/api/face-vitals", {
@@ -96,13 +96,17 @@ export default function FaceVitalsPanel() {
         <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Constantes par la caméra</h2>
       </div>
       <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
-        30 s de vidéo du visage : le pouls se lit dans les micro-variations de couleur de la peau à chaque battement
-        (photopléthysmographie à distance), plus la respiration, les clignements et la somnolence. Assis, au repos, de face.
+        Quelques secondes de vidéo du visage : le pouls se lit dans les micro-variations de couleur de la peau à chaque
+        battement (photopléthysmographie à distance), plus les clignements et la somnolence. Assis, au repos, de face.
       </p>
 
-      <button type="button" onClick={() => setCapturing(true)}
-        className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold mb-3" style={{ background: "var(--danger)", color: "#fff" }}>
-        Mesurer (30 s)
+      <button type="button" onClick={() => setCapturing("quick")}
+        className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold" style={{ background: "var(--danger)", color: "#fff" }}>
+        Mesurer mon pouls (10 à 15 s)
+      </button>
+      <button type="button" onClick={() => setCapturing("long")}
+        className="w-full min-h-[40px] text-[12px] font-medium mb-3" style={{ color: "var(--text-secondary)" }}>
+        Mesure longue avec respiration (25 s)
       </button>
       {saveError && <p role="alert" className="text-[12px] mb-2" style={{ color: "var(--danger)" }}>La mesure n&apos;a pas pu être enregistrée.</p>}
 
@@ -181,7 +185,7 @@ export default function FaceVitalsPanel() {
         changeante. Références : Verkruysse 2008 ; de Haan &amp; Jeanne 2013 ; Wang et al. 2017 (POS) ; Dinges 1998 (PERCLOS).
       </p>
 
-      {capturing && <FaceVitalsCapture onDone={save} onCancel={() => setCapturing(false)} />}
+      {capturing && <FaceVitalsCapture mode={capturing} onDone={save} onCancel={() => setCapturing(null)} />}
     </section>
   );
 }

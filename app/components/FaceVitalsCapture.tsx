@@ -4,25 +4,29 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconX, IconLoader2 } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
-import { computeVitals, type FaceVitals, type VitalsFrame } from "@/app/lib/face-vitals";
+import { computeVitals, shouldStop, MIN_MEASURE_MS, MAX_QUICK_MS, type FaceVitals, type LiveEstimate, type VitalsFrame } from "@/app/lib/face-vitals";
 
-const DURATION_MS = 30_000;
+// Rapide : s'arrete des que le pouls est stable (10 a 20 s). Long : 25 s fixes, pour la respiration.
+const LONG_MS = 25_000;
 // Zones de peau suivies a chaque image : front (151) et joues (205, 425)
 const ROI = [151, 205, 425];
 
 interface Props {
+  mode?: "quick" | "long";
   onDone: (v: FaceVitals) => void;
   onCancel: () => void;
 }
 
-/** Mesure de 30 s : camera frontale, suivi du visage image par image, couleur moyenne de la peau. */
-export default function FaceVitalsCapture({ onDone, onCancel }: Props) {
+/** Mesure de 10 a 20 s (ou 25 s en mode long) : camera frontale, suivi du visage image par image, couleur moyenne de la peau. */
+export default function FaceVitalsCapture({ mode = "quick", onDone, onCancel }: Props) {
+  const maxMs = mode === "long" ? LONG_MS : MAX_QUICK_MS;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<"loading" | "measuring" | "error">("loading");
   const [error, setError] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [face, setFace] = useState(false);
   const [liveBpm, setLiveBpm] = useState<number | null>(null);
+  const finishRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -46,6 +50,17 @@ export default function FaceVitalsCapture({ onDone, onCancel }: Props) {
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         setPhase("measuring");
         let start = 0, lastVideoTime = -1, lastLive = 0;
+        const estimates: LiveEstimate[] = [];
+        const finish = () => {
+          if (stopped) return;
+          stopped = true;
+          cancelAnimationFrame(raf);
+          stream?.getTracks().forEach((t) => t.stop());
+          const v = computeVitals(frames);
+          if (v) onDone(v);
+          else { setError("Pas assez d'images exploitables : garde le visage dans l'ovale, bien éclairé."); setPhase("error"); }
+        };
+        finishRef.current = finish;
 
         const tick = () => {
           if (stopped) return;
@@ -81,19 +96,14 @@ export default function FaceVitalsCapture({ onDone, onCancel }: Props) {
 
           const el = now - start;
           setElapsed(el);
-          if (el > 12_000 && now - lastLive > 2000) {
+          // Estimation provisoire chaque seconde a partir de 6 s
+          if (el > 6_000 && now - lastLive > 1000) {
             lastLive = now;
-            const v = computeVitals(frames);
+            const v = computeVitals(frames, 6);
+            estimates.push({ tMs: el, bpm: v?.heartRate ?? null, confidence: v?.heartConfidence ?? "faible" });
             setLiveBpm(v?.heartRate ?? null);
           }
-          if (el >= DURATION_MS) {
-            stopped = true;
-            cancelAnimationFrame(raf);
-            stream?.getTracks().forEach((t) => t.stop());
-            const v = computeVitals(frames);
-            if (v) onDone(v);
-            else { setError("Pas assez d'images exploitables : garde le visage dans l'ovale, bien éclairé."); setPhase("error"); }
-          }
+          if (mode === "quick" ? shouldStop(estimates, el) : el >= maxMs) finish();
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
@@ -114,8 +124,8 @@ export default function FaceVitalsCapture({ onDone, onCancel }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pct = Math.min(100, (elapsed / DURATION_MS) * 100);
-  const left = Math.max(0, Math.ceil((DURATION_MS - elapsed) / 1000));
+  const pct = Math.min(100, (elapsed / maxMs) * 100);
+  const secs = Math.floor(elapsed / 1000);
 
   // Portail vers <body> : la page cree son propre contexte d'empilement (wrapper relative z-10), qui laisserait
   // la barre de navigation passer par-dessus l'ecran de mesure (meme piege que FaceOvalCamera).
@@ -140,12 +150,19 @@ export default function FaceVitalsCapture({ onDone, onCancel }: Props) {
         {phase === "loading" ? "Préparation de la caméra…"
           : phase === "error" ? error
           : !face ? "Place ton visage dans l'ovale"
-          : `Ne bouge pas, respire normalement · ${left} s`}
+          : mode === "quick"
+            ? (elapsed < MIN_MEASURE_MS ? `Ne bouge pas · ${secs} s` : `Stabilisation du pouls… ${secs} s`)
+            : `Ne bouge pas, respire normalement · ${Math.max(0, Math.ceil((maxMs - elapsed) / 1000))} s`}
       </p>
       {phase === "measuring" && (
         <p className="text-[13px] mt-1 text-center" style={{ color: "rgba(255,255,255,0.7)" }}>
           {liveBpm ? `Pouls provisoire : ${liveBpm} bpm` : "Assis, lumière stable et de face, sans parler."}
         </p>
+      )}
+      {phase === "measuring" && mode === "quick" && elapsed >= MIN_MEASURE_MS && (
+        <button type="button" onClick={() => finishRef.current?.()} className="mt-4 min-h-[44px] px-5 rounded-xl text-[14px] font-semibold" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
+          Terminer maintenant
+        </button>
       )}
       {phase === "error" && (
         <button type="button" onClick={onCancel} className="mt-4 min-h-[44px] px-5 rounded-xl text-[14px] font-semibold" style={{ background: "#fff", color: "#000" }}>Fermer</button>

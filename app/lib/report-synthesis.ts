@@ -118,7 +118,7 @@ function buildUserMessage(data: ReportData): string {
   }
   const fv = data.faceScan.vitals;
   if (fv) {
-    lines.push(`\n— Constantes par la caméra (${fv.count} mesure${fv.count > 1 ? "s" : ""} de 30 s au repos) —`);
+    lines.push(`\n— Constantes par la caméra (${fv.count} mesure${fv.count > 1 ? "s" : ""} par la caméra au repos) —`);
     lines.push(`Pouls médian ${fv.heartRate ?? "?"} bpm · respiration ≈ ${fv.respRate ?? "?"} /min · clignements ${fv.blinksPerMin ?? "?"} /min · PERCLOS max ${fv.perclosMax ?? "?"} % (≥ 15 % = somnolence)`);
   }
 

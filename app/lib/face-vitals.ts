@@ -1,4 +1,4 @@
-// Constantes mesurees par la camera sur ~30 s de video du visage. Module pur (teste dans tests/face-vitals.test.ts).
+// Constantes mesurees par la camera sur 10 a 25 s de video du visage. Module pur (teste dans tests/face-vitals.test.ts).
 //
 // - Pouls : photoplethysmographie a distance (rPPG), algorithme POS (Wang, den Brinker, Stuijk & de Haan,
 //   "Algorithmic Principles of Remote PPG", IEEE TBME 2017) sur la couleur moyenne du front et des joues,
@@ -118,11 +118,12 @@ function prominence(spec: { f: number; p: number }[], pk: { p: number }): number
   return pk.p / (ps[ps.length >> 1] || 1e-12);
 }
 
-export function computeVitals(frames: VitalsFrame[]): FaceVitals | null {
-  if (frames.length < 60) return null;
+/** `minDurationS` : 10 s pour un resultat ; plus court seulement pour les estimations provisoires. */
+export function computeVitals(frames: VitalsFrame[], minDurationS = 10): FaceVitals | null {
+  if (frames.length < Math.min(60, minDurationS * 8)) return null;
   const t = frames.map((f) => f.t);
   const durationS = (t[t.length - 1] - t[0]) / 1000;
-  if (durationS < 10) return null;
+  if (durationS < minDurationS) return null;
   const fps = (frames.length - 1) / durationS;
   const HZ = 30;
   const warnings: string[] = [];
@@ -144,10 +145,10 @@ export function computeVitals(frames: VitalsFrame[]): FaceVitals | null {
   if (lum < 60) warnings.push("Lumière faible : mets-toi face à une fenêtre ou une lampe");
   if (heartConfidence === "faible") warnings.push("Signal du pouls trop faible : lumière stable et visage immobile");
 
-  // Respiration (indicative) : intensite de la peau et mouvement vertical, sur 30 s minimum
+  // Respiration (indicative) : intensite de la peau et mouvement vertical, sur 18 s minimum (mesure longue)
   let respRate: number | null = null;
   let respConfidence: FaceVitals["respConfidence"] = "faible";
-  if (durationS >= 20) {
+  if (durationS >= 18) {
     const lumS = detrend(resample(t, frames.map((f) => f.rgb[1]), 10), 10 * 12);
     const motS = detrend(resample(t, frames.map((f) => f.noseY), 10), 10 * 12);
     const cands = [lumS, motS].map((x) => { const sp = spectrum(x, 10, 0.1, 0.5, 0.005); const pk = peak(sp); return { f: pk.f, prom: prominence(sp, pk) }; });
@@ -202,4 +203,23 @@ export function sanitizeVitals(x: unknown): FaceVitals | null {
     blinksPerMin: v.blinksPerMin as number, perclos: v.perclos as number, motion: v.motion as number,
     warnings: Array.isArray(v.warnings) ? (v.warnings as unknown[]).filter((w): w is string => typeof w === "string").slice(0, 6).map((w) => w.slice(0, 120)) : [],
   };
+}
+
+/** Estimation provisoire pendant la mesure. */
+export interface LiveEstimate { tMs: number; bpm: number | null; confidence: FaceVitals["heartConfidence"] }
+
+export const MIN_MEASURE_MS = 10_000;
+export const MAX_QUICK_MS = 20_000;
+
+/**
+ * Arret automatique : au moins 10 s, puis des que les 3 dernieres estimations (une par seconde)
+ * sont fiables et a moins de 3 bpm d'ecart. Plafond 20 s : on garde alors ce qu'on a.
+ */
+export function shouldStop(estimates: LiveEstimate[], elapsedMs: number): boolean {
+  if (elapsedMs >= MAX_QUICK_MS) return true;
+  if (elapsedMs < MIN_MEASURE_MS) return false;
+  const last = estimates.slice(-3);
+  if (last.length < 3 || last.some((e) => e.bpm === null || e.confidence === "faible")) return false;
+  const bpms = last.map((e) => e.bpm!);
+  return Math.max(...bpms) - Math.min(...bpms) <= 3;
 }
