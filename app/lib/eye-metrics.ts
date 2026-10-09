@@ -21,6 +21,8 @@ export interface EyeSide {
   // ── Analyse detaillee (v1.1, champs optionnels : absents des premiers scans) ──
   fissureWidthMm?: number;       // largeur de la fente palpebrale (coin interne -> externe)
   fenteRatio?: number;           // hauteur de la fente / diametre de l'iris (independant de la distance)
+  irisLab?: [number, number, number] | null; // couleur de l'iris (CIELAB mediane, anneau hors pupille et hors reflet)
+  irisName?: string | null;      // famille de couleur lisible (brun, noisette, clair...)
   scleralShowUpperMm?: number;   // blanc visible au-dessus de l'iris (yeux ecarquilles)
   scleralShowLowerMm?: number;   // blanc visible sous l'iris (fatigue, paupiere inferieure relachee)
   rednessNasal?: number | null;  // rougeur cote nez
@@ -94,6 +96,40 @@ export function detectPupil(read: PixelReader, c: Pt, irisR: number, w: number, 
   while (lo > 0 && grad[lo - 1].g >= best.g * 0.9) lo--;
   while (hi < grad.length - 1 && grad[hi + 1].g >= best.g * 0.9) hi++;
   return { r: (grad[lo].r + grad[hi].r) / 2, contrast: best.g };
+}
+
+/** Couleur de l'iris : anneau entre la pupille et le bord, reflets (tres clairs) et cils (tres sombres) exclus. */
+function irisColour(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { irisLab: [number, number, number] | null; irisName: string | null } {
+  const Ls: number[] = [], As: number[] = [], Bs: number[] = [];
+  const rMax = R * 0.9;
+  for (let dy = -rMax; dy <= rMax; dy += 1) for (let dx = -rMax; dx <= rMax; dx += 1) {
+    const d = Math.hypot(dx, dy);
+    if (d < Math.max(pupilR * 1.15, R * 0.3) || d > rMax) continue;
+    const xi = Math.round(c.x + dx), yi = Math.round(c.y + dy);
+    if (xi < 0 || yi < 0 || xi >= w || yi >= h) continue;
+    const [L, a, b] = rgbToLab(read(xi, yi));
+    if (L > 88 || L < 6) continue;
+    Ls.push(L); As.push(a); Bs.push(b);
+  }
+  if (Ls.length < 30) return { irisLab: null, irisName: null };
+  const lab: [number, number, number] = [round(median(Ls), 1), round(median(As), 1), round(median(Bs), 1)];
+  return { irisLab: lab, irisName: irisColourName(lab) };
+}
+
+/** Famille de couleur lisible, a partir de la luminosite (L*) et du jaune/bleu (b*). Grossier, par design. */
+export function irisColourName([L, , b]: [number, number, number]): string {
+  if (L < 25) return "brun très foncé";
+  if (L < 40) return "brun";
+  if (L < 55) return b > 20 ? "noisette / ambré" : "brun clair";
+  if (L < 68) return b > 12 ? "vert / noisette clair" : "gris-vert";
+  return "bleu / gris clair";
+}
+
+/** Iris de couleurs differentes gauche/droite (heterochromie) : ecart de couleur L*a*b* au-dessus du seuil. */
+export function irisDifference(m: EyeMetrics): number | null {
+  const a = m.A.irisLab, b = m.B.irisLab;
+  if (!a || !b) return null;
+  return round(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), 1);
 }
 
 function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: PixelReader, w: number, h: number): EyeSide {
@@ -179,6 +215,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     arcus: arcus === null ? null : round(arcus, 1),
     fissureWidthMm: round(dist(P[e.inner], P[e.outer]) * mmPerPx),
     fenteRatio: round((mrd1Mm + mrd2Mm) / HVID_MM, 3),
+    ...irisColour(read, c, R, pupil?.r ?? R * 0.4, w, h),
     scleralShowUpperMm: round(Math.max(0, mrd1Mm - RADIUS_MM)),
     scleralShowLowerMm: round(Math.max(0, mrd2Mm - RADIUS_MM)),
     rednessNasal: zoneRed(zone.nasal),

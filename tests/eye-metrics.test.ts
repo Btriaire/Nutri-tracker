@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, eyeSideIndexes, sideNotes, type EyeScanData, type EyeMetrics } from "../app/lib/eye-metrics";
+import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, eyeSideIndexes, sideNotes, irisDifference, type EyeScanData, type EyeMetrics } from "../app/lib/eye-metrics";
 
 const W = 500, H = 400, R = 40;
 const CA = { x: 150, y: 200 }, CB = { x: 350, y: 200 };
@@ -172,5 +172,16 @@ describe("analyse par oeil", () => {
     expect(eyeSideIndexes(cur, all, "B").ouverture).toBe(50);
     expect(sideNotes(cur, all, "A").join()).toMatch(/Ouverture de la paupière : moins ouverte que d'habitude/);
     expect(sideNotes(cur, all, "B")).toEqual([]);
+  });
+});
+
+describe("couleur de l'iris", () => {
+  it("iris brun vs iris clair : nom de couleur, et heterochromie detectee", () => {
+    const brown = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ iris: [90, 55, 30] }) })!;
+    expect(brown.A.irisName).toMatch(/brun/);
+    const blue = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ iris: [120, 165, 200] }) })!;
+    expect(blue.A.irisName).toMatch(/bleu|gris/);
+    const same = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
+    expect(irisDifference(same)!).toBeLessThan(3);
   });
 });

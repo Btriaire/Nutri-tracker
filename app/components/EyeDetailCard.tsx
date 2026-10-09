@@ -32,6 +32,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
     ["Arc cornéen / anneau limbique", `${n(side.arcus)} / ${n(side.limbalRing)}`],
     ["Cernes sous cet œil", side.cernes == null ? "—" : `${n(side.cernes)} (L* joue − sous l'œil)`],
     ["Fente / iris", side.fenteRatio == null ? "—" : n(side.fenteRatio, 2)],
+    ["Couleur de l'iris", side.irisName ?? "non mesurable"],
     ["Reflet de l'écran (Hirschberg)", cl ? `${n(cl.dxMm)} / ${n(cl.dyMm)} mm du centre` : "non détecté"],
   ];
 
