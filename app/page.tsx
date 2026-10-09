@@ -3,6 +3,6 @@ import Splash from "@/app/components/Splash";
 
 export default async function Home() {
   const session = await getSession();
-  const target  = session ? "/dashboard" : "/login";
+  const target  = session ? "/log" : "/login";
   return <Splash target={target} />;
 }
