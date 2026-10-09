@@ -41,7 +41,7 @@ function packIco(pngBuffers) {
 // ─── Standard icon (rounded-square background, safe for favicon/apple/any) ───
 const iconSVG = `
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="112" fill="#10b981"/>
+  <rect width="512" height="512" rx="112" fill="#1e3a5f"/>
   <circle cx="256" cy="256" r="118" fill="none" stroke="#ffffff" stroke-width="30"/>
   <circle cx="256" cy="256" r="52" fill="#ffffff"/>
   <rect x="66" y="150" width="9" height="62" rx="4.5" fill="#ffffff"/>
@@ -57,7 +57,7 @@ const iconSVG = `
 // ─── Maskable icon (full-bleed background, mark within safe zone ~70%) ───
 const maskableSVG = `
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#10b981"/>
+  <rect width="512" height="512" fill="#1e3a5f"/>
   <g transform="translate(256 256) scale(0.8) translate(-256 -256)">
   <circle cx="256" cy="256" r="118" fill="none" stroke="#ffffff" stroke-width="30"/>
   <circle cx="256" cy="256" r="52" fill="#ffffff"/>

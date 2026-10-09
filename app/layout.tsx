@@ -48,8 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={geistSans.variable} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#1e3a5f" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1e3a5f" media="(prefers-color-scheme: dark)" />
       </head>
       <body style={{ color: "var(--text-primary)", minHeight: "100vh" }}>
         <ThemeProvider>
