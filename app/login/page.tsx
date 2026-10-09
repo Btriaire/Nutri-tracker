@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { IconMail, IconLock, IconChevronRight, IconLoader2 } from "@tabler/icons-react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
-import AnimatedLogo from "@/app/components/AnimatedLogo";
+import AppIcon from "@/app/components/AppIcon";
 
 async function createServerSession(body: object): Promise<boolean> {
   const res = await fetch("/api/auth/session", {
@@ -70,7 +70,7 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-3">
-            <AnimatedLogo size={56} play={false} />
+            <AppIcon size={56} />
           </div>
           <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
             NutriTracker

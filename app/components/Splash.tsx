@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import AnimatedLogo from "./AnimatedLogo";
+import AppIcon from "./AppIcon";
 
 /**
  * Écran d'accueil animé joué à la racine "/" pour tout le monde
@@ -34,7 +34,9 @@ export default function Splash({ target }: { target: string }) {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => setGone(true)}
           >
-            <AnimatedLogo size={132} />
+            <motion.div animate={{ scale: [1, 1.035, 1] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}>
+              <AppIcon size={132} />
+            </motion.div>
 
             <div className="mt-6 flex overflow-hidden">
               {"NutriTracker".split("").map((c, i) => (
