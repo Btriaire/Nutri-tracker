@@ -9,7 +9,12 @@ const n = (v: number | null | undefined, d = 1) => (v == null ? "—" : (Math.ro
 const S = 320, C = S / 2, PX_PER_MM = S / (3 * HVID_MM);
 
 /** Un oeil isole : photo annotee (iris, pupille, paupieres, reflet) et toutes ses mesures. */
-export default function EyeDetailCard({ label, side, imageUrl }: { label: string; side: EyeSide; imageUrl: string | null }) {
+const INDEX_LABEL: Record<string, string> = { ouverture: "Ouverture", paupiereBasse: "Paupière basse", cernes: "Cernes", rougeur: "Rougeur", jaune: "Jaune" };
+
+export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }: {
+  label: string; side: EyeSide; imageUrl: string | null;
+  indexes?: Record<string, number | null> | null; notes?: string[];
+}) {
   const irisR = (HVID_MM / 2) * PX_PER_MM;
   const pupilR = side.pupilMm != null ? (side.pupilMm / 2) * PX_PER_MM : null;
   const upperY = C - side.mrd1Mm * PX_PER_MM, lowerY = C + side.mrd2Mm * PX_PER_MM;
@@ -26,6 +31,7 @@ export default function EyeDetailCard({ label, side, imageUrl }: { label: string
     ["Jaune du blanc (b*)", n(side.scleraB)],
     ["Arc cornéen / anneau limbique", `${n(side.arcus)} / ${n(side.limbalRing)}`],
     ["Cernes sous cet œil", side.cernes == null ? "—" : `${n(side.cernes)} (L* joue − sous l'œil)`],
+    ["Fente / iris", side.fenteRatio == null ? "—" : n(side.fenteRatio, 2)],
     ["Reflet de l'écran (Hirschberg)", cl ? `${n(cl.dxMm)} / ${n(cl.dyMm)} mm du centre` : "non détecté"],
   ];
 
@@ -58,6 +64,21 @@ export default function EyeDetailCard({ label, side, imageUrl }: { label: string
           <span><span style={{ color: "#34d399" }}>●</span> paupières</span>
           <span><span style={{ color: "#f87171" }}>●</span> reflet</span>
         </p>
+      )}
+      {indexes && (
+        <div className="grid grid-cols-5 gap-1 px-3 pb-2">
+          {Object.entries(INDEX_LABEL).map(([k, lab]) => (
+            <div key={k} className="rounded-lg p-1.5 text-center" style={{ background: "var(--layer-2)" }}>
+              <p className="text-[11px] leading-tight" style={{ color: "var(--text-secondary)" }}>{lab}</p>
+              <p className="text-[15px] font-semibold tabular-nums" style={{ color: indexes[k] == null ? "var(--text-muted)" : "var(--text-primary)" }}>{indexes[k] ?? "—"}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {notes && (
+        <ul className="px-3 pb-2 space-y-0.5 text-[12px]" style={{ color: notes.length ? "var(--warn)" : "var(--text-muted)" }}>
+          {notes.length ? notes.map((t) => <li key={t}>• {t}</li>) : <li>Dans ton habitude sur toutes les mesures.</li>}
+        </ul>
       )}
       <dl className="px-3 pb-2.5 text-[12px]">
         {rows.map(([k, v]) => (

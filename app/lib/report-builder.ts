@@ -211,7 +211,7 @@ export interface ReportData {
     /** Mesures objectives (points du visage + couleur) sur TOUT l'historique, pas seulement la periode. */
     objective?: FaceReportSummary | null;
     /** Scans de l'oeil de la periode : index du dernier et signaux a surveiller. */
-    eye?: { count: number; latestDate: string; indexes: { secheresse: number | null; fatigue: number | null; coloration: number | null }; mbiS: number | null; signals: string[] } | null;
+    eye?: { count: number; latestDate: string; indexes: { secheresse: number | null; fatigue: number | null; coloration: number | null }; perEye?: Record<"A" | "B", Record<string, number | null>> | null; mbiS: number | null; signals: string[] } | null;
   };
   measurements: {
     entriesCount: number;
@@ -541,8 +541,8 @@ export async function buildReportData(userId: string, from: string, to: string):
   const faceObjective = summarizeForReport(faceMetricsSnap.docs
     .map(d => d.data() as { date: string; metrics?: FaceMetrics })
     .filter((h): h is { date: string; metrics: FaceMetrics } => h.metrics?.version === FACE_METRICS_VERSION && h.date <= to));
-  const eyeSnap = await db.collection(`users/${userId}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS").get();
-  const eyeAll = eyeSnap.docs.map(d => d.data() as EyeScanData & { time: string })
+  const eyeSnap = await db.collection(`users/${userId}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexesEye").get();
+  const eyeAll = eyeSnap.docs.map(d => d.data() as EyeScanData & { time: string; indexesEye?: Record<"A" | "B", Record<string, number | null>> })
     .filter(e => e.metrics?.version === EYE_METRICS_VERSION && e.date <= to)
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   const eyePeriod = eyeAll.filter(e => e.date >= from);
@@ -551,6 +551,7 @@ export async function buildReportData(userId: string, from: string, to: string):
     count: eyePeriod.length,
     latestDate: eyeLatest.date,
     indexes: eyeIndexes(eyeLatest, eyeAll),
+    perEye: eyeLatest.indexesEye ?? null,
     mbiS: eyeLatest.mbiS ?? null,
     signals: eyeSignals(eyeLatest, eyeAll).filter(s => s.level !== "ok").map(s => s.text),
   } : null;

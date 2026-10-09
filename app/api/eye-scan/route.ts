@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
-import { sanitizeEyeScan, type EyeScanData, type EyeSignal, type eyeIndexesFrom } from "@/app/lib/eye-metrics";
+import { sanitizeEyeScan, type EyeScanData, type EyeSignal, type eyeIndexesFrom, type sideIndexesFrom } from "@/app/lib/eye-metrics";
 import { refreshEyeStats } from "@/app/lib/scan-stats";
 
 // Scans de l'oeil : users/owner/eyeScans/{id} (mesures + petite photo recadree des yeux)
@@ -15,6 +15,8 @@ export type EyeScanEntry = EyeScanData & {
   id: string; time: string;
   /** Index et signaux du jour (vs scans anterieurs), memorises a l'enregistrement. */
   indexes?: ReturnType<typeof eyeIndexesFrom>;
+  /** Index de chaque oeil, mémorisés (A = droit, B = gauche). */
+  indexesEye?: Record<"A" | "B", ReturnType<typeof sideIndexesFrom>>;
   /** Photos isolees de chaque oeil disponibles (servies par /api/eye-scan/image?eye=A|B). */
   eyes?: ("A" | "B")[];
   signals?: EyeSignal[];
@@ -25,7 +27,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const db = getAdminFirestore();
   const [snap, stats] = await Promise.all([
-    db.collection(COL).orderBy("date", "desc").select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals", "eyes").get(),
+    db.collection(COL).orderBy("date", "desc").select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals", "indexesEye", "eyes").get(),
     db.doc("users/owner/eyeStats/current").get(),
   ]);
   const scans = snap.docs.map((d) => ({ ...(d.data() as Omit<EyeScanEntry, "id">), id: d.id }))
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
   await ref.set({ ...entry, ...(image ? { image } : {}), ...(imageA ? { imageA } : {}), ...(imageB ? { imageB } : {}), createdAt: Timestamp.now() });
   await refreshEyeStats(db).catch((e) => console.error("[eye-scan stats]", e));
   const saved = (await ref.get()).data() as EyeScanEntry;
-  return NextResponse.json({ scan: { ...entry, indexes: saved.indexes, signals: saved.signals } }, { status: 201 });
+  return NextResponse.json({ scan: { ...entry, indexes: saved.indexes, signals: saved.signals, indexesEye: saved.indexesEye } }, { status: 201 });
 }
 
 export async function DELETE(req: NextRequest) {

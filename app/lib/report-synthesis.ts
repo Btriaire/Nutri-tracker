@@ -122,6 +122,7 @@ function buildUserMessage(data: ReportData): string {
     const ix = fe.indexes as Record<string, number | null>;
     lines.push(`Index vs habitude (50) : sécheresse ${ix.secheresse ?? "?"}, fatigue ${ix.fatigue ?? "?"}, coloration ${ix.coloration ?? "?"}, ouverture ${ix.ouverture ?? "?"}, cernes ${ix.cernes ?? "?"}${fe.mbiS != null ? ` · yeux ouverts sans cligner ${fe.mbiS} s` : ""}`);
     if (fe.signals.length) lines.push(`À surveiller : ${fe.signals.join(" ; ")}`);
+    if (fe.perEye) lines.push(`Par œil — droit : ouverture ${fe.perEye.A.ouverture ?? "?"}, cernes ${fe.perEye.A.cernes ?? "?"} · gauche : ouverture ${fe.perEye.B.ouverture ?? "?"}, cernes ${fe.perEye.B.cernes ?? "?"}`);
   }
 
   if (data.measurements.entriesCount > 0) {

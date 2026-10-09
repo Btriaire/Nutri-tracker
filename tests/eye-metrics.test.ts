@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, type EyeScanData } from "../app/lib/eye-metrics";
+import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, eyeSideIndexes, sideNotes, type EyeScanData, type EyeMetrics } from "../app/lib/eye-metrics";
 
 const W = 500, H = 400, R = 40;
 const CA = { x: 150, y: 200 }, CB = { x: 350, y: 200 };
@@ -154,5 +154,23 @@ describe("analyse detaillee par oeil", () => {
   it("symetrie : 100 si les deux yeux sont identiques, plus bas si les pupilles different", () => {
     expect(computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!.symmetryScore).toBeGreaterThanOrEqual(95);
     expect(computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ pupilB: 22 }) })!.symmetryScore!).toBeLessThan(70);
+  });
+});
+
+describe("analyse par oeil", () => {
+  it("un oeil plus ferme que sa propre habitude : son index ouverture baisse, l'autre reste a 50, lecture dediee", () => {
+    const base = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
+    const mk = (mut?: (m: EyeMetrics) => void): EyeScanData => {
+      const m = JSON.parse(JSON.stringify(base)) as EyeMetrics;
+      mut?.(m);
+      return { date: "2026-10-01", metrics: m, mbiS: 15 };
+    };
+    const hist = [mk(), mk(), mk(), mk()];
+    const cur = mk((m) => { m.A.mrd1Mm = 2.0; });
+    const all = [...hist, cur];
+    expect(eyeSideIndexes(cur, all, "A").ouverture!).toBeLessThan(10);
+    expect(eyeSideIndexes(cur, all, "B").ouverture).toBe(50);
+    expect(sideNotes(cur, all, "A").join()).toMatch(/Ouverture de la paupière : moins ouverte que d'habitude/);
+    expect(sideNotes(cur, all, "B")).toEqual([]);
   });
 });

@@ -9,7 +9,7 @@ import { IconEye, IconCircleCheck, IconAlertTriangle, IconAlertOctagon, IconTras
 import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanCapture";
 import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import EyeDetailCard from "@/app/components/EyeDetailCard";
-import { eyeIndexes, eyeSignals, rednessGrade, scanValue, type EyeValueKey } from "@/app/lib/eye-metrics";
+import { eyeIndexes, eyeSignals, eyeSideIndexes, sideNotes, rednessGrade, scanValue, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
 type Context = {
@@ -169,8 +169,10 @@ export default function EyeScanClient() {
                 Chaque œil est isolé et mesuré séparément ; les traits montrent ce qui a été mesuré sur la photo.
               </p>
               <div className="space-y-3">
-                <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A` : null} />
-                <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B` : null} />
+                <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A` : null}
+                  indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")} />
+                <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B` : null}
+                  indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")} />
               </div>
             </section>
 

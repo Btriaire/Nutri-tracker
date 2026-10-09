@@ -20,6 +20,7 @@ export interface EyeSide {
   arcus: number | null;          // L* bord de l'iris - L* milieu de l'iris (anneau clair = arc corneen)
   // ── Analyse detaillee (v1.1, champs optionnels : absents des premiers scans) ──
   fissureWidthMm?: number;       // largeur de la fente palpebrale (coin interne -> externe)
+  fenteRatio?: number;           // hauteur de la fente / diametre de l'iris (independant de la distance)
   scleralShowUpperMm?: number;   // blanc visible au-dessus de l'iris (yeux ecarquilles)
   scleralShowLowerMm?: number;   // blanc visible sous l'iris (fatigue, paupiere inferieure relachee)
   rednessNasal?: number | null;  // rougeur cote nez
@@ -177,6 +178,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     scleraB: scleraB === null ? null : round(scleraB),
     arcus: arcus === null ? null : round(arcus, 1),
     fissureWidthMm: round(dist(P[e.inner], P[e.outer]) * mmPerPx),
+    fenteRatio: round((mrd1Mm + mrd2Mm) / HVID_MM, 3),
     scleralShowUpperMm: round(Math.max(0, mrd1Mm - RADIUS_MM)),
     scleralShowLowerMm: round(Math.max(0, mrd2Mm - RADIUS_MM)),
     rednessNasal: zoneRed(zone.nasal),
@@ -433,4 +435,85 @@ export function sanitizeEyeScan(x: unknown): Omit<EyeScanData, "date"> | null {
   const clean = JSON.parse(JSON.stringify({ metrics: m, plr: plr ?? null, conjunctiva: cj ?? null, mbiS: d.mbiS ?? null }));
   clean.metrics.quality.warnings = (clean.metrics.quality.warnings as unknown[]).filter((w): w is string => typeof w === "string").slice(0, 6);
   return clean;
+}
+
+// ─── Analyse par oeil (v1.2) : chaque oeil lu seul, contre sa propre reference ───────────────
+// Un index par oeil et une lecture ecrite. Memorises a l'enregistrement (scan-stats), donc pas recalcules.
+
+type SideKey = "mrd1" | "fente" | "rougeur" | "jaune" | "cernes" | "sclereBas" | "pupille" | "arcus" | "limbal";
+export type EyeSideId = "A" | "B";
+
+const SIDE_LABEL: Record<SideKey, string> = {
+  mrd1: "Ouverture de la paupière", fente: "Hauteur de la fente", rougeur: "Rougeur du blanc", jaune: "Jaune du blanc",
+  cernes: "Cernes", sclereBas: "Blanc sous l'iris", pupille: "Pupille", arcus: "Arc cornéen", limbal: "Anneau limbique",
+};
+// [valeur haute, valeur basse] : ce que dit la lecture selon le sens de l'écart
+const SIDE_WORDS: Record<SideKey, [string, string]> = {
+  mrd1: ["plus ouverte", "moins ouverte"], fente: ["plus haute", "plus basse"], rougeur: ["plus rouge", "moins rouge"],
+  jaune: ["plus jaune", "moins jaune"], cernes: ["plus marqués", "moins marqués"], sclereBas: ["plus visible sous l'iris", "moins visible"],
+  pupille: ["plus grande", "plus petite"], arcus: ["plus marqué", "moins marqué"], limbal: ["plus net", "plus estompé"],
+};
+const SIDE_MIN: Record<SideKey, number> = { mrd1: 0.3, fente: 0.4, rougeur: 0.8, jaune: 0.8, cernes: 0.8, sclereBas: 0.3, pupille: 0.3, arcus: 2, limbal: 1 };
+
+function sideValue(k: SideKey, s: EyeSide): number | null {
+  const v = k === "mrd1" ? s.mrd1Mm
+    : k === "fente" ? s.mrd1Mm + s.mrd2Mm
+    : k === "rougeur" ? s.rednessA
+    : k === "jaune" ? s.scleraB
+    : k === "cernes" ? s.cernes ?? null
+    : k === "sclereBas" ? s.scleralShowLowerMm ?? null
+    : k === "pupille" ? s.pupilMm
+    : k === "arcus" ? s.arcus
+    : s.limbalRing ?? null;
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+export type SideBaselines = Partial<Record<SideKey, { median: number; spread: number; n: number }>>;
+
+/** Reference personnelle de CET oeil (mediane + dispersion robuste des scans de qualite). */
+export function sideBaselines(history: EyeScanData[], side: EyeSideId, exclude?: EyeScanData): SideBaselines {
+  const out: SideBaselines = {};
+  const good = history.filter((h) => h !== exclude && h.metrics.quality.score >= 60);
+  for (const k of Object.keys(SIDE_MIN) as SideKey[]) {
+    const vals = good.map((h) => sideValue(k, h.metrics[side])).filter((x): x is number => x !== null);
+    const b = robust(vals, SIDE_MIN[k]);
+    if (b) out[k] = { ...b, n: vals.length };
+  }
+  return out;
+}
+
+const sideZ = (k: SideKey, s: EyeSide, b: SideBaselines): number | null => {
+  const v = sideValue(k, s), base = b[k];
+  return v === null || !base ? null : (v - base.median) / base.spread;
+};
+
+/** Index 0-100 d'un oeil (50 = son habitude). */
+export function sideIndexesFrom(current: EyeScanData, b: SideBaselines, side: EyeSideId) {
+  const s = current.metrics[side];
+  const z = (k: SideKey) => sideZ(k, s, b);
+  return {
+    ouverture: idx([[z("mrd1"), 0.6], [z("fente"), 0.4]]),
+    paupiereBasse: idx([[z("sclereBas"), 1]]),
+    cernes: idx([[z("cernes"), 1]]),
+    rougeur: idx([[z("rougeur"), 1]]),
+    jaune: idx([[z("jaune"), 1]]),
+  };
+}
+
+export function eyeSideIndexes(current: EyeScanData, history: EyeScanData[], side: EyeSideId) {
+  return sideIndexesFrom(current, sideBaselines(history, side, current), side);
+}
+
+/** Lecture ecrite d'un oeil : ce qui s'ecarte nettement (|z| >= 1,5) de sa propre habitude. */
+export function sideNotes(current: EyeScanData, history: EyeScanData[], side: EyeSideId): string[] {
+  const b = sideBaselines(history, side, current);
+  const s = current.metrics[side];
+  const out: string[] = [];
+  for (const k of Object.keys(SIDE_MIN) as SideKey[]) {
+    const z = sideZ(k, s, b);
+    if (z === null || Math.abs(z) < 1.5) continue;
+    const [up, down] = SIDE_WORDS[k];
+    out.push(`${SIDE_LABEL[k]} : ${z > 0 ? up : down} que d'habitude`);
+  }
+  return out;
 }

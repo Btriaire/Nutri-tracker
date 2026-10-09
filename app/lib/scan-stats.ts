@@ -6,7 +6,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { Timestamp } from "firebase-admin/firestore";
 import { computeBaselines, faceIndexes, FACE_METRICS_VERSION, type FaceMetrics, type FaceIndexes } from "./face-metrics";
-import { eyeBaselines, eyeIndexesFrom, eyeSignalsFrom, EYE_METRICS_VERSION, type EyeScanData } from "./eye-metrics";
+import { eyeBaselines, eyeIndexesFrom, eyeSignalsFrom, sideBaselines, sideIndexesFrom, EYE_METRICS_VERSION, type EyeScanData } from "./eye-metrics";
 
 const USER = "users/owner";
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
@@ -34,10 +34,10 @@ export async function refreshFaceStats(db: Firestore) {
   return { count: scans.length, written };
 }
 
-type EyeDoc = EyeScanData & { time: string; indexes?: unknown; signals?: unknown };
+type EyeDoc = EyeScanData & { time: string; indexes?: unknown; signals?: unknown; indexesEye?: unknown };
 
 export async function refreshEyeStats(db: Firestore) {
-  const snap = await db.collection(`${USER}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals").get();
+  const snap = await db.collection(`${USER}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals", "indexesEye").get();
   const scans = snap.docs
     .map((d) => ({ ref: d.ref, data: d.data() as EyeDoc }))
     .filter((s) => s.data.metrics?.version === EYE_METRICS_VERSION)
@@ -50,10 +50,17 @@ export async function refreshEyeStats(db: Firestore) {
   let written = 0;
   for (let i = 0; i < scans.length; i++) {
     const cur = scans[i].data;
-    const b = eyeBaselines(scans.slice(0, i).map((s) => s.data));   // scans anterieurs uniquement
+    const prior = scans.slice(0, i).map((s) => s.data);          // scans anterieurs uniquement
+    const b = eyeBaselines(prior);
     const indexes = eyeIndexesFrom(cur, b);
     const signals = eyeSignalsFrom(cur, b);
-    if (!same(indexes, cur.indexes) || !same(signals, cur.signals)) { await scans[i].ref.update({ indexes, signals }); written++; }
+    const indexesEye = {
+      A: sideIndexesFrom(cur, sideBaselines(prior, "A"), "A"),
+      B: sideIndexesFrom(cur, sideBaselines(prior, "B"), "B"),
+    };
+    if (!same(indexes, cur.indexes) || !same(signals, cur.signals) || !same(indexesEye, cur.indexesEye)) {
+      await scans[i].ref.update({ indexes, signals, indexesEye }); written++;
+    }
   }
   return { count: scans.length, written };
 }
