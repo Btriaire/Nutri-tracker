@@ -99,7 +99,10 @@ export default function Nav() {
           {pageTitle(path)}
         </span>
         <Link href="/dashboard" aria-label="Accueil Nutri-Tracker" className="flex items-center flex-shrink-0 min-h-[44px] opacity-70 active:opacity-100">
-          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103} className="h-6 w-auto" priority />
+          <span className="flex items-center gap-1.5">
+            <Image src="/icons/icon-192.png" alt="" width={24} height={24} className="rounded-[6px]" priority />
+            <span className="text-[14px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Nutri-Tracker</span>
+          </span>
         </Link>
       </div>
 
@@ -165,8 +168,10 @@ export default function Nav() {
         }}
       >
         <Link href="/dashboard" className="flex items-center px-2 mb-6">
-          <Image src="/logo.png" alt="Nutri-Tracker" width={390} height={103}
-            className="w-full max-w-[180px] h-auto" priority />
+          <span className="flex items-center gap-2">
+            <Image src="/icons/icon-192.png" alt="" width={32} height={32} className="rounded-[8px]" priority />
+            <span className="text-[16px] font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Nutri-Tracker</span>
+          </span>
         </Link>
 
         {TABS.map(({ href, Icon, label, color, bg }) => {
