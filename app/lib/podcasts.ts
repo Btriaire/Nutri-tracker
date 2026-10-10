@@ -1,7 +1,9 @@
 // Podcasts NotebookLM : fichiers .m4a generes et conserves sur le VPS (vps-manager, /opt/notebooklm-nutri/output).
 // L'appli ne fait que relayer : si le VPS ne repond pas, on le dit clairement au lieu de laisser une liste vide.
 
-export const VPS_MANAGER_URL = process.env.VPS_MANAGER_URL || "http://46.202.131.240:9000";
+// Route publique et protegee du VPS (nginx, 443) : seules lancer / etat / telecharger y passent, avec la cle.
+const PODCAST_URL = process.env.VPS_PODCAST_URL || "https://46.202.131.240.nip.io/podcast-api";
+const PODCAST_KEY = process.env.VPS_PODCAST_KEY || "";
 
 export type PodcastFile = { name: string; mtime: string; sizeKb: number };
 export type PodcastStatus = { success: boolean; running: boolean; files: PodcastFile[]; error?: string };
@@ -30,7 +32,10 @@ export async function fetchVps(path: string, init: RequestInit = {}, timeoutMs =
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    return await fetch(`${VPS_MANAGER_URL}${path}`, { ...init, signal: ctrl.signal, cache: "no-store" });
+    const rel = path.replace("/api/notebooklm-nutri", "");   // /run, /status, /download/x.m4a
+    const headers = new Headers(init.headers);
+    headers.set("X-Podcast-Key", PODCAST_KEY);
+    return await fetch(`${PODCAST_URL}${rel}`, { ...init, headers, signal: ctrl.signal, cache: "no-store" });
   } finally {
     clearTimeout(timer);
   }
