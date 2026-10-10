@@ -13,6 +13,7 @@ const KINDS: Record<string, string> = {
   mois: "Mois",
   trimestre: "Trimestre",
   long: "Bilan complet",
+  weekly: "Weekly Complet",
   total: "Depuis le début",
   all: "Depuis le début",
   debut: "Depuis le début",
@@ -24,7 +25,7 @@ export function podcastInfo(name: string): { kind: string; date: string | null; 
   if (!m) return { kind: "Podcast", date: null, long: false };
   const raw = m[1];
   if (!raw) return { kind: "Podcast", date: m[2], long: false };   // anciens fichiers sans type : nutri-2026-08-25.m4a
-  return { kind: KINDS[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1), date: m[2], long: raw === "long" };
+  return { kind: KINDS[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1), date: m[2], long: raw === "long" || raw === "weekly" };
 }
 
 /** Appel au VPS avec delai maximal sur la reponse (les en-tetes), pas sur la lecture du corps (audio). */
