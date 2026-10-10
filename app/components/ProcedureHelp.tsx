@@ -73,7 +73,7 @@ export const EYE_PROCEDURE: Procedure = {
     "Mains propres pour l'étape de la paupière.",
   ],
   steps: [
-    { title: "Fixe le point en haut (3 s)", detail: "Un point s'anime en haut de l'écran, juste sous la caméra : fixe-le et ouvre bien les yeux, sans forcer ni plisser, tête droite. Regarder ce point aligne ton regard sur l'objectif et dégage l'iris des paupières. Le cadre devient vert quand ton visage est détecté." },
+    { title: "Œil droit, puis œil gauche (3,5 s chacun)", detail: "L'écran zoome sur tes yeux. Un cadre montre l'œil à mesurer (moitié gauche de l'écran = ton œil droit). Ouvre-le bien grand, fixe le point en haut, tête droite. Si l'appli dit « ouvre plus grand », écarquille un peu plus. L'autre œil peut rester ouvert." },
     { title: "Réflexe pupillaire (4 s)", detail: "L'écran devient noir puis flashe en blanc : continue de fixer le point, sans cligner, jusqu'au message suivant." },
     { title: "Paupière inférieure (3 s pour te préparer)", detail: "Avec l'index, tire doucement la peau sous un œil vers le bas pour montrer l'intérieur rose de la paupière, et regarde vers le haut. Regarde la flèche en haut et garde la position jusqu'à « Ne bouge pas ». Un seul œil suffit." },
     { title: "Test de sécheresse (optionnel)", detail: "Appuie sur « Commencer », puis garde les yeux ouverts naturellement, sans forcer. Cligne dès que c'est inconfortable : le chronomètre s'arrête au premier clignement. « Passer » si tu ne veux pas le faire." },

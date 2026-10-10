@@ -240,18 +240,30 @@ export function computeEyeMetrics(inp: EyeInput): EyeMetrics | null {
   if (Math.abs(A.irisPx - B.irisPx) / Math.max(A.irisPx, B.irisPx) > 0.12) { warnings.push("Tête tournée : regarde l'écran bien en face"); score -= 25; }
   if (A.pupilMm === null || B.pupilMm === null) { warnings.push("Pupille peu visible (iris foncé ou flou) : mesures de pupille indisponibles"); score -= 10; }
   if (A.mrd1Mm < 0.5 && B.mrd1Mm < 0.5) { warnings.push("Yeux trop fermés : ouvre grand les yeux"); score -= 30; }
-  // Symetrie : 100 - penalites sur les ecarts entre les deux yeux (ouverture, pupilles, rougeur)
-  const dPupil = A.pupilMm !== null && B.pupilMm !== null ? Math.abs(A.pupilMm - B.pupilMm) : 0;
-  const dRed = A.rednessA !== null && B.rednessA !== null ? Math.abs(A.rednessA - B.rednessA) : 0;
-  const symmetryScore = Math.round(Math.max(0, 100 - Math.abs(A.mrd1Mm - B.mrd1Mm) * 20 - dPupil * 25 - dRed * 3));
-  const hirschbergMm = A.catchlight && B.catchlight
-    ? round(Math.hypot(A.catchlight.dxMm - B.catchlight.dxMm, A.catchlight.dyMm - B.catchlight.dyMm)) : null;
   return {
     version: EYE_METRICS_VERSION, A, B,
-    anisocoriaMm: A.pupilMm !== null && B.pupilMm !== null ? round(Math.abs(A.pupilMm - B.pupilMm)) : null,
-    hirschbergMm,
-    symmetryScore,
+    ...pairFields(A, B),
     quality: { score: Math.max(0, score), warnings },
+  };
+}
+
+/** Champs qui dependent des DEUX yeux : anisocorie, symetrie, alignement du regard. */
+export function pairFields(A: EyeSide, B: EyeSide): Pick<EyeMetrics, "anisocoriaMm" | "hirschbergMm" | "symmetryScore"> {
+  const dPupil = A.pupilMm !== null && B.pupilMm !== null ? Math.abs(A.pupilMm - B.pupilMm) : 0;
+  const dRed = A.rednessA !== null && B.rednessA !== null ? Math.abs(A.rednessA - B.rednessA) : 0;
+  return {
+    anisocoriaMm: A.pupilMm !== null && B.pupilMm !== null ? round(Math.abs(A.pupilMm - B.pupilMm)) : null,
+    hirschbergMm: A.catchlight && B.catchlight
+      ? round(Math.hypot(A.catchlight.dxMm - B.catchlight.dxMm, A.catchlight.dyMm - B.catchlight.dyMm)) : null,
+    symmetryScore: Math.round(Math.max(0, 100 - Math.abs(A.mrd1Mm - B.mrd1Mm) * 20 - dPupil * 25 - dRed * 3)),
+  };
+}
+
+/** Assemble un scan a partir de l'oeil droit mesure pendant sa phase et du gauche mesure pendant la sienne. */
+export function mergeEyeMetrics(r: EyeMetrics, l: EyeMetrics): EyeMetrics {
+  return {
+    ...r, B: l.B, ...pairFields(r.A, l.B),
+    quality: { score: Math.min(r.quality.score, l.quality.score), warnings: [...new Set([...r.quality.warnings, ...l.quality.warnings])] },
   };
 }
 
