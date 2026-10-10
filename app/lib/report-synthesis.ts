@@ -51,6 +51,7 @@ RÈGLES :
 - N'ajoute aucun texte hors du JSON.`;
 
 function buildUserMessage(data: ReportData): string {
+  const proposalLines = (data.proposals ?? []).map(p => `- ${p.text}`).join("\n");
   const lines: string[] = [];
   lines.push(`Période : ${data.meta.from} au ${data.meta.to} (${data.meta.totalDays} jours)`);
 
@@ -140,6 +141,7 @@ function buildUserMessage(data: ReportData): string {
     }
   }
 
+  if (proposalLines) lines.push(`\n— Propositions concrètes (quantités calculées sur tes aliments réels) —\n${proposalLines}`);
   return lines.join("\n");
 }
 

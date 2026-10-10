@@ -1,5 +1,6 @@
 import { FieldPath } from "firebase-admin/firestore";
 import { summarizeForReport, FACE_METRICS_VERSION, type FaceMetrics, type FaceReportSummary } from "./face-metrics";
+import { buildProposals, type Proposal } from "./report-proposals";
 import { EYE_METRICS_VERSION, eyeIndexes, eyeSignals, type EyeScanData } from "./eye-metrics";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
@@ -87,6 +88,9 @@ export interface FoodFrequencyRow {
   avgSodiumMg:      number;
   avgSaturatedFatG: number;
   avgFiberG:        number;
+  /** Portion habituelle (g) et valeurs pour 100 g : servent aux propositions de quantités. */
+  usualGrams:       number;
+  per100:           { calories: number; proteinG: number; fiberG: number };
 }
 
 export interface SymptomHistoryDay {
@@ -127,6 +131,8 @@ export interface GlucoseSummary {
 }
 
 export interface ReportData {
+  /** Propositions concretes pour la semaine (ce qui manque, quantites a changer). */
+  proposals: Proposal[];
   meta: {
     from:        string;
     to:          string;
@@ -161,6 +167,7 @@ export interface ReportData {
     pctWaterGoal:  number;
     daily:         DayNutrition[];
     foodFrequency: FoodFrequencyRow[];
+
   };
   activity: {
     daysWithData:      number;
@@ -292,14 +299,17 @@ export async function buildReportData(userId: string, from: string, to: string):
   const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
 
   // ── Food frequency (for the AI food-habits synthesis) ─────────────────────
-  const foodStats = new Map<string, { name: string; count: number; totalCalories: number; sugarG: number; sodiumMg: number; saturatedFatG: number; fiberG: number }>();
+  const foodStats = new Map<string, { name: string; count: number; totalCalories: number; sugarG: number; sodiumMg: number; saturatedFatG: number; fiberG: number; grams: number; proteinG: number; kcal: number; brand?: string }>();
   for (const d of foodSnaps.docs) {
     const log = d.data() as DayLog;
     for (const e of log.entries ?? []) {
       const key = e.name.trim().toLowerCase();
       if (!key) continue;
-      const s = foodStats.get(key) ?? { name: e.name.trim(), count: 0, totalCalories: 0, sugarG: 0, sodiumMg: 0, saturatedFatG: 0, fiberG: 0 };
+      const s = foodStats.get(key) ?? { name: e.name.trim(), count: 0, totalCalories: 0, sugarG: 0, sodiumMg: 0, saturatedFatG: 0, fiberG: 0, grams: 0, proteinG: 0, kcal: 0 };
       s.count++;
+      s.grams    += e.servingGrams ?? 0;
+      s.proteinG += e.nutrition?.proteinG ?? 0;
+      s.kcal     += e.nutrition?.calories ?? 0;
       s.totalCalories  += e.nutrition?.calories ?? 0;
       s.sugarG         += e.nutrition?.sugarG ?? 0;
       s.sodiumMg       += e.nutrition?.sodiumMg ?? 0;
@@ -319,6 +329,10 @@ export async function buildReportData(userId: string, from: string, to: string):
       avgSodiumMg: Math.round(s.sodiumMg / s.count),
       avgSaturatedFatG: Math.round((s.saturatedFatG / s.count) * 10) / 10,
       avgFiberG: Math.round((s.fiberG / s.count) * 10) / 10,
+      usualGrams: Math.round(s.grams / s.count),
+      per100: s.grams > 0
+        ? { calories: (s.kcal / s.grams) * 100, proteinG: (s.proteinG / s.grams) * 100, fiberG: (s.fiberG / s.grams) * 100 }
+        : { calories: 0, proteinG: 0, fiberG: 0 },
     }));
 
   const avgCalories  = avg(dailyNutrition.map(d => d.calories));
@@ -581,7 +595,14 @@ export async function buildReportData(userId: string, from: string, to: string):
       }, {} as Partial<Record<MeasurementField, number>>)
     : null;
 
+  const proposals = buildProposals({
+    daysLogged, avgCalories, avgProteinG, avgFiberG, avgWaterMl,
+    goals: { dailyCalories: goals.dailyCalories, proteinGrams: goals.proteinGrams, fiberGrams: goals.fiberGrams, waterMl: goals.waterMl },
+    foods: foodFrequency.map(f => ({ name: f.name, usualGrams: f.usualGrams, count: f.count, per100: f.per100 })),
+  });
+
   const data: ReportData = {
+    proposals,
     meta: {
       from,
       to,

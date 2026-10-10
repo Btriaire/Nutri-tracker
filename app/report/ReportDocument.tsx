@@ -1263,6 +1263,20 @@ export default function ReportDocument({ data }: { data: ReportData }) {
       )}
 
       {/* ═══════════════════════════════════════════════════════════
+          PROPOSITIONS (quantités à ajuster, aliments à ajouter)
+      ═══════════════════════════════════════════════════════════ */}
+      {data.proposals?.length > 0 && (
+        <div className="glass p-4 mb-5">
+          <p className="text-[12px] font-bold mb-2" style={{ color: "var(--text-primary)" }}>Propositions pour la semaine</p>
+          <ul className="space-y-1.5">
+            {data.proposals.map((p) => (
+              <li key={p.text} className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>• {p.text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
           SYNTHÈSE IA (dernière disponible)
       ═══════════════════════════════════════════════════════════ */}
       {data.latestSynthesis && (() => {
