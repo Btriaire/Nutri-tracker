@@ -566,3 +566,49 @@ export function sideNotes(current: EyeScanData, history: EyeScanData[], side: Ey
   }
   return out;
 }
+
+// ─── Qualite d'acquisition (affichee pendant la prise de vue) ─────────────────────────────────
+
+/** Nettete et lumiere autour de l'iris : laplacien moyen (nettete) et luminance moyenne (0-255). */
+export function acquisitionStats(read: PixelReader, cx: number, cy: number, irisPx: number): { sharp: number; light: number } {
+  const r = irisPx * 1.5, N = 12, step = (2 * r) / N;
+  const gray = (x: number, y: number) => { const [R, G, B] = read(Math.round(x), Math.round(y)); return 0.299 * R + 0.587 * G + 0.114 * B; };
+  let lap = 0, lum = 0, n = 0;
+  for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+    const x = cx - r + i * step, y = cy - r + j * step;
+    const g = gray(x, y);
+    lum += g; n++;
+    if (i > 0 && j > 0 && i < N && j < N) {
+      lap += Math.abs(4 * g - gray(x - step, y) - gray(x + step, y) - gray(x, y - step) - gray(x, y + step));
+    }
+  }
+  return { sharp: lap / ((N - 1) * (N - 1)), light: lum / n };
+}
+
+export interface AcquisitionInput { open: number; dist: number; motion: number; sharp: number; light: number }
+export interface Acquisition { score: number; issue: string | null }
+
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/**
+ * Score 0-100 de la prise de vue et premier point a corriger.
+ * dist : distance inter-canthus / largeur image (portee acceptee large : 0,07-0,32, ideal 0,11-0,24).
+ * motion : deplacement de l'iris entre deux evaluations / distance inter-canthus.
+ * Seuils de nettete et de lumiere : heuristiques, a calibrer sur de vrais scans.
+ */
+export function acquisitionQuality({ open, dist, motion, sharp, light }: AcquisitionInput): Acquisition {
+  const dDev = dist < 0.11 ? (0.11 - dist) / 0.05 : dist > 0.24 ? (dist - 0.24) / 0.08 : 0;
+  const distScore = clamp01(1 - dDev);
+  const stabScore = clamp01(1 - motion / 0.03);
+  const sharpScore = clamp01((sharp - 3) / 10);
+  const lightScore = light < 60 ? clamp01((light - 30) / 30) : light > 220 ? clamp01((250 - light) / 30) : 1;
+  const openScore = clamp01(open / 0.6);
+  const score = Math.round(100 * (0.2 * distScore + 0.25 * stabScore + 0.3 * sharpScore + 0.1 * lightScore + 0.15 * openScore));
+  const issue = open < 0.45 ? "Ouvre plus grand"
+    : distScore < 0.5 ? (dist < 0.11 ? "Trop loin : rapproche-toi" : "Trop près : éloigne-toi")
+    : stabScore < 0.5 ? "Bouge moins : tiens le téléphone stable"
+    : sharpScore < 0.5 ? "Image floue : attends la mise au point"
+    : lightScore < 0.5 ? (light < 100 ? "Trop sombre : éclaire le visage" : "Trop de lumière")
+    : null;
+  return { score, issue };
+}

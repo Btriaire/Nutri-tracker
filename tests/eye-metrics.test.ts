@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, eyeSideIndexes, sideNotes, irisDifference, type EyeScanData, type EyeMetrics } from "../app/lib/eye-metrics";
+import { acquisitionQuality, computeEyeMetrics, computeConjunctiva, analyzePlr, eyeIndexes, eyeSignals, rednessGrade, sanitizeEyeScan, eyeSideIndexes, sideNotes, irisDifference, type EyeScanData, type EyeMetrics } from "../app/lib/eye-metrics";
 
 const W = 500, H = 400, R = 40;
 const CA = { x: 150, y: 200 }, CB = { x: 350, y: 200 };
@@ -183,5 +183,22 @@ describe("couleur de l'iris", () => {
     expect(blue.A.irisName).toMatch(/bleu|gris/);
     const same = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
     expect(irisDifference(same)!).toBeLessThan(3);
+  });
+});
+
+describe("acquisitionQuality", () => {
+  const good = { open: 0.7, dist: 0.17, motion: 0.001, sharp: 15, light: 130 };
+  it("donne un score haut et aucun conseil pour une bonne prise", () => {
+    const q = acquisitionQuality(good);
+    expect(q.score).toBeGreaterThanOrEqual(95);
+    expect(q.issue).toBeNull();
+  });
+  it("signale le flou et le mouvement en premier", () => {
+    expect(acquisitionQuality({ ...good, sharp: 1 }).issue).toMatch(/floue/);
+    expect(acquisitionQuality({ ...good, motion: 0.05 }).issue).toMatch(/stable/);
+  });
+  it("tolere une distance large, sans conseil", () => {
+    expect(acquisitionQuality({ ...good, dist: 0.09 }).issue).toBeNull();
+    expect(acquisitionQuality({ ...good, dist: 0.04 }).issue).toMatch(/rapproche/);
   });
 });

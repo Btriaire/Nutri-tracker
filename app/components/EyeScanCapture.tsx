@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconX, IconLoader2, IconArrowUp } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
-import { computeEyeMetrics, computeConjunctiva, analyzePlr, mergeEyeMetrics, type EyeMetrics, type EyeSideId, type Conjunctiva, type PlrResult, type PlrSample } from "@/app/lib/eye-metrics";
+import { acquisitionQuality, acquisitionStats, analyzePlr, computeConjunctiva, computeEyeMetrics, mergeEyeMetrics, type Conjunctiva, type EyeMetrics, type EyeSideId, type PlrResult, type PlrSample } from "@/app/lib/eye-metrics";
 import type { PixelReader } from "@/app/lib/face-metrics";
 
 export interface EyeCaptureResult {
   metrics: EyeMetrics;
+  /** Reprise d'un seul oeil : metrics ne contient que cet oeil fiable, le parent complete avec le scan precedent. */
+  only?: EyeSideId;
   plr: PlrResult | null;
   conjunctiva: Conjunctiva | null;
   mbiS: number | null;
@@ -20,20 +22,26 @@ export interface EyeCaptureResult {
 type Phase = "loading" | "eyes-R" | "eyes-L" | "plr-dark" | "plr-flash" | "conj-ready" | "conj" | "mbi-ready" | "mbi" | "error";
 
 const EYE_MS = 3500, DARK_MS = 1300, FLASH_MS = 2300, CONJ_WAIT_MS = 3000, CONJ_MS = 1500, MBI_MAX_MS = 40_000;
-const EYE_GIVE_UP_MS = 12_000;          // au-dela, sans oeil bien ouvert : on arrete et on explique
+const EYE_GIVE_UP_MS = 15_000;          // au-dela, sans prise correcte : on arrete et on explique
 const MIN_OPEN = 0.45;                  // ouverture minimale (hauteur de fente / iris) pour retenir une image
-const ZOOM = 1.6;                       // zoom d'affichage et, si la camera le permet, zoom optique
+const MIN_QUALITY = 60;                 // score de prise de vue minimal pour retenir une image
+const STABLE_FRAMES = 2;                // evaluations consecutives sans mouvement avant de retenir
+const ZOOM = 2;                         // zoom d'affichage et, si la camera le permet, zoom optique
 const EYE_PTS = [33, 133, 159, 145, 263, 362, 386, 374, 468, 473];
 const BLINK: Record<EyeSideId, string> = { A: "eyeBlinkRight", B: "eyeBlinkLeft" };   // A = oeil droit de la personne
+const IRIS: Record<EyeSideId, number> = { A: 468, B: 473 };
+const LABEL: Record<EyeSideId, string> = { A: "ŒIL DROIT", B: "ŒIL GAUCHE" };
+// Centre du cadre de guidage (en % de la largeur) : image miroir, oeil droit a gauche
+const EYE_X: Record<EyeSideId, number> = { A: 31, B: 69 };
 
-/** Scan guide de l'oeil : oeil droit puis gauche (zoom, ouverture guidee), reflexe pupillaire, conjonctive, secheresse. */
-export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCaptureResult) => void; onCancel: () => void }) {
+/** Scan guide de l'oeil : oeil droit puis gauche (zoom, ouverture, qualite en direct), reflexe pupillaire, conjonctive, secheresse. */
+export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r: EyeCaptureResult) => void; onCancel: () => void; only?: EyeSideId }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState("");
   const [face, setFace] = useState(false);
   const [left, setLeft] = useState(0);
-  const [openness, setOpenness] = useState(0);
+  const [quality, setQuality] = useState<{ score: number; issue: string | null }>({ score: 0, issue: null });
   const [mbiElapsed, setMbiElapsed] = useState(0);
   const phaseRef = useRef<Phase>("loading");
   const startMbi = useRef<(() => void) | null>(null);
@@ -46,18 +54,27 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     const go = (p: Phase) => { phaseRef.current = p; setPhase(p); };
 
-    type Best = { m: EyeMetrics; image: string | null; eye: string | null };
+    type Best = { m: EyeMetrics; q: number; image: string | null; eye: string | null };
     const best: Partial<Record<EyeSideId, Best>> = {};
     const plrSamples: PlrSample[] = [];
     let conj: Conjunctiva | null = null;
     let mbiS: number | null = null;
     let phaseStart = 0, flashT = 0, lastEval = 0, eyesClosedSince = 0;
+    let prevIris: { x: number; y: number } | null = null, stable = 0;   // stabilisateur : mouvement de l'iris entre evaluations
+    const resetSide = () => { prevIris = null; stable = 0; phaseStart = 0; };
 
     const finish = () => {
       if (stopped) return;
       stopped = true;
       cancelAnimationFrame(raf);
       stream?.getTracks().forEach((t) => t.stop());
+      if (only) {
+        const b = best[only];
+        if (!b) { setError("Œil non bien ouvert : ouvre-le grand, fixe le point, et refais la prise."); go("error"); return; }
+        onDone({ metrics: b.m, only, plr: null, conjunctiva: null, mbiS: null, image: b.image,
+          imageA: only === "A" ? b.eye : null, imageB: only === "B" ? b.eye : null });
+        return;
+      }
       if (!best.A || !best.B) { setError("Yeux non mesurés : rapproche le téléphone (25-30 cm), bien en face, et ouvre les yeux."); go("error"); return; }
       onDone({
         metrics: mergeEyeMetrics(best.A.m, best.B.m), plr: analyzePlr(plrSamples, flashT), conjunctiva: conj, mbiS,
@@ -84,7 +101,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
         video.srcObject = s;
         await video.play();
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        go("eyes-R");
+        go(only === "B" ? "eyes-L" : "eyes-R");
         phaseStart = 0;
         let lastVideoTime = -1;
 
@@ -98,7 +115,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
           const pts = res.faceLandmarks?.[0];
           setFace(!!pts);
           const p = phaseRef.current;
-          if (!pts) { if (p === "eyes-R" || p === "eyes-L") phaseStart = 0; return; }
+          if (!pts) { if (p === "eyes-R" || p === "eyes-L") { phaseStart = 0; prevIris = null; stable = 0; } return; }
           const bs = res.faceBlendshapes?.[0]?.categories ?? [];
           const blinkOf = (side: EyeSideId) => bs.find((c) => c.categoryName === BLINK[side])?.score ?? 0;
           const blink = (blinkOf("A") + blinkOf("B")) / 2;
@@ -143,7 +160,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
           };
 
           if (p === "eyes-R" || p === "eyes-L") {
-            // Un oeil a la fois : on garde l'image la plus nette ou l'oeil est le plus ouvert
+            // Un oeil a la fois : on garde la prise de meilleure qualite, stable et ouverte
             const side: EyeSideId = p === "eyes-R" ? "A" : "B";
             if (!phaseStart) phaseStart = now;
             if (blinkOf(side) < 0.3 && now - lastEval > 180) {
@@ -151,18 +168,31 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
               const { reader, crop, cropEye } = read();
               const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader });
               if (m) {
+                const iris = IRIS[side];
+                const cx = pts[iris].x * w, cy = pts[iris].y * h;
+                const ipd = Math.hypot((pts[263].x - pts[33].x) * w, (pts[263].y - pts[33].y) * h);
+                const motion = prevIris ? Math.hypot(cx - prevIris.x, cy - prevIris.y) / ipd : 0;
+                stable = prevIris && motion < 0.012 ? stable + 1 : 0;
+                prevIris = { x: cx, y: cy };
                 const open = m[side].fenteRatio ?? 0;
-                setOpenness(open);
+                const { sharp, light } = acquisitionStats(reader, cx, cy, m[side].irisPx);
+                const q = acquisitionQuality({ open, dist: ipd / w, motion, sharp, light });
+                setQuality(q);
                 const cur = best[side];
-                if (open >= MIN_OPEN && (!cur || m.quality.score > cur.m.quality.score)) {
-                  best[side] = { m, image: crop(), eye: cropEye(side === "A" ? 468 : 473, m[side].irisPx) };
+                if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && (!cur || q.score > cur.q)) {
+                  best[side] = { m, q: q.score, image: crop(), eye: cropEye(iris, m[side].irisPx) };
                 }
               }
             }
             const el = now - phaseStart;
             setLeft(Math.max(0, Math.ceil((EYE_MS - el) / 1000)));
-            if (el >= EYE_MS && best[side]) { go(side === "A" ? "eyes-L" : "plr-dark"); phaseStart = now; }
-            else if (el >= EYE_GIVE_UP_MS && !best[side]) { setError("Œil non bien ouvert : ouvre-le grand, fixe le point, et refais le scan."); go("error"); stopped = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop()); }
+            if (el >= EYE_MS && best[side]) {
+              if (only) { finish(); return; }
+              if (side === "A") { go("eyes-L"); resetSide(); } else { go("plr-dark"); phaseStart = now; }
+            } else if (el >= EYE_GIVE_UP_MS && !best[side]) {
+              setError("Œil non bien ouvert : ouvre-le grand, fixe le point, et refais la prise.");
+              go("error"); stopped = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop());
+            }
           } else if (p === "plr-dark" || p === "plr-flash") {
             if (blink < 0.4) {
               const { reader } = read();
@@ -209,14 +239,14 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
   const dark = phase === "plr-dark";
   const bg = dark ? "#000" : phase === "error" || phase === "loading" ? "#000" : "#fff";
   const fg = bg === "#fff" ? "#111" : "#fff";
-  const eyeLabel = phase === "eyes-R" ? "Œil droit" : phase === "eyes-L" ? "Œil gauche" : "";
-  const openHint = openness < MIN_OPEN && face ? " · ouvre plus grand" : "";
+  const side: EyeSideId | null = phase === "eyes-R" ? "A" : phase === "eyes-L" ? "B" : null;
+  const qColor = quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)";
+  const eyeMessage = !face ? "Place ton visage à 25-30 cm, de face"
+    : quality.issue ?? `Parfait, reste immobile · ${left} s`;
   const message: Record<Phase, string> = {
     loading: "Préparation de la caméra…",
-    "eyes-R": !face ? "Place ton visage à 25-30 cm, de face"
-      : `${eyeLabel} : ouvre-le bien grand et fixe le point, l'autre œil peut rester ouvert${openHint} · ${left} s`,
-    "eyes-L": !face ? "Place ton visage à 25-30 cm, de face"
-      : `${eyeLabel} : ouvre-le bien grand et fixe le point, l'autre œil peut rester ouvert${openHint} · ${left} s`,
+    "eyes-R": eyeMessage,
+    "eyes-L": eyeMessage,
     "plr-dark": "Continue de fixer le point…",
     "plr-flash": "Flash : fixe le point, ne cligne pas",
     "conj-ready": `Tire doucement ta paupière inférieure vers le bas et regarde la flèche en haut · ${Math.max(0, left)} s`,
@@ -227,7 +257,8 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
   };
 
   // Cadre de guidage : moitie gauche de l'ecran = oeil droit (image miroir), moitie droite = oeil gauche
-  const guide = phase === "eyes-R" ? { left: "14%", width: "34%" } : phase === "eyes-L" ? { left: "52%", width: "34%" } : null;
+  const guide = side ? { left: `${EYE_X[side] - 17}%`, width: "34%" } : null;
+  const fixY = "max(56px, calc(env(safe-area-inset-top) + 40px))";
 
   return createPortal(
     <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center px-6" style={{ background: bg, transition: "background 0.05s" }} role="dialog" aria-label="Scan de l'œil">
@@ -238,7 +269,7 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
 
       {/* Cible de fixation juste sous la camera */}
       {(phase === "eyes-R" || phase === "eyes-L" || phase === "plr-dark" || phase === "plr-flash") && (
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ top: "max(56px, calc(env(safe-area-inset-top) + 40px))" }} aria-hidden>
+        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ top: fixY }} aria-hidden>
           <span className="relative flex items-center justify-center w-12 h-12">
             <span className="absolute inset-0 rounded-full animate-ping" style={{ background: dark ? "rgba(255,255,255,0.12)" : "rgba(99,102,241,0.25)" }} />
             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ border: `2px solid ${dark ? "#555" : "#6366f1"}` }}>
@@ -248,21 +279,35 @@ export default function EyeScanCapture({ onDone, onCancel }: { onDone: (r: EyeCa
         </div>
       )}
       {(phase === "conj-ready" || phase === "conj") && (
-        <div className="absolute left-1/2 -translate-x-1/2 animate-bounce" style={{ top: "max(56px, calc(env(safe-area-inset-top) + 40px))", color: "#6366f1" }} aria-hidden>
+        <div className="absolute left-1/2 -translate-x-1/2 animate-bounce" style={{ top: fixY, color: "#6366f1" }} aria-hidden>
           <IconArrowUp size={44} stroke={2.5} />
         </div>
       )}
 
-      <div className="relative w-[300px] h-[150px] rounded-2xl overflow-hidden" style={{ opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
-        <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: `scaleX(-1) scale(${phase === "eyes-R" || phase === "eyes-L" ? ZOOM : 1})`, transformOrigin: "50% 40%", objectPosition: "50% 38%" }} />
+      <div className="relative w-[320px] h-[200px] rounded-2xl overflow-hidden" style={{ opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
+        <video ref={videoRef} playsInline muted className="w-full h-full object-cover"
+          style={{ transform: `scaleX(-1) scale(${side ? ZOOM : 1})`, transformOrigin: `${side ? EYE_X[side] : 50}% 42%`, objectPosition: "50% 38%" }} />
         {guide && (
-          <div className="absolute top-[18%] bottom-[18%] rounded-[50%] pointer-events-none" aria-hidden
-            style={{ left: guide.left, width: guide.width, border: `2px solid ${openness >= MIN_OPEN ? "var(--ok)" : "var(--warn)"}`, boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)" }} />
+          <div className="absolute top-[22%] bottom-[22%] rounded-[50%] pointer-events-none" aria-hidden
+            style={{ left: guide.left, width: guide.width, border: `2px solid ${quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)"}`, boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)" }} />
+        )}
+        {side && (
+          <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-black pointer-events-none whitespace-nowrap" aria-hidden
+            style={{ fontSize: 40, letterSpacing: 1, color: "rgba(255,255,255,0.55)", textShadow: "0 0 10px rgba(0,0,0,0.6)" }}>{LABEL[side]}</span>
         )}
         {phase === "loading" && <div className="absolute inset-0 flex items-center justify-center" style={{ color: "#fff" }}><IconLoader2 className="animate-spin" /></div>}
       </div>
 
-      <p className="text-[16px] font-semibold mt-6 text-center max-w-[320px]" style={{ color: fg }} aria-live="polite">{message[phase]}</p>
+      {side && face && (
+        <div className="mt-4 w-[320px] max-w-full" aria-label={`Qualité d'acquisition ${quality.score} %`}>
+          <div className="flex justify-between text-[12px] mb-1" style={{ color: fg }}><span>Qualité de prise</span><span className="tabular-nums">{quality.score} %</span></div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: bg === "#fff" ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)" }}>
+            <div className="h-full rounded-full transition-[width] duration-200" style={{ width: `${quality.score}%`, background: qColor }} />
+          </div>
+        </div>
+      )}
+
+      <p className="text-[16px] font-semibold mt-5 text-center max-w-[320px]" style={{ color: fg }} aria-live="polite">{message[phase]}</p>
 
       {phase === "mbi-ready" && (
         <div className="flex gap-3 mt-5">

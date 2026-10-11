@@ -9,7 +9,7 @@ import { IconEye, IconCircleCheck, IconAlertTriangle, IconAlertOctagon, IconTras
 import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanCapture";
 import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import EyeDetailCard from "@/app/components/EyeDetailCard";
-import { eyeIndexes, eyeSignals, eyeSideIndexes, sideNotes, rednessGrade, scanValue, type EyeValueKey } from "@/app/lib/eye-metrics";
+import { eyeIndexes, eyeSignals, eyeSideIndexes, mergeEyeMetrics, sideNotes, rednessGrade, scanValue, type EyeSideId, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
 type Context = {
@@ -44,7 +44,7 @@ const INDEX_META = [
 
 export default function EyeScanClient() {
   const [scans, setScans] = useState<EyeScanEntry[] | null>(null);
-  const [capturing, setCapturing] = useState(false);
+  const [capture, setCapture] = useState<null | "both" | EyeSideId>(null);
   const [saveError, setSaveError] = useState(false);
   const [ctx, setCtx] = useState<Context | null>(null);
   const [param, setParam] = useState<EyeValueKey>("mbi");
@@ -70,13 +70,37 @@ export default function EyeScanClient() {
     return () => { cancelled = true; };
   }, [latest]);
 
+  const blobToDataUrl = (b: Blob) => new Promise<string>((ok, ko) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(fr.result as string);
+    fr.onerror = ko;
+    fr.readAsDataURL(b);
+  });
+
   const save = async (r: EyeCaptureResult) => {
-    setCapturing(false);
+    setCapture(null);
     setSaveError(false);
     const now = new Date();
+    // Reprise d'un seul oeil : on complete avec l'oeil du scan precedent (metrics et photo), le reste est repris tel quel
+    let body;
+    if (r.only && latest) {
+      const other = r.only === "A" ? "B" : "A";
+      const otherImg = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=${other}`, { cache: "no-store" })
+        .then((res) => (res.ok ? res.blob() : null)).then((b) => (b ? blobToDataUrl(b) : null)).catch(() => null);
+      body = {
+        date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm"), image: r.image,
+        imageA: r.only === "A" ? r.imageA : otherImg, imageB: r.only === "B" ? r.imageB : otherImg,
+        data: {
+          metrics: r.only === "A" ? mergeEyeMetrics(r.metrics, latest.metrics) : mergeEyeMetrics(latest.metrics, r.metrics),
+          plr: latest.plr, conjunctiva: latest.conjunctiva, mbiS: latest.mbiS,
+        },
+      };
+    } else {
+      body = { date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm"), image: r.image, imageA: r.imageA, imageB: r.imageB, data: { metrics: r.metrics, plr: r.plr, conjunctiva: r.conjunctiva, mbiS: r.mbiS } };
+    }
     const res = await fetch("/api/eye-scan", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm"), image: r.image, imageA: r.imageA, imageB: r.imageB, data: { metrics: r.metrics, plr: r.plr, conjunctiva: r.conjunctiva, mbiS: r.mbiS } }),
+      body: JSON.stringify(body),
     }).catch(() => null);
     if (res?.ok) {
       const { scan } = await res.json() as { scan: EyeScanEntry };
@@ -121,9 +145,19 @@ export default function EyeScanClient() {
             <li>4. Option : garder les yeux ouverts sans cligner (test de sécheresse)</li>
           </ol>
           <p className="text-[12px] mb-3" style={{ color: "var(--text-muted)" }}>Pièce plutôt sombre, sans lunettes ni lentilles colorées. L&apos;écran sert d&apos;éclairage.</p>
-          <button type="button" onClick={() => setCapturing(true)} className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold" style={{ background: "var(--indigo)", color: "var(--bg)" }}>
+          <button type="button" onClick={() => setCapture("both")} className="w-full min-h-[48px] rounded-xl text-[14px] font-semibold" style={{ background: "var(--indigo)", color: "var(--bg)" }}>
             Commencer le scan
           </button>
+          {latest?.metrics && (
+            <div className="flex gap-2 mt-2">
+              {(["A", "B"] as const).map((side) => (
+                <button key={side} type="button" onClick={() => setCapture(side)} className="flex-1 min-h-[44px] rounded-xl text-[13px] font-medium"
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+                  Reprendre l&apos;œil {side === "A" ? "droit" : "gauche"}
+                </button>
+              ))}
+            </div>
+          )}
           {saveError && <p role="alert" className="text-[12px] mt-2" style={{ color: "var(--danger)" }}>Le scan n&apos;a pas pu être enregistré : vérifie ta connexion, puis refais-le.</p>}
         </section>
 
@@ -305,7 +339,7 @@ export default function EyeScanClient() {
           une paupière qui tombe ou une vision trouble apparues soudainement doivent être vues par un médecin sans attendre.
         </p>
       </div>
-      {capturing && <EyeScanCapture onDone={save} onCancel={() => setCapturing(false)} />}
+      {capture && <EyeScanCapture onDone={save} onCancel={() => setCapture(null)} only={capture === "both" ? undefined : capture} />}
     </div>
   );
 }
