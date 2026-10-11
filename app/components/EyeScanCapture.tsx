@@ -26,6 +26,8 @@ const EYE_GIVE_UP_MS = 15_000;          // au-dela, sans prise correcte : on arr
 const MIN_OPEN = 0.45;                  // ouverture minimale (hauteur de fente / iris) pour retenir une image
 const MIN_QUALITY = 60;                 // score de prise de vue minimal pour retenir une image
 const STABLE_FRAMES = 2;                // evaluations consecutives sans mouvement avant de retenir
+const BURST = 5;                        // photos rapprochees par oeil ; la meilleure est gardee
+const EVAL_MS = 100;                    // intervalle entre deux photos du rafale
 const ZOOM = 2;                         // zoom d'affichage et, si la camera le permet, zoom optique
 const EYE_PTS = [33, 133, 159, 145, 263, 362, 386, 374, 468, 473];
 const BLINK: Record<EyeSideId, string> = { A: "eyeBlinkRight", B: "eyeBlinkLeft" };   // A = oeil droit de la personne
@@ -42,6 +44,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const [face, setFace] = useState(false);
   const [left, setLeft] = useState(0);
   const [quality, setQuality] = useState<{ score: number; issue: string | null }>({ score: 0, issue: null });
+  const [shots, setShots] = useState(0);
   const [mbiElapsed, setMbiElapsed] = useState(0);
   const phaseRef = useRef<Phase>("loading");
   const startMbi = useRef<(() => void) | null>(null);
@@ -56,6 +59,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
 
     type Best = { m: EyeMetrics; q: number; image: string | null; eye: string | null };
     const best: Partial<Record<EyeSideId, Best>> = {};
+    const cands: Partial<Record<EyeSideId, Best[]>> = {};   // rafale de la passe en cours
     const plrSamples: PlrSample[] = [];
     let conj: Conjunctiva | null = null;
     let mbiS: number | null = null;
@@ -163,7 +167,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
             // Un oeil a la fois : on garde la prise de meilleure qualite, stable et ouverte
             const side: EyeSideId = p === "eyes-R" ? "A" : "B";
             if (!phaseStart) phaseStart = now;
-            if (blinkOf(side) < 0.3 && now - lastEval > 180) {
+            if (blinkOf(side) < 0.3 && now - lastEval > EVAL_MS) {
               lastEval = now;
               const { reader, crop, cropEye } = read();
               const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader });
@@ -178,18 +182,22 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 const { sharp, light } = acquisitionStats(reader, cx, cy, m[side].irisPx);
                 const q = acquisitionQuality({ open, dist: ipd / w, motion, sharp, light });
                 setQuality(q);
-                const cur = best[side];
-                if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && (!cur || q.score > cur.q)) {
-                  best[side] = { m, q: q.score, image: crop(), eye: cropEye(iris, m[side].irisPx) };
+                const list = (cands[side] ??= []);
+                if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && list.length < BURST) {
+                  list.push({ m, q: q.score, image: crop(), eye: cropEye(iris, m[side].irisPx) });
+                  setShots(list.length);
                 }
               }
             }
+            const list = cands[side] ?? [];
             const el = now - phaseStart;
             setLeft(Math.max(0, Math.ceil((EYE_MS - el) / 1000)));
-            if (el >= EYE_MS && best[side]) {
+            if (list.length >= BURST || (el >= EYE_MS && list.length)) {
+              // Algo de choix : la photo de meilleure qualite de la rafale
+              best[side] = list.reduce((a, b) => (b.q > a.q ? b : a));
               if (only) { finish(); return; }
-              if (side === "A") { go("eyes-L"); resetSide(); } else { go("plr-dark"); phaseStart = now; }
-            } else if (el >= EYE_GIVE_UP_MS && !best[side]) {
+              if (side === "A") { go("eyes-L"); resetSide(); setShots(0); } else { go("plr-dark"); phaseStart = now; }
+            } else if (el >= EYE_GIVE_UP_MS && !list.length) {
               setError("Œil non bien ouvert : ouvre-le grand, fixe le point, et refais la prise.");
               go("error"); stopped = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop());
             }
@@ -242,7 +250,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const side: EyeSideId | null = phase === "eyes-R" ? "A" : phase === "eyes-L" ? "B" : null;
   const qColor = quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)";
   const eyeMessage = !face ? "Place ton visage à 25-30 cm, de face"
-    : quality.issue ?? `Parfait, reste immobile · ${left} s`;
+    : quality.issue ?? `Parfait, reste immobile · photo ${shots}/${BURST} · ${left} s`;
   const message: Record<Phase, string> = {
     loading: "Préparation de la caméra…",
     "eyes-R": eyeMessage,
