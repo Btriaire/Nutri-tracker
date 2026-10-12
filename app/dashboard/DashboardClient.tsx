@@ -1288,6 +1288,11 @@ export default function DashboardClient({
                       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>
+                  {label === "Fibres" && (
+                    <p className="text-[11px] mt-1" style={{ color: value < goal ? "var(--text-muted)" : "var(--ok)" }}>
+                      {value < goal ? `Encore ${Math.ceil(goal - value)} g pour ta cible du jour` : "Cible fibres atteinte"}
+                    </p>
+                  )}
                 </div>
               );
             })}
