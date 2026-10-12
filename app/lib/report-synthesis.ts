@@ -59,6 +59,9 @@ function buildUserMessage(data: ReportData): string {
   lines.push(`Calories moy: ${data.nutrition.avgCalories} kcal/j (objectif ${data.profile.goals.dailyCalories}, ${data.nutrition.pctCalGoal}%)`);
   lines.push(`Protéines: ${data.nutrition.avgProteinG}g, Glucides: ${data.nutrition.avgCarbsG}g, Lipides: ${data.nutrition.avgFatG}g, Fibres: ${data.nutrition.avgFiberG}g`);
   lines.push(`Eau: ${data.nutrition.avgWaterMl}mL/j (objectif ${data.profile.goals.waterMl}mL, ${data.nutrition.pctWaterGoal}%)`);
+  if (data.fiber && data.fiber.daysLogged > 0) {
+    lines.push(`Fibres: cible ${data.fiber.targetG} g/j, ${data.fiber.daysBelow} jour(s) sur ${data.fiber.daysLogged} sous la cible. Principales sources: ${data.fiber.topSources.map(s => `${s.name} ${s.fiberG} g`).join(", ") || "aucune"}.`);
+  }
 
   if (data.nutrition.foodFrequency.length > 0) {
     lines.push(`\n— Aliments consommés (par ordre de fréquence) —`);

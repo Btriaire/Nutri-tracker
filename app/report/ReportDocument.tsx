@@ -526,6 +526,21 @@ export default function ReportDocument({ data }: { data: ReportData }) {
           </div>
         </div>
 
+        {/* Fibres : jours sous la cible et principales sources */}
+        {data.fiber && data.fiber.daysLogged > 0 && (
+          <div className="mb-4 px-3 py-2.5 rounded-xl" style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
+            <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--fiber)" }}>Fibres</p>
+            <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
+              {data.fiber.daysBelow} jour{data.fiber.daysBelow > 1 ? "s" : ""} sur {data.fiber.daysLogged} sous la cible de {data.fiber.targetG} g.
+            </p>
+            {data.fiber.topSources.length > 0 && (
+              <p className="text-[12px] mt-1" style={{ color: "var(--text-muted)" }}>
+                Principales sources : {data.fiber.topSources.map(s => `${s.name} (${s.fiberG} g)`).join(", ")}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Calories trend */}
         {data.nutrition.daily.length > 1 && (
           <div>

@@ -133,6 +133,13 @@ export interface GlucoseSummary {
 export interface ReportData {
   /** Propositions concretes pour la semaine (ce qui manque, quantites a changer). */
   proposals: Proposal[];
+     fiber: {
+       targetG: number;
+       avgG: number;
+       daysLogged: number;
+       daysBelow: number;
+       topSources: { name: string; fiberG: number }[];
+     };
   meta: {
     from:        string;
     to:          string;
@@ -601,8 +608,23 @@ export async function buildReportData(userId: string, from: string, to: string):
     foods: foodFrequency.map(f => ({ name: f.name, usualGrams: f.usualGrams, count: f.count, per100: f.per100 })),
   });
 
+  const fiberTarget = goals.fiberGrams || 30;
+  const fiberDays = dailyNutrition.filter(d => d.fiberG > 0);
+  const fiberBlock = {
+    targetG: fiberTarget,
+    avgG: avgFiberG,
+    daysLogged: fiberDays.length,
+    daysBelow: fiberDays.filter(d => d.fiberG < fiberTarget).length,
+    topSources: [...foodStats.values()]
+      .filter(s => s.fiberG > 0)
+      .sort((a, b) => b.fiberG - a.fiberG)
+      .slice(0, 5)
+      .map(s => ({ name: s.name, fiberG: Math.round(s.fiberG * 10) / 10 })),
+  };
+
   const data: ReportData = {
     proposals,
+    fiber: fiberBlock,
     meta: {
       from,
       to,
