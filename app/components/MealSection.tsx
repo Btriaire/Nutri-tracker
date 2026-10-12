@@ -75,6 +75,8 @@ export default function MealSection({
   const entryMinutes = entries.map((e) => (e.loggedAt?.seconds ?? 0) / 60).filter((m) => m > 0);
   const showEntryTimes = entryMinutes.length > 1 && Math.max(...entryMinutes) - Math.min(...entryMinutes) > 20;
 
+  const mealFiber = Math.round(entries.reduce((s, e) => s + e.nutrition.fiberG, 0) * 10) / 10;
+  const fiberPct = Math.round(mealFiber / (goals?.fiberGrams || 30) * 100);
   const quality = goals && cal > 0
     ? computeQualityScore(
         entries.reduce((acc, e) => ({
@@ -191,6 +193,7 @@ export default function MealSection({
               <span className="text-[12px] whitespace-nowrap tabular-nums">
                 <span className="font-semibold" style={{ color: meta.color }}>{cal} kcal</span>
                 {quality && <span style={{ color: quality.color }}> · {quality.label}</span>}
+                {goals && mealFiber > 0 && <span style={{ color: "var(--fiber)" }}> · {mealFiber} g fibres ({fiberPct} %)</span>}
               </span>
             ) : (
               <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{lang === "fr" ? "Rien de noté" : "Empty"}</span>
