@@ -718,3 +718,24 @@ html:not([data-theme="lumiere"]):not(.light) body {
 a, button, input, select, textarea, label, [role="button"], [role="radio"] {
   touch-action: manipulation;
 }
+
+/* ─── Densité d'affichage ──────────────────────────────────────────────────── */
+html[data-density="compact"] {
+  zoom: 0.88;
+}
+
+@supports not (zoom: 1) {
+  html[data-density="compact"] {
+    font-size: 88%;
+  }
+}
+
+html[data-density="large"] {
+  zoom: 1.08;
+}
+
+@supports not (zoom: 1) {
+  html[data-density="large"] {
+    font-size: 108%;
+  }
+}

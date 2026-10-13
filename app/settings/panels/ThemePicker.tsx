@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconChevronDown, IconChevronUp, IconSun } from "@tabler/icons-react";
-import { type Theme } from "@/app/components/ThemeProvider";
+import { type Theme, type Density, useTheme } from "@/app/components/ThemeProvider";
 
 const THEME_DEFS: {
   id: Theme;
@@ -129,8 +129,16 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
   );
 }
 
+const DENSITY_OPTIONS: { id: Density; label: string; desc: string; scale: string }[] = [
+  { id: "compact", label: "Compact", desc: "Plus petit (88%)", scale: "-12%" },
+  { id: "normal",  label: "Normal",  desc: "Par défaut (100%)", scale: "100%" },
+  { id: "large",   label: "Confort", desc: "Plus grand (108%)", scale: "+8%" },
+];
+
 export default function ThemePicker({ current, onChange }: { current: Theme; onChange: (t: Theme) => void }) {
   const [open, setOpen] = useState(false);
+  const { density, setDensity } = useTheme();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -151,9 +159,9 @@ export default function ThemePicker({ current, onChange }: { current: Theme; onC
             <IconSun size={15} style={{ color: "#a78bfa" }} />
           </div>
           <div className="text-left">
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence</p>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Apparence & Affichage</p>
             <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-              {THEME_DEFS.find(t => t.id === current)?.name ?? "Thème actuel"}
+              {THEME_DEFS.find(t => t.id === current)?.name ?? "Thème actuel"} · {DENSITY_OPTIONS.find(d => d.id === density)?.label ?? "Normal"}
             </p>
           </div>
         </div>
@@ -172,29 +180,74 @@ export default function ThemePicker({ current, onChange }: { current: Theme; onC
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            {/* 2×2 grid */}
-            <div className="grid grid-cols-2 gap-2.5 px-4 pb-4" style={{ borderTop: "1px solid var(--border)" }}>
-              {THEME_DEFS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => { onChange(t.id); setOpen(false); }}
-                  className="text-left pt-3"
-                  style={{ outline: "none" }}
-                >
-                  <ThemePreview t={t} selected={current === t.id} />
-                  <div className="mt-1.5 px-0.5">
-                    <p
-                      className="text-[12px] font-semibold leading-tight"
-                      style={{ color: current === t.id ? "var(--text-primary)" : "var(--text-secondary)" }}
+            {/* 2×2 grid thème */}
+            <div className="px-4 pt-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+                Thème de couleur
+              </p>
+              <div className="grid grid-cols-2 gap-2.5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
+                {THEME_DEFS.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { onChange(t.id); }}
+                    className="text-left pt-1"
+                    style={{ outline: "none" }}
+                  >
+                    <ThemePreview t={t} selected={current === t.id} />
+                    <div className="mt-1.5 px-0.5">
+                      <p
+                        className="text-[12px] font-semibold leading-tight"
+                        style={{ color: current === t.id ? "var(--text-primary)" : "var(--text-secondary)" }}
+                      >
+                        {t.name}
+                      </p>
+                      <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>
+                        {t.desc}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Densité / Taille d'affichage */}
+            <div className="px-4 py-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                  Taille & Densité d&apos;écran
+                </p>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--layer-2)", color: "var(--text-secondary)" }}>
+                  Spécifique à cet appareil
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {DENSITY_OPTIONS.map((opt) => {
+                  const active = density === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setDensity(opt.id)}
+                      className="py-2 px-2.5 rounded-xl text-center transition-all flex flex-col items-center justify-center gap-0.5"
+                      style={{
+                        background: active ? "color-mix(in srgb, var(--protein) 15%, var(--surface))" : "var(--surface)",
+                        border: active ? "1.5px solid var(--protein)" : "1px solid var(--border)",
+                        outline: "none",
+                      }}
                     >
-                      {t.name}
-                    </p>
-                    <p className="text-[12px] leading-tight" style={{ color: "var(--text-muted)" }}>
-                      {t.desc}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                      <span
+                        className="text-[13px] font-semibold"
+                        style={{ color: active ? "var(--protein)" : "var(--text-primary)" }}
+                      >
+                        {opt.label}
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                        {opt.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}

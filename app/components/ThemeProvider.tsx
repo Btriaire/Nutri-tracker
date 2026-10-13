@@ -4,10 +4,20 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 
 export type Theme = "cosmos" | "lumiere";
+export type Density = "compact" | "normal" | "large";
 
-const ThemeContext = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  density: Density;
+  setDensity: (d: Density) => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({
   theme: "cosmos",
   setTheme: () => {},
+  density: "normal",
+  setDensity: () => {},
 });
 
 export function useTheme() { return useContext(ThemeContext); }
@@ -19,8 +29,14 @@ function applyTheme(t: Theme) {
   html.classList.toggle("light", t === "lumiere");
 }
 
+function applyDensity(d: Density) {
+  const html = document.documentElement;
+  html.dataset.density = d;
+}
+
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("cosmos");
+  const [density, setDensityState] = useState<Density>("normal");
 
   useEffect(() => {
     // Les anciens themes supprimes (mfp = clair, ocean = sombre) migrent vers leur equivalent.
@@ -29,12 +45,19 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     // Support legacy "light"/"dark" values from old storage key
     const legacy = localStorage.getItem("theme");
     const validThemes: Theme[] = ["cosmos", "lumiere"];
-    const initial: Theme =
+    const initialTheme: Theme =
       stored && validThemes.includes(stored) ? stored
       : legacy === "light" ? "lumiere"
       : "cosmos";
-    setThemeState(initial);
-    applyTheme(initial);
+    setThemeState(initialTheme);
+    applyTheme(initialTheme);
+
+    const storedDensity = localStorage.getItem("nutri-density") as Density | null;
+    const validDensities: Density[] = ["compact", "normal", "large"];
+    const initialDensity: Density =
+      storedDensity && validDensities.includes(storedDensity) ? storedDensity : "normal";
+    setDensityState(initialDensity);
+    applyDensity(initialDensity);
   }, []);
 
   const setTheme = (t: Theme) => {
@@ -43,8 +66,14 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     applyTheme(t);
   };
 
+  const setDensity = (d: Density) => {
+    setDensityState(d);
+    localStorage.setItem("nutri-density", d);
+    applyDensity(d);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, density, setDensity }}>
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </ThemeContext.Provider>
   );
