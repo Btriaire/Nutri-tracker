@@ -50,7 +50,7 @@ export default function LoginPage() {
       else setError("Compte non autorisé");
     } catch (err: unknown) {
       const msg = (err as { code?: string }).code;
-      if (msg !== "auth/popup-closed-by-user") setError("Connexion Google échouée");
+      if (msg !== "auth/popup-closed-by-user") setError(`Connexion Google échouée (${msg ?? "erreur inconnue"})`);
     } finally {
       setGoogleLoad(false);
     }
