@@ -7,7 +7,7 @@ const TENANT_EXACT = ["/dashboard", "/health", "/progress", "/activity", "/activ
 const TENANT_PREFIXES = [
   "/log", "/settings",
   "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
-  "/api/supplement-intakes", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
+  "/api/supplement-intakes", "/api/supplement-ai", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
   "/api/repartition", "/api/food", "/api/measurements", "/api/workout-templates",
   "/api/face-scan", "/api/eye-scan", "/api/meditation", "/api/progress", "/api/weight-corrections", "/api/workout-templates", "/api/ai/advanced-analysis", "/api/withings", "/api/withings-body", "/api/google-fit", "/api/gfit-session", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
   "/api/cardio", "/api/sleep", "/api/album", "/api/export",
