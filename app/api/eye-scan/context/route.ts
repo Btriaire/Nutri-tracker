@@ -12,14 +12,15 @@ import type { DayLog, SupplementLog, UserProfile } from "@/app/lib/types";
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const date = req.nextUrl.searchParams.get("date");
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   const d = parseISO(date);
   const from14 = format(subDays(d, 13), "yyyy-MM-dd"), from7 = format(subDays(d, 6), "yyyy-MM-dd");
   const db = getAdminFirestore();
-  const range = (col: string) => db.collection(`users/owner/${col}`)
+  const range = (col: string) => db.collection(`users/${USER}/${col}`)
     .where(FieldPath.documentId(), ">=", from14).where(FieldPath.documentId(), "<=", date).get();
-  const [logs, supps, profile] = await Promise.all([range("foodLog"), range("supplementLogs"), db.doc("users/owner").get()]);
+  const [logs, supps, profile] = await Promise.all([range("foodLog"), range("supplementLogs"), db.doc(`users/${USER}`).get()]);
 
   const days = logs.docs.map((x) => ({ id: x.id, log: x.data() as DayLog })).filter((x) => (x.log.entries ?? []).length > 0);
   const water = logs.docs.filter((x) => x.id >= from7).map((x) => (x.data() as DayLog).waterMl ?? 0).filter((w) => w > 0);

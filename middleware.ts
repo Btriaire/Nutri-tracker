@@ -7,6 +7,8 @@ const TENANT_PREFIXES = [
   "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
   "/api/supplement-intakes", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
   "/api/repartition", "/api/food", "/api/measurements", "/api/workout-templates",
+  "/api/face-scan", "/api/eye-scan", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
+  "/api/cardio", "/api/sleep", "/api/album", "/api/export",
 ];
 
 const PUBLIC_PREFIXES = [

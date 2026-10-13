@@ -5,7 +5,6 @@ import { getSession } from "@/app/lib/session";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const USER = "owner";
 const SCHEMA_VERSION = 2;
 
 // Exclues : jetons de connexion, photos base64 (sauvegardees a part par le cron), historique interne.
@@ -32,6 +31,7 @@ function sanitize(obj: unknown): unknown {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const from   = searchParams.get("from")   ?? undefined;

@@ -6,7 +6,6 @@ import type { GymSession, GymExercise, GymSet, ManualActivity } from "@/app/lib/
 
 export const dynamic = "force-dynamic";
 
-const USER = "owner";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Musculation ≈ 5 MET (effort modéré) — calories = MET × 75 kg × h
@@ -28,6 +27,7 @@ function totalVolume(exercises: GymExercise[]): number {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   let body: {
     date:        string;
@@ -147,6 +148,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

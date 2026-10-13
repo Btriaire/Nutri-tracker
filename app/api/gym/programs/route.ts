@@ -6,12 +6,12 @@ import type { GymProgram, GymProgramExercise } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const USER = "owner";
 
 // ─── GET : liste des programmes ─────────────────────────────────────────────────
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const db  = getAdminFirestore();
   const col = db.collection(`users/${USER}/gymPrograms`);
@@ -32,6 +32,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   let body: { name?: string; exercises?: GymProgramExercise[] };
   try {
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { GoogleFitDay } from "@/app/lib/types";
@@ -28,9 +29,12 @@ export interface WithingsPoint {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = req.nextUrl;
   const days = Math.min(parseInt(searchParams.get("days") ?? "30"), 90);
-  const userId = "owner";
+  const userId = USER;
 
   const db  = getAdminFirestore();
   const today = new Date();

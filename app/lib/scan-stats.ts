@@ -8,10 +8,10 @@ import { Timestamp } from "firebase-admin/firestore";
 import { computeBaselines, faceIndexes, FACE_METRICS_VERSION, type FaceMetrics, type FaceIndexes } from "./face-metrics";
 import { eyeBaselines, eyeIndexesFrom, eyeSignalsFrom, sideBaselines, sideIndexesFrom, EYE_METRICS_VERSION, type EyeScanData } from "./eye-metrics";
 
-const USER = "users/owner";
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
-export async function refreshFaceStats(db: Firestore) {
+export async function refreshFaceStats(db: Firestore, user: string) {
+  const USER = `users/${user}`;
   const snap = await db.collection(`${USER}/faceScans`).select("date", "metrics", "indexes").get();
   const scans = snap.docs
     .map((d) => ({ ref: d.ref, ...(d.data() as { date: string; metrics?: FaceMetrics; indexes?: FaceIndexes }) }))
@@ -36,7 +36,8 @@ export async function refreshFaceStats(db: Firestore) {
 
 type EyeDoc = EyeScanData & { time: string; indexes?: unknown; signals?: unknown; indexesEye?: unknown };
 
-export async function refreshEyeStats(db: Firestore) {
+export async function refreshEyeStats(db: Firestore, user: string) {
+  const USER = `users/${user}`;
   const snap = await db.collection(`${USER}/eyeScans`).select("date", "time", "metrics", "plr", "conjunctiva", "mbiS", "indexes", "signals", "indexesEye").get();
   const scans = snap.docs
     .map((d) => ({ ref: d.ref, data: d.data() as EyeDoc }))

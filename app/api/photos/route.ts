@@ -5,7 +5,6 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { put, del } from "@vercel/blob";
 
-const USER_ID = "owner";
 
 export interface DayPhoto {
   id:        string;   // e.g. "photo_0", "photo_1", "photo_2", "meal_breakfast"
@@ -31,12 +30,13 @@ export interface DayPhotosDoc {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const date = req.nextUrl.searchParams.get("date");
   if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });
 
   const db    = getAdminFirestore();
-  const snap  = await db.doc(`users/owner/dayPhotos/${date}`).get();
+  const snap  = await db.doc(`users/${USER}/dayPhotos/${date}`).get();
   const data  = snap.exists ? (snap.data() as DayPhotosDoc) : null;
   return NextResponse.json({ photos: data?.photos ?? [] });
 }
@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   let body: { date: string; dataUrl: string };
   try { body = await req.json() as typeof body; }
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
   if (!date || !dataUrl) return NextResponse.json({ error: "date + dataUrl required" }, { status: 400 });
 
   const db   = getAdminFirestore();
-  const ref  = db.doc(`users/owner/dayPhotos/${date}`);
+  const ref  = db.doc(`users/${USER}/dayPhotos/${date}`);
   const snap = await ref.get();
   const existing: DayPhoto[] = snap.exists ? (snap.data() as DayPhotosDoc).photos ?? [] : [];
 
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
     if (!match) return NextResponse.json({ error: "Format d'image invalide" }, { status: 400 });
     const [, mime, b64] = match;
     const ext = mime.split("/")[1].replace("jpeg", "jpg");
-    const blob = await put(`dayPhotos/${USER_ID}/${date}/${id}.${ext}`, Buffer.from(b64, "base64"), {
+    const blob = await put(`dayPhotos/${USER}/${date}/${id}.${ext}`, Buffer.from(b64, "base64"), {
       access: "public",
       contentType: mime,
       addRandomSuffix: true,
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   let body: { date: string; photoId: string };
   try { body = await req.json() as typeof body; }
@@ -106,7 +108,7 @@ export async function DELETE(req: NextRequest) {
   if (!date || !photoId) return NextResponse.json({ error: "date + photoId required" }, { status: 400 });
 
   const db   = getAdminFirestore();
-  const ref  = db.doc(`users/owner/dayPhotos/${date}`);
+  const ref  = db.doc(`users/${USER}/dayPhotos/${date}`);
   const snap = await ref.get();
   if (!snap.exists) return NextResponse.json({ ok: true, photos: [] });
 

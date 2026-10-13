@@ -1,9 +1,9 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { FitnessDay } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
-const USER = "owner";
 
 function stripTimestamps(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
@@ -17,6 +17,9 @@ function stripTimestamps(obj: unknown): unknown {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))

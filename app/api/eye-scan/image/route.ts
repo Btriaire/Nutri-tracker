@@ -9,9 +9,10 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const id = req.nextUrl.searchParams.get("id");
   if (!id || !/^[\w-]{1,64}$/.test(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
-  const snap = await getAdminFirestore().doc(`users/owner/eyeScans/${id}`).get();
+  const snap = await getAdminFirestore().doc(`users/${USER}/eyeScans/${id}`).get();
   const eye = req.nextUrl.searchParams.get("eye");
   const field = eye === "A" ? "imageA" : eye === "B" ? "imageB" : "image";
   const url = snap.exists ? (snap.get(field) as string | undefined) : undefined;

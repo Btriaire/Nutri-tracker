@@ -14,11 +14,12 @@ export interface RecentPhoto {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const days = parseInt(req.nextUrl.searchParams.get("days") ?? "14", 10);
 
   const db   = getAdminFirestore();
-  const snap = await db.collection("users/owner/dayPhotos")
+  const snap = await db.collection(`users/${USER}/dayPhotos`)
     .orderBy("date", "desc")
     .limit(days)
     .get();

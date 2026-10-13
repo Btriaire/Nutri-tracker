@@ -6,7 +6,6 @@ import type { ManualActivity } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const USER = "owner";
 
 const ACTIVITY_NAMES: Record<number, string> = {
   1: "Course à pied", 3: "Course", 7: "Vélo", 8: "Vélo",
@@ -21,6 +20,7 @@ const ACTIVITY_NAMES: Record<number, string> = {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))
@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   let body: {
     date: string;

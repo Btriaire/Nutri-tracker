@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -6,7 +7,6 @@ import type { DayLog, FoodEntry, ManualActivity } from "@/app/lib/types";
 import type { DayPhoto, DayPhotosDoc } from "@/app/api/photos/route";
 import { FieldPath } from "firebase-admin/firestore";
 
-const USER = "owner";
 
 export interface AlbumMeal {
   name:     string;
@@ -40,6 +40,9 @@ const MEAL_EMOJI: Record<string, string> = {
 };
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");
   const to   = searchParams.get("to");

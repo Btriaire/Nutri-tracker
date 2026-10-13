@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { id } = await params;
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; }
@@ -27,7 +31,7 @@ export async function PATCH(
   if (Object.keys(update).length === 0)
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
-  await db.doc(`users/owner/manualActivities/${id}`).update(update);
+  await db.doc(`users/${USER}/manualActivities/${id}`).update(update);
   return NextResponse.json({ ok: true });
 }
 
@@ -35,8 +39,11 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { id } = await params;
   const db = getAdminFirestore();
-  await db.doc(`users/owner/manualActivities/${id}`).delete();
+  await db.doc(`users/${USER}/manualActivities/${id}`).delete();
   return NextResponse.json({ ok: true });
 }

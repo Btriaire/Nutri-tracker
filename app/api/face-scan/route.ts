@@ -10,7 +10,6 @@ import { GROQ_VISION_MODEL, GROQ_VISION_MAX_TOKENS, describeGroqError, recordGro
 import { sanitizeMetrics, metricsContext, type FaceMetrics, type FaceIndexes } from "@/app/lib/face-metrics";
 import { refreshFaceStats } from "@/app/lib/scan-stats";
 
-const USER = "owner";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_IMAGE_BYTES = 500 * 1024; // 500KB per image after client-side compression
 
@@ -56,6 +55,7 @@ Règles : n'invente rien (findings vide si vraiment rien à signaler) ; jamais d
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const db = getAdminFirestore();
@@ -76,6 +76,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY not set" }, { status: 500 });
@@ -216,7 +217,7 @@ export async function POST(req: NextRequest) {
 
     await db.collection(`users/${USER}/faceScans`).doc(id).set(entry);
     // Memorise la nouvelle reference et les index du jour de ce scan
-    await refreshFaceStats(db).catch((e) => console.error("[face-scan stats]", e));
+    await refreshFaceStats(db, USER).catch((e) => console.error("[face-scan stats]", e));
     const indexes = (await db.collection(`users/${USER}/faceScans`).doc(id).get()).get("indexes") as FaceIndexes | undefined;
 
     return NextResponse.json({ scan: { ...entry, ...(indexes ? { indexes } : {}) } }, { status: 201 });
@@ -230,6 +231,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const body = await req.json().catch(() => null) as { id?: unknown; metrics?: unknown } | null;
   const id = typeof body?.id === "string" && /^[\w-]{1,64}$/.test(body.id) ? body.id : null;
   const metrics = sanitizeMetrics(body?.metrics);
@@ -248,6 +250,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -256,7 +259,7 @@ export async function DELETE(req: NextRequest) {
 
     const db = getAdminFirestore();
     await db.collection(`users/${USER}/faceScans`).doc(id).delete();
-    await refreshFaceStats(db).catch((e) => console.error("[face-scan stats]", e));
+    await refreshFaceStats(db, USER).catch((e) => console.error("[face-scan stats]", e));
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[face-scan DELETE]", e);

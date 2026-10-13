@@ -10,5 +10,5 @@ import { refreshFaceStats } from "@/app/lib/scan-stats";
 export async function POST() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json(await refreshFaceStats(getAdminFirestore()));
+  return NextResponse.json(await refreshFaceStats(getAdminFirestore(), session.userId));
 }
