@@ -6,11 +6,11 @@ import { getTokens } from "@/app/lib/withings";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 
-const USER = "owner";
 
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const tokens = await getTokens(USER);
   if (!tokens) {

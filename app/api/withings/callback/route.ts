@@ -3,13 +3,16 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { saveTokens, syncRange } from "@/app/lib/withings";
 import { format, subDays } from "date-fns";
+import { readOauthState } from "@/app/lib/oauth-state";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code  = searchParams.get("code");
   const error = searchParams.get("error");
 
-  if (error || !code) {
+  // Le compte qui a lance la connexion (signe dans "state")
+  const USER = await readOauthState(searchParams.get("state"));
+  if (error || !code || !USER) {
     return NextResponse.redirect(new URL("/settings?withings=error", req.url));
   }
 
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await saveTokens("owner", {
+    await saveTokens(USER, {
       accessToken:  json.body.access_token,
       refreshToken: json.body.refresh_token,
       expiresAt:    Date.now() + (json.body.expires_in ?? 10800) * 1000,
@@ -51,11 +54,11 @@ export async function GET(req: NextRequest) {
   // Sync last 7 days synchronously so weight shows up immediately on dashboard
   const today = format(new Date(), "yyyy-MM-dd");
   const from7 = format(subDays(new Date(), 6), "yyyy-MM-dd");
-  try { await syncRange("owner", from7, today); } catch { /* ignore */ }
+  try { await syncRange(USER, from7, today); } catch { /* ignore */ }
 
   // Continue syncing 30 days in the background after redirect
   const from30 = format(subDays(new Date(), 30), "yyyy-MM-dd");
-  syncRange("owner", from30, today).catch(console.error);
+  syncRange(USER, from30, today).catch(console.error);
 
   return NextResponse.redirect(new URL("/settings?withings=connected", req.url));
 }

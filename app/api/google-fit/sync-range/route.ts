@@ -12,23 +12,18 @@ export const maxDuration = 60;
 // This route is listed as public in middleware.ts (the cron calls it without a session
 // cookie), so it checks its own auth: either a logged-in session (manual sync from the
 // app) or the same CRON_SECRET bearer token the cron endpoint accepts.
-async function isAuthorized(req: NextRequest): Promise<boolean> {
-  const secret = process.env.CRON_SECRET;
-  const bearer = req.headers.get("authorization");
-  if (secret && bearer === `Bearer ${secret}`) return true;
-  const session = await getSession();
-  return !!session;
-}
-
 export async function POST(req: NextRequest) {
-  if (!(await isAuthorized(req))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Cron (secret) : toujours le proprietaire ; sinon le compte connecte
+  const secret = process.env.CRON_SECRET;
+  const automated = !!secret && req.headers.get("authorization") === `Bearer ${secret}`;
+  const session = automated ? null : await getSession();
+  const USER = automated ? "owner" : session?.userId;
+  if (!USER) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { from, to } = await req.json() as { from: string; to: string };
   if (!from || !to) return NextResponse.json({ error: "from and to required" }, { status: 400 });
 
-  const tokens = await getTokens("owner");
+  const tokens = await getTokens(USER);
   if (!tokens) return NextResponse.json({ error: "Not connected" }, { status: 400 });
 
   const startMs  = new Date(from + "T00:00:00").getTime();
@@ -250,7 +245,7 @@ export async function POST(req: NextRequest) {
     const weight = getLastFp(3);
     const sleep  = sleepByDate[date] ?? null;
 
-    batch.set(db.doc(`users/owner/fitnessData/${date}`), {
+    batch.set(db.doc(`users/${USER}/fitnessData/${date}`), {
       date,
       googleFit: {
         steps:               getInt(0),
@@ -271,7 +266,7 @@ export async function POST(req: NextRequest) {
     const bpReadings = bpByDate[date] ?? [];
     if (bpReadings.length > 0) {
       batch.set(
-        db.doc(`users/owner/healthLog/${date}`),
+        db.doc(`users/${USER}/healthLog/${date}`),
         { date, bloodPressure: FieldValue.arrayUnion(...bpReadings), updatedAt: FieldValue.serverTimestamp() },
         { merge: true },
       );
@@ -293,7 +288,7 @@ export async function POST(req: NextRequest) {
   // the main batch. This keeps repeated range syncs idempotent and preserves
   // manual readings while replacing a corrected Google Fit point.
   for (const [date, incoming] of Object.entries(glucoseByDate)) {
-    const ref = db.doc(`users/owner/glucoseLog/${date}`);
+    const ref = db.doc(`users/${USER}/glucoseLog/${date}`);
     const existing = (await ref.get()).data() as GlucoseDay | undefined;
     await ref.set({ date, readings: mergeReadings(existing?.readings ?? [], incoming), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   }

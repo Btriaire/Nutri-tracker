@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -8,6 +9,9 @@ export const dynamic = "force-dynamic";
 // Edits stored in fitnessData/{date} under sessionEdits.{sessionId}.*
 // This field is NEVER touched by the sync process.
 export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   let body: { date: string; sessionId: string; name?: string; calories?: number | null; durationMin?: number };
   try { body = await req.json() as typeof body; }
   catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
@@ -26,7 +30,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
   const db  = getAdminFirestore();
-  const ref = db.doc(`users/owner/fitnessData/${date}`);
+  const ref = db.doc(`users/${USER}/fitnessData/${date}`);
 
   try {
     await ref.update(update);

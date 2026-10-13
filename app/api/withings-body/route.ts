@@ -5,7 +5,6 @@ import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 
-const USER = "owner";
 
 export interface BodyCompPoint {
   date:          string;
@@ -36,6 +35,7 @@ export interface BodyCompPoint {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const days = Math.min(365, Math.max(7, parseInt(searchParams.get("days") ?? "90", 10)));

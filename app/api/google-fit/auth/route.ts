@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/app/lib/session";
+import { makeOauthState } from "@/app/lib/oauth-state";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/fitness.activity.read",
@@ -11,6 +13,10 @@ const SCOPES = [
 ].join(" ");
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const state = await makeOauthState(session.userId);
+  if (!state) return NextResponse.json({ error: "Session secret missing" }, { status: 500 });
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id",     process.env.GOOGLE_CLIENT_ID!.trim());
   url.searchParams.set("redirect_uri",  process.env.GOOGLE_REDIRECT_URI!.trim());
@@ -18,5 +24,6 @@ export async function GET() {
   url.searchParams.set("scope",         SCOPES);
   url.searchParams.set("access_type",   "offline");
   url.searchParams.set("prompt",        "consent"); // force refresh_token
+  url.searchParams.set("state",         state);
   return NextResponse.redirect(url.toString());
 }

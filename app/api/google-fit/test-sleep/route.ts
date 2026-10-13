@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { decrypt } from "@/app/lib/oauth";
@@ -6,8 +7,11 @@ import { format } from "date-fns";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const db     = getAdminFirestore();
-  const userId = "owner";
+  const userId = USER;
 
   const tokSnap = await db.doc(`users/${userId}/oauthTokens/google_fit`).get();
   if (!tokSnap.exists) return NextResponse.json({ error: "No GFit tokens" }, { status: 400 });

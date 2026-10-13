@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { getTokens, activityLabel, fetchGlucoseReadings } from "@/app/lib/google-fit";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -9,10 +10,13 @@ import { mergeReadings } from "@/app/lib/glucose";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { days = 90 } = await req.json() as { days?: number };
   const clampedDays = Math.min(Math.max(days, 1), 365);
 
-  const tokens = await getTokens("owner");
+  const tokens = await getTokens(USER);
   if (!tokens) return NextResponse.json({ error: "Not connected" }, { status: 400 });
 
   const endDate   = new Date();
@@ -187,7 +191,7 @@ export async function POST(req: NextRequest) {
         calories:     null,
       }));
 
-    const ref = db.doc(`users/owner/fitnessData/${date}`);
+    const ref = db.doc(`users/${USER}/fitnessData/${date}`);
     batch.set(ref, {
       date,
       googleFit: {
@@ -209,7 +213,7 @@ export async function POST(req: NextRequest) {
     const bpReadings = bpByDate[date] ?? [];
     if (bpReadings.length > 0) {
       batch.set(
-        db.doc(`users/owner/healthLog/${date}`),
+        db.doc(`users/${USER}/healthLog/${date}`),
         { date, bloodPressure: FieldValue.arrayUnion(...bpReadings), updatedAt: FieldValue.serverTimestamp() },
         { merge: true },
       );
@@ -228,7 +232,7 @@ export async function POST(req: NextRequest) {
   if (opCount > 0) await batch.commit();
 
   for (const [date, incoming] of Object.entries(glucoseByDate)) {
-    const ref = db.doc(`users/owner/glucoseLog/${date}`);
+    const ref = db.doc(`users/${USER}/glucoseLog/${date}`);
     const existing = (await ref.get()).data() as GlucoseDay | undefined;
     await ref.set({ date, readings: mergeReadings(existing?.readings ?? [], incoming), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
   }

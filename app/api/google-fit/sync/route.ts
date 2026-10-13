@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { syncDay, isConnected } from "@/app/lib/google-fit";
 import { format } from "date-fns";
@@ -6,13 +7,16 @@ import { format } from "date-fns";
 // Edge-runtime-only and had no effect on this Node.js route.
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { date } = await req.json() as { date?: string };
   const targetDate = date ?? format(new Date(), "yyyy-MM-dd");
 
-  if (!await isConnected("owner")) {
+  if (!await isConnected(USER)) {
     return NextResponse.json({ error: "Not connected" }, { status: 400 });
   }
 
-  const ok = await syncDay("owner", targetDate);
+  const ok = await syncDay(USER, targetDate);
   return NextResponse.json({ ok, date: targetDate });
 }

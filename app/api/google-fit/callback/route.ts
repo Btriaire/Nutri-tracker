@@ -3,13 +3,16 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { saveTokens, syncDay } from "@/app/lib/google-fit";
 import { format } from "date-fns";
+import { readOauthState } from "@/app/lib/oauth-state";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code  = searchParams.get("code");
   const error = searchParams.get("error");
 
-  if (error || !code) {
+  // Le compte qui a lance la connexion (signe dans "state") ; sans lui, rien n'est enregistre
+  const USER = await readOauthState(searchParams.get("state"));
+  if (error || !code || !USER) {
     return NextResponse.redirect(new URL("/settings?fit=error", req.url));
   }
 
@@ -39,7 +42,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await saveTokens("owner", {
+    await saveTokens(USER, {
       accessToken:  json.access_token,
       refreshToken: json.refresh_token,
       expiresAt:    Date.now() + (json.expires_in ?? 3600) * 1000,
@@ -50,7 +53,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Sync today synchronously so data shows immediately on dashboard
-  try { await syncDay("owner", format(new Date(), "yyyy-MM-dd")); } catch { /* ignore */ }
+  try { await syncDay(USER, format(new Date(), "yyyy-MM-dd")); } catch { /* ignore */ }
 
   return NextResponse.redirect(new URL("/settings?fit=connected", req.url));
 }
