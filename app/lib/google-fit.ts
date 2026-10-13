@@ -851,6 +851,12 @@ export async function syncDay(userId: string, date: string): Promise<boolean> {
 
   if (data.glucose.length > 0) await writeGlucose(userId, date, data.glucose);
 
+  // Clear any stale error flags on successful sync
+  await db.doc(`users/${userId}/oauthTokens/google_fit`).set(
+    { refreshError: null, refreshFailedAt: null },
+    { merge: true },
+  ).catch(() => {/* silent */});
+
   return true;
 }
 

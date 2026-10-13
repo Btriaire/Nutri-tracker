@@ -23,6 +23,7 @@ const PUBLIC_PREFIXES = [
   "/api/withings/callback",
   "/api/apple-health/ingest",
   "/api/apple-health/hae",
+  "/api/google-health/ingest",
   "/report/print",
   "/api/report/generate",
   "/api/infographic/upload",
