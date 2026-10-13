@@ -159,7 +159,7 @@ const MEAL_RULES: Record<MealType, MealRule> = {
 const MEAL_RULES_NK: Record<MealType, MealRule> = {
   breakfast: {
     breadMaxG: 60,
-    summary: "60g pain complet (ou 1 carré frais Gervais 0%) + 1 œuf entier + 2 blancs (ou 30g jambon dégraissé) + 1 kiwi vert + boisson sans sucre",
+    summary: "60g pain complet (ou 1 carré frais Gervais 0%) + 1 œuf entier + 2 blancs (ou 30g jambon dégraissé) + 1 kiwi vert (optionnel) + boisson sans sucre",
   },
   lunch: {
     breadMaxG: 60,
