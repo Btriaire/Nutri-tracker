@@ -3,10 +3,11 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
+// trim() : des variables Vercel saisies avec un retour a la ligne cassaient l'authDomain (popup Google en echec)
 const firebaseConfig = {
-  apiKey:     process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId:  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  apiKey:     process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim(),
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim(),
+  projectId:  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim(),
 };
 
 export function getClientAuth() {
