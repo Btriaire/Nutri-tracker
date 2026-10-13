@@ -506,7 +506,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             {withings === "connected"    && <IconCircleCheck  size={18} style={{ color: "var(--fiber)",      flexShrink: 0 }} />}
             {withings === "needs_reauth" && <IconAlertCircle size={18} style={{ color: "var(--warn)",           flexShrink: 0 }} />}
             {withings === "disconnected" && <IconCircleX     size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
-            {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+            {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
           <AnimatePresence initial={false}>
