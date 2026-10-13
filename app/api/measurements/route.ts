@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
@@ -19,12 +20,15 @@ export interface MeasurementEntry {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = req.nextUrl;
   const months = parseInt(searchParams.get("months") ?? "12", 10);
   const db     = getAdminFirestore();
 
   const snap = await db
-    .collection("users/owner/measurements")
+    .collection(`users/${USER}/measurements`)
     .orderBy("month", "desc")
     .limit(Math.min(months, 24) * 31)
     .get();
@@ -43,13 +47,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const body = await req.json() as Omit<MeasurementEntry, "loggedAt" | "month" | "date">;
   const now   = new Date();
   const date  = format(now, "yyyy-MM-dd");
   const month = format(now, "yyyy-MM");
   const db    = getAdminFirestore();
 
-  await db.doc(`users/owner/measurements/${date}`).set({
+  await db.doc(`users/${USER}/measurements/${date}`).set({
     ...body,
     date,
     month,

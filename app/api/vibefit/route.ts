@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 export const dynamic = "force-dynamic";
 
 import { syncDay, isConnected } from "@/app/lib/google-fit";
@@ -6,7 +7,6 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { format, subDays } from "date-fns";
 
-const USER = "owner";
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
 // Server-to-server auth for VibeFit (PaLaMa fitness PWA), same convention as
@@ -80,7 +80,7 @@ function pickSleep(day: SleepSources, gf: { sleepMinutes?: number | null }): { s
 // heart rate, workout sessions). VibeFit has no Google OAuth of its own —
 // it reads whatever nutri-tracker already pulled, same source-of-truth idea
 // as the weight lookup below.
-async function getGoogleFitRange(req: NextRequest) {
+async function getGoogleFitRange(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(30, Math.max(1, Number(searchParams.get("days")) || 7));
   const db = getAdminFirestore();
@@ -127,7 +127,7 @@ interface RemoteActivity {
 // name+duration), plus any manualActivities entries typed directly into
 // NutriTracker's own UI. Both exclude source==="vibefit" so a pull never
 // re-imports what VibeFit pushed here itself.
-async function getActivitiesRange(req: NextRequest) {
+async function getActivitiesRange(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(90, Math.max(1, Number(searchParams.get("days")) || 30));
   const db = getAdminFirestore();
@@ -191,7 +191,7 @@ async function getActivitiesRange(req: NextRequest) {
 // entries VibeFit itself pushed (source==="vibefit") — those already exist
 // in VibeFit's own local nutrition store, so counting them again here would
 // double them when VibeFit adds this to its own day total.
-async function getNutritionForDay(req: NextRequest) {
+async function getNutritionForDay(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -240,7 +240,7 @@ async function getNutritionForDay(req: NextRequest) {
 // GET ?type=nutrition-range&days=N — same totals as getNutritionForDay, but
 // for each of the last N days in one call, so VibeFit's Progression overview
 // doesn't have to make N separate requests just to plot a trend.
-async function getNutritionRange(req: NextRequest) {
+async function getNutritionRange(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(30, Math.max(1, Number(searchParams.get("days")) || 14));
   const db = getAdminFirestore();
@@ -277,7 +277,7 @@ async function getNutritionRange(req: NextRequest) {
 // de ces valeurs est connue. VibeFit n'a ni capteur cardiaque continu ni
 // tensiomètre connecté ; tout vient d'intégrations/saisies déjà actives côté
 // NutriTracker.
-async function getCardiacRange(req: NextRequest) {
+async function getCardiacRange(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = Math.min(60, Math.max(1, Number(searchParams.get("days")) || 14));
   const db = getAdminFirestore();
@@ -332,10 +332,10 @@ async function getCardiacRange(req: NextRequest) {
 }
 
 // GET ?type=mood&date=YYYY-MM-DD — today's mood entry from NutriTracker's
-// "Humeur du jour" widget (users/owner/mentalHealth/{date}), read directly
+// "Humeur du jour" widget (users/${USER}/mentalHealth/{date}), read directly
 // via admin Firestore since app/api/mental-health/route.ts is session-gated
 // and has no server-to-server path — same rationale as every other read here.
-async function getMoodForDay(req: NextRequest) {
+async function getMoodForDay(USER: string, req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -357,15 +357,17 @@ async function getMoodForDay(req: NextRequest) {
 // GET — latest known weight (Withings first, VibeFit fallback), for VibeFit
 // to pull on load and adopt if more recent than its own local log.
 export async function GET(req: NextRequest) {
+  // Client VibeFit : authentifié par secret (pas de cookie), donc toujours le proprietaire
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = "owner";
 
   const { searchParams } = new URL(req.url);
-  if (searchParams.get("type") === "googlefit") return getGoogleFitRange(req);
-  if (searchParams.get("type") === "activities") return getActivitiesRange(req);
-  if (searchParams.get("type") === "nutrition") return getNutritionForDay(req);
-  if (searchParams.get("type") === "nutrition-range") return getNutritionRange(req);
-  if (searchParams.get("type") === "mood") return getMoodForDay(req);
-  if (searchParams.get("type") === "cardiac") return getCardiacRange(req);
+  if (searchParams.get("type") === "googlefit") return getGoogleFitRange(USER, req);
+  if (searchParams.get("type") === "activities") return getActivitiesRange(USER, req);
+  if (searchParams.get("type") === "nutrition") return getNutritionForDay(USER, req);
+  if (searchParams.get("type") === "nutrition-range") return getNutritionRange(USER, req);
+  if (searchParams.get("type") === "mood") return getMoodForDay(USER, req);
+  if (searchParams.get("type") === "cardiac") return getCardiacRange(USER, req);
 
   const db = getAdminFirestore();
   const today = new Date();
@@ -393,7 +395,9 @@ export async function GET(req: NextRequest) {
 
 // POST — push a weigh-in or a food entry from VibeFit.
 export async function POST(req: NextRequest) {
+  // Client VibeFit : authentifié par secret (pas de cookie), donc toujours le proprietaire
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = "owner";
 
   const body = (await req.json()) as WeightPush | FoodPush | ActivityPush | DailyPhotoPush | GoogleFitSyncPush;
   const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : format(new Date(), "yyyy-MM-dd");
@@ -492,7 +496,7 @@ export async function POST(req: NextRequest) {
     if (!body.dataUrl || !body.dataUrl.startsWith("data:image/") || body.dataUrl.length > 500_000) {
       return NextResponse.json({ error: "Invalid dataUrl" }, { status: 400 });
     }
-    // Même album que le Journal (app/api/photos/route.ts, users/owner/dayPhotos/{date}),
+    // Même album que le Journal (app/api/photos/route.ts, users/${USER}/dayPhotos/{date}),
     // déjà affiché sur la page du jour via <DayPhotos> — pas un champ à part.
     // Ne remplace jamais une capture déjà présente pour ce jour-là (prise
     // manuellement dans NutriTracker, ou déjà poussée par VibeFit plus tôt) —

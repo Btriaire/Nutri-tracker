@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
   // cookie *gate*; without this check GET would become fully public.)
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = req.nextUrl;
 
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
 
     const db   = getAdminFirestore();
     const snap = await db
-      .collection("users/owner/mentalHealth")
+      .collection(`users/${USER}/mentalHealth`)
       .where("date", ">=", from)
       .where("date", "<=", today)
       .orderBy("date", "asc")
@@ -89,7 +90,7 @@ export async function GET(req: NextRequest) {
   // ── Single-day mode: ?date= (default) ───────────────────────────────────
   const date = searchParams.get("date") ?? format(new Date(), "yyyy-MM-dd");
   const db   = getAdminFirestore();
-  const snap = await db.doc(`users/owner/mentalHealth/${date}`).get();
+  const snap = await db.doc(`users/${USER}/mentalHealth/${date}`).get();
   if (!snap.exists) return NextResponse.json({ entry: null });
   const raw = snap.data()!;
   return NextResponse.json({
@@ -105,9 +106,10 @@ export async function POST(req: NextRequest) {
   // The middleware deliberately leaves this route reachable by server-to-server
   // callers. Keep the manual path authenticated here as well; otherwise any
   // anonymous POST could write into the owner's mental-health log.
-  if (!automated && !(await getSession())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await getSession();
+  // Appels serveur (secret) : toujours le proprietaire ; sinon le compte connecte
+  const USER = automated ? "owner" : session?.userId;
+  if (!USER) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json() as Omit<MentalHealthEntry, "loggedAt">;
 
   // The automated path (Halcyon-PaLaMa) only ever sends {mood, tags} — no
@@ -136,7 +138,7 @@ export async function POST(req: NextRequest) {
     // same-day detailed entry (stress/anxiety/focus/sleep/social) made via
     // the manual widget, and vice versa — see measurements/route.ts for the
     // same precedent.
-    await db.doc(`users/owner/mentalHealth/${date}`).set(
+    await db.doc(`users/${USER}/mentalHealth/${date}`).set(
       { mood, tags, date, loggedAt: Timestamp.now() },
       { merge: true }
     );
@@ -145,7 +147,7 @@ export async function POST(req: NextRequest) {
 
   const db = getAdminFirestore();
   const date = body.date ?? format(new Date(), "yyyy-MM-dd");
-  await db.doc(`users/owner/mentalHealth/${date}`).set(
+  await db.doc(`users/${USER}/mentalHealth/${date}`).set(
     { ...body, date, loggedAt: Timestamp.now() },
     { merge: true }
   );
