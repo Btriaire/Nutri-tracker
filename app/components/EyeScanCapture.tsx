@@ -130,7 +130,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
           const span = Math.max(...xs) - Math.min(...xs);
           const x0 = Math.max(0, Math.floor(Math.min(...xs) - span * 0.25)), x1 = Math.min(w, Math.ceil(Math.max(...xs) + span * 0.25));
           const y0 = Math.max(0, Math.floor(Math.min(...ys) - span * 0.25)), y1 = Math.min(h, Math.ceil(Math.max(...ys) + span * 0.9));
-          const read = (): { reader: PixelReader; crop: () => string | null; cropEye: (iris: number, irisPx: number) => string | null } => {
+          const read = (): { reader: PixelReader; crop: () => string | null; cropEye: (center: { x: number; y: number }, irisPx: number) => string | null } => {
             ctx.drawImage(video, 0, 0, w, h);
             const rw = x1 - x0, rh = y1 - y0;
             const { data } = ctx.getImageData(x0, y0, rw, rh);
@@ -148,11 +148,11 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 out.getContext("2d")!.drawImage(canvas, x0, y0, rw, rh, 0, 0, out.width, out.height);
                 return out.toDataURL("image/jpeg", 0.8);
               },
-              // Un oeil isole : carre de 3 diametres d'iris centre sur l'iris
-              cropEye: (iris, irisPx) => {
+              // Un oeil isole : carre de 3 diametres d'iris centre exactement sur le centre calcule de l'iris
+              cropEye: (center: { x: number; y: number }, irisPx: number) => {
                 const side = irisPx * 3;
                 if (!(side > 8)) return null;
-                const cx = pts[iris].x * w, cy = pts[iris].y * h;
+                const cx = center.x, cy = center.y;
                 const out = document.createElement("canvas");
                 out.width = 320; out.height = 320;
                 const g = out.getContext("2d")!;
@@ -172,8 +172,8 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
               const { reader, crop, cropEye } = read();
               const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader });
               if (m) {
-                const iris = IRIS[side];
-                const cx = pts[iris].x * w, cy = pts[iris].y * h;
+                const center = m[side].irisCenter ?? { x: pts[IRIS[side]].x * w, y: pts[IRIS[side]].y * h };
+                const cx = center.x, cy = center.y;
                 const ipd = Math.hypot((pts[263].x - pts[33].x) * w, (pts[263].y - pts[33].y) * h);
                 const motion = prevIris ? Math.hypot(cx - prevIris.x, cy - prevIris.y) / ipd : 0;
                 stable = prevIris && motion < 0.012 ? stable + 1 : 0;
@@ -184,7 +184,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 setQuality(q);
                 const list = (cands[side] ??= []);
                 if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && list.length < BURST) {
-                  list.push({ m, q: q.score, image: crop(), eye: cropEye(iris, m[side].irisPx) });
+                  list.push({ m, q: q.score, image: crop(), eye: cropEye(center, m[side].irisPx) });
                   setShots(list.length);
                 }
               }

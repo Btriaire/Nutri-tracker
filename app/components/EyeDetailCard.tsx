@@ -17,6 +17,12 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
 }) {
   const irisR = (HVID_MM / 2) * PX_PER_MM;
   const pupilR = side.pupilMm != null ? (side.pupilMm / 2) * PX_PER_MM : null;
+  // Décalage du centre de la pupille par rapport à l'iris en pixels SVG
+  const pupilDxMm = (side.pupilCenter && side.irisCenter) ? ((side.pupilCenter.x - side.irisCenter.x) * (HVID_MM / side.irisPx)) : 0;
+  const pupilDyMm = (side.pupilCenter && side.irisCenter) ? ((side.pupilCenter.y - side.irisCenter.y) * (HVID_MM / side.irisPx)) : 0;
+  const pupilCx = C + pupilDxMm * PX_PER_MM;
+  const pupilCy = C + pupilDyMm * PX_PER_MM;
+
   const upperY = C - side.mrd1Mm * PX_PER_MM, lowerY = C + side.mrd2Mm * PX_PER_MM;
   const cl = side.catchlight;
   const pir = side.pupilMm != null ? Math.round((side.pupilMm / HVID_MM) * 100) : null;
@@ -45,7 +51,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
           <img src={imageUrl} alt={`${label} isolé`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
           <svg viewBox={`0 0 ${S} ${S}`} className="absolute inset-0 w-full h-full" aria-hidden>
             <circle cx={C} cy={C} r={irisR} fill="none" stroke="#818cf8" strokeWidth={2} />
-            {pupilR && <circle cx={C} cy={C} r={pupilR} fill="none" stroke="#fbbf24" strokeWidth={2} />}
+            {pupilR && <circle cx={pupilCx} cy={pupilCy} r={pupilR} fill="none" stroke="#fbbf24" strokeWidth={2} />}
             <line x1={C - irisR * 1.6} x2={C + irisR * 1.6} y1={upperY} y2={upperY} stroke="#34d399" strokeWidth={2} strokeDasharray="6 4" />
             <line x1={C - irisR * 1.6} x2={C + irisR * 1.6} y1={lowerY} y2={lowerY} stroke="#34d399" strokeWidth={2} strokeDasharray="6 4" />
             <line x1={C} x2={C} y1={upperY} y2={C} stroke="#34d399" strokeWidth={1.5} />

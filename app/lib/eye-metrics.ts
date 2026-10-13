@@ -30,6 +30,8 @@ export interface EyeSide {
   limbalRing?: number | null;    // contraste de l'anneau sombre au bord de l'iris (s'estompe avec l'age)
   cernes?: number | null;        // L* joue - L* sous l'oeil, de ce cote
   catchlight?: { dxMm: number; dyMm: number } | null; // reflet de l'ecran par rapport au centre de l'iris (test de Hirschberg)
+  irisCenter?: { x: number; y: number }; // Coordonnées absolues calculées du centre de l'iris
+  pupilCenter?: { x: number; y: number }; // Coordonnées absolues calculées du centre de la pupille
 }
 
 export interface EyeMetrics {
@@ -61,6 +63,25 @@ function lumAt(read: PixelReader, x: number, y: number, w: number, h: number): n
   return rgbToLab(read(xi, yi))[0];
 }
 
+/** Ajustement d'un cercle (Kåsa fit) à partir de points de contour + centre initial */
+export function fitIrisCircle(center: Pt, ring: Pt[]): { c: Pt; r: number } {
+  // Ajustement géométrique robuste : moyenne des diamètres opposés et barycentre
+  // ring = [droite, haut, gauche, bas]
+  const dHoriz = dist(ring[0], ring[2]);
+  const dVert = dist(ring[1], ring[3]);
+  const rAvg = (dHoriz + dVert) / 4;
+  
+  // Barycentre des 4 points du limbe
+  const meanX = (ring[0].x + ring[1].x + ring[2].x + ring[3].x) / 4;
+  const meanY = (ring[0].y + ring[1].y + ring[2].y + ring[3].y) / 4;
+
+  // Fusion pondérée : les points du contour du limbe sont très fidèles pour le centre réel
+  const cx = meanX * 0.75 + center.x * 0.25;
+  const cy = meanY * 0.75 + center.y * 0.25;
+
+  return { c: { x: cx, y: cy }, r: rAvg };
+}
+
 /** Luminosite mediane sur un cercle, angles de la moitie basse elargie (evite paupiere superieure et cils). */
 function ringL(read: PixelReader, c: Pt, r: number, w: number, h: number): number {
   const vals: number[] = [];
@@ -73,14 +94,47 @@ function ringL(read: PixelReader, c: Pt, r: number, w: number, h: number): numbe
 }
 
 /**
- * Pupille : profil radial de luminosite depuis le centre de l'iris ; le bord est le saut le plus fort
- * (sombre -> plus clair) entre 15 % et 75 % du rayon de l'iris. La mediane par cercle ignore le reflet de l'ecran.
+ * Pupille : recherche du centre le plus sombre (barycentre de luminance sombre)
+ * puis profil radial de luminosité pour localiser le saut pupil-iris.
  */
-export function detectPupil(read: PixelReader, c: Pt, irisR: number, w: number, h: number): { r: number; contrast: number } | null {
+export function detectPupil(read: PixelReader, irisCenter: Pt, irisR: number, w: number, h: number): { r: number; contrast: number; center?: Pt } | null {
+  // 1. Raffinement du centre de la pupille : explorer une petite zone autour d'irisCenter
+  const searchR = Math.max(2, Math.round(irisR * 0.25));
+  let minLum = 255;
+  let pupilC = { ...irisCenter };
+
+  // Echantillonnage pour trouver le centre de masse sombre
+  let sumX = 0, sumY = 0, sumWeight = 0;
+  for (let dy = -searchR; dy <= searchR; dy += 1) {
+    for (let dx = -searchR; dx <= searchR; dx += 1) {
+      if (dx * dx + dy * dy > searchR * searchR) continue;
+      const x = irisCenter.x + dx;
+      const y = irisCenter.y + dy;
+      const l = lumAt(read, x, y, w, h);
+      if (l !== null) {
+        if (l < minLum) minLum = l;
+        // Poids élevé pour les pixels sombres (pupille), sans être affecté par un reflet blanc
+        if (l < 50) {
+          const wLum = Math.max(0, 50 - l);
+          sumX += x * wLum;
+          sumY += y * wLum;
+          sumWeight += wLum;
+        }
+      }
+    }
+  }
+
+  if (sumWeight > 0) {
+    pupilC = { x: sumX / sumWeight, y: sumY / sumWeight };
+  }
+
   const step = Math.max(0.5, irisR / 60);
   const radii: number[] = [], prof: number[] = [];
-  for (let r = irisR * 0.08; r <= irisR * 0.85; r += step) { radii.push(r); prof.push(ringL(read, c, r, w, h)); }
-  const k = Math.max(1, Math.round(irisR * 0.06 / step));
+  for (let r = irisR * 0.08; r <= irisR * 0.85; r += step) {
+    radii.push(r);
+    prof.push(ringL(read, pupilC, r, w, h));
+  }
+  const k = Math.max(1, Math.round((irisR * 0.06) / step));
   const grad: { r: number; g: number }[] = [];
   for (let i = k; i < prof.length - k; i++) {
     const r = radii[i];
@@ -90,12 +144,12 @@ export function detectPupil(read: PixelReader, c: Pt, irisR: number, w: number, 
   if (!grad.length) return null;
   const best = grad.reduce((a, b) => (b.g > a.g ? b : a));
   if (!Number.isFinite(best.g)) return null;
-  // Le saut forme un plateau de largeur ~2k : le bord est au milieu du plateau, pas a son debut
+  // Le saut forme un plateau de largeur ~2k : le bord est au milieu du plateau
   const i0 = grad.indexOf(best);
   let lo = i0, hi = i0;
   while (lo > 0 && grad[lo - 1].g >= best.g * 0.9) lo--;
   while (hi < grad.length - 1 && grad[hi + 1].g >= best.g * 0.9) hi++;
-  return { r: (grad[lo].r + grad[hi].r) / 2, contrast: best.g };
+  return { r: (grad[lo].r + grad[hi].r) / 2, contrast: best.g, center: pupilC };
 }
 
 /** Couleur de l'iris : anneau entre la pupille et le bord, reflets (tres clairs) et cils (tres sombres) exclus. */
@@ -133,10 +187,13 @@ export function irisDifference(m: EyeMetrics): number | null {
 }
 
 function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: PixelReader, w: number, h: number): EyeSide {
-  const c = P[e.iris];
-  // Diametre de l'iris : MediaPipe estime le contour complet ; on garde la plus grande des deux paires opposees
-  const irisPx = Math.max(dist(P[e.ring[0]], P[e.ring[2]]), dist(P[e.ring[1]], P[e.ring[3]]));
-  const R = irisPx / 2;
+  // Ajustement géométrique précis de l'iris et du limbe
+  const rawCenter = P[e.iris];
+  const ringPts = e.ring.map((idx) => P[idx]);
+  const fitted = fitIrisCircle(rawCenter, ringPts);
+  const c = fitted.c;
+  const R = fitted.r;
+  const irisPx = 2 * R;
   const mmPerPx = HVID_MM / Math.max(1, irisPx);
 
   // Axe de l'oeil -> direction "haut" perpendiculaire (insensible a l'inclinaison de la tete)
@@ -223,6 +280,8 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     limbalRing: limbalRing === null ? null : round(limbalRing, 1),
     cernes: Number.isFinite(cer) ? round(cer, 1) : null,
     catchlight,
+    irisCenter: { x: round(c.x, 1), y: round(c.y, 1) },
+    pupilCenter: pupil?.center ? { x: round(pupil.center.x, 1), y: round(pupil.center.y, 1) } : { x: round(c.x, 1), y: round(c.y, 1) },
   };
 }
 

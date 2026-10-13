@@ -48,6 +48,13 @@ describe("computeEyeMetrics", () => {
     expect(m.A.pupilMm!).toBeCloseTo((2 * 15 * 11.7) / 80, 0);
     expect(Math.abs(m.A.pupilMm! - 4.39)).toBeLessThan(0.35);
     expect(m.anisocoriaMm!).toBeLessThan(0.3);
+    // Vérification du centrage précis de l'iris et de la pupille
+    expect(m.A.irisCenter).toBeDefined();
+    expect(m.A.irisCenter!.x).toBeCloseTo(CA.x, 0);
+    expect(m.A.irisCenter!.y).toBeCloseTo(CA.y, 0);
+    expect(m.A.pupilCenter).toBeDefined();
+    expect(m.A.pupilCenter!.x).toBeCloseTo(CA.x, 0);
+    expect(m.A.pupilCenter!.y).toBeCloseTo(CA.y, 0);
   });
 
   it("detecte des pupilles inegales et le signale", () => {
