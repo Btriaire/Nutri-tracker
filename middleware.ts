@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { sessionSecret, verifySession } from "@/app/lib/session-crypto";
 
 // Routes et pages deja cloisonnees par utilisateur (userId de la session). Les autres : proprietaire seulement.
+// Pages exactes (sans sous-pages) : /health/eye et /health/face-scan restent reservees au proprietaire
+const TENANT_EXACT = ["/dashboard", "/health", "/progress"];
 const TENANT_PREFIXES = [
   "/log", "/settings",
   "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
@@ -53,7 +55,7 @@ export async function middleware(req: NextRequest) {
   if (payload) {
     const userId = (JSON.parse(payload) as { userId?: string }).userId;
     // Comptes ajoutes (multi-utilisateur) : seulement les routes deja cloisonnees par utilisateur
-    if (userId && userId !== "owner" && !TENANT_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) {
+    if (userId && userId !== "owner" && !TENANT_EXACT.includes(pathname) && !TENANT_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) {
       if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       return NextResponse.redirect(new URL("/log", req.url));
     }

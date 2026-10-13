@@ -2,7 +2,6 @@
 // (données initiales, sans effet client) et la route API (bouton "revérifier").
 import { getAdminFirestore } from "./firebase-admin";
 
-const USER = "owner";
 const DAYS_SCANNED = 10;
 const STALE_AFTER_DAYS = 3;
 
@@ -33,7 +32,7 @@ function hasRealData(node: Record<string, unknown> | undefined): boolean {
   });
 }
 
-export async function getIntegrationsHealth(): Promise<IntegrationHealth[]> {
+export async function getIntegrationsHealth(USER: string): Promise<IntegrationHealth[]> {
   const db = getAdminFirestore();
   const today = new Date();
 

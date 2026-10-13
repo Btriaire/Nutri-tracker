@@ -26,7 +26,7 @@ export default async function SettingsPage() {
     [fitConnected, withingsConnected, integrations] = await Promise.all([
       fitStatus(userId),
       withingsStatus(userId),
-      getIntegrationsHealth(),
+      getIntegrationsHealth(userId),
     ]);
     if (profile.exists) {
       const p = profile.data() as UserProfile;

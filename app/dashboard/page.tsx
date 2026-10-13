@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -9,7 +11,9 @@ import DashboardClient from "./DashboardClient";
 
 export default async function DashboardPage() {
   const today  = format(new Date(), "yyyy-MM-dd");
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
   let goals             = defaultGoals();
   let displayName       = "";

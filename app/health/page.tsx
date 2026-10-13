@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -25,7 +27,9 @@ function strip(e: HealthEntry): HealthData {
 
 export default async function HealthPage() {
   const today  = format(new Date(), "yyyy-MM-dd");
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   const from   = format(subDays(new Date(), 29), "yyyy-MM-dd");
 
   let entry: HealthData | null = null;

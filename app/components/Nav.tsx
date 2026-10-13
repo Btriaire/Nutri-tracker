@@ -64,9 +64,9 @@ export default function Nav() {
   const [addOpen, setAddOpen] = useState(false);
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
-  // Comptes ajoutes : seules les pages deja cloisonnees (Journal, Reglages) sont proposees
+  // Comptes ajoutes : seules les pages deja cloisonnees sont proposees
   const [owner, setOwner] = useState(true);
-  const tabs = owner ? TABS : TABS.filter((t) => t.href === "/log" || t.href === "/settings");
+  const tabs = owner ? TABS : TABS.filter((t) => ["/dashboard", "/log", "/health", "/progress", "/settings"].includes(t.href));
 
   const handleLogout = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });

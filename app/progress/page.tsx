@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -6,7 +8,9 @@ import type { UserProfile, NutritionPlan, TrackedNutrients } from "@/app/lib/typ
 import ProgressClient from "./ProgressClient";
 
 export default async function ProgressPage() {
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   let goals = defaultGoals();
   let targetWeightKg: number | null = null;
   let currentWeightKg: number | null = null;
