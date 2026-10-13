@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { enrichNutrition } from "@/app/lib/nutrition-enrich";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -9,6 +10,9 @@ import { getCachedFoodImage } from "@/app/lib/food-image-library";
 
 // POST /api/log/batch — add multiple food entries to one day in one transaction
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const body = await req.json() as {
     date:    string;
     entries: Omit<FoodEntry, "id" | "loggedAt">[];
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   const db  = getAdminFirestore();
-  const ref = db.doc(`users/owner/foodLog/${body.date}`);
+  const ref = db.doc(`users/${USER}/foodLog/${body.date}`);
 
   const newEntries: FoodEntry[] = await Promise.all(body.entries.map(async (e) => {
     const cachedPhoto = e.photoUrl ? null : await getCachedFoodImage(e.name);

@@ -7,7 +7,6 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { FieldPath } from "firebase-admin/firestore";
 import type { SupplementProduct, SupplementLog, MicronutrientDay, MicronutrientCode } from "@/app/lib/types";
 
-const USER = "owner";
 
 export interface SupplementAdherenceDay {
   date:  string;
@@ -28,6 +27,7 @@ export interface SupplementsProgressResponse {
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");

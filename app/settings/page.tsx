@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { getConnectionStatus as fitStatus }      from "@/app/lib/google-fit";
 import { getConnectionStatus as withingsStatus } from "@/app/lib/withings";
+import { redirect } from "next/navigation";
+import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { NutritionGoals, UserProfile } from "@/app/lib/types";
@@ -9,6 +11,9 @@ import { getIntegrationsHealth, type IntegrationHealth } from "@/app/lib/integra
 import SettingsClient from "./SettingsClient";
 
 export default async function SettingsPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   let fitConnected:      "connected" | "needs_reauth" | "disconnected" = "disconnected";
   let withingsConnected: "connected" | "needs_reauth" | "disconnected" = "disconnected";
   let goals: NutritionGoals = defaultGoals();
@@ -17,10 +22,10 @@ export default async function SettingsPage() {
   let integrations: IntegrationHealth[] = [];
   try {
     const db = getAdminFirestore();
-    const profile = await db.doc("users/owner").get();
+    const profile = await db.doc(`users/${userId}`).get();
     [fitConnected, withingsConnected, integrations] = await Promise.all([
-      fitStatus("owner"),
-      withingsStatus("owner"),
+      fitStatus(userId),
+      withingsStatus(userId),
       getIntegrationsHealth(),
     ]);
     if (profile.exists) {

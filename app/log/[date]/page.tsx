@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { DayLog, FoodEntry, UserProfile, TrackedNutrients, DietProgramPrefs } from "@/app/lib/types";
@@ -25,7 +26,9 @@ export default async function LogDatePage({ params }: Props) {
   const { date } = await params;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) redirect("/log");
 
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   let dayLog: DayLog | null = null;
   let goals = defaultGoals();
   let lang: "fr" | "en" = "fr";

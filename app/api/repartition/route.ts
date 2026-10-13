@@ -11,7 +11,6 @@ import type { DayLog, MicronutrientDay, UserProfile, MicronutrientCode } from "@
 
 export const dynamic = "force-dynamic";
 
-const USER = "owner";
 
 const CATEGORY_LABELS: Record<string, string> = {
   feculents:     "Féculents",
@@ -34,6 +33,7 @@ interface Insight { label: string; detail: string; days?: number }
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");

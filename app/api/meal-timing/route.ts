@@ -6,7 +6,6 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 import type { DayLog, FoodEntry, MealType } from "@/app/lib/types";
 
-const USER = "owner";
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
 
 export interface MealTimingPoint {
@@ -58,6 +57,7 @@ function circularMean(minutes: number[]): number {
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const db    = getAdminFirestore();
   const today = format(new Date(), "yyyy-MM-dd");

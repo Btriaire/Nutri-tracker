@@ -7,11 +7,11 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import type { SupplementProduct } from "@/app/lib/types";
 import { Timestamp } from "firebase-admin/firestore";
 
-const USER = "owner";
 
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const db = getAdminFirestore();
@@ -27,6 +27,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const body = await req.json() as Partial<SupplementProduct>;
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -123,6 +125,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   try {
     const { searchParams } = new URL(req.url);

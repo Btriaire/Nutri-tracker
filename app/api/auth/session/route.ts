@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSession } from "@/app/lib/session";
 import { getAdminAuth } from "@/app/lib/firebase-admin";
+import { resolveUserId } from "@/app/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +31,17 @@ export async function POST(req: NextRequest) {
       const adminAuth = getAdminAuth();
       const decoded   = await adminAuth.verifyIdToken(idToken);
 
-      // If ADMIN_EMAIL is set, restrict to that account only
-      const ownerEmail = process.env.ADMIN_EMAIL;
-      if (ownerEmail && decoded.email !== ownerEmail) {
+      // Proprietaire (ADMIN_EMAIL) = "owner" ; comptes ajoutes (ALLOWED_EMAILS) = leur uid Firebase
+      const userId = resolveUserId(decoded.email ?? "", decoded.uid, {
+        adminEmail: process.env.ADMIN_EMAIL,
+        allowedEmails: process.env.ALLOWED_EMAILS,
+      });
+      if (!userId) {
         return NextResponse.json({ error: "Unauthorized account" }, { status: 403 });
       }
 
       await createSession({
-        userId: "owner",
+        userId,
         email:  decoded.email ?? "",
         name:   decoded.name  ?? decoded.email ?? "Owner",
       });

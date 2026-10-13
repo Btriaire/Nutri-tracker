@@ -1,5 +1,7 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
+import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
 import type { DayLog, FoodEntry, UserProfile, TrackedNutrients, DietProgramPrefs } from "@/app/lib/types";
@@ -19,7 +21,9 @@ function serializeDayLog(raw: DayLog): DayLog {
 
 export default async function LogPage() {
   const today  = format(new Date(), "yyyy-MM-dd");
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
   let dayLog: DayLog | null = null;
   let goals = defaultGoals();

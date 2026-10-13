@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { nanoid } from "nanoid";
@@ -18,13 +19,19 @@ function sumNutrition(entries: SavedMealEntry[]): FoodNutrition {
 }
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const db   = getAdminFirestore();
-  const snap = await db.collection("users/owner/savedMeals").orderBy("name").get();
+  const snap = await db.collection(`users/${USER}/savedMeals`).orderBy("name").get();
   const meals = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as SavedMeal[];
   return NextResponse.json({ meals });
 }
 
 export async function POST(req: Request) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const body = await req.json() as { name: string; icon?: string; entries: SavedMealEntry[] };
   if (!body.name || !body.entries?.length) {
     return NextResponse.json({ error: "name and entries required" }, { status: 400 });
@@ -34,7 +41,7 @@ export async function POST(req: Request) {
   const id  = nanoid(12);
   const now = FieldValue.serverTimestamp();
 
-  await db.doc(`users/owner/savedMeals/${id}`).set({
+  await db.doc(`users/${USER}/savedMeals/${id}`).set({
     id,
     name:           body.name,
     icon:           body.icon ?? "🍽️",

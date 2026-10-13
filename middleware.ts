@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sessionSecret, verifySession } from "@/app/lib/session-crypto";
 
+// Routes et pages deja cloisonnees par utilisateur (userId de la session). Les autres : proprietaire seulement.
+const TENANT_PREFIXES = [
+  "/log", "/settings",
+  "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
+  "/api/supplement-intakes", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
+  "/api/repartition", "/api/food",
+];
+
 const PUBLIC_PREFIXES = [
   "/login",
   "/offline",        // page de secours hors ligne (aucune donnee)
@@ -39,7 +47,16 @@ export async function middleware(req: NextRequest) {
   // d'existence laissait passer n'importe quel cookie fabriqué à la main.
   const token  = req.cookies.get("session")?.value;
   const secret = sessionSecret();
-  if (token && secret && await verifySession(token, secret)) return NextResponse.next();
+  const payload = token && secret ? await verifySession(token, secret) : null;
+  if (payload) {
+    const userId = (JSON.parse(payload) as { userId?: string }).userId;
+    // Comptes ajoutes (multi-utilisateur) : seulement les routes deja cloisonnees par utilisateur
+    if (userId && userId !== "owner" && !TENANT_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?"))) {
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.redirect(new URL("/log", req.url));
+    }
+    return NextResponse.next();
+  }
 
   // API routes → 401 JSON
   if (pathname.startsWith("/api/")) {

@@ -12,7 +12,6 @@ import type {
   SupplementLog, SupplementProduct,
 } from "@/app/lib/types";
 
-const USER = "owner";
 
 function entryTime(entry: FoodEntry): string {
   const seconds = Number((entry.loggedAt as unknown as { seconds?: number })?.seconds ?? 0);
@@ -33,6 +32,7 @@ function entryTime(entry: FoodEntry): string {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const { date } = await req.json() as { date: string };
   if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });

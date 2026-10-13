@@ -8,7 +8,6 @@ import { format, subDays, parseISO, differenceInDays } from "date-fns";
 import type { DayLog } from "@/app/lib/types";
 import { computeCurrentStreak } from "@/app/lib/streak";
 
-const USER = "owner";
 
 export interface HeatmapDay {
   date:    string;   // YYYY-MM-DD
@@ -30,6 +29,7 @@ export interface StreakData {
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const db    = getAdminFirestore();
   const today = format(new Date(), "yyyy-MM-dd");

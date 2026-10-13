@@ -8,8 +8,6 @@ import { MICRONUTRIENT_DB } from "@/app/lib/micronutrients";
 import { Timestamp } from "firebase-admin/firestore";
 import type { MicronutrientInfo } from "@/app/lib/types";
 
-const USER = "owner";
-const COLLECTION = `users/${USER}/customNutrients`;
 
 // Rotates through a set of colors distinct from the built-in palette so custom
 // nutrients are visually identifiable without needing the user to pick one.
@@ -34,6 +32,7 @@ interface CustomNutrientEntry extends MicronutrientInfo {
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const COLLECTION = `users/${session.userId}/customNutrients`;
 
   const db = getAdminFirestore();
   const snap = await db.collection(COLLECTION).orderBy("createdAt", "asc").get();
@@ -47,6 +46,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const COLLECTION = `users/${session.userId}/customNutrients`;
 
   let body: { label?: string; unit?: string; symbol?: string; recommendedDailyIntake?: number };
   try {
@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const COLLECTION = `users/${session.userId}/customNutrients`;
 
   const code = req.nextUrl.searchParams.get("code");
   if (!code) return NextResponse.json({ error: "code required" }, { status: 400 });
