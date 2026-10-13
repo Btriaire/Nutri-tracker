@@ -165,7 +165,7 @@ const MEAL_RULES_NK: Record<MealType, MealRule> = {
     breadMaxG: 60,
     meatMaxG: 120,
     fishMaxG: 130,
-    summary: "120g viande blanche (ou 130g poisson, ou 33g thon en boîte) + légumes cuits ou crus à volonté + 60g pain complet OU 120g pâtes/riz/quinoa complets pesés cuits + 100g fruits rouges, 1 kiwi, ou ½ grenade",
+    summary: "120g viande blanche (ou 130g poisson, ou 33g thon en boîte) + légumes cuits ou crus à volonté + 60g pain complet OU 120g pâtes complètes (Barilla) ou riz/quinoa complets pesés cuits + 100g fruits rouges, 1 kiwi, ou ½ grenade",
   },
   snacks: {
     noBread: true,
@@ -285,8 +285,9 @@ function checkForbiddenKeywords(normalizedName: string): string | null {
     if (!/\bsans\s*sucre\b/.test(normalizedName)) return `sucre/sucrerie interdit (${hit})`;
     hit = null;
   }
+  // Pates completes (ex. Barilla complete) : autorisees, seules les pates blanches sont interdites
   hit = matchesAny(normalizedName, PASTA_PIZZA_KEYWORDS);
-  if (hit) return `farine blanche interdite (${hit})`;
+  if (hit && !/\bcomplet/.test(normalizedName)) return `farine blanche interdite (${hit})`;
 
   hit = matchesAny(normalizedName, WINE_KEYWORDS);
   if (hit) return `vin/apéritif interdit (${hit})`;
