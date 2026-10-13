@@ -6,7 +6,6 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { format } from "date-fns";
 
-const USER = "owner";
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
 // Server-to-server auth for automated pushes (Halcyon-PaLaMa), same
@@ -30,6 +29,7 @@ export interface MeditationSession {
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
 
   const db   = getAdminFirestore();
   const snap = await db
@@ -44,10 +44,11 @@ export async function GET() {
 
 // POST — save a completed session
 export async function POST(req: NextRequest) {
-  const session = isAutomatedRequest(req)
-    ? { userId: "owner", email: "", name: "" }
-    : await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Halcyon (serveur, secret) ecrit toujours chez le proprietaire ; sinon le compte connecte
+  const automated = isAutomatedRequest(req);
+  const session = automated ? null : await getSession();
+  const USER = automated ? "owner" : session?.userId;
+  if (!USER) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as { programId: string; programLabel: string; durationMin: number };
 

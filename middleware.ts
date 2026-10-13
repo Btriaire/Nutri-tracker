@@ -3,13 +3,13 @@ import { sessionSecret, verifySession } from "@/app/lib/session-crypto";
 
 // Routes et pages deja cloisonnees par utilisateur (userId de la session). Les autres : proprietaire seulement.
 // Pages exactes (sans sous-pages) : /health/eye et /health/face-scan restent reservees au proprietaire
-const TENANT_EXACT = ["/dashboard", "/health", "/progress"];
+const TENANT_EXACT = ["/dashboard", "/health", "/progress", "/activity", "/activity/sleep", "/activity/steps", "/cardio", "/health/eye", "/health/face-scan"];
 const TENANT_PREFIXES = [
   "/log", "/settings",
   "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
   "/api/supplement-intakes", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
   "/api/repartition", "/api/food", "/api/measurements", "/api/workout-templates",
-  "/api/face-scan", "/api/eye-scan", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
+  "/api/face-scan", "/api/eye-scan", "/api/meditation", "/api/progress", "/api/weight-corrections", "/api/workout-templates", "/api/ai/advanced-analysis", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
   "/api/cardio", "/api/sleep", "/api/album", "/api/export",
 ];
 

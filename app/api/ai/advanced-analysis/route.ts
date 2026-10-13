@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -24,6 +25,9 @@ function avg(arr: number[]): number | null {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const { searchParams } = new URL(req.url);
   const period = (searchParams.get("period") ?? "7d") as Period;
   const days   = periodDays(period);

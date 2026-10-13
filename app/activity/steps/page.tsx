@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -15,7 +17,9 @@ export interface StepsPoint {
 }
 
 export default async function StepsPage() {
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   const db     = getAdminFirestore();
   const today  = new Date();
 

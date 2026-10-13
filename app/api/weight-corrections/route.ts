@@ -1,3 +1,4 @@
+import { getSession } from "@/app/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
@@ -14,8 +15,11 @@ interface WeightCorrectionDoc {
 }
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const db   = getAdminFirestore();
-  const snap = await db.collection("users/owner/weightCorrections").get();
+  const snap = await db.collection(`users/${USER}/weightCorrections`).get();
   const corrections = snap.docs.map((d) => {
     const data = d.data() as WeightCorrectionDoc;
     return { normalizedName: data.normalizedName, grams: data.grams, label: data.label, unitLabel: data.unitLabel };
@@ -30,6 +34,9 @@ export async function GET() {
  *  doc par nom normalise, ecrase la precedente correction si l'utilisateur
  *  corrige a nouveau. */
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
   const body = await req.json() as { name?: string; grams?: number; label?: string; unitLabel?: string };
   if (!body.name || !body.grams || body.grams <= 0) {
     return NextResponse.json({ error: "Invalid" }, { status: 400 });
@@ -40,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const db    = getAdminFirestore();
   const docId = normalizedName.replace(/\s+/g, "-").slice(0, 200);
-  await db.doc(`users/owner/weightCorrections/${docId}`).set({
+  await db.doc(`users/${USER}/weightCorrections/${docId}`).set({
     normalizedName,
     grams:     body.grams,
     label:     body.label ?? `${Math.round(body.grams)}g`,

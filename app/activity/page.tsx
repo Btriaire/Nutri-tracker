@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -37,7 +39,9 @@ const EMOJI: Record<number, string> = {
 };
 
 export default async function ActivityPage() {
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   const today  = format(new Date(), "yyyy-MM-dd");
   const from   = format(subDays(new Date(), 13), "yyyy-MM-dd");
 

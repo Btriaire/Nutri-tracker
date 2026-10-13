@@ -563,9 +563,9 @@ function rescoreResult(r: FoodSearchResult, words: string[]): number {
 
 interface WeightFix { grams: number; label: string; unitLabel: string }
 
-async function getWeightCorrections(): Promise<Map<string, WeightFix>> {
+async function getWeightCorrections(userId: string): Promise<Map<string, WeightFix>> {
   try {
-    const snap = await getAdminFirestore().collection("users/owner/weightCorrections").get();
+    const snap = await getAdminFirestore().collection(`users/${userId}/weightCorrections`).get();
     const map = new Map<string, WeightFix>();
     snap.docs.forEach((d) => {
       const data = d.data() as { normalizedName: string; grams: number; label: string; unitLabel: string };
@@ -621,7 +621,7 @@ function applyVerifiedWeight(
 
 // ─── Main search ──────────────────────────────────────────────────────────────
 
-export async function searchFoods(query: string, lang: Lang = "fr"): Promise<FoodSearchResult[]> {
+export async function searchFoods(query: string, lang: Lang = "fr", userId: string): Promise<FoodSearchResult[]> {
   const q = query.trim();
   if (!q) return [];
 
@@ -649,6 +649,6 @@ export async function searchFoods(query: string, lang: Lang = "fr"): Promise<Foo
       .map((x) => x.r),
   ).slice(0, 35);
 
-  const corrections = await getWeightCorrections();
+  const corrections = await getWeightCorrections(userId);
   return results.map((r) => applyVerifiedWeight(r, corrections));
 }

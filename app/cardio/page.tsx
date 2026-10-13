@@ -1,3 +1,5 @@
+import { getSession } from "@/app/lib/session";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
@@ -7,7 +9,9 @@ import CardioClient from "./CardioClient";
 import type { CardioPoint } from "@/app/api/cardio/route";
 
 export default async function CardioPage() {
-  const userId = "owner";
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
   const db     = getAdminFirestore();
   const today  = new Date();
 

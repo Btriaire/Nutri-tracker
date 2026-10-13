@@ -15,6 +15,6 @@ export async function GET(req: NextRequest) {
 
   if (!q) return NextResponse.json({ results: [] });
 
-  const results = await searchFoods(q, lang);
+  const results = await searchFoods(q, lang, session.userId);
   return NextResponse.json({ results });
 }
