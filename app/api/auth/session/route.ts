@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
     // ── Firebase ID token (Google Sign-In) ─────────────────────────────────
     if (idToken) {
       const adminAuth = getAdminAuth();
-      const decoded   = await adminAuth.verifyIdToken(idToken);
+      let decoded;
+      try {
+        decoded = await adminAuth.verifyIdToken(idToken);
+      } catch {
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      }
 
       // Proprietaire (ADMIN_EMAIL) = "owner" ; comptes ajoutes (ALLOWED_EMAILS) = leur uid Firebase
       const userId = resolveUserId(decoded.email ?? "", decoded.uid, {
