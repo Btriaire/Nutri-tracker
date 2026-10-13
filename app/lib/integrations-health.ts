@@ -8,7 +8,7 @@ const STALE_AFTER_DAYS = 3;
 export type IntegrationState = "ok" | "stale" | "error" | "off";
 
 export interface IntegrationHealth {
-  id:           "googleFit" | "googleHealth" | "appleHealth" | "withings" | "ai";
+  id:           "googleFit" | "withings" | "ai";
   label:        string;
   state:        IntegrationState;
   /** Dernier jour portant de VRAIES données (pas juste un ping de synchro). */
@@ -104,17 +104,6 @@ export async function getIntegrationsHealth(USER: string): Promise<IntegrationHe
     build("googleFit", "Google Fit", gfitTokenSnap.exists, lastDataFor("googleFit"), {
       errorDetail: gfitNeedsReauth ? "Rafraîchissement du token échoué — reconnexion nécessaire" : undefined,
     }),
-    build("googleHealth", "Google Health",
-      !!profile.integrations?.googleHealth?.connected && !!profile.integrations?.googleHealth?.token,
-      lastDataFor("googleHealth"),
-      { offDetail: "Pas de token — voir Réglages > Google Health" }),
-    // Pour Apple Health on ignore volontairement integrations.appleHealth.lastSyncedAt :
-    // il se met à jour même quand le payload reçu ne contenait rien d'exploitable
-    // (cas vécu — la synchro semblait active alors qu'aucune donnée n'arrivait).
-    build("appleHealth", "Apple Health",
-      !!profile.integrations?.appleHealth?.connected && !!profile.integrations?.appleHealth?.token,
-      lastDataFor("appleHealth"),
-      { offDetail: "Pas de token — voir Réglages > Apple Health" }),
     build("withings", "Withings", withingsTokenSnap.exists,
       lastDataFor("withingsSleep") ?? lastDataFor("withingsBody")),
   ];

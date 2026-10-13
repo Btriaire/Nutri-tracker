@@ -12,8 +12,6 @@ import { useTheme } from "@/app/components/ThemeProvider";
 import { format, subYears, startOfYear, endOfYear, getYear } from "date-fns";
 import type { NutritionGoals } from "@/app/lib/types";
 import SupplementConfig from "@/app/components/SupplementConfig";
-import AppleHealthPanel from "@/app/components/AppleHealthPanel";
-import GoogleHealthPanel from "@/app/components/GoogleHealthPanel";
 import IntegrationsHealthPanel from "@/app/components/IntegrationsHealthPanel";
 import GoalsPanel from "./panels/GoalsPanel";
 import DataSafetyBanner from "./panels/DataSafetyBanner";
@@ -293,9 +291,6 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             suite si une source a cessé d'envoyer des données */}
         <IntegrationsHealthPanel initial={initialIntegrations} />
 
-        {/* Apple Health card */}
-        <AppleHealthPanel />
-
         {/* Google Fit card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -487,9 +482,6 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           )}
           </AnimatePresence>
         </motion.div>
-
-        {/* Google Health (Connect) card */}
-        <GoogleHealthPanel />
 
         {/* Withings card */}
         <motion.div
