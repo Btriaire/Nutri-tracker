@@ -64,6 +64,9 @@ export default function Nav() {
   const [addOpen, setAddOpen] = useState(false);
   const [photoUrl,    setPhotoUrl]    = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
+  // Comptes ajoutes : seules les pages deja cloisonnees (Journal, Reglages) sont proposees
+  const [owner, setOwner] = useState(true);
+  const tabs = owner ? TABS : TABS.filter((t) => t.href === "/log" || t.href === "/settings");
 
   const handleLogout = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -77,9 +80,10 @@ export default function Nav() {
   useEffect(() => {
     fetch("/api/goals")
       .then(r => r.json())
-      .then((d: { photoUrl?: string; displayName?: string }) => {
+      .then((d: { photoUrl?: string; displayName?: string; isOwner?: boolean }) => {
         if (d.photoUrl)    setPhotoUrl(d.photoUrl);
         if (d.displayName) setDisplayName(d.displayName);
+        if (d.isOwner === false) setOwner(false);
       })
       .catch(() => {});
   }, []);
@@ -174,7 +178,7 @@ export default function Nav() {
           </span>
         </Link>
 
-        {TABS.map(({ href, Icon, label, color, bg }) => {
+        {tabs.map(({ href, Icon, label, color, bg }) => {
           const active = path.startsWith(href);
           return (
             <Link key={href} href={href}

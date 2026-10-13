@@ -15,7 +15,7 @@ export async function GET() {
   const doc = await db.doc(`users/${session.userId}`).get();
 
   if (!doc.exists) {
-    return NextResponse.json({ goals: defaultGoals() });
+    return NextResponse.json({ goals: defaultGoals(), isOwner: session.userId === "owner" });
   }
 
   const profile = doc.data() as UserProfile;
@@ -25,6 +25,7 @@ export async function GET() {
     photoUrl:    profile.photoUrl    ?? null,
     displayName: profile.displayName ?? null,
     dietProgram: profile.dietProgram ?? null,
+    isOwner:     session.userId === "owner",
   });
 }
 
