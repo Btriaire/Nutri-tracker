@@ -387,21 +387,35 @@ async function fetchActivity(userId: string, from: string, to: string): Promise<
   const tokens = await getTokens(userId);
   if (!tokens) return [];
 
-  const formBody = new URLSearchParams({
-    action:       "getactivity",
-    startdateymd: from,
-    enddateymd:   to,
-    data_fields:  "steps,distance,active_calories,total_calories,soft,moderate,intense,heart_rate_average",
-  });
+  let accessToken = tokens.accessToken;
+  const post = async () => {
+    const formBody = new URLSearchParams({
+      action:       "getactivity",
+      startdateymd: from,
+      enddateymd:   to,
+      data_fields:  "steps,distance,active_calories,total_calories,soft,moderate,intense,heart_rate_average",
+    });
 
-  const res = await fetch("https://wbsapi.withings.net/v2/measure", {
-    method:  "POST",
-    headers: { "Authorization": `Bearer ${tokens.accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: formBody,
-  });
-  if (!res.ok) return [];
-  const json = await res.json() as { status: number; body?: { activities: { date: string; steps?: number; distance?: number; active_calories?: number; total_calories?: number; soft?: number; moderate?: number; intense?: number; heart_rate_average?: number }[] } };
-  if (json.status !== 0 || !json.body?.activities) return [];
+    const res = await fetch("https://wbsapi.withings.net/v2/measure", {
+      method:  "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: formBody,
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) return null;
+    return await res.json() as { status: number; body?: { activities: { date: string; steps?: number; distance?: number; active_calories?: number; total_calories?: number; soft?: number; moderate?: number; intense?: number; heart_rate_average?: number }[] } };
+  };
+
+  let json = await post();
+  if (json?.status === 401) {
+    try {
+      const fresh = await refreshAccessToken(tokens.refreshToken);
+      await saveTokens(userId, fresh);
+      accessToken = fresh.accessToken;
+      json = await post();
+    } catch { return []; }
+  }
+  if (!json || json.status !== 0 || !json.body?.activities) return [];
 
   return json.body.activities.map(a => ({
     date:            a.date,
@@ -434,25 +448,39 @@ export async function fetchSleepSummary(userId: string, from: string, to: string
   const tokens = await getTokens(userId);
   if (!tokens) return [];
 
-  const formBody = new URLSearchParams({
-    action:       "getsummary",
-    startdateymd: from,
-    enddateymd:   to,
-    data_fields:  "total_sleep_time,deepsleepduration,lightsleepduration,remsleepduration,sleep_score,heart_rate_average,snoring,wakeupcount",
-  });
+  let accessToken = tokens.accessToken;
+  const post = async () => {
+    const formBody = new URLSearchParams({
+      action:       "getsummary",
+      startdateymd: from,
+      enddateymd:   to,
+      data_fields:  "total_sleep_time,deepsleepduration,lightsleepduration,remsleepduration,sleep_score,heart_rate_average,snoring,wakeupcount",
+    });
 
-  const res = await fetch("https://wbsapi.withings.net/v2/sleep", {
-    method:  "POST",
-    headers: {
-      "Authorization": `Bearer ${tokens.accessToken}`,
-      "Content-Type":  "application/x-www-form-urlencoded",
-    },
-    body: formBody,
-  });
+    const res = await fetch("https://wbsapi.withings.net/v2/sleep", {
+      method:  "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type":  "application/x-www-form-urlencoded",
+      },
+      body: formBody,
+      signal: AbortSignal.timeout(20_000),
+    });
 
-  if (!res.ok) return [];
-  const json = await res.json() as { status: number; body?: { series: { date: string; data: Record<string, number> }[] } };
-  if (json.status !== 0 || !json.body?.series) return [];
+    if (!res.ok) return null;
+    return await res.json() as { status: number; body?: { series: { date: string; data: Record<string, number> }[] } };
+  };
+
+  let json = await post();
+  if (json?.status === 401) {
+    try {
+      const fresh = await refreshAccessToken(tokens.refreshToken);
+      await saveTokens(userId, fresh);
+      accessToken = fresh.accessToken;
+      json = await post();
+    } catch { return []; }
+  }
+  if (!json || json.status !== 0 || !json.body?.series) return [];
 
   return json.body.series.map(s => ({
     date:          s.date,

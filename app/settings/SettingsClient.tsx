@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconAlertCircle, IconLogout, IconFileTypePdf, IconPill, IconApple, IconChevronRight } from "@tabler/icons-react";
+import { IconCircleCheck, IconCircleX, IconRefresh, IconBolt, IconLoader2, IconDatabase, IconChevronDown, IconChevronUp, IconAlertCircle, IconLogout, IconFileTypePdf, IconPill, IconApple, IconChevronRight, IconScale } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "@/app/lib/firebase-client";
@@ -495,9 +495,9 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
           className="glass p-5 mb-4"
         >
           <button className="w-full flex items-center gap-3" onClick={() => setWithingsOpen(v => !v)}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "linear-gradient(135deg, rgba(0,150,255,0.25) 0%, rgba(0,200,180,0.25) 100%)", border: "1px solid var(--layer-3)" }}>
-              ⚖️
+              <IconScale size={20} style={{ color: "#00c8b4" }} />
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="font-semibold text-[14px]" style={{ color: "var(--text-primary)" }}>Withings</p>
@@ -506,7 +506,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             {withings === "connected"    && <IconCircleCheck  size={18} style={{ color: "var(--fiber)",      flexShrink: 0 }} />}
             {withings === "needs_reauth" && <IconAlertCircle size={18} style={{ color: "var(--warn)",           flexShrink: 0 }} />}
             {withings === "disconnected" && <IconCircleX     size={18} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
-            {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} /> : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
+            {withingsOpen ? <IconChevronUp size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} : <IconChevronDown size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
           </button>
 
           <AnimatePresence initial={false}>
@@ -581,7 +581,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
             </div>
           ) : (
             <button type="button" onClick={openWithingsAuth} className="btn btn-primary w-full gap-2 text-[13px]" style={{ height: "40px", background: "linear-gradient(135deg,#0096ff,#00c8b4)", border: "none" }}>
-              ⚖️ Connecter Withings
+              <IconScale size={16} /> Connecter Withings
             </button>
           )}
           </div>
