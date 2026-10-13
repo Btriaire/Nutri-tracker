@@ -18,6 +18,7 @@ import type { DietProgramId, DietProgramPrefs, FoodEntry, MealType } from "./typ
 
 export const DIET_PROGRAMS: Record<DietProgramId, { name: string; shortDesc: string; icon: string }> = {
   tl:          { name: "Programme Dr.T-L",       shortDesc: "Régime prescrit — repères précis par repas", icon: "🩺" },
+  tl_nk:       { name: "Dr.T-L · NK (12/10/26)", shortDesc: "Ordonnance personnalisée du 12/10/26", icon: "🩺" },
   cholesterol: { name: "Anti-cholestérol (LDL)", shortDesc: "Limiter graisses saturées/trans, favoriser fibres et oméga-3", icon: "❤️" },
 };
 
@@ -152,6 +153,32 @@ const MEAL_RULES: Record<MealType, MealRule> = {
   },
 };
 
+// Ordonnance du 12/10/26 (NK) : memes interdits que le programme Dr.T-L, quantites et repas ajustes.
+// Non modelise (pas de regle automatique) : yaourt Prebiso 0% + poudre apres diner, 30 g jambon + 2 petits-suisses 0% en collation,
+// 1 carre 0% en option, tofu 150 g au diner, 2,4 L d'eau et 5 cc d'huile par jour.
+const MEAL_RULES_NK: Record<MealType, MealRule> = {
+  breakfast: {
+    breadMaxG: 60,
+    summary: "60g pain complet (ou 1 carré frais Gervais 0%) + 1 œuf entier + 2 blancs (ou 30g jambon dégraissé) + 1 kiwi vert + boisson sans sucre",
+  },
+  lunch: {
+    breadMaxG: 60,
+    meatMaxG: 120,
+    fishMaxG: 130,
+    summary: "120g viande blanche (ou 130g poisson, ou 33g thon en boîte) + légumes cuits ou crus à volonté + 60g pain complet OU 120g pâtes/riz/quinoa complets pesés cuits + 100g fruits rouges, 1 kiwi, ou ½ grenade",
+  },
+  snacks: {
+    noBread: true,
+    summary: "1 kiwi (si pas pris au petit-déjeuner) ou 1 prune rouge. Sans pain.",
+  },
+  dinner: {
+    breadMaxG: 60,
+    meatMaxG: 120,
+    fishMaxG: 130,
+    summary: "130g poisson (ou 33g thon en boîte, ou 120g viande blanche, ou 150g tofu nature) + légumes à volonté + 60g pain complet OU 120g féculents complets cuits + 1 carré 0% + ½ grenade",
+  },
+};
+
 export const DIET_PROGRAM_NAME = "Programme Dr.T-L";
 
 export const APPROVED_FRUITS_SUMMARY =
@@ -168,8 +195,8 @@ export const DIET_INTERDITS_SUMMARY =
   "vin/apéritif, fruits hors liste autorisée et jus de fruits, légumes secs/" +
   "pomme de terre/carotte/betterave/avocat/maïs/potiron/artichaut/salsifis et assimilés.";
 
-export function dietMealSummary(meal: MealType): string {
-  return MEAL_RULES[meal].summary;
+export function dietMealSummary(meal: MealType, programId: DietProgramId = "tl"): string {
+  return (programId === "tl_nk" ? MEAL_RULES_NK : MEAL_RULES)[meal].summary;
 }
 
 // ─── Programme Anti-cholestérol (LDL) ──────────────────────────────────────
@@ -282,8 +309,8 @@ function checkForbiddenKeywords(normalizedName: string): string | null {
   return null;
 }
 
-function checkQuantity(meal: MealType, normalizedName: string, grams: number): string | null {
-  const rule = MEAL_RULES[meal];
+function checkQuantity(meal: MealType, normalizedName: string, grams: number, rules: Record<MealType, MealRule> = MEAL_RULES): string | null {
+  const rule = rules[meal];
 
   if (rule.noBread && /\bpain\b|\bkrissproll\b/.test(normalizedName)) {
     return "pain non prévu à ce repas";
@@ -332,7 +359,7 @@ export function checkDietCompliance(
         const forbidden = checkForbiddenKeywords(normalized);
         if (forbidden) reasons.push(forbidden);
 
-        const overQuantity = checkQuantity(meal, normalized, entry.servingGrams ?? 0);
+        const overQuantity = checkQuantity(meal, normalized, entry.servingGrams ?? 0, programId === "tl_nk" ? MEAL_RULES_NK : MEAL_RULES);
         if (overQuantity) reasons.push(overQuantity);
       }
 

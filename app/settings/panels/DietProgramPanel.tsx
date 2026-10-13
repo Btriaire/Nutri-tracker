@@ -23,6 +23,7 @@ const DIET_MEAL_LABEL: Record<MealType, string> = {
 const DIET_PROGRAM_OPTIONS: { id: DietProgramId | null; label: string }[] = [
   { id: null,          label: "Aucun" },
   { id: "tl",          label: DIET_PROGRAMS.tl.name },
+  { id: "tl_nk",       label: DIET_PROGRAMS.tl_nk.name },
   { id: "cholesterol", label: DIET_PROGRAMS.cholesterol.name },
 ];
 

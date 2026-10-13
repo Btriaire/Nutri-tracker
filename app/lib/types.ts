@@ -325,7 +325,7 @@ export interface UserProfile {
   dietProgram?: DietProgramPrefs;
 }
 
-export type DietProgramId = "tl" | "cholesterol";
+export type DietProgramId = "tl" | "tl_nk" | "cholesterol";
 
 export interface DietProgramPrefs {
   /** Programme actif ; absent/null = aucun. */

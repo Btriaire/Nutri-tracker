@@ -58,7 +58,7 @@ export default function DietProgramInfoModal({ onClose, programId = "tl" }: Prop
           </div>
 
           <div className="overflow-y-auto px-4 py-4 space-y-4">
-            {programId === "tl" ? (
+            {programId !== "cholesterol" ? (
               <>
                 <div>
                   <p className="text-[12px] uppercase tracking-wide mb-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
@@ -69,7 +69,7 @@ export default function DietProgramInfoModal({ onClose, programId = "tl" }: Prop
                       <div key={meal} className="px-3 py-2 rounded-lg"
                         style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
                         <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--ok)" }}>{MEAL_LABEL[meal]}</p>
-                        <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
+                        <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal, programId)}</p>
                       </div>
                     ))}
                   </div>
