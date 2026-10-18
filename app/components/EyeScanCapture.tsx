@@ -21,7 +21,7 @@ export interface EyeCaptureResult {
 
 type Phase = "loading" | "eyes-R" | "eyes-L" | "plr-dark" | "plr-flash" | "conj-ready" | "conj" | "mbi-ready" | "mbi" | "error";
 
-const EYE_MS = 3500, DARK_MS = 1300, FLASH_MS = 2300, CONJ_WAIT_MS = 3000, CONJ_MS = 1500, MBI_MAX_MS = 40_000;
+const EYE_MS = 6000, DARK_MS = 1300, FLASH_MS = 2300, CONJ_WAIT_MS = 3000, CONJ_MS = 1500, MBI_MAX_MS = 40_000;
 const EYE_GIVE_UP_MS = 15_000;          // au-dela, sans prise correcte : on arrete et on explique
 const MIN_OPEN = 0.45;                  // ouverture minimale (hauteur de fente / iris) pour retenir une image
 const MIN_QUALITY = 60;                 // score de prise de vue minimal pour retenir une image

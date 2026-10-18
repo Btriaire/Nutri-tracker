@@ -14,6 +14,7 @@ type MacroKey = "protein" | "sodium" | "sugar" | "saturatedFat";
 
 const MEAL_LABEL: Record<MealType, string> = {
   breakfast: "Petit-déj.",
+  morning_snack: "Coll. matin",
   lunch:     "Déjeuner",
   dinner:    "Dîner",
   snacks:    "Collation",

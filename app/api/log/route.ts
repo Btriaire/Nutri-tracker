@@ -4,7 +4,7 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { calcTotals } from "@/app/lib/nutrition";
 import type { DayLog, FoodEntry, MealType } from "@/app/lib/types";
 
-const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const MEAL_TYPES: MealType[] = ["breakfast", "morning_snack", "lunch", "snacks", "dinner"];
 import { nanoid } from "nanoid";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getCachedFoodImage } from "@/app/lib/food-image-library";

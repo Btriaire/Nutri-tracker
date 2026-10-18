@@ -30,6 +30,7 @@ export default async function LogPage() {
   let lang: "fr" | "en" = "fr";
   let trackedNutrients: TrackedNutrients | undefined = undefined;
   let dietProgram: DietProgramPrefs | undefined = undefined;
+  let morningSnack = false;
 
   try {
     const db = getAdminFirestore();
@@ -46,10 +47,11 @@ export default async function LogPage() {
       lang              = profile.lang ?? "fr";
       trackedNutrients  = profile.chartPrefs?.trackedNutrients;
       dietProgram       = profile.dietProgram;
+      morningSnack      = !!profile.mealSlots?.morningSnack;
     }
   } catch (e) {
     console.error("Firestore error:", e);
   }
 
-  return <LogClient date={today} initialLog={dayLog} goals={goals} lang={lang} trackedNutrients={trackedNutrients} dietProgram={dietProgram} />;
+  return <LogClient date={today} initialLog={dayLog} goals={goals} lang={lang} trackedNutrients={trackedNutrients} dietProgram={dietProgram} morningSnack={morningSnack} />;
 }

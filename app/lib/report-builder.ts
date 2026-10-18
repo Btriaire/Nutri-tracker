@@ -727,7 +727,7 @@ export async function buildReportData(userId: string, from: string, to: string):
 
 // ─── Glycemie ──────────────────────────────────────────────────────────────
 
-const GLUCOSE_MEAL_LABEL: Record<MealType, string> = { breakfast: "Petit-déjeuner", lunch: "Déjeuner", dinner: "Dîner", snacks: "Collation" };
+const GLUCOSE_MEAL_LABEL: Record<MealType, string> = { breakfast: "Petit-déjeuner", morning_snack: "Collation du matin", lunch: "Déjeuner", dinner: "Dîner", snacks: "Collation" };
 
 function buildGlucoseSummary(glucoseDays: GlucoseDay[], foodLogs: DayLog[], goals: ReturnType<typeof defaultGoals>): GlucoseSummary {
   const target = { min: goals.glucoseTargetMinMmol ?? DEFAULT_GLUCOSE_TARGET.min, max: goals.glucoseTargetMaxMmol ?? DEFAULT_GLUCOSE_TARGET.max };

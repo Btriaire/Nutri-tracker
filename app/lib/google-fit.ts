@@ -700,7 +700,7 @@ export async function fetchDayData(userId: string, date: string): Promise<DayFit
   // reellement enregistrees sur le compte (decouverte automatique) plutot que de renvoyer une serie vide.
   if (glucose.length === 0) {
     glucose = (await fetchGlucoseReadings(auth, startMs, endMs)).map((r) => ({
-      timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType,
+      timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType === "morning_snack" ? null : r.mealType,
     }));
   }
 
@@ -778,7 +778,7 @@ export async function syncGlucoseDay(userId: string, date: string): Promise<{ ok
   if (points.length === 0) return { ok: true, readings: 0 };
 
   const total = await writeGlucose(userId, date, points.map((r) => ({
-    timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType,
+    timeMs: r.timeMs, mmol: r.mmol, mealRelation: r.mealRelation, mealType: r.mealType === "morning_snack" ? null : r.mealType,
   })));
   return { ok: true, readings: total };
 }

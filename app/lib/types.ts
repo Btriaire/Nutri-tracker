@@ -5,7 +5,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 export type WeeklyGoal    = "lose" | "maintain" | "gain";
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 export type Lang          = "fr" | "en";
-export type MealType      = "breakfast" | "lunch" | "dinner" | "snacks";
+export type MealType      = "breakfast" | "morning_snack" | "lunch" | "dinner" | "snacks";
 export type FoodSource    = "ciqual" | "off" | "usda" | "custom" | "recipe" | "ai" | "edamam" | "nutritionix" | "fatsecret";
 export type HungerLevel   = 1 | 2 | 3 | 4 | 5; // 1=pas faim, 5=très faim
 
@@ -323,6 +323,8 @@ export interface UserProfile {
   chartPrefs?:  ChartPrefs;
   photoUrl?:    string;
   dietProgram?: DietProgramPrefs;
+  /** Repas optionnels proposés dans le journal. */
+  mealSlots?: { morningSnack?: boolean };
 }
 
 export type DietProgramId = "tl" | "tl_nk" | "cholesterol";

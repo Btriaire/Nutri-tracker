@@ -16,6 +16,7 @@ interface Props {
 const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
 const MEAL_LABEL: Record<MealType, string> = {
   breakfast: "Petit-déjeuner",
+  morning_snack: "Collation du matin",
   lunch:     "Déjeuner",
   dinner:    "Dîner",
   snacks:    "Collations",

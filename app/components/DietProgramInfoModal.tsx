@@ -13,6 +13,7 @@ import {
 const MEAL_ORDER: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
 const MEAL_LABEL: Record<MealType, string> = {
   breakfast: "Petit-déjeuner",
+  morning_snack: "Collation du matin",
   lunch:     "Déjeuner",
   snacks:    "Goûter",
   dinner:    "Dîner",

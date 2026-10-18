@@ -10,6 +10,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const MEAL_CALORIE_PCT: Record<MealType, number> = {
   breakfast: 0.25,
+  morning_snack: 0.05,
   lunch:     0.35,
   dinner:    0.30,
   snacks:    0.10,
@@ -17,6 +18,7 @@ const MEAL_CALORIE_PCT: Record<MealType, number> = {
 
 const MEAL_NAMES_FR: Record<MealType, string> = {
   breakfast: "Petit-déjeuner",
+  morning_snack: "Collation du matin",
   lunch:     "Déjeuner",
   dinner:    "Dîner",
   snacks:    "Collation",
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { meal, goals, alreadyKcal = 0, excludeFoods = [] } = body;
-  if (!["breakfast", "lunch", "dinner", "snacks"].includes(meal)) {
+  if (!["breakfast", "morning_snack", "lunch", "dinner", "snacks"].includes(meal)) {
     return NextResponse.json({ error: "Invalid meal" }, { status: 400 });
   }
 

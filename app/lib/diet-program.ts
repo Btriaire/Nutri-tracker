@@ -132,6 +132,10 @@ interface MealRule {
 }
 
 const MEAL_RULES: Record<MealType, MealRule> = {
+  morning_snack: {
+    noBread: true,
+    summary: "Collation du matin : fruit nature autorisé (liste) ou yaourt nature/fromage blanc 0%. Sans pain.",
+  },
   breakfast: {
     breadMaxG: 60,
     summary: "60g pain complet (ou 4 Krissproll) + yaourt nature/fromage blanc 0% + 2 blancs d'œuf dur (obligatoire) + fruits rouges + boisson sans sucre",
@@ -157,6 +161,10 @@ const MEAL_RULES: Record<MealType, MealRule> = {
 // Non modelise (pas de regle automatique) : yaourt Prebiso 0% + poudre apres diner, 30 g jambon + 2 petits-suisses 0% en collation,
 // 1 carre 0% en option, tofu 150 g au diner, 2,4 L d'eau et 5 cc d'huile par jour.
 const MEAL_RULES_NK: Record<MealType, MealRule> = {
+  morning_snack: {
+    noBread: true,
+    summary: "Collation du matin : 1 kiwi (si pas pris au petit-déjeuner) ou 1 prune rouge. Sans pain.",
+  },
   breakfast: {
     breadMaxG: 60,
     summary: "60g pain complet (ou 1 carré frais Gervais 0%) + 1 œuf entier + 2 blancs (ou 30g jambon dégraissé) + 1 kiwi vert (optionnel) + boisson sans sucre",
@@ -328,7 +336,7 @@ function checkQuantity(meal: MealType, normalizedName: string, grams: number, ru
   return null;
 }
 
-const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const MEAL_TYPES: MealType[] = ["breakfast", "morning_snack", "lunch", "snacks", "dinner"];
 
 /**
  * `exceptions` : noms d'aliments (déjà normalizeFoodName()) que l'utilisateur a

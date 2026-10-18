@@ -6,7 +6,7 @@ import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { format, subDays } from "date-fns";
 import type { DayLog, FoodEntry, MealType } from "@/app/lib/types";
 
-const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
+const MEAL_TYPES: MealType[] = ["breakfast", "morning_snack", "lunch", "dinner", "snacks"];
 
 export interface MealTimingPoint {
   date:       string;

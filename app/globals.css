@@ -730,6 +730,13 @@ html[data-density="compact"] {
   }
 }
 
+/* Petits ecrans (iPhone SE, mini) : le mode compact descend encore pour tenir la page */
+@media (max-width: 400px) {
+  html[data-density="compact"] {
+    zoom: 0.8;
+  }
+}
+
 html[data-density="large"] {
   zoom: 1.08;
 }

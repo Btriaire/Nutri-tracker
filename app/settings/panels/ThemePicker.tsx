@@ -130,7 +130,7 @@ function ThemePreview({ t, selected }: { t: typeof THEME_DEFS[number]; selected:
 }
 
 const DENSITY_OPTIONS: { id: Density; label: string; desc: string; scale: string }[] = [
-  { id: "compact", label: "Compact", desc: "Plus petit (88%)", scale: "-12%" },
+  { id: "compact", label: "Compact", desc: "Plus petit (88 %, 80 % sur petit écran)", scale: "-12%" },
   { id: "normal",  label: "Normal",  desc: "Par défaut (100%)", scale: "100%" },
   { id: "large",   label: "Confort", desc: "Plus grand (108%)", scale: "+8%" },
 ];

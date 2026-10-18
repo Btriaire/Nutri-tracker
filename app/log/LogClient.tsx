@@ -44,7 +44,7 @@ import QualityScoreBadge from "@/app/components/QualityScoreBadge";
 import QualityScoreDetail from "@/app/components/QualityScoreDetail";
 import { computeQualityScore } from "@/app/lib/meal-quality";
 
-const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const MEALS: MealType[] = ["breakfast", "morning_snack", "lunch", "snacks", "dinner"];
 /** Entier avec separateur de milliers francais : 2810 -> "2 810". */
 const int = (n: number) => Math.round(n).toLocaleString("fr-FR");
 
@@ -211,9 +211,10 @@ interface Props {
   lang?:            Lang;
   trackedNutrients?: TrackedNutrients;
   dietProgram?:     DietProgramPrefs;
+  morningSnack?:    boolean;
 }
 
-export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram }: Props) {
+export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram, morningSnack = false }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
@@ -844,7 +845,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           {/* Meal sections — primary action on this page, so it comes right after the
               lock banner instead of after the secondary trackers below. */}
           <div className="space-y-3 mb-5">
-            {MEALS.map((meal, i) => (
+            {MEALS.filter((m) => m !== "morning_snack" || morningSnack || (initialLog?.entries ?? []).some((e) => e.meal === "morning_snack")).map((meal, i) => (
               <motion.div
                 key={meal}
                 initial={{ opacity: 0, y: 10 }}

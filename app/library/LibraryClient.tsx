@@ -34,6 +34,7 @@ const CATEGORIES = [
 
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: "Petit-déjeuner",
+  morning_snack: "Collation du matin",
   lunch:     "Déjeuner",
   dinner:    "Dîner",
   snacks:    "Collation",

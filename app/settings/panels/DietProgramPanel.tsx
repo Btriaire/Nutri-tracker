@@ -12,9 +12,10 @@ import {
 
 import type { MealType } from "@/app/lib/types";
 
-const DIET_MEAL_ORDER: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
+const DIET_MEAL_ORDER: MealType[] = ["breakfast", "morning_snack", "lunch", "snacks", "dinner"];
 const DIET_MEAL_LABEL: Record<MealType, string> = {
   breakfast: "Petit-déjeuner",
+  morning_snack: "Collation du matin",
   lunch:     "Déjeuner",
   snacks:    "Goûter",
   dinner:    "Dîner",
@@ -33,11 +34,14 @@ export default function DietProgramPanel() {
   const [saving,    setSaving]    = useState(false);
   const [saved,     setSaved]     = useState(false);
 
+  const [morningSnack, setMorningSnack] = useState(false);
+
   useEffect(() => {
     fetch("/api/goals")
       .then(r => r.json())
-      .then((d: { dietProgram?: DietProgramPrefs | null }) => {
+      .then((d: { dietProgram?: DietProgramPrefs | null; mealSlots?: { morningSnack?: boolean } }) => {
         setProgramId(resolveDietProgramId(d.dietProgram));
+        setMorningSnack(!!d.mealSlots?.morningSnack);
       })
       .catch(() => {});
   }, []);
@@ -54,6 +58,16 @@ export default function DietProgramPanel() {
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
     } finally { setSaving(false); }
+  };
+
+  const handleMorningSnack = async () => {
+    const next = !morningSnack;
+    setMorningSnack(next);
+    await fetch("/api/goals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mealSlots: { morningSnack: next } }),
+    });
   };
 
   return (
@@ -104,7 +118,15 @@ export default function DietProgramPanel() {
             </p>
           )}
 
-          {programId === "tl" && (
+          {/* Collation du matin (journal) */}
+          <button type="button" onClick={handleMorningSnack} aria-pressed={morningSnack}
+            className="w-full flex items-center justify-between min-h-[44px] px-3 rounded-xl text-[13px]"
+            style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+            <span>Collation du matin</span>
+            <span className="font-semibold" style={{ color: morningSnack ? "var(--ok)" : "var(--text-muted)" }}>{morningSnack ? "Activée" : "Désactivée"}</span>
+          </button>
+
+          {(programId === "tl" || programId === "tl_nk") && (
             <>
               {/* Repères par repas */}
               <div>
@@ -116,7 +138,7 @@ export default function DietProgramPanel() {
                     <div key={meal} className="px-3 py-2 rounded-lg"
                       style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
                       <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{DIET_MEAL_LABEL[meal]}</p>
-                      <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal)}</p>
+                      <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{dietMealSummary(meal, programId ?? "tl")}</p>
                     </div>
                   ))}
                 </div>

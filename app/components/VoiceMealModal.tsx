@@ -46,6 +46,7 @@ interface SpeechRecognitionLike {
 
 const MEAL_META: Record<MealType, { label: string; emoji: string; color: string }> = {
   breakfast: { label: "Petit-déj",  emoji: "🍳", color: "var(--carbs)" },
+  morning_snack: { label: "Coll. matin", emoji: "🍎", color: "var(--fiber)" },
   lunch:     { label: "Déjeuner",   emoji: "🥗", color: "var(--fiber)" },
   dinner:    { label: "Dîner",      emoji: "🍽️", color: "var(--protein)" },
   snacks:    { label: "Collation",  emoji: "🍎", color: "var(--calories)" },

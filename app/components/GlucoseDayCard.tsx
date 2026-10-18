@@ -11,7 +11,7 @@ import { MEAL_META } from "./meal-meta";
 import { GlucoseBars, responseBars, mmol, hhmm, levelColor } from "./GlucoseSigns";
 
 const MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
-const SHORT: Record<MealType, string> = { breakfast: "P.-déj", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
+const SHORT: Record<MealType, string> = { breakfast: "P.-déj", morning_snack: "Coll. mat.", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
 const HOUR = 3_600_000;
 
 function useNow(intervalMs: number) {

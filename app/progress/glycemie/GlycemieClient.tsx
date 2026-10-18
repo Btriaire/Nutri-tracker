@@ -17,7 +17,7 @@ import { MEAL_META } from "@/app/components/meal-meta";
 import { GlucoseBars, fmt, levelColor } from "@/app/components/GlucoseSigns";
 
 const ALL_MEALS: MealType[] = ["breakfast", "lunch", "snacks", "dinner"];
-const SHORT: Record<MealType, string> = { breakfast: "P.-déj", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
+const SHORT: Record<MealType, string> = { breakfast: "P.-déj", morning_snack: "Coll. mat.", lunch: "Déj.", snacks: "Coll.", dinner: "Dîn." };
 const RANGES = [7, 14, 30, 90] as const;
 const AXIS = { fontSize: 12, fill: "var(--text-muted)" };
 const TOOLTIP = { background: "var(--surface-hover)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 12 };

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-const MEALS: MealType[] = ["breakfast", "lunch", "dinner", "snacks"];
+const MEALS: MealType[] = ["breakfast", "morning_snack", "lunch", "dinner", "snacks"];
 
 interface DetectedFood {
   name:           string;
@@ -28,7 +28,7 @@ Format :
 
 Règles :
 ${AI_SODIUM_SAT_RULES}
-- "meal" doit valoir exactement "breakfast", "lunch", "dinner" ou "snacks".
+- "meal" doit valoir exactement "breakfast", "morning_snack", "lunch", "dinner" ou "snacks".
 - Déduis le repas du contexte ("ce matin"/"petit-déj" → breakfast, "ce midi"/"déjeuner" → lunch, "ce soir"/"dîner" → dinner, "goûter"/"en-cas"/"collation" → snacks).
 - Si le repas n'est pas précisé, utilise le repas par défaut fourni par l'utilisateur.
 - Si une quantité n'est pas donnée, estime une portion habituelle réaliste (ex: 1 pomme ≈ 150g, 1 tranche de pain ≈ 30g).

@@ -25,6 +25,7 @@ export async function GET() {
     photoUrl:    profile.photoUrl    ?? null,
     displayName: profile.displayName ?? null,
     dietProgram: profile.dietProgram ?? null,
+    mealSlots:   profile.mealSlots   ?? null,
     isOwner:     session.userId === "owner",
   });
 }
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string; dietProgram?: DietProgramPrefs };
+  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string; dietProgram?: DietProgramPrefs; mealSlots?: { morningSnack?: boolean } };
   const db = getAdminFirestore();
   await db.doc(`users/${session.userId}`).set(body, { merge: true });
   return NextResponse.json({ ok: true });
