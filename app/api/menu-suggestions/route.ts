@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
 import { getMealHabitProfile, getRecentlySuggested, recordSuggested } from "@/app/lib/meal-habits";
 import type { MealType, NutritionGoals } from "@/app/lib/types";
+import { getAdminFirestore } from "@/app/lib/firebase-admin";
+import { resolveDietProgramId, dietMealSummary, DIET_INTERDITS_SUMMARY, APPROVED_FRUITS_SUMMARY, FORBIDDEN_FRUITS_SUMMARY, CHOLESTEROL_FAVORISER_SUMMARY, CHOLESTEROL_LIMITER_SUMMARY } from "@/app/lib/diet-program";
+import type { UserProfile } from "@/app/lib/types";
 import { GROQ_TEXT_MODEL } from "@/app/lib/groq";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -91,6 +94,23 @@ export async function POST(req: NextRequest) {
   const remaining      = Math.max(0, goals.dailyCalories - alreadyKcal);
   const adjustedBudget = Math.min(budget, remaining);
   const program        = (goals.plan as { programLabel?: string } | undefined)?.programLabel ?? "équilibré";
+  // Programme alimentaire reel du compte (profil), pas celui de la requete
+  const profileSnap = await getAdminFirestore().doc(`users/${session.userId}`).get();
+  const dietId      = resolveDietProgramId((profileSnap.data() as UserProfile | undefined)?.dietProgram);
+  const dietBlock   = dietId === "tl" || dietId === "tl_nk"
+    ? `
+Regime imposé (ordonnance, à respecter STRICTEMENT dans CHAQUE proposition) :
+- Repère de ce repas : ${dietMealSummary(meal, dietId)}
+- Interdits : ${DIET_INTERDITS_SUMMARY}
+- Fruits autorisés (un seul choix par repas, jamais en jus) : ${APPROVED_FRUITS_SUMMARY}
+- Fruits interdits : ${FORBIDDEN_FRUITS_SUMMARY}
+- Pain ou pâtes uniquement complets ; jamais de pain blanc ni de pâtes blanches.`
+    : dietId === "cholesterol"
+      ? `
+Regime imposé (à respecter dans CHAQUE proposition) :
+- Favoriser : ${CHOLESTEROL_FAVORISER_SUMMARY}
+- Limiter : ${CHOLESTEROL_LIMITER_SUMMARY}`
+      : "";
   const proteinTarget  = Math.round(goals.proteinGrams * MEAL_CALORIE_PCT[meal]);
 
   // Learned from the user's own history for THIS meal slot — see meal-habits.ts.
@@ -108,7 +128,7 @@ export async function POST(req: NextRequest) {
 Tu proposes des repas simples, pratiques, typiques de la cuisine française du quotidien, avec des valeurs nutritionnelles précises et réalistes.
 Réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.`;
 
-  const userMessage = `Génère 3 propositions de repas pour : ${MEAL_NAMES_FR[meal]}
+  const userMessage = `Génère 5 propositions de repas pour : ${MEAL_NAMES_FR[meal]}
 
 Profil nutritionnel :
 - Programme : ${program}
@@ -125,7 +145,8 @@ Déjà mangé aujourd'hui à ce repas : ${excludeFoods.join(", ")}. Ne propose p
 ${recentlySuggested.length > 0 ? `
 Repas déjà suggérés récemment pour ce créneau (ne pas répéter à l'identique) : ${recentlySuggested.join(", ")}.` : ""}
 
-Propose 3 repas variés : 1 léger, 1 équilibré, 1 rassasiant.
+${dietBlock}
+Propose 5 repas variés, tous conformes au régime imposé ci-dessus s'il existe : au moins 1 léger, 1 équilibré, 1 rassasiant, et 2 autres différents des précédents.
 Les recettes doivent être réalisables en moins de 20 min, sans matériel spécial.
 Les valeurs nutritionnelles doivent être cohérentes avec les quantités.
 
@@ -157,7 +178,7 @@ Format JSON exact :
         model:           GROQ_TEXT_MODEL, // llama-3.3-70b-versatile was deprecated by Groq
         reasoning_effort: "low",
         temperature:     0.72,
-        max_tokens:      2500,
+        max_tokens:      4000,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
