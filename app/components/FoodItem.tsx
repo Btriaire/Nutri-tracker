@@ -168,7 +168,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
   }, []);
 
   const handleSaveEdit = async () => {
-    const grams = Math.max(1, parseFloat(editGrams) || 1);
+    const grams = Math.max(1, parseFloat(editGrams.replace(",", ".")) || 1);
     setEditSaving(true);
     try {
       // Scale per-100g first, then to new grams
@@ -207,7 +207,7 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
     } finally { setEditSaving(false); }
   };
 
-  const previewGrams = Math.max(1, parseFloat(editGrams) || 1);
+  const previewGrams = Math.max(1, parseFloat(editGrams.replace(",", ".")) || 1);
   const previewN = editing
     ? scaleNutrition(scaleNutrition(entry.nutrition, 10000 / entry.servingGrams), previewGrams)
     : null;
@@ -367,27 +367,27 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
               {/* Compact input row */}
               <div className="flex items-center gap-1.5 mb-1.5">
                 <button
-                  onClick={() => setEditGrams((v) => String(Math.max(1, (parseFloat(v) || 1) - 10)))}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
+                  onClick={() => setEditGrams((v) => String(Math.max(1, (parseFloat(v.replace(",", ".")) || 1) - 5)))}
+                  className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 text-[18px] transition-colors"
                   style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
                   −
                 </button>
                 <div className="relative flex-1">
                   <input
                     type="number"
-                    value={editGrams}
+                    inputMode="decimal" value={editGrams}
                     onChange={(e) => setEditGrams(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false); }}
                     className="input text-center text-[13px] tabular-nums pr-5"
-                    style={{ height: "28px" }}
+                    style={{ height: "44px", fontSize: "16px" }}
                     min="1"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px]"
                     style={{ color: "var(--text-muted)" }}>g</span>
                 </div>
                 <button
-                  onClick={() => setEditGrams((v) => String((parseFloat(v) || 0) + 10))}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-[15px] transition-colors"
+                  onClick={() => setEditGrams((v) => String((parseFloat(v.replace(",", ".")) || 0) + 5))}
+                  className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 text-[18px] transition-colors"
                   style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}>
                   +
                 </button>

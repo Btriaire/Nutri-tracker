@@ -112,7 +112,7 @@ export default function BodyMeasurementsTab() {
       const body: Partial<Record<MeasurementKey, number | null>> = {};
       for (const { key } of FIELDS) {
         const v = form[key];
-        body[key] = v && v.trim() !== "" ? parseFloat(v) : null;
+        body[key] = v && v.trim() !== "" ? parseFloat(v.replace(",", ".")) : null;
       }
       await fetch("/api/measurements", {
         method:  "POST",
@@ -328,7 +328,7 @@ export default function BodyMeasurementsTab() {
               <label className="flex-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>{label}</label>
               <div className="flex items-center gap-1.5">
                 <input
-                  type="number" step="0.1" min="0" max="300"
+                  type="text" inputMode="decimal" enterKeyHint="next"
                   value={form[key] ?? ""}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                   placeholder="—"
