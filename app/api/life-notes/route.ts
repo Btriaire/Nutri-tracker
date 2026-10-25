@@ -24,7 +24,9 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 async function getGroqAnalysis(text: string): Promise<Partial<LifeNote>> {
   try {
+    // Delai max : sans lui, une reponse Groq qui ne vient jamais bloque l'enregistrement indefiniment
     const response = await fetch(GROQ_URL, {
+      signal: AbortSignal.timeout(12000),
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
