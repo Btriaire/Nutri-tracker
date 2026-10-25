@@ -40,9 +40,11 @@ export async function getConnectionStatus(userId: string): Promise<ConnectionSta
   const doc = await db.doc(`users/${userId}/oauthTokens/google_fit`).get();
   if (!doc.exists) return "disconnected";
   const d = doc.data()!;
-  // If a refresh failed within the last 48h, flag as needs_reauth
+  // Un refus permanent (refresh token révoqué) reste signalé jusqu'à une reconnexion réussie,
+  // qui efface refreshFailedAt (voir saveTokens). L'ancienne fenêtre de 48 h faisait repasser
+  // l'état à « connecté » alors que la synchro était morte, sans bouton pour la relancer.
   const failedAt = d.refreshFailedAt?.toMillis?.() as number | undefined;
-  if (failedAt && Date.now() - failedAt < 48 * 3600_000) return "needs_reauth";
+  if (failedAt) return "needs_reauth";
   return "connected";
 }
 

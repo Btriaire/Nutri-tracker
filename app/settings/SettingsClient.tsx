@@ -343,6 +343,12 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
                   <span className="text-[12px]" style={{ color: "var(--fiber)" }}>Connecté</span>
                 </div>
               )}
+              <button type="button" onClick={openWithingsAuth} className="text-[11.5px] underline self-start" style={{ color: "var(--text-muted)" }}>
+                La synchro ne fonctionne plus ? Reconnecter Withings
+              </button>
+              <Link href="/api/google-fit/auth" className="text-[11.5px] underline self-start" style={{ color: "var(--text-muted)" }}>
+                La synchro ne fonctionne plus ? Reconnecter Google Fit
+              </Link>
 
               {syncMsg && (
                 <p className="text-[12px] px-1" style={{ color: "var(--text-muted)" }}>{syncMsg}</p>

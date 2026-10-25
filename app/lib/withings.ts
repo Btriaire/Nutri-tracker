@@ -46,7 +46,8 @@ export async function getConnectionStatus(userId: string): Promise<ConnectionSta
   // - AND no successful refresh has happened since (token still expired / nearly expired)
   // This prevents phantom reauth prompts when a Firestore write failed but tokens are still valid.
   const successfulRefreshSince = expiresAt > Date.now() + 60_000; // token valid for > 1 min
-  if (failedAt && Date.now() - failedAt < 48 * 3600_000 && !successfulRefreshSince) return "needs_reauth";
+  // Pas de fenêtre de 48 h : tant qu'un refus est enregistré et qu'aucun rafraîchissement n'a réussi, il faut reconnecter.
+  if (failedAt && !successfulRefreshSince) return "needs_reauth";
   return "connected";
 }
 
