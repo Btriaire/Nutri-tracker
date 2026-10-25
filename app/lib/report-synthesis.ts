@@ -59,6 +59,11 @@ function buildUserMessage(data: ReportData): string {
   lines.push(`Calories moy: ${data.nutrition.avgCalories} kcal/j (objectif ${data.profile.goals.dailyCalories}, ${data.nutrition.pctCalGoal}%)`);
   lines.push(`Protéines: ${data.nutrition.avgProteinG}g, Glucides: ${data.nutrition.avgCarbsG}g, Lipides: ${data.nutrition.avgFatG}g, Fibres: ${data.nutrition.avgFiberG}g`);
   lines.push(`Eau: ${data.nutrition.avgWaterMl}mL/j (objectif ${data.profile.goals.waterMl}mL, ${data.nutrition.pctWaterGoal}%)`);
+  if (data.lifeNotes && data.lifeNotes.length > 0) {
+    const words = Array.from(new Set(data.lifeNotes.flatMap(n => n.keywords))).slice(0, 15);
+    const lasting = data.lifeNotes.filter(n => n.persistent).length;
+    lines.push(`Changements de vie ou de comportement (dictes par l'utilisateur, information subjective) : ${data.lifeNotes.length} note(s), ${lasting} durable(s). Mots-cles : ${words.join(", ")}. Tiens-en compte dans l'analyse et le bilan, sans les presenter comme une cause prouvee.`);
+  }
   if (data.fiber && data.fiber.daysLogged > 0) {
     lines.push(`Fibres: cible ${data.fiber.targetG} g/j, ${data.fiber.daysBelow} jour(s) sur ${data.fiber.daysLogged} sous la cible. Principales sources: ${data.fiber.topSources.map(s => `${s.name} ${s.fiberG} g`).join(", ") || "aucune"}.`);
   }

@@ -133,6 +133,7 @@ export interface GlucoseSummary {
 export interface ReportData {
   /** Propositions concretes pour la semaine (ce qui manque, quantites a changer). */
   proposals: Proposal[];
+  lifeNotes: { date: string; kind: string; persistent: boolean; keywords: string[] }[];
      fiber: {
        targetG: number;
        avgG: number;
@@ -288,6 +289,14 @@ export async function buildReportData(userId: string, from: string, to: string):
   const goals   = profile?.goals ?? defaultGoals();
 
   // ── Nutrition aggregation ─────────────────────────────────────────────────
+  // Changements de vie ou de comportement (dictes par l'utilisateur) sur la periode
+  const lifeSnap = await db.collection(`users/${userId}/lifeNotes`)
+    .where("date", ">=", from).where("date", "<=", to)
+    .orderBy("date", "asc").get();
+  const lifeNotes = lifeSnap.docs.map(d => {
+    const n = d.data() as { date: string; kind?: string; persistent?: boolean; keywords?: string[] };
+    return { date: n.date, kind: n.kind ?? "comportement", persistent: !!n.persistent, keywords: n.keywords ?? [] };
+  });
   const dailyNutrition: DayNutrition[] = foodSnaps.docs.map(d => {
     const log = d.data() as DayLog;
     const t   = log.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 };
@@ -625,6 +634,7 @@ export async function buildReportData(userId: string, from: string, to: string):
   const data: ReportData = {
     proposals,
     fiber: fiberBlock,
+    lifeNotes,
     meta: {
       from,
       to,
