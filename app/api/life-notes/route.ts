@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/app/lib/session";
+import { localLifeAnalysis } from "@/app/lib/life-keywords";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { GROQ_URL, GROQ_TEXT_MODEL } from "@/app/lib/groq";
 import { nanoid } from "nanoid";
@@ -26,7 +27,7 @@ async function getGroqAnalysis(text: string): Promise<Partial<LifeNote>> {
   try {
     // Delai max : sans lui, une reponse Groq qui ne vient jamais bloque l'enregistrement indefiniment
     const response = await fetch(GROQ_URL, {
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(8000),
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
@@ -67,13 +68,9 @@ async function getGroqAnalysis(text: string): Promise<Partial<LifeNote>> {
       persistent: data.persistent,
       summary: data.summary
     };
-  } catch (error) {
-    return {
-      keywords: [],
-      kind: "comportement",
-      persistent: false,
-      summary: text.length > 80 ? text.substring(0, 77) + "..." : text
-    };
+  } catch {
+    // IA indisponible ou trop lente : analyse locale, la note s'enregistre quand meme avec des mots-cles
+    return localLifeAnalysis(text);
   }
 }
 
@@ -144,7 +141,7 @@ export async function POST(request: NextRequest) {
     id,
     date,
     text,
-    keywords: groqAnalysis.keywords || [],
+    keywords: groqAnalysis.keywords && groqAnalysis.keywords.length > 0 ? groqAnalysis.keywords : localLifeAnalysis(text).keywords,
     kind: groqAnalysis.kind || "comportement",
     persistent: groqAnalysis.persistent ?? false,
     summary: groqAnalysis.summary || (text.length > 80 ? text.substring(0, 77) + "..." : text),

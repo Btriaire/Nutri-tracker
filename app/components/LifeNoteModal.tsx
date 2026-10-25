@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { IconMicrophone, IconPlayerStop, IconCheck, IconLoader2, IconX } from "@tabler/icons-react";
 import Sheet from "./Sheet";
 import type { LifeNote } from "@/app/api/life-notes/route";
+import { localLifeAnalysis, queueLifeNote } from "@/app/lib/life-keywords";
 
 type SpeechResultLike = { isFinal: boolean; 0: { transcript: string } };
 type SpeechEventLike = { resultIndex: number; results: ArrayLike<SpeechResultLike> };
@@ -113,25 +114,30 @@ export default function LifeNoteModal({
     setIsSaving(true);
     setError("");
 
+    const finish = (note: LifeNote) => {
+      setKeywords(note.keywords || []);
+      setTimeout(() => {
+        onSaved(note);
+        onClose();
+      }, 1200);
+    };
     try {
       const response = await fetch("/api/life-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, date }),
+        signal: AbortSignal.timeout(20000),
       });
 
       if (!response.ok) throw new Error();
 
       const { note } = (await response.json()) as { note: LifeNote };
-      setKeywords(note.keywords || []);
-
-      setTimeout(() => {
-        onSaved(note);
-        onClose();
-      }, 1200);
+      finish(note);
     } catch {
-      setError("Impossible d'enregistrer, réessaie.");
-      setIsSaving(false);
+      // Serveur ou reseau indisponible : la note est gardee sur l'appareil, renvoyee des que possible
+      const clean = text.trim();
+      queueLifeNote({ text: clean, date });
+      finish({ id: `local-${Date.now()}`, date, text: clean, ...localLifeAnalysis(clean), createdAt: new Date().toISOString() });
     }
   };
 

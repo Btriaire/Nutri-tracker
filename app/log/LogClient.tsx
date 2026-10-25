@@ -28,6 +28,7 @@ import { checkDietCompliance, normalizeFoodName, resolveDietProgramId, DIET_PROG
 import LifeNoteModal from "@/app/components/LifeNoteModal";
 import type { LifeNote } from "@/app/api/life-notes/route";
 import { addDays } from "date-fns";
+import { flushLifeQueue } from "@/app/lib/life-keywords";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import AlternativeFoodsModal from "@/app/components/AlternativeFoodsModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
@@ -237,6 +238,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
       .then((d: { notes?: LifeNote[] }) => { if (!cancelled) setLifeCarryable((d.notes ?? []).some((n) => n.persistent)); })
       .catch(() => {});
     return () => { cancelled = true; };
+  }, [date]);
+  // Notes dictees hors ligne ou en echec : renvoyees a l'ouverture du journal
+  useEffect(() => {
+    flushLifeQueue().then((sent) => {
+      if (sent === 0) return;
+      fetch(`/api/life-notes?date=${date}`)
+        .then((r) => (r.ok ? r.json() : { notes: [] }))
+        .then((d: { notes?: LifeNote[] }) => setLifeNotes(d.notes ?? []))
+        .catch(() => {});
+    }).catch(() => {});
   }, [date]);
   const carryLifeStates = async () => {
     setLifeCarrying(true);
