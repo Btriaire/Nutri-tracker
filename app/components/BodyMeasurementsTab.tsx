@@ -69,6 +69,15 @@ function AnatomicalBody({
   );
 }
 
+function stepValue(current: string | undefined, delta: number): number {
+  const base = parseFloat((current ?? "").replace(",", "."));
+  const start = Number.isFinite(base) ? base : 0;
+  return Math.max(0, Math.round((start + delta) * 10) / 10);
+}
+function formatCm(value: number): string {
+  return String(value).replace(".", ",");
+}
+
 export default function BodyMeasurementsTab() {
   const [entries, setEntries]           = useState<MeasurementEntry[]>([]);
   const [loading, setLoading]           = useState(true);
@@ -327,18 +336,36 @@ export default function BodyMeasurementsTab() {
               </div>
               <label className="flex-1 text-[13px]" style={{ color: "var(--text-secondary)" }}>{label}</label>
               <div className="flex items-center gap-1.5">
+                <button
+                  className="w-11 h-11 rounded-xl flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}
+                  onClick={() => setForm(f => ({ ...f, [key]: formatCm(stepValue(f[key], -0.5)) }))}
+                  aria-label="Diminuer"
+                >
+                  −
+                </button>
                 <input
                   type="text" inputMode="decimal" enterKeyHint="next"
                   value={form[key] ?? ""}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  onFocus={e => e.currentTarget.select()}
+                  autoComplete="off"
                   placeholder="—"
-                  className="w-24 min-h-[44px] px-2 rounded-xl text-[16px] text-right tabular-nums outline-none"
+                  className="w-16 min-h-[44px] px-1 rounded-xl text-[16px] text-center tabular-nums outline-none"
                   style={{
                     background: "var(--layer-2)",
-                    border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`,
+                    border: `1px solid ${form[key] ? alpha(color, 31) : "var(--border)"}`, 
                     color: form[key] ? color : "var(--text-muted)",
                   }}
                 />
+                <button
+                  className="w-11 h-11 rounded-xl flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)" }}
+                  onClick={() => setForm(f => ({ ...f, [key]: formatCm(stepValue(f[key], 0.5)) }))}
+                  aria-label="Augmenter"
+                >
+                  +
+                </button>
                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>cm</span>
               </div>
             </div>

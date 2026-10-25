@@ -9,7 +9,7 @@ const TENANT_PREFIXES = [
   "/api/goals", "/api/log", "/api/meals", "/api/meal-timing", "/api/micronutrient-intakes", "/api/supplements",
   "/api/supplement-intakes", "/api/supplement-ai", "/api/supplements-progress", "/api/custom-nutrients", "/api/custom-foods", "/api/streak",
   "/api/repartition", "/api/food", "/api/measurements", "/api/workout-templates",
-  "/api/face-scan", "/api/eye-scan", "/api/meditation", "/api/progress", "/api/weight-corrections", "/api/workout-templates", "/api/ai/advanced-analysis", "/api/menu-suggestions", "/api/withings", "/api/withings-body", "/api/google-fit", "/api/gfit-session", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
+  "/api/face-scan", "/api/eye-scan", "/api/meditation", "/api/progress", "/api/weight-corrections", "/api/workout-templates", "/api/ai/advanced-analysis", "/api/menu-suggestions", "/api/life-notes", "/api/withings", "/api/withings-body", "/api/google-fit", "/api/gfit-session", "/api/photos", "/api/activity", "/api/activity-day", "/api/gym",
   "/api/cardio", "/api/sleep", "/api/album", "/api/export",
 ];
 

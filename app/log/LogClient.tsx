@@ -25,6 +25,9 @@ import MealMicronutrientsPanel from "@/app/components/MealMicronutrientsPanel";
 import { extractMicronutrientsForced, logMicronutrients } from "@/app/lib/micronutrient-extractor";
 import type { DayLog, FoodEntry, MealType, DayTotals, NutritionGoals, Lang, HungerLevel, TrackedNutrients, DayType, AlcoolDrink, MicronutrientDay, SupplementLog, DietProgramPrefs } from "@/app/lib/types";
 import { checkDietCompliance, normalizeFoodName, resolveDietProgramId, DIET_PROGRAMS } from "@/app/lib/diet-program";
+import LifeNoteModal from "@/app/components/LifeNoteModal";
+import type { LifeNote } from "@/app/api/life-notes/route";
+import { addDays } from "date-fns";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import AlternativeFoodsModal from "@/app/components/AlternativeFoodsModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
@@ -32,7 +35,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp, IconHeartHandshake } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -217,6 +220,33 @@ interface Props {
 export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram, morningSnack = false }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
+  // Changements de vie ou de comportement (dictee) : notes du jour + reprise des etats persistants
+  const [showLife,      setShowLife]      = useState(false);
+  const [lifeNotes,     setLifeNotes]     = useState<LifeNote[]>([]);
+  const [lifeCarryable, setLifeCarryable] = useState(false);
+  const [lifeCarrying,  setLifeCarrying]  = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/life-notes?date=${date}`)
+      .then((r) => (r.ok ? r.json() : { notes: [] }))
+      .then((d: { notes?: LifeNote[] }) => { if (!cancelled) setLifeNotes(d.notes ?? []); })
+      .catch(() => {});
+    const base = new Date(date + "T12:00:00");
+    fetch(`/api/life-notes?from=${format(addDays(base, -14), "yyyy-MM-dd")}&to=${format(addDays(base, -1), "yyyy-MM-dd")}`)
+      .then((r) => (r.ok ? r.json() : { notes: [] }))
+      .then((d: { notes?: LifeNote[] }) => { if (!cancelled) setLifeCarryable((d.notes ?? []).some((n) => n.persistent)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [date]);
+  const carryLifeStates = async () => {
+    setLifeCarrying(true);
+    try {
+      const res = await fetch(`/api/life-notes?date=${date}`, { method: "PUT" });
+      const d = await res.json() as { notes?: LifeNote[] };
+      setLifeNotes(d.notes ?? []);
+      setLifeCarryable(false);
+    } finally { setLifeCarrying(false); }
+  };
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
@@ -552,6 +582,15 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <IconMicrophone size={17} stroke={1.8} />
           </button>
+          {/* Changement de vie ou de comportement — dictee */}
+          <button
+            onClick={() => setShowLife(true)}
+            aria-label="Changement de vie ou de comportement"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
+          >
+            <IconHeartHandshake size={17} stroke={1.8} />
+          </button>
           {/* Aliments Alternatifs — calorie-matched food substitution tool */}
           <button
             onClick={() => setShowAlternatives(true)}
@@ -562,6 +601,27 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <IconArrowsExchange size={17} stroke={1.8} />
           </button>
         </motion.div>
+
+        {/* Changements de vie ou de comportement du jour */}
+        {(lifeNotes.length > 0 || lifeCarryable) && (
+          <div className="glass px-4 py-3 mb-5">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="label-xs">Changements du jour</p>
+              {lifeCarryable && lifeNotes.length === 0 && (
+                <button onClick={carryLifeStates} disabled={lifeCarrying}
+                  className="text-[12px] font-medium min-h-[36px] px-2" style={{ color: "var(--accent)" }}>
+                  {lifeCarrying ? "…" : "Reprendre l'état d'hier"}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {lifeNotes.flatMap((n) => n.keywords.map((k) => (
+                <span key={`${n.id}-${k}`} className="px-2.5 py-1 rounded-full text-[12px]"
+                  style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>{k}</span>
+              )))}
+            </div>
+          </div>
+        )}
 
         {/* Hors ligne : saisie minimale d'un repas, envoyee au retour du reseau */}
         <OfflineMealCapture />
@@ -1055,6 +1115,8 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
 
       {/* Voice meal modal — Nutri-IA */}
       <AnimatePresence>
+        <LifeNoteModal open={showLife} date={date} onClose={() => setShowLife(false)}
+          onSaved={(note) => setLifeNotes((prev) => [...prev, note])} />
         {showVoice && (
           <VoiceMealModal
             date={date}
