@@ -615,7 +615,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
               )}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {lifeNotes.flatMap((n) => n.keywords.map((k) => (
+              {lifeNotes.flatMap((n) => (n.keywords ?? []).map((k) => (
                 <span key={`${n.id}-${k}`} className="px-2.5 py-1 rounded-full text-[12px]"
                   style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>{k}</span>
               )))}

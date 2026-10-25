@@ -50,14 +50,17 @@ async function getGroqAnalysis(text: string): Promise<Partial<LifeNote>> {
 
     if (!response.ok) throw new Error("Groq API error");
 
-    const data = await response.json();
-    if (!data.keywords || !data.kind || typeof data.persistent !== "boolean" || !data.summary) {
+    // La reponse Groq est { choices: [{ message: { content } }] } : le JSON utile est dans content
+    const body = await response.json() as { choices?: { message?: { content?: string } }[] };
+    const content = body.choices?.[0]?.message?.content ?? "{}";
+    const data = JSON.parse(content) as { keywords?: unknown; kind?: unknown; persistent?: unknown; summary?: unknown };
+    if (!Array.isArray(data.keywords) || typeof data.persistent !== "boolean" || typeof data.summary !== "string") {
       throw new Error("Invalid Groq response format");
     }
 
     return {
-      keywords: data.keywords.slice(0, 6),
-      kind: data.kind,
+      keywords: data.keywords.filter((k): k is string => typeof k === "string").slice(0, 6),
+      kind: data.kind === "vie" ? "vie" : "comportement",
       persistent: data.persistent,
       summary: data.summary
     };

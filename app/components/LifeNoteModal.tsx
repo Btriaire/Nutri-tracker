@@ -122,7 +122,7 @@ export default function LifeNoteModal({
 
       if (!response.ok) throw new Error();
 
-      const note: LifeNote = await response.json();
+      const { note } = (await response.json()) as { note: LifeNote };
       setKeywords(note.keywords || []);
 
       setTimeout(() => {
