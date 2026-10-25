@@ -35,7 +35,8 @@ async function getGroqAnalysis(text: string): Promise<Partial<LifeNote>> {
       body: JSON.stringify({
         model: GROQ_TEXT_MODEL,
         temperature: 0.2,
-        max_tokens: 400,
+        reasoning_effort: "low",
+        max_tokens: 1200,
         response_format: { type: "json_object" },
         messages: [
           {
