@@ -626,39 +626,36 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </button>
         </motion.div>
 
-        {/* Changements de vie ou de comportement du jour : repris de la veille par defaut, - pour retirer, + pour ajouter */}
+        {/* Changements de vie ou de comportement du jour (compact) : - / + sur chaque item, repris de la veille */}
         {lifeNotes.length > 0 && (
-          <div className="glass px-4 py-3 mb-5">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="label-xs">Changements du jour</p>
-            </div>
-            <div className="space-y-1.5">
-              {lifeNotes.flatMap((n) => {
-                const items = (n.keywords ?? []).length > 0 ? (n.keywords ?? []) : [n.summary || n.text];
-                const hasKeywords = (n.keywords ?? []).length > 0;
-                return items.map((k) => {
-                  const level = n.levels?.[k] ?? 1;
-                  return (
-                    <div key={`${n.id}-${k}`} className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{k}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                          {"●".repeat(level)}{"○".repeat(3 - level)}{n.carriedFrom ? " · repris d'hier" : ""}
-                        </p>
-                      </div>
-                      <button onClick={() => (hasKeywords ? stepLifeItem(n, k, -1) : removeLifeNote(n.id))} aria-label={`Moins : ${k}`}
-                        className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
-                        style={{ background: "var(--layer-2)", color: "var(--danger)" }}>−</button>
-                      {hasKeywords && (
-                        <button onClick={() => stepLifeItem(n, k, 1)} aria-label={`Plus : ${k}`}
-                          className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
-                          style={{ background: "var(--layer-2)", color: "var(--ok)" }}>+</button>
-                      )}
-                    </div>
-                  );
-                });
-              })}
-            </div>
+          <div className="glass px-3 py-2 mb-4 flex flex-wrap items-center gap-1.5">
+            <IconHeartHandshake size={14} stroke={1.8} style={{ color: "var(--text-muted)" }} aria-hidden />
+            {lifeNotes.flatMap((n) => {
+              const hasKeywords = (n.keywords ?? []).length > 0;
+              const items = hasKeywords ? n.keywords : [n.summary || n.text];
+              return items.map((k) => {
+                const level = n.levels?.[k] ?? 1;
+                return (
+                  <span key={`${n.id}-${k}`} className="inline-flex items-center rounded-full pl-0.5 pr-0.5"
+                    style={{ background: "var(--layer-2)", border: "1px solid var(--border)" }}>
+                    <button onClick={() => (hasKeywords ? stepLifeItem(n, k, -1) : removeLifeNote(n.id))} aria-label={`Moins : ${k}`}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[16px] leading-none"
+                      style={{ color: "var(--danger)" }}>−</button>
+                    <span className="text-[12px] max-w-[9.5rem] truncate" style={{ color: "var(--text-primary)" }}>{k}</span>
+                    {hasKeywords && (
+                      <span className="text-[8px] ml-1 tracking-tighter" style={{ color: "var(--text-muted)" }} aria-label={`Intensité ${level} sur 3`}>
+                        {"●".repeat(level)}
+                      </span>
+                    )}
+                    {hasKeywords && (
+                      <button onClick={() => stepLifeItem(n, k, 1)} aria-label={`Plus : ${k}`}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-[16px] leading-none"
+                        style={{ color: "var(--ok)" }}>+</button>
+                    )}
+                  </span>
+                );
+              });
+            })}
           </div>
         )}
 
