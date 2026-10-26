@@ -33,6 +33,8 @@ interface Props {
   lang?:   Lang;
   onClose: () => void;
   onSaved: () => void;
+  /** "meal" : repas sauvegarde (ingredients separes) ; "food" : un seul aliment compose (pain special, soupe...) */
+  mode?:   "meal" | "food";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -60,7 +62,7 @@ function sumNutrition(items: MealItem[]): FoodNutrition {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }: Props) {
+export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, mode = "meal" }: Props) {
   const [mounted, setMounted] = useState(false);
 
   // Meal
@@ -141,6 +143,28 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
     if (!mealName.trim() || items.length === 0) return;
     setSaving(true);
     try {
+      if (mode === "food") {
+        // Un seul aliment reutilisable : somme des composants, portion = poids total
+        const total = Math.max(1, Math.round(items.reduce((s, i) => s + i.servingGrams, 0)));
+        const nutrition = items.reduce<Record<string, number>>((acc, i) => {
+          for (const [k, v] of Object.entries(i.nutrition)) if (typeof v === "number") acc[k] = Math.round(((acc[k] ?? 0) + v) * 10) / 10;
+          return acc;
+        }, {}) as unknown as FoodNutrition;
+        await fetch("/api/custom-foods", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: mealName.trim(),
+            servingSizeG: total,
+            servingLabel: `1 portion (${total} g)`,
+            servingOptions: [{ label: `1 portion (${total} g)`, grams: total, isDefault: true }, { label: "100 g", grams: 100 }],
+            nutrition,
+          }),
+        });
+        onSaved();
+        onClose();
+        return;
+      }
       await fetch("/api/meals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,7 +225,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
               style={{ borderBottom: "1px solid var(--border)" }}>
               <button onClick={onClose} className="btn-icon flex-shrink-0"><IconX size={13} stroke={2} /></button>
               <p className="flex-1 font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
-                Créer un repas
+                {mode === "food" ? "Créer un aliment" : "Créer un repas"}
               </p>
               <button
                 onClick={handleSave}
@@ -229,7 +253,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved }
                   <input
                     value={mealName}
                     onChange={(e) => setMealName(e.target.value)}
-                    placeholder="Nom du repas…"
+                    placeholder={mode === "food" ? "Nom de l'aliment (ex. Pain spécial)…" : "Nom du repas…"}
                     className="input flex-1 text-[14px] font-medium"
                     maxLength={40}
                   />

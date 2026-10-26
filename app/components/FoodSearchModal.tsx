@@ -188,6 +188,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [savedMeals, setSavedMeals]       = useState<SavedMeal[]>([]);
   const [loadingMeals, setLoadingMeals]   = useState(false);
   const [showMealBuilder, setShowMealBuilder] = useState(false);
+  const [builderMode, setBuilderMode] = useState<"meal" | "food">("meal");
   const [savingMeal, setSavingMeal]       = useState(false);
   const [newMealName, setNewMealName]     = useState("");
   const [newMealIcon, setNewMealIcon]     = useState("🍽️");
@@ -867,6 +868,14 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {/* ── ALIMENTS ── */}
               {tab === "aliments" && (
                 <div className="px-4 py-3">
+                  <button
+                    onClick={() => { setBuilderMode("food"); setShowMealBuilder(true); }}
+                    className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+                    style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--ok)" }}
+                  >
+                    <IconPlus size={14} stroke={2} />
+                    Créer mon aliment (pain spécial, soupe, salade…)
+                  </button>
                   {!query && (
                     <>
                       <p className="label-xs mb-3">Catégories</p>
@@ -1076,7 +1085,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                 <div className="px-4 py-4">
                   {/* Create meal button */}
                   <button
-                    onClick={() => setShowMealBuilder(true)}
+                    onClick={() => { setBuilderMode("meal"); setShowMealBuilder(true); }}
                     className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
                     style={{
                       background: "rgba(167,139,250,0.1)",
@@ -1312,6 +1321,14 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {/* ── MES ALIMENTS ── */}
               {tab === "mes-aliments" && (
                 <div className="px-4 py-4">
+                  <button
+                    onClick={() => { setBuilderMode("food"); setShowMealBuilder(true); }}
+                    className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
+                    style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--ok)" }}
+                  >
+                    <IconPlus size={14} stroke={2} />
+                    Créer mon aliment (pain spécial, soupe, salade…)
+                  </button>
                   <div className="flex items-center gap-2 mb-3">
                     <IconStarFilled size={13} style={{ color: "var(--warn)" }} />
                     <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -1778,7 +1795,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
         open={showMealBuilder}
         lang={lang}
         onClose={() => setShowMealBuilder(false)}
-        onSaved={() => { loadMeals(); setTab("repas"); }}
+        mode={builderMode}
+        onSaved={() => { if (builderMode === "food") { loadMyFoods(); setTab("mes-aliments"); } else { loadMeals(); setTab("repas"); } }}
       />
     </>
   );
