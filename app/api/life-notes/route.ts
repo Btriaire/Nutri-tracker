@@ -14,6 +14,8 @@ export interface LifeNote {
   date: string;
   text: string;
   keywords: string[];
+  /** Intensite par mot-cle (1 a 3, 1 par defaut) : reglee avec - et + sur chaque item */
+  levels?: Record<string, number>;
   kind: LifeNoteKind;
   persistent: boolean;
   summary: string;
@@ -160,6 +162,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH ?id=... { keywords, levels } : retirer un mot-cle ou changer son intensite (- / + sur chaque item)
+export async function PATCH(request: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const body = await request.json() as { keywords?: unknown; levels?: unknown };
+  if (!Array.isArray(body.keywords) || body.keywords.length > 6) {
+    return NextResponse.json({ error: "Invalid keywords" }, { status: 400 });
+  }
+  const keywords = body.keywords.filter((k): k is string => typeof k === "string" && k.length > 0 && k.length <= 40);
+  const levels: Record<string, number> = {};
+  if (body.levels && typeof body.levels === "object") {
+    for (const [k, v] of Object.entries(body.levels as Record<string, unknown>)) {
+      if (keywords.includes(k) && typeof v === "number") levels[k] = Math.min(3, Math.max(1, Math.round(v)));
+    }
+  }
+
+  try {
+    await getAdminFirestore().doc(`users/${session.userId}/lifeNotes/${id}`).update({ keywords, levels });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to update note" }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -218,7 +248,7 @@ export async function PUT(request: NextRequest) {
         for (const n of sourceNotes) {
           const id = nanoid(12);
           batch.set(notesRef.doc(id), {
-            id, date, text: n.text, keywords: n.keywords ?? [], kind: n.kind, persistent: true,
+            id, date, text: n.text, keywords: n.keywords ?? [], levels: n.levels ?? {}, kind: n.kind, persistent: true,
             summary: n.summary, carriedFrom: n.id, createdAt: new Date().toISOString(),
           });
         }

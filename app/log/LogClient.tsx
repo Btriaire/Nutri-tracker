@@ -256,6 +256,21 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
     if (id.startsWith("local-")) return;
     await fetch(`/api/life-notes?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   };
+  // - / + sur UN item : l'intensite monte ou baisse ; en dessous de 1, l'item est retire (la note aussi s'il ne reste rien)
+  const stepLifeItem = async (note: LifeNote, keyword: string, delta: number) => {
+    const level = (note.levels?.[keyword] ?? 1) + delta;
+    if (level < 1) {
+      const keywords = note.keywords.filter((k) => k !== keyword);
+      if (keywords.length === 0) { await removeLifeNote(note.id); return; }
+      const levels = { ...(note.levels ?? {}) }; delete levels[keyword];
+      setLifeNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, keywords, levels } : n)));
+      if (!note.id.startsWith("local-")) await fetch(`/api/life-notes?id=${encodeURIComponent(note.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ keywords, levels }) }).catch(() => {});
+      return;
+    }
+    const levels = { ...(note.levels ?? {}), [keyword]: Math.min(3, level) };
+    setLifeNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, levels } : n)));
+    if (!note.id.startsWith("local-")) await fetch(`/api/life-notes?id=${encodeURIComponent(note.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ keywords: note.keywords, levels }) }).catch(() => {});
+  };
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
   const [waterMl,      setWaterMl]      = useState(initialLog?.waterMl ?? 0);
@@ -616,27 +631,33 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <div className="glass px-4 py-3 mb-5">
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="label-xs">Changements du jour</p>
-              <button onClick={() => setShowLife(true)} aria-label="Ajouter un changement"
-                className="w-11 h-11 -my-2 rounded-full flex items-center justify-center text-[20px] font-semibold"
-                style={{ color: "var(--accent)" }}>+</button>
             </div>
-            <div className="space-y-2">
-              {lifeNotes.map((n) => (
-                <div key={n.id} className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0 flex flex-wrap gap-1.5">
-                    {(n.keywords ?? []).length > 0 ? (n.keywords ?? []).map((k) => (
-                      <span key={`${n.id}-${k}`} className="px-2.5 py-1 rounded-full text-[12px]"
-                        style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>{k}</span>
-                    )) : (
-                      <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{n.summary || n.text}</span>
-                    )}
-                    {n.carriedFrom && <span className="text-[11px] self-center" style={{ color: "var(--text-muted)" }}>repris d&apos;hier</span>}
-                  </div>
-                  <button onClick={() => removeLifeNote(n.id)} aria-label="Retirer ce changement"
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
-                    style={{ background: "var(--layer-2)", color: "var(--danger)" }}>−</button>
-                </div>
-              ))}
+            <div className="space-y-1.5">
+              {lifeNotes.flatMap((n) => {
+                const items = (n.keywords ?? []).length > 0 ? (n.keywords ?? []) : [n.summary || n.text];
+                const hasKeywords = (n.keywords ?? []).length > 0;
+                return items.map((k) => {
+                  const level = n.levels?.[k] ?? 1;
+                  return (
+                    <div key={`${n.id}-${k}`} className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] truncate" style={{ color: "var(--text-primary)" }}>{k}</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                          {"●".repeat(level)}{"○".repeat(3 - level)}{n.carriedFrom ? " · repris d'hier" : ""}
+                        </p>
+                      </div>
+                      <button onClick={() => (hasKeywords ? stepLifeItem(n, k, -1) : removeLifeNote(n.id))} aria-label={`Moins : ${k}`}
+                        className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
+                        style={{ background: "var(--layer-2)", color: "var(--danger)" }}>−</button>
+                      {hasKeywords && (
+                        <button onClick={() => stepLifeItem(n, k, 1)} aria-label={`Plus : ${k}`}
+                          className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
+                          style={{ background: "var(--layer-2)", color: "var(--ok)" }}>+</button>
+                      )}
+                    </div>
+                  );
+                });
+              })}
             </div>
           </div>
         )}
