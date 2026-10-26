@@ -18,7 +18,7 @@ const MEAL_ICONS = ["🍽️","☕","🥗","🍱","🍜","🥙","🥪","🍛","�
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface MealItem {
+export interface MealItem {
   foodId:       string;
   source:       FoodSource;
   name:         string;
@@ -35,6 +35,8 @@ interface Props {
   onSaved: () => void;
   /** "meal" : repas sauvegarde (ingredients separes) ; "food" : un seul aliment compose (pain special, soupe...) */
   mode?:   "meal" | "food";
+  /** Modification d'un aliment compose deja sauvegarde (a posteriori) */
+  editFood?: { id: string; name: string; items: MealItem[] } | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -62,7 +64,7 @@ function sumNutrition(items: MealItem[]): FoodNutrition {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, mode = "meal" }: Props) {
+export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, mode = "meal", editFood = null }: Props) {
   const [mounted, setMounted] = useState(false);
 
   // Meal
@@ -81,6 +83,13 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
   const [editingUnit, setEditingUnit] = useState<ServingOption | null>(null);
   const [editingQty,  setEditingQty]  = useState("1");
 
+  // Recherche Nutri-AI et import d'un texte colle
+  const [aiSearching, setAiSearching] = useState(false);
+  const [pasteOpen,   setPasteOpen]   = useState(false);
+  const [pasteText,   setPasteText]   = useState("");
+  const [parsing,     setParsing]     = useState(false);
+  const [parseError,  setParseError]  = useState("");
+
   const searchRef   = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -88,8 +97,9 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
 
   useEffect(() => {
     if (open) {
-      setMealName(""); setMealIcon("🍽️"); setItems([]);
+      setMealName(editFood?.name ?? ""); setMealIcon("🍽️"); setItems(editFood?.items ?? []);
       setQuery(""); setResults([]); setEditingFood(null);
+      setPasteOpen(false); setPasteText(""); setParseError("");
       setTimeout(() => searchRef.current?.focus(), 120);
     }
   }, [open]);
@@ -139,6 +149,50 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
     setTimeout(() => searchRef.current?.focus(), 80);
   };
 
+  // Nutri-AI : propose des aliments meme quand la recherche classique ne trouve pas
+  const doAiSearch = async () => {
+    if (!query.trim() || aiSearching) return;
+    setAiSearching(true);
+    try {
+      const res  = await fetch(`/api/food/ai-search?q=${encodeURIComponent(query)}`);
+      const json = await res.json() as { results?: FoodSearchResult[] };
+      setResults((prev) => [...(json.results ?? []), ...prev]);
+    } finally { setAiSearching(false); }
+  };
+
+  // Texte brut colle (recette, liste de courses) -> ingredients et quantites
+  const parsePasted = async () => {
+    if (!pasteText.trim() || parsing) return;
+    setParsing(true); setParseError("");
+    try {
+      const res = await fetch("/api/food/parse-recipe", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: pasteText }),
+      });
+      if (!res.ok) throw new Error();
+      const { ingredients } = await res.json() as { ingredients: { name: string; grams: number; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number }[] };
+      setItems((prev) => [
+        ...prev,
+        ...ingredients.map((g, i): MealItem => ({
+          foodId: `ai-parsed-${Date.now()}-${i}`, source: "ai" as FoodSource, name: g.name,
+          servingLabel: `${Math.round(g.grams)} g`, servingGrams: g.grams,
+          nutrition: { calories: g.calories, proteinG: g.proteinG, carbsG: g.carbsG, fatG: g.fatG, fiberG: g.fiberG },
+        })),
+      ]);
+      setPasteText(""); setPasteOpen(false);
+    } catch {
+      setParseError("Impossible d'analyser ce texte, réessaie ou ajoute les aliments à la main.");
+    } finally { setParsing(false); }
+  };
+
+  // Modifier la quantite d'un composant : la nutrition suit proportionnellement
+  const setItemGrams = (idx: number, grams: number) => {
+    setItems((prev) => prev.map((it, i) => {
+      if (i !== idx || !(grams > 0)) return it;
+      const per100 = scaleNutrition(it.nutrition, 10000 / Math.max(1, it.servingGrams));
+      return { ...it, servingGrams: grams, servingLabel: `${Math.round(grams)} g`, nutrition: scaleNutrition(per100, grams) };
+    }));
+  };
+
   const handleSave = async () => {
     if (!mealName.trim() || items.length === 0) return;
     setSaving(true);
@@ -150,8 +204,8 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
           for (const [k, v] of Object.entries(i.nutrition)) if (typeof v === "number") acc[k] = Math.round(((acc[k] ?? 0) + v) * 10) / 10;
           return acc;
         }, {}) as unknown as FoodNutrition;
-        await fetch("/api/custom-foods", {
-          method: "POST",
+        await fetch(editFood ? `/api/custom-foods/${editFood.id}` : "/api/custom-foods", {
+          method: editFood ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: mealName.trim(),
@@ -159,6 +213,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
             servingLabel: `1 portion (${total} g)`,
             servingOptions: [{ label: `1 portion (${total} g)`, grams: total, isDefault: true }, { label: "100 g", grams: 100 }],
             nutrition,
+            ingredients: items,
           }),
         });
         onSaved();
@@ -212,7 +267,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
               zIndex: 80,
               background: "var(--surface-hover)",
               border: "1px solid var(--border-strong)", borderBottom: "none",
-              maxHeight: "94vh",
+              maxHeight: "94dvh", paddingBottom: "env(safe-area-inset-bottom)",
             }}
           >
             {/* Handle */}
@@ -225,7 +280,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
               style={{ borderBottom: "1px solid var(--border)" }}>
               <button onClick={onClose} className="btn-icon flex-shrink-0"><IconX size={13} stroke={2} /></button>
               <p className="flex-1 font-semibold text-[15px]" style={{ color: "var(--text-primary)" }}>
-                {mode === "food" ? "Créer un aliment" : "Créer un repas"}
+                {mode === "food" ? (editFood ? "Modifier l'aliment" : "Créer un aliment") : "Créer un repas"}
               </p>
               <button
                 onClick={handleSave}
@@ -240,7 +295,7 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col">
 
               {/* ── Meal meta ── */}
               <div className="px-4 pt-4 pb-3 space-y-3">
@@ -282,8 +337,8 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
 
               {/* ── Added items ── */}
               {items.length > 0 && (
-                <div className="px-4 pb-3">
-                  <p className="label-xs mb-2">Aliments ajoutés ({items.length})</p>
+                <div className="px-4 pb-3 order-3">
+                  <p className="label-xs mb-2">Composants ({items.length}) — touche la quantité pour la modifier</p>
                   <div className="space-y-1.5">
                     {items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
@@ -293,11 +348,23 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
                             {item.name}
                           </p>
                           <p className="text-[12px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                            {item.servingLabel}
-                            <span className="ml-1.5 font-medium" style={{ color: "var(--calories)" }}>
+                            <span className="font-medium" style={{ color: "var(--calories)" }}>
                               {Math.round(item.nutrition.calories)} kcal
                             </span>
                           </p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <input
+                            key={`${idx}-${item.servingGrams}`}
+                            defaultValue={String(Math.round(item.servingGrams))}
+                            inputMode="decimal"
+                            onFocus={(e) => e.currentTarget.select()}
+                            onBlur={(e) => setItemGrams(idx, parseFloat(e.currentTarget.value.replace(",", ".")))}
+                            aria-label={`Quantité de ${item.name} en grammes`}
+                            className="w-16 min-h-[44px] rounded-xl text-[16px] text-center tabular-nums outline-none"
+                            style={{ background: "var(--layer-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                          />
+                          <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>g</span>
                         </div>
                         <button onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
                           className="btn-icon w-7 h-7 flex-shrink-0"
@@ -310,11 +377,11 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
                 </div>
               )}
 
-              <div className="h-px mx-4 mb-3" style={{ background: "var(--border)" }} />
+              <div className="h-px mx-4 mb-3 order-1" style={{ background: "var(--border)" }} />
 
               {/* ── Inline configure ── */}
               {editingFood ? (
-                <div className="px-4 pb-6 space-y-3">
+                <div className="px-4 pb-6 space-y-3 order-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>
@@ -377,7 +444,32 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
                 </div>
               ) : (
                 /* ── Food search ── */
-                <div className="px-4 pb-6">
+                <div className="px-4 pb-6 order-1">
+                  {/* Texte brut colle -> ingredients et quantites */}
+                  <button onClick={() => setPasteOpen((v) => !v)}
+                    className="w-full flex items-center justify-between min-h-[44px] px-3 mb-3 rounded-xl text-[13px] font-medium"
+                    style={{ background: "var(--layer-1)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                    <span>Coller une recette ou une liste d&apos;ingrédients</span>
+                    <span style={{ color: "var(--text-muted)" }}>{pasteOpen ? "−" : "+"}</span>
+                  </button>
+                  {pasteOpen && (
+                    <div className="mb-3 space-y-2">
+                      <textarea
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        placeholder="Colle ici le texte : 200 g de farine complète, 1 oeuf, 2 c. à soupe d'huile…"
+                        rows={5}
+                        className="input text-[16px] w-full"
+                        style={{ resize: "vertical" }}
+                      />
+                      <button onClick={parsePasted} disabled={parsing || !pasteText.trim()}
+                        className="btn btn-primary w-full min-h-[44px] text-[13px] gap-1.5">
+                        {parsing ? <IconLoader2 size={13} stroke={2} className="animate-spin" /> : <IconCheck size={13} stroke={2} />}
+                        Trouver les ingrédients et quantités
+                      </button>
+                      {parseError && <p role="alert" className="text-[12px]" style={{ color: "var(--danger)" }}>{parseError}</p>}
+                    </div>
+                  )}
                   <p className="label-xs mb-2">Ajouter un aliment</p>
                   <div className="relative mb-3">
                     {searching
@@ -394,6 +486,14 @@ export default function MealBuilderModal({ open, lang = "fr", onClose, onSaved, 
                       className="input pl-9 text-[13px]"
                     />
                   </div>
+                  {query.trim().length > 1 && (
+                    <button onClick={doAiSearch} disabled={aiSearching}
+                      className="w-full flex items-center justify-center gap-2 min-h-[44px] mb-3 rounded-xl text-[13px] font-medium"
+                      style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.3)", color: "var(--accent)" }}>
+                      {aiSearching ? <IconLoader2 size={13} stroke={2} className="animate-spin" /> : null}
+                      Chercher avec Nutri-AI
+                    </button>
+                  )}
 
                   {results.length > 0 && (
                     <div className="space-y-1">

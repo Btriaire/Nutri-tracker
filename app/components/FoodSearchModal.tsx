@@ -9,7 +9,7 @@ import {
   IconBarcode, IconCamera, IconStar, IconStarFilled, IconHistory,
   IconRosetteDiscountCheckFilled,
 } from "@tabler/icons-react";
-import MealBuilderModal from "./MealBuilderModal";
+import MealBuilderModal, { type MealItem } from "./MealBuilderModal";
 import FoodPictogram from "./FoodPictogram";
 import BarcodeScanner from "./BarcodeScanner";
 import type {
@@ -189,6 +189,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
   const [loadingMeals, setLoadingMeals]   = useState(false);
   const [showMealBuilder, setShowMealBuilder] = useState(false);
   const [builderMode, setBuilderMode] = useState<"meal" | "food">("meal");
+  // Composants des aliments crees a la main (pour pouvoir les modifier apres coup)
+  const [myFoodParts, setMyFoodParts] = useState<Record<string, MealItem[]>>({});
+  const [editFood, setEditFood] = useState<{ id: string; name: string; items: MealItem[] } | null>(null);
   const [savingMeal, setSavingMeal]       = useState(false);
   const [newMealName, setNewMealName]     = useState("");
   const [newMealIcon, setNewMealIcon]     = useState("🍽️");
@@ -287,7 +290,8 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
     setLoadingMyFoods(true);
     try {
       const res  = await fetch("/api/custom-foods");
-      const json = await res.json() as { foods: Array<{ id: string; name: string; servingSizeG: number; servingLabel?: string; nutrition: FoodNutrition }> };
+      const json = await res.json() as { foods: Array<{ id: string; name: string; servingSizeG: number; servingLabel?: string; nutrition: FoodNutrition; ingredients?: MealItem[] }> };
+      setMyFoodParts(Object.fromEntries((json.foods ?? []).filter((f) => f.ingredients && f.ingredients.length > 0).map((f) => [`custom:${f.id}`, f.ingredients as MealItem[]])));
       const mapped: FoodSearchResult[] = (json.foods ?? []).map(f => ({
         id:           `custom:${f.id}`,
         source:       "custom" as const,
@@ -869,7 +873,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {tab === "aliments" && (
                 <div className="px-4 py-3">
                   <button
-                    onClick={() => { setBuilderMode("food"); setShowMealBuilder(true); }}
+                    onClick={() => { setEditFood(null); setBuilderMode("food"); setShowMealBuilder(true); }}
                     className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
                     style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--ok)" }}
                   >
@@ -1322,7 +1326,7 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
               {tab === "mes-aliments" && (
                 <div className="px-4 py-4">
                   <button
-                    onClick={() => { setBuilderMode("food"); setShowMealBuilder(true); }}
+                    onClick={() => { setEditFood(null); setBuilderMode("food"); setShowMealBuilder(true); }}
                     className="w-full flex items-center justify-center gap-2 mb-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
                     style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--ok)" }}
                   >
@@ -1386,6 +1390,16 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
                               : <IconPlus size={16} stroke={2} style={{ color: "var(--warn)" }} />
                             }
                           </button>
+                          {myFoodParts[r.id] && (
+                            <button
+                              onClick={() => { setEditFood({ id: r.id.replace(/^custom:/, ""), name: r.name, items: myFoodParts[r.id] }); setBuilderMode("food"); setShowMealBuilder(true); }}
+                              className="shrink-0 flex items-center justify-center w-11 self-stretch text-[12px] font-medium"
+                              style={{ background: "rgba(34,197,94,0.07)", borderLeft: "1px solid rgba(34,197,94,0.18)", color: "var(--ok)" }}
+                              title="Modifier les composants"
+                            >
+                              Modifier
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteMyFood(r.id)}
                             disabled={deletingMyFoodId === r.id}
@@ -1794,8 +1808,9 @@ export default function FoodSearchModal({ open, meal, date, lang = "fr", onClose
       <MealBuilderModal
         open={showMealBuilder}
         lang={lang}
-        onClose={() => setShowMealBuilder(false)}
+        onClose={() => { setShowMealBuilder(false); setEditFood(null); }}
         mode={builderMode}
+        editFood={editFood}
         onSaved={() => { if (builderMode === "food") { loadMyFoods(); setTab("mes-aliments"); } else { loadMeals(); setTab("repas"); } }}
       />
     </>
