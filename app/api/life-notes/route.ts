@@ -107,13 +107,16 @@ export async function GET(request: NextRequest) {
       query = query.where("date", ">=", from).where("date", "<=", to);
     }
 
-    const snapshot = await query.orderBy("date").orderBy("createdAt").get();
+    // Pas d'orderBy composite (il exigerait un index Firestore) : tri en memoire
+    const snapshot = await query.get();
     const notes: LifeNote[] = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as LifeNote));
+    } as LifeNote)).sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
 
-    return NextResponse.json({ notes });
+    // "carried" : la reprise automatique de la veille a deja eu lieu ce jour-la
+    const carried = date ? (await db.doc(`users/${session.userId}/lifeDays/${date}`).get()).exists : undefined;
+    return NextResponse.json({ notes, carried });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch notes" }, { status: 500 });
   }
@@ -190,69 +193,48 @@ export async function PUT(request: NextRequest) {
 
   try {
     const db = getAdminFirestore();
-    const notesRef = db.collection(`users/${session.userId}/lifeNotes`);
+    const base = `users/${session.userId}`;
+    const notesRef = db.collection(`${base}/lifeNotes`);
+    const dayRef = db.doc(`${base}/lifeDays/${date}`);
 
-    // Trouver les notes persistentes de la date la plus récente antérieure
-    const previousNotesSnapshot = await notesRef
-      .where("date", "<", date)
-      .where("persistent", "==", true)
-      .orderBy("date", "desc")
-      .orderBy("createdAt", "desc")
-      .limit(1)
-      .get();
+    // Deja repris ce jour-la (meme si l'utilisateur a tout retire) : on ne recopie plus
+    if (!(await dayRef.get()).exists) {
+      // Jour source : le plus recent jour anterieur ayant un marqueur de reprise ou des notes
+      const [daysSnap, notesSnap] = await Promise.all([
+        db.collection(`${base}/lifeDays`).get(),
+        notesRef.where("date", "<", date).get(),
+      ]);
+      const knownDays = new Set<string>([
+        ...daysSnap.docs.map(d => d.id).filter(d => d < date),
+        ...notesSnap.docs.map(d => (d.data() as LifeNote).date),
+      ]);
+      const source = [...knownDays].sort().pop();
 
-    if (previousNotesSnapshot.empty) {
-      return NextResponse.json({ notes: [] });
+      if (source) {
+        const sourceNotes = notesSnap.docs
+          .map(d => ({ ...(d.data() as LifeNote), id: d.id }))
+          .filter(n => n.date === source && n.persistent);
+        const batch = db.batch();
+        for (const n of sourceNotes) {
+          const id = nanoid(12);
+          batch.set(notesRef.doc(id), {
+            id, date, text: n.text, keywords: n.keywords ?? [], kind: n.kind, persistent: true,
+            summary: n.summary, carriedFrom: n.id, createdAt: new Date().toISOString(),
+          });
+        }
+        batch.set(dayRef, { carriedFrom: source, createdAt: new Date().toISOString() });
+        await batch.commit();
+      } else {
+        await dayRef.set({ carriedFrom: null, createdAt: new Date().toISOString() });
+      }
     }
 
-    const previousNote = previousNotesSnapshot.docs[0].data() as LifeNote;
-
-    // Vérifier si une note carriedFrom existe déjà pour cette date
-    const existingCarriedNote = await notesRef
-      .where("date", "==", date)
-      .where("carriedFrom", "==", previousNote.id)
-      .limit(1)
-      .get();
-
-    if (!existingCarriedNote.empty) {
-      // Récupérer toutes les notes de la date demandée
-      const currentNotesSnapshot = await notesRef
-        .where("date", "==", date)
-        .orderBy("createdAt")
-        .get();
-
-      const currentNotes: LifeNote[] = currentNotesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as LifeNote));
-
-      return NextResponse.json({ notes: currentNotes });
-    }
-
-    // Créer la nouvelle note
-    const newNote: Omit<LifeNote, "id"> = {
-      ...previousNote,
-      date,
-      carriedFrom: previousNote.id,
-      createdAt: new Date().toISOString()
-    };
-
-    const newNoteRef = notesRef.doc(nanoid(12));
-    await newNoteRef.set(newNote);
-
-    // Récupérer toutes les notes de la date demandée
-    const updatedNotesSnapshot = await notesRef
-      .where("date", "==", date)
-      .orderBy("createdAt")
-      .get();
-
-    const updatedNotes: LifeNote[] = updatedNotesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as LifeNote));
-
-    return NextResponse.json({ notes: updatedNotes });
-  } catch (error) {
+    const snapshot = await notesRef.where("date", "==", date).get();
+    const notes: LifeNote[] = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as LifeNote))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return NextResponse.json({ notes });
+  } catch {
     return NextResponse.json({ error: "Failed to carry notes" }, { status: 500 });
   }
 }

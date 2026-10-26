@@ -224,18 +224,20 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   // Changements de vie ou de comportement (dictee) : notes du jour + reprise des etats persistants
   const [showLife,      setShowLife]      = useState(false);
   const [lifeNotes,     setLifeNotes]     = useState<LifeNote[]>([]);
-  const [lifeCarryable, setLifeCarryable] = useState(false);
-  const [lifeCarrying,  setLifeCarrying]  = useState(false);
+  // Reprise automatique de la veille (une fois par jour), puis +/- par note
   useEffect(() => {
     let cancelled = false;
+    const todayStr = format(new Date(), "yyyy-MM-dd");
     fetch(`/api/life-notes?date=${date}`)
       .then((r) => (r.ok ? r.json() : { notes: [] }))
-      .then((d: { notes?: LifeNote[] }) => { if (!cancelled) setLifeNotes(d.notes ?? []); })
-      .catch(() => {});
-    const base = new Date(date + "T12:00:00");
-    fetch(`/api/life-notes?from=${format(addDays(base, -14), "yyyy-MM-dd")}&to=${format(addDays(base, -1), "yyyy-MM-dd")}`)
-      .then((r) => (r.ok ? r.json() : { notes: [] }))
-      .then((d: { notes?: LifeNote[] }) => { if (!cancelled) setLifeCarryable((d.notes ?? []).some((n) => n.persistent)); })
+      .then(async (d: { notes?: LifeNote[]; carried?: boolean }) => {
+        if (cancelled) return;
+        setLifeNotes(d.notes ?? []);
+        if (d.carried === false && date === todayStr) {
+          const res = await fetch(`/api/life-notes?date=${date}`, { method: "PUT" });
+          if (res.ok && !cancelled) setLifeNotes(((await res.json()) as { notes?: LifeNote[] }).notes ?? []);
+        }
+      })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [date]);
@@ -249,14 +251,10 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
         .catch(() => {});
     }).catch(() => {});
   }, [date]);
-  const carryLifeStates = async () => {
-    setLifeCarrying(true);
-    try {
-      const res = await fetch(`/api/life-notes?date=${date}`, { method: "PUT" });
-      const d = await res.json() as { notes?: LifeNote[] };
-      setLifeNotes(d.notes ?? []);
-      setLifeCarryable(false);
-    } finally { setLifeCarrying(false); }
+  const removeLifeNote = async (id: string) => {
+    setLifeNotes((prev) => prev.filter((n) => n.id !== id));
+    if (id.startsWith("local-")) return;
+    await fetch(`/api/life-notes?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   };
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [entries,      setEntries]      = useState<FoodEntry[]>(initialLog?.entries ?? []);
@@ -613,23 +611,32 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </button>
         </motion.div>
 
-        {/* Changements de vie ou de comportement du jour */}
-        {(lifeNotes.length > 0 || lifeCarryable) && (
+        {/* Changements de vie ou de comportement du jour : repris de la veille par defaut, - pour retirer, + pour ajouter */}
+        {lifeNotes.length > 0 && (
           <div className="glass px-4 py-3 mb-5">
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="label-xs">Changements du jour</p>
-              {lifeCarryable && lifeNotes.length === 0 && (
-                <button onClick={carryLifeStates} disabled={lifeCarrying}
-                  className="text-[12px] font-medium min-h-[36px] px-2" style={{ color: "var(--accent)" }}>
-                  {lifeCarrying ? "…" : "Reprendre l'état d'hier"}
-                </button>
-              )}
+              <button onClick={() => setShowLife(true)} aria-label="Ajouter un changement"
+                className="w-11 h-11 -my-2 rounded-full flex items-center justify-center text-[20px] font-semibold"
+                style={{ color: "var(--accent)" }}>+</button>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {lifeNotes.flatMap((n) => (n.keywords ?? []).map((k) => (
-                <span key={`${n.id}-${k}`} className="px-2.5 py-1 rounded-full text-[12px]"
-                  style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>{k}</span>
-              )))}
+            <div className="space-y-2">
+              {lifeNotes.map((n) => (
+                <div key={n.id} className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0 flex flex-wrap gap-1.5">
+                    {(n.keywords ?? []).length > 0 ? (n.keywords ?? []).map((k) => (
+                      <span key={`${n.id}-${k}`} className="px-2.5 py-1 rounded-full text-[12px]"
+                        style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>{k}</span>
+                    )) : (
+                      <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{n.summary || n.text}</span>
+                    )}
+                    {n.carriedFrom && <span className="text-[11px] self-center" style={{ color: "var(--text-muted)" }}>repris d&apos;hier</span>}
+                  </div>
+                  <button onClick={() => removeLifeNote(n.id)} aria-label="Retirer ce changement"
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-[20px] font-semibold flex-shrink-0"
+                    style={{ background: "var(--layer-2)", color: "var(--danger)" }}>−</button>
+                </div>
+              ))}
             </div>
           </div>
         )}
