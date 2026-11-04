@@ -6,6 +6,9 @@ import { IconX, IconLoader2, IconArrowUp } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
 import { acquisitionQuality, acquisitionStats, analyzePlr, computeConjunctiva, computeEyeMetrics, mergeEyeMetrics, type Conjunctiva, type EyeMetrics, type EyeSideId, type PlrResult, type PlrSample } from "@/app/lib/eye-metrics";
 import type { PixelReader } from "@/app/lib/face-metrics";
+import { canthalRollDeg } from "@/app/lib/eye-structures";
+import { drawEyeOverlay, EYE_LID_POINTS } from "@/app/lib/eye-overlay";
+import { EyeChoiceScreen, EyeDoneScreen } from "./EyeScanStep";
 
 export interface EyeCaptureResult {
   metrics: EyeMetrics;
@@ -19,14 +22,18 @@ export interface EyeCaptureResult {
   imageB: string | null;
 }
 
-type Phase = "loading" | "eyes-R" | "eyes-L" | "plr-dark" | "plr-flash" | "conj-ready" | "conj" | "mbi-ready" | "mbi" | "error";
+type Phase = "loading" | "eyes-R" | "eyes-L" | "eye-done" | "choose" | "plr-dark" | "plr-flash" | "conj-ready" | "conj" | "mbi-ready" | "mbi" | "error";
 
 const EYE_MS = 6000, DARK_MS = 1300, FLASH_MS = 2300, CONJ_WAIT_MS = 3000, CONJ_MS = 1500, MBI_MAX_MS = 40_000;
 const EYE_GIVE_UP_MS = 15_000;          // au-dela, sans prise correcte : on arrete et on explique
 const MIN_OPEN = 0.45;                  // ouverture minimale (hauteur de fente / iris) pour retenir une image
 const MIN_QUALITY = 60;                 // score de prise de vue minimal pour retenir une image
 const STABLE_FRAMES = 2;                // evaluations consecutives sans mouvement avant de retenir
-const BURST = 5;                        // photos rapprochees par oeil ; la meilleure est gardee
+const BURST = 5;                        // photos minimales par oeil ; la meilleure est gardee
+const BURST_MAX = 12;                   // on continue a ajouter des candidats pendant la duree minimale
+const MIN_DWELL_MS = 4500;              // duree minimale par oeil (acquisition lisible, pas trop rapide)
+const DONE_MS = 1600;                   // ecran de confirmation "oeil capture"
+const INNER_OUTER = { A: [133, 33], B: [362, 263] } as const;   // coins de l'oeil (interne, externe) pour le redressement
 const EVAL_MS = 100;                    // intervalle entre deux photos du rafale
 const ZOOM = 2;                         // zoom d'affichage et, si la camera le permet, zoom optique
 const EYE_PTS = [33, 133, 159, 145, 263, 362, 386, 374, 468, 473];
@@ -45,6 +52,12 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const [left, setLeft] = useState(0);
   const [quality, setQuality] = useState<{ score: number; issue: string | null }>({ score: 0, issue: null });
   const [shots, setShots] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
+  const [dwell, setDwell] = useState(0);                       // progression de la duree minimale (0-100)
+  const [doneInfo, setDoneInfo] = useState<{ label: string; image: string | null; score: number } | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const finishNow = useRef<(() => void) | null>(null);
+  const startAdvanced = useRef<(() => void) | null>(null);
   const [mbiElapsed, setMbiElapsed] = useState(0);
   const phaseRef = useRef<Phase>("loading");
   const startMbi = useRef<(() => void) | null>(null);
@@ -86,6 +99,10 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
       });
     };
 
+    // Choix apres les deux yeux : terminer tout de suite (sans PLR ni conjonctive) ou lancer les analyses avancees
+    let afterDone: (() => void) | null = null;
+    finishNow.current = () => finish();
+    startAdvanced.current = () => { go("plr-dark"); phaseStart = performance.now(); };
     startMbi.current = () => { go("mbi"); phaseStart = performance.now(); eyesClosedSince = 0; };
     skipMbi.current = () => { mbiS = null; finish(); };
 
@@ -105,6 +122,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
         video.srcObject = s;
         await video.play();
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        if (overlayRef.current) { overlayRef.current.width = video.videoWidth; overlayRef.current.height = video.videoHeight; }
         go(only === "B" ? "eyes-L" : "eyes-R");
         phaseStart = 0;
         let lastVideoTime = -1;
@@ -119,6 +137,10 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
           const pts = res.faceLandmarks?.[0];
           setFace(!!pts);
           const p = phaseRef.current;
+          // Confirmation et choix : pas besoin du visage pour avancer ; le dessin des structures est efface
+          if (p !== "eyes-R" && p !== "eyes-L") overlayRef.current?.getContext("2d")?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+          if (p === "eye-done") { if (now - phaseStart >= DONE_MS) afterDone?.(); return; }
+          if (p === "choose") return;
           if (!pts) { if (p === "eyes-R" || p === "eyes-L") { phaseStart = 0; prevIris = null; stable = 0; } return; }
           const bs = res.faceBlendshapes?.[0]?.categories ?? [];
           const blinkOf = (side: EyeSideId) => bs.find((c) => c.categoryName === BLINK[side])?.score ?? 0;
@@ -130,7 +152,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
           const span = Math.max(...xs) - Math.min(...xs);
           const x0 = Math.max(0, Math.floor(Math.min(...xs) - span * 0.25)), x1 = Math.min(w, Math.ceil(Math.max(...xs) + span * 0.25));
           const y0 = Math.max(0, Math.floor(Math.min(...ys) - span * 0.25)), y1 = Math.min(h, Math.ceil(Math.max(...ys) + span * 0.9));
-          const read = (): { reader: PixelReader; crop: () => string | null; cropEye: (center: { x: number; y: number }, irisPx: number) => string | null } => {
+          const read = (): { reader: PixelReader; crop: () => string | null; cropEye: (center: { x: number; y: number }, irisPx: number, eye: EyeSideId) => string | null } => {
             ctx.drawImage(video, 0, 0, w, h);
             const rw = x1 - x0, rh = y1 - y0;
             const { data } = ctx.getImageData(x0, y0, rw, rh);
@@ -149,7 +171,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 return out.toDataURL("image/jpeg", 0.8);
               },
               // Un oeil isole : carre de 3 diametres d'iris centre exactement sur le centre calcule de l'iris
-              cropEye: (center: { x: number; y: number }, irisPx: number) => {
+              cropEye: (center: { x: number; y: number }, irisPx: number, eye: EyeSideId) => {
                 const side = irisPx * 3;
                 if (!(side > 8)) return null;
                 const cx = center.x, cy = center.y;
@@ -157,7 +179,11 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 out.width = 320; out.height = 320;
                 const g = out.getContext("2d")!;
                 g.fillStyle = "#000"; g.fillRect(0, 0, 320, 320);
-                g.drawImage(canvas, cx - side / 2, cy - side / 2, side, side, 0, 0, 320, 320);
+                // Redressement : l'axe des coins de l'oeil est remis a l'horizontale (photos comparables d'un scan a l'autre)
+                const [inn, outr] = INNER_OUTER[eye];
+                const roll = (canthalRollDeg({ x: pts[inn].x * w, y: pts[inn].y * h }, { x: pts[outr].x * w, y: pts[outr].y * h }) * Math.PI) / 180;
+                g.translate(160, 160); g.rotate(-roll);
+                g.drawImage(canvas, cx - side / 2, cy - side / 2, side, side, -160, -160, 320, 320);
                 return out.toDataURL("image/jpeg", 0.85);
               },
             };
@@ -182,21 +208,32 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 const { sharp, light } = acquisitionStats(reader, cx, cy, m[side].irisPx);
                 const q = acquisitionQuality({ open, dist: ipd / w, motion, sharp, light });
                 setQuality(q);
+                // Structures detectees dessinees en direct (iris, pupille, paupieres, anneau de visee)
+                const ov = overlayRef.current?.getContext("2d");
+                if (ov) {
+                  const [lt, lb] = EYE_LID_POINTS[side];
+                  drawEyeOverlay(ov, m[side], { top: { x: pts[lt].x * w, y: pts[lt].y * h }, bottom: { x: pts[lb].x * w, y: pts[lb].y * h } }, q.score >= MIN_QUALITY);
+                }
                 const list = (cands[side] ??= []);
-                if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && list.length < BURST) {
-                  list.push({ m, q: q.score, image: crop(), eye: cropEye(center, m[side].irisPx) });
+                if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && list.length < BURST_MAX) {
+                  list.push({ m, q: q.score, image: crop(), eye: cropEye(center, m[side].irisPx, side) });
                   setShots(list.length);
+                  setBestScore(Math.max(...list.map((c) => c.q)));
                 }
               }
             }
             const list = cands[side] ?? [];
             const el = now - phaseStart;
-            setLeft(Math.max(0, Math.ceil((EYE_MS - el) / 1000)));
-            if (list.length >= BURST || (el >= EYE_MS && list.length)) {
+            setLeft(Math.max(0, Math.ceil((Math.max(EYE_MS, MIN_DWELL_MS) - el) / 1000)));
+            setDwell(Math.min(100, (el / MIN_DWELL_MS) * 100));
+            if ((el >= MIN_DWELL_MS && list.length >= BURST) || (el >= EYE_MS && list.length)) {
               // Algo de choix : la photo de meilleure qualite de la rafale
               best[side] = list.reduce((a, b) => (b.q > a.q ? b : a));
-              if (only) { finish(); return; }
-              if (side === "A") { go("eyes-L"); resetSide(); setShots(0); } else { go("plr-dark"); phaseStart = now; }
+              // Confirmation "oeil capture" (vignette de la meilleure image), puis oeil suivant ou choix des analyses
+              const chosen = best[side]!;
+              setDoneInfo({ label: side === "A" ? "Œil droit" : "Œil gauche", image: chosen.eye, score: chosen.q });
+              go("eye-done"); phaseStart = now;
+              afterDone = only ? () => finish() : side === "A" ? () => { setShots(0); setBestScore(0); setDwell(0); go("eyes-L"); resetSide(); } : () => go("choose");
             } else if (el >= EYE_GIVE_UP_MS && !list.length) {
               setError("Œil non bien ouvert : ouvre-le grand, fixe le point, et refais la prise.");
               go("error"); stopped = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop());
@@ -250,11 +287,13 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const side: EyeSideId | null = phase === "eyes-R" ? "A" : phase === "eyes-L" ? "B" : null;
   const qColor = quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)";
   const eyeMessage = !face ? "Place ton visage à 25-30 cm, de face"
-    : quality.issue ?? `Parfait, reste immobile · photo ${shots}/${BURST} · ${left} s`;
+    : quality.issue ?? `Parfait, reste immobile · photo ${shots}/${BURST_MAX} · meilleure ${bestScore} %`;
   const message: Record<Phase, string> = {
     loading: "Préparation de la caméra…",
     "eyes-R": eyeMessage,
     "eyes-L": eyeMessage,
+    "eye-done": "",
+    choose: "",
     "plr-dark": "Continue de fixer le point…",
     "plr-flash": "Flash : fixe le point, ne cligne pas",
     "conj-ready": `Tire doucement ta paupière inférieure vers le bas et regarde la flèche en haut · ${Math.max(0, left)} s`,
@@ -295,16 +334,45 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
       <div className="relative w-[320px] h-[200px] rounded-2xl overflow-hidden" style={{ opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
         <video ref={videoRef} playsInline muted className="w-full h-full object-cover"
           style={{ transform: `scaleX(-1) scale(${side ? ZOOM : 1})`, transformOrigin: `${side ? EYE_X[side] : 50}% 42%`, objectPosition: "50% 38%" }} />
+        {/* Structures detectees (iris, pupille, paupieres) : meme transformation que la video pour coincider avec l'image zoomee */}
+        <canvas ref={overlayRef} aria-hidden className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ transform: `scaleX(-1) scale(${side ? ZOOM : 1})`, transformOrigin: `${side ? EYE_X[side] : 50}% 42%`, objectPosition: "50% 38%" }} />
         {guide && (
           <div className="absolute top-[22%] bottom-[22%] rounded-[50%] pointer-events-none" aria-hidden
             style={{ left: guide.left, width: guide.width, border: `2px solid ${quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)"}`, boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)" }} />
         )}
         {side && (
-          <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-black pointer-events-none whitespace-nowrap" aria-hidden
-            style={{ fontSize: 40, letterSpacing: 1, color: "rgba(255,255,255,0.55)", textShadow: "0 0 10px rgba(0,0,0,0.6)" }}>{LABEL[side]}</span>
+          <span className="absolute inset-x-0 top-1 text-center font-black pointer-events-none whitespace-nowrap" aria-hidden
+            style={{ fontSize: 26, letterSpacing: 1, color: "rgba(255,255,255,0.55)", textShadow: "0 0 10px rgba(0,0,0,0.6)" }}>{LABEL[side]}</span>
         )}
         {phase === "loading" && <div className="absolute inset-0 flex items-center justify-center" style={{ color: "#fff" }}><IconLoader2 className="animate-spin" /></div>}
       </div>
+
+      {/* Legende des structures + progression de la duree minimale (l'acquisition ne se termine pas trop vite) */}
+      {side && (
+        <div className="mt-2 w-[320px] max-w-full">
+          <div className="flex items-center justify-center gap-3 text-[12px] mb-2" style={{ color: fg }}>
+            <span><span style={{ color: "#818cf8" }}>●</span> Iris</span>
+            <span><span style={{ color: "#fbbf24" }}>●</span> Pupille</span>
+            <span><span style={{ color: "#34d399" }}>●</span> Paupières</span>
+          </div>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: bg === "#fff" ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.15)" }} aria-label={`Acquisition ${Math.round(dwell)} %`}>
+            <div className="h-full rounded-full" style={{ width: `${dwell}%`, background: "var(--accent)", transition: "width 0.15s linear" }} />
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation apres chaque oeil, puis choix des analyses avancees (optionnelles) */}
+      {phase === "eye-done" && doneInfo && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#fff" }}>
+          <EyeDoneScreen label={doneInfo.label} image={doneInfo.image} score={doneInfo.score} />
+        </div>
+      )}
+      {phase === "choose" && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6" style={{ background: "#fff" }}>
+          <EyeChoiceScreen onFinish={() => finishNow.current?.()} onAdvanced={() => startAdvanced.current?.()} />
+        </div>
+      )}
 
       {side && face && (
         <div className="mt-4 w-[320px] max-w-full" aria-label={`Qualité d'acquisition ${quality.score} %`}>

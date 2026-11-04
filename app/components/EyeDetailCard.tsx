@@ -29,6 +29,8 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
 
   const rows: [string, string][] = [
     ["Pupille", side.pupilMm == null ? "non mesurable" : `${n(side.pupilMm)} mm · ${pir} % de l'iris`],
+    ["Régularité du bord de la pupille", side.pupilCircularity == null ? "—" : `${Math.round(side.pupilCircularity * 100)} %`],
+    ["Décentrement de la pupille", side.pupilDecentrationMm == null ? "—" : `${n(side.pupilDecentrationMm)} mm`],
     ["Paupière haute (MRD1)", `${n(side.mrd1Mm)} mm`],
     ["Paupière basse (MRD2)", `${n(side.mrd2Mm)} mm`],
     ["Fente : hauteur × largeur", `${n(side.mrd1Mm + side.mrd2Mm)} × ${n(side.fissureWidthMm)} mm`],
