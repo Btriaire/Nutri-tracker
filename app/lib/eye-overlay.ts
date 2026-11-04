@@ -6,7 +6,8 @@ export function drawEyeOverlay(
   ctx: CanvasRenderingContext2D,
   side: EyeSide,
   lid: { top: { x: number; y: number }; bottom: { x: number; y: number } },
-  good: boolean
+  good: boolean,
+  manual?: { x: number; y: number } | null
 ): void {
   // Clear the canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -80,6 +81,28 @@ export function drawEyeOverlay(
     ctx.lineTo(catchlightX - 4, catchlightY + 4);
     ctx.strokeStyle = "#f87171";
     ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Draw manual crosshair if provided
+  if (manual) {
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(manual.x - 14, manual.y);
+    ctx.lineTo(manual.x + 14, manual.y);
+    ctx.moveTo(manual.x, manual.y - 14);
+    ctx.lineTo(manual.x, manual.y + 14);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(manual.x - 14, manual.y);
+    ctx.lineTo(manual.x + 14, manual.y);
+    ctx.moveTo(manual.x, manual.y - 14);
+    ctx.lineTo(manual.x, manual.y + 14);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2.5;
     ctx.stroke();
   }
 }

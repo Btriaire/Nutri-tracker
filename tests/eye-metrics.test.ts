@@ -43,6 +43,15 @@ function eyeImage(o: { pupilA?: number; pupilB?: number; iris?: RGB; sclera?: RG
 }
 
 describe("computeEyeMetrics", () => {
+  it("utilise le centre propose a la main (oeil A) et garde la detection pour l'autre oeil", () => {
+    const manual = { x: CA.x + 3, y: CA.y - 2 };
+    const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}), manualCenters: { A: manual } })!;
+    expect(m.A.manualCenter).toBe(true);
+    expect(Math.abs(m.A.irisCenter!.x - manual.x)).toBeLessThan(0.2);
+    expect(Math.abs(m.A.irisCenter!.y - manual.y)).toBeLessThan(0.2);
+    expect(m.B.manualCenter).toBeUndefined();
+    expect(Math.abs(m.B.irisCenter!.x - CB.x)).toBeLessThan(2);
+  });
   it("mesure la pupille en mm avec l'iris comme regle (11,7 mm) malgre le reflet de l'ecran", () => {
     const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
     expect(m.A.pupilMm!).toBeCloseTo((2 * 15 * 11.7) / 80, 0);

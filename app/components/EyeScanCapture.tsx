@@ -8,6 +8,7 @@ import { acquisitionQuality, acquisitionStats, analyzePlr, computeConjunctiva, c
 import type { PixelReader } from "@/app/lib/face-metrics";
 import { canthalRollDeg } from "@/app/lib/eye-structures";
 import { drawEyeOverlay, EYE_LID_POINTS } from "@/app/lib/eye-overlay";
+import { tapToImage } from "@/app/lib/eye-tap";
 import { EyeChoiceScreen, EyeDoneScreen } from "./EyeScanStep";
 
 export interface EyeCaptureResult {
@@ -56,6 +57,10 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const [dwell, setDwell] = useState(0);                       // progression de la duree minimale (0-100)
   const [doneInfo, setDoneInfo] = useState<{ label: string; image: string | null; score: number } | null>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const manualRef = useRef<Partial<Record<EyeSideId, { x: number; y: number }>>>({});
+  const manualDirty = useRef<EyeSideId | null>(null);
+  const [manualSides, setManualSides] = useState<Partial<Record<EyeSideId, boolean>>>({});
   const finishNow = useRef<(() => void) | null>(null);
   const startAdvanced = useRef<(() => void) | null>(null);
   const [mbiElapsed, setMbiElapsed] = useState(0);
@@ -193,10 +198,11 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
             // Un oeil a la fois : on garde la prise de meilleure qualite, stable et ouverte
             const side: EyeSideId = p === "eyes-R" ? "A" : "B";
             if (!phaseStart) phaseStart = now;
+            if (manualDirty.current === side) { manualDirty.current = null; cands[side] = []; setShots(0); setBestScore(0); resetSide(); phaseStart = now; }
             if (blinkOf(side) < 0.3 && now - lastEval > EVAL_MS) {
               lastEval = now;
               const { reader, crop, cropEye } = read();
-              const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader });
+              const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader, manualCenters: manualRef.current });
               if (m) {
                 const center = m[side].irisCenter ?? { x: pts[IRIS[side]].x * w, y: pts[IRIS[side]].y * h };
                 const cx = center.x, cy = center.y;
@@ -212,7 +218,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
                 const ov = overlayRef.current?.getContext("2d");
                 if (ov) {
                   const [lt, lb] = EYE_LID_POINTS[side];
-                  drawEyeOverlay(ov, m[side], { top: { x: pts[lt].x * w, y: pts[lt].y * h }, bottom: { x: pts[lb].x * w, y: pts[lb].y * h } }, q.score >= MIN_QUALITY);
+                  drawEyeOverlay(ov, m[side], { top: { x: pts[lt].x * w, y: pts[lt].y * h }, bottom: { x: pts[lb].x * w, y: pts[lb].y * h } }, q.score >= MIN_QUALITY, manualRef.current[side] ?? null);
                 }
                 const list = (cands[side] ??= []);
                 if (open >= MIN_OPEN && q.score >= MIN_QUALITY && stable >= STABLE_FRAMES && list.length < BURST_MAX) {
@@ -285,6 +291,44 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
   const bg = dark ? "#000" : phase === "error" || phase === "loading" ? "#000" : "#fff";
   const fg = bg === "#fff" ? "#111" : "#fff";
   const side: EyeSideId | null = phase === "eyes-R" ? "A" : phase === "eyes-L" ? "B" : null;
+  const handleTap = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!side || !boxRef.current || !videoRef.current || videoRef.current.videoWidth === 0) {
+      return;
+    }
+
+    const rect = boxRef.current.getBoundingClientRect();
+    const point = tapToImage(
+      { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      {
+        cw: rect.width,
+        ch: rect.height,
+        vw: videoRef.current.videoWidth,
+        vh: videoRef.current.videoHeight,
+        zoom: ZOOM,
+        originX: EYE_X[side] / 100,
+        originY: 0.42,
+        posX: 0.5,
+        posY: 0.38,
+        mirror: true,
+      }
+    );
+
+    manualRef.current[side] = point;
+    manualDirty.current = side;
+    setManualSides((prev) => ({ ...prev, [side]: true }));
+  };
+
+  const clearManual = () => {
+    if (!side) {
+      return;
+    }
+
+    delete manualRef.current[side];
+    manualDirty.current = side;
+    setManualSides((prev) => ({ ...prev, [side]: false }));
+  };
+
+  const hasManual = side ? !!manualSides[side] : false;
   const qColor = quality.score >= MIN_QUALITY ? "var(--ok)" : "var(--warn)";
   const eyeMessage = !face ? "Place ton visage à 25-30 cm, de face"
     : quality.issue ?? `Parfait, reste immobile · photo ${shots}/${BURST_MAX} · meilleure ${bestScore} %`;
@@ -331,7 +375,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
         </div>
       )}
 
-      <div className="relative w-[320px] h-[200px] rounded-2xl overflow-hidden" style={{ opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
+      <div ref={boxRef} onPointerDown={handleTap} className="relative w-[320px] h-[200px] rounded-2xl overflow-hidden" style={{ touchAction: "manipulation", opacity: dark || phase === "plr-flash" ? 0 : 1, boxShadow: `0 0 0 3px ${face ? "var(--ok)" : "var(--warn)"}` }}>
         <video ref={videoRef} playsInline muted className="w-full h-full object-cover"
           style={{ transform: `scaleX(-1) scale(${side ? ZOOM : 1})`, transformOrigin: `${side ? EYE_X[side] : 50}% 42%`, objectPosition: "50% 38%" }} />
         {/* Structures detectees (iris, pupille, paupieres) : meme transformation que la video pour coincider avec l'image zoomee */}
@@ -360,6 +404,25 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
             <div className="h-full rounded-full" style={{ width: `${dwell}%`, background: "var(--accent)", transition: "width 0.15s linear" }} />
           </div>
         </div>
+      )}
+
+      {side && (
+        <p className="mt-2 text-[12px] text-center" style={{ color: fg }}>
+          {hasManual ? (
+            <>
+              Centre choisi à la main
+              <button
+                type="button"
+                onClick={clearManual}
+                className="min-h-[44px] px-3 underline text-[var(--accent)]"
+              >
+                Réinitialiser
+              </button>
+            </>
+          ) : (
+            "Option : touche le centre de ton œil sur l'image pour affiner l'alignement."
+          )}
+        </p>
       )}
 
       {/* Confirmation apres chaque oeil, puis choix des analyses avancees (optionnelles) */}
