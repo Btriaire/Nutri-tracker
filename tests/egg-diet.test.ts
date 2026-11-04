@@ -70,37 +70,47 @@ describe("egg-diet", () => {
   });
 
   describe("eggPlanForDay", () => {
-    it("should include all meals with morning snack", () => {
+    it("should include only breakfast, lunch, and dinner", () => {
       const plan = eggPlanForDay(0, { morningSnack: true });
+      expect(plan.some(entry => entry.meal === "breakfast")).toBe(true);
+      expect(plan.some(entry => entry.meal === "morning_snack")).toBe(false);
+      expect(plan.some(entry => entry.meal === "lunch")).toBe(true);
+      expect(plan.some(entry => entry.meal === "snacks")).toBe(false);
+      expect(plan.some(entry => entry.meal === "dinner")).toBe(true);
+    });
+
+    it("should have the same menu for all day indices", () => {
+      const plan1 = eggPlanForDay(0, {});
+      const plan2 = eggPlanForDay(1, {});
+      const plan3 = eggPlanForDay(2, {});
+      const plan4 = eggPlanForDay(5, {});
+      expect(plan1).toEqual(plan2);
+      expect(plan1).toEqual(plan3);
+      expect(plan1).toEqual(plan4);
+    });
+
+    it("should have correct food quantities", () => {
+      const plan = eggPlanForDay(0, {});
+      const breakfast = plan.filter((e) => e.meal === 'breakfast' && e.foodId === 'egg-diet:blanc');
+      const lunch = plan.filter((e) => e.meal === 'lunch' && e.foodId === 'egg-diet:blanc');
+      const dinner = plan.filter((e) => e.meal === 'dinner' && e.foodId === 'egg-diet:blanc');
+      expect(breakfast.every(entry => entry.servingQty === 3)).toBe(true);
+      expect(lunch.every(entry => entry.servingQty === 3)).toBe(true);
+      expect(dinner.every(entry => entry.servingQty === 3)).toBe(true);
+    });
+
+    it("should have total calories and proteins within specified ranges", () => {
+      const plan = eggPlanForDay(0, {});
       const total_kcal = plan.reduce((sum, entry) => sum + entry.nutrition.calories, 0);
       const total_proteins = plan.reduce((sum, entry) => sum + entry.nutrition.proteinG, 0);
-      expect(plan.some(entry => entry.meal === "breakfast")).toBe(true);
-      expect(plan.some(entry => entry.meal === "morning_snack")).toBe(true);
-      expect(plan.some(entry => entry.meal === "lunch")).toBe(true);
-      expect(plan.some(entry => entry.meal === "snacks")).toBe(true);
-      expect(plan.some(entry => entry.meal === "dinner")).toBe(true);
-      expect(total_kcal).toBeGreaterThanOrEqual(1100);
-      expect(total_kcal).toBeLessThanOrEqual(1600);
-      expect(total_proteins).toBeGreaterThanOrEqual(65);
-    });
-
-    it("should not include morning snack if not specified", () => {
-      const plan = eggPlanForDay(1, {});
-      expect(plan.some(entry => entry.meal === "morning_snack")).toBe(false);
-    });
-
-    it("should have the same meal names and quantities for different day indices", () => {
-      const plan1 = eggPlanForDay(0, { morningSnack: true });
-      const plan2 = eggPlanForDay(3, { morningSnack: true });
-      expect(plan1.some(entry => entry.meal === "breakfast" && entry.name === plan2.find(e => e.meal === "breakfast")?.name)).toBe(true);
-      expect(plan1.some(entry => entry.meal === "morning_snack" && entry.name === plan2.find(e => e.meal === "morning_snack")?.name)).toBe(true);
-      expect(plan1.some(entry => entry.meal === "lunch" && entry.name === plan2.find(e => e.meal === "lunch")?.name)).toBe(true);
-      expect(plan1.some(entry => entry.meal === "snacks" && entry.name === plan2.find(e => e.meal === "snacks")?.name)).toBe(true);
-      expect(plan1.some(entry => entry.meal === "dinner" && entry.name === plan2.find(e => e.meal === "dinner")?.name)).toBe(true);
+      expect(total_kcal).toBeGreaterThanOrEqual(440);
+      expect(total_kcal).toBeLessThanOrEqual(490);
+      expect(total_proteins).toBeGreaterThanOrEqual(60);
+      expect(total_proteins).toBeLessThanOrEqual(70);
     });
 
     it("should have foodId starting with 'egg-diet:'", () => {
-      const plan = eggPlanForDay(2, { morningSnack: true });
+      const plan = eggPlanForDay(0, {});
       expect(plan.every(entry => entry.foodId.startsWith("egg-diet:"))).toBe(true);
     });
   });

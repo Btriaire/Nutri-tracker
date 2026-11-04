@@ -95,11 +95,10 @@ export default function EggDietCard() {
     <div className="bg-[var(--layer-1)] rounded-lg p-4">
       <h2 className="text-[var(--text-primary)] text-lg font-bold">Régime aux œufs</h2>
       <p className="text-[var(--text-secondary)] text-sm mb-4">
-        Programme court : chaque jour, les zones de repas sont remplies avec un menu à base d&apos;œufs, que tu peux modifier ensuite.
+        Programme à 900 kcal : chaque jour, les repas sont remplis avec le menu prescrit (blancs d&apos;œufs, laitage 0 %, bouillon de légumes), que tu peux modifier ensuite.
       </p>
       <p className="text-[var(--text-muted)] text-xs mb-4">
-        Menu type d&apos;environ 1 300 kcal par jour, à suivre quelques jours seulement. Ce n&apos;est pas un avis médical : demande conseil à ton médecin ou à un diététicien si tu as une pathologie, un traitement, ou si tu es enceinte.
-      </p>
+        Régime très basse calorie : à suivre uniquement quelques jours et sous suivi médical. Les aliments listés totalisent environ 465 kcal par jour dans l&apos;app, bien en dessous des 900 kcal annoncés : vérifie le plan avec ton médecin. Ce n&apos;est pas un avis médical.</p>
       {loading ? (
         <div className="flex justify-center items-center py-4">
           <IconLoader2 className="animate-spin text-[var(--text-primary)]" />
