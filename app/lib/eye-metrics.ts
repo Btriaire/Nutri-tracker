@@ -5,6 +5,7 @@
 // "A" = oeil droit de la personne (a gauche sur l'image non miroir), "B" = oeil gauche.
 
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
+import { canthalRollDeg, fitLimbusRays, fitPupilRays } from "./eye-structures";
 
 export const EYE_METRICS_VERSION = 1;
 export const HVID_MM = 11.7;
@@ -32,6 +33,12 @@ export interface EyeSide {
   catchlight?: { dxMm: number; dyMm: number } | null; // reflet de l'ecran par rapport au centre de l'iris (test de Hirschberg)
   irisCenter?: { x: number; y: number }; // Coordonnées absolues calculées du centre de l'iris
   pupilCenter?: { x: number; y: number }; // Coordonnées absolues calculées du centre de la pupille
+  // ── Structures (v1.3) : ajustement par rayons du limbe et de la pupille ──
+  pupilCircularity?: number;     // 0-1 : regularite du bord de la pupille
+  pupilConfidence?: number;      // 0-1 : confiance de la mesure de la pupille par rayons
+  pupilDecentrationMm?: number;  // ecart entre le centre de la pupille et celui de l'iris
+  limbusConfidence?: number;     // 0-1 : confiance de l'ajustement du bord de l'iris
+  irisRefined?: boolean;         // vrai si le diametre de l'iris a ete affine sur l'image
 }
 
 export interface EyeMetrics {
@@ -43,6 +50,8 @@ export interface EyeMetrics {
   hirschbergMm?: number | null;
   /** Symetrie entre les deux yeux, 100 = identiques (ouverture, pupilles, rougeur). */
   symmetryScore?: number;
+  /** Inclinaison de la tete (axe des coins des yeux par rapport a l'horizontale), en degres. */
+  rollDeg?: number;
   quality: { score: number; warnings: string[] };
 }
 
@@ -191,8 +200,11 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   const rawCenter = P[e.iris];
   const ringPts = e.ring.map((idx) => P[idx]);
   const fitted = fitIrisCircle(rawCenter, ringPts);
-  const c = fitted.c;
-  const R = fitted.r;
+  // Affinage du bord de l'iris sur l'image (limbe) : melange 50/50 avec les points de repere, seulement si l'ajustement est fiable
+  const limbus = fitLimbusRays(read, fitted.c, fitted.r, w, h);
+  const useLimbus = !!limbus && limbus.confidence >= 0.5 && Math.abs(limbus.r - fitted.r) / fitted.r < 0.15;
+  const c = useLimbus ? { x: (fitted.c.x + limbus!.cx) / 2, y: fitted.c.y } : fitted.c;
+  const R = useLimbus ? (fitted.r + limbus!.r) / 2 : fitted.r;
   const irisPx = 2 * R;
   const mmPerPx = HVID_MM / Math.max(1, irisPx);
 
@@ -205,7 +217,12 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   const mrd1Mm = Math.max(0, up(P[e.upper])) * mmPerPx;
   const mrd2Mm = Math.max(0, -up(P[e.lower])) * mmPerPx;
 
-  const pupil = detectPupil(read, c, R, w, h);
+  const pupilOld = detectPupil(read, c, R, w, h);
+  // Pupille par rayons (bord sombre->clair sur 48 directions, cercle robuste) ; repli sur l'ancienne methode si peu fiable
+  const pupilFit = fitPupilRays(read, c, R, w, h);
+  const pupil = pupilFit && pupilFit.confidence >= 0.35
+    ? { r: pupilFit.r, contrast: pupilOld?.contrast ?? 10, center: { x: pupilFit.cx, y: pupilFit.cy } }
+    : pupilOld;
   const pupilMmRaw = pupil ? 2 * pupil.r * mmPerPx : null;
   const pupilOk = pupil && pupil.contrast >= 6 && pupilMmRaw! >= 1.5 && pupilMmRaw! <= 9;
 
@@ -282,6 +299,13 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     catchlight,
     irisCenter: { x: round(c.x, 1), y: round(c.y, 1) },
     pupilCenter: pupil?.center ? { x: round(pupil.center.x, 1), y: round(pupil.center.y, 1) } : { x: round(c.x, 1), y: round(c.y, 1) },
+    ...(pupilFit && pupilFit.confidence >= 0.35 ? {
+      pupilCircularity: round(pupilFit.circularity, 2),
+      pupilConfidence: round(pupilFit.confidence, 2),
+      pupilDecentrationMm: round(Math.hypot(pupilFit.cx - c.x, pupilFit.cy - c.y) * mmPerPx),
+    } : {}),
+    ...(limbus ? { limbusConfidence: round(limbus.confidence, 2) } : {}),
+    irisRefined: useLimbus,
   };
 }
 
@@ -292,9 +316,12 @@ export function computeEyeMetrics(inp: EyeInput): EyeMetrics | null {
   const P: Pt[] = inp.landmarks.map((p) => ({ x: p.x * inp.width, y: p.y * inp.height }));
   const A = measureSide(P, EYES.A, inp.read, inp.width, inp.height);
   const B = measureSide(P, EYES.B, inp.read, inp.width, inp.height);
+  // Inclinaison de la tete : moyenne des deux axes de coins (en degres)
+  const rollDeg = round((canthalRollDeg(P[EYES.A.inner], P[EYES.A.outer]) + canthalRollDeg(P[EYES.B.inner], P[EYES.B.outer])) / 2, 1);
   const warnings: string[] = [];
   let score = 100;
   const irisMin = Math.min(A.irisPx, B.irisPx);
+  if (Math.abs(rollDeg) > 12) { warnings.push("Tête inclinée : redresse le visage pour une mesure plus fiable"); score -= 10; }
   if (irisMin < 28) { warnings.push("Yeux trop petits sur l'image : rapproche le téléphone (25-30 cm)"); score -= 35; }
   if (Math.abs(A.irisPx - B.irisPx) / Math.max(A.irisPx, B.irisPx) > 0.12) { warnings.push("Tête tournée : regarde l'écran bien en face"); score -= 25; }
   if (A.pupilMm === null || B.pupilMm === null) { warnings.push("Pupille peu visible (iris foncé ou flou) : mesures de pupille indisponibles"); score -= 10; }
@@ -302,6 +329,7 @@ export function computeEyeMetrics(inp: EyeInput): EyeMetrics | null {
   return {
     version: EYE_METRICS_VERSION, A, B,
     ...pairFields(A, B),
+    rollDeg,
     quality: { score: Math.max(0, score), warnings },
   };
 }

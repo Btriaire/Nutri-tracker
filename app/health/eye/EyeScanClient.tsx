@@ -9,6 +9,7 @@ import { IconEye, IconCircleCheck, IconAlertTriangle, IconAlertOctagon, IconTras
 import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanCapture";
 import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import EyeDetailCard from "@/app/components/EyeDetailCard";
+import EyeFollowUpCard from "@/app/components/EyeFollowUpCard";
 import { eyeIndexes, eyeSignals, eyeSideIndexes, mergeEyeMetrics, sideNotes, rednessGrade, scanValue, type EyeSideId, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
@@ -163,6 +164,9 @@ export default function EyeScanClient() {
 
         {scans === null && <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Chargement…</p>}
         {scans && scans.length === 0 && <p className="text-[12px] mb-4" style={{ color: "var(--text-muted)" }}>Aucun scan pour l&apos;instant : les index apparaissent dès le premier, la comparaison à ton habitude à partir du 4ᵉ.</p>}
+
+        {/* Suivi : evolution depuis le scan precedent et contre ta mediane (visible des l'ouverture) */}
+        {history.length > 0 && <EyeFollowUpCard scans={history} />}
 
         {latest && m && idx && (
           <>
