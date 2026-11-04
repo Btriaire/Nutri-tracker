@@ -325,6 +325,8 @@ export interface UserProfile {
   dietProgram?: DietProgramPrefs;
   /** Repas optionnels proposés dans le journal. */
   mealSlots?: { morningSnack?: boolean };
+  /** Regime aux oeufs : programme court qui remplit une journee de repas (voir lib/egg-diet.ts). */
+  eggProgram?: import("./egg-diet").EggProgramPrefs | null;
 }
 
 export type DietProgramId = "tl" | "tl_nk" | "cholesterol";

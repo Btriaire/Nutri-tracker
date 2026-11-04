@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import EggDietCard from "@/app/components/EggDietCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconCircleCheck, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import type { DietProgramPrefs, DietProgramId } from "@/app/lib/types";
@@ -125,6 +126,8 @@ export default function DietProgramPanel() {
             <span>Collation du matin</span>
             <span className="font-semibold" style={{ color: morningSnack ? "var(--ok)" : "var(--text-muted)" }}>{morningSnack ? "Activée" : "Désactivée"}</span>
           </button>
+
+          <EggDietCard />
 
           {(programId === "tl" || programId === "tl_nk") && (
             <>

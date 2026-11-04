@@ -29,6 +29,8 @@ import LifeNoteModal from "@/app/components/LifeNoteModal";
 import type { LifeNote } from "@/app/api/life-notes/route";
 import { addDays } from "date-fns";
 import { flushLifeQueue } from "@/app/lib/life-keywords";
+import EggDietBanner from "@/app/components/EggDietBanner";
+import type { EggProgramPrefs } from "@/app/lib/egg-diet";
 import DietProgramInfoModal from "@/app/components/DietProgramInfoModal";
 import AlternativeFoodsModal from "@/app/components/AlternativeFoodsModal";
 import HungerTimeline from "@/app/components/HungerTimeline";
@@ -216,9 +218,10 @@ interface Props {
   trackedNutrients?: TrackedNutrients;
   dietProgram?:     DietProgramPrefs;
   morningSnack?:    boolean;
+  eggProgram?:      EggProgramPrefs | null;
 }
 
-export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram, morningSnack = false }: Props) {
+export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram, morningSnack = false, eggProgram = null }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
   // Changements de vie ou de comportement (dictee) : notes du jour + reprise des etats persistants
@@ -626,6 +629,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </button>
         </motion.div>
 
+        <EggDietBanner date={date} eggProgram={eggProgram} morningSnack={morningSnack} />
         {/* Changements de vie ou de comportement du jour (compact) : - / + sur chaque item, repris de la veille */}
         {lifeNotes.length > 0 && (
           <div className="glass px-3 py-2 mb-4 flex flex-wrap items-center gap-1.5">

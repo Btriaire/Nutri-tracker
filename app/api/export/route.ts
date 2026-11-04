@@ -127,6 +127,9 @@ export async function GET(req: NextRequest) {
 }
 
 function csvEscape(s: string): string {
+  if (s.startsWith('=') || s.startsWith('+') || s.startsWith('-') || s.startsWith('@') || s.startsWith('\t') || s.startsWith('\n')) {
+    s = "'" + s;
+  }
   if (s.includes(";") || s.includes('"') || s.includes("\n")) {
     return `"${s.replace(/"/g, '""')}"`;
   }

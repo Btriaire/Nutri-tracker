@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import type { EggProgramPrefs } from "@/app/lib/egg-diet";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { defaultGoals } from "@/app/lib/nutrition";
@@ -31,6 +32,7 @@ export default async function LogPage() {
   let trackedNutrients: TrackedNutrients | undefined = undefined;
   let dietProgram: DietProgramPrefs | undefined = undefined;
   let morningSnack = false;
+  let eggProgram: EggProgramPrefs | null = null;
 
   try {
     const db = getAdminFirestore();
@@ -48,10 +50,11 @@ export default async function LogPage() {
       trackedNutrients  = profile.chartPrefs?.trackedNutrients;
       dietProgram       = profile.dietProgram;
       morningSnack      = !!profile.mealSlots?.morningSnack;
+      eggProgram        = profile.eggProgram ?? null;
     }
   } catch (e) {
     console.error("Firestore error:", e);
   }
 
-  return <LogClient date={today} initialLog={dayLog} goals={goals} lang={lang} trackedNutrients={trackedNutrients} dietProgram={dietProgram} morningSnack={morningSnack} />;
+  return <LogClient date={today} initialLog={dayLog} goals={goals} lang={lang} trackedNutrients={trackedNutrients} dietProgram={dietProgram} morningSnack={morningSnack} eggProgram={eggProgram} />;
 }
