@@ -71,10 +71,10 @@ export function fitCircleRobust(points: Pt[]): CircleFit | null {
   return { ...fit, rms, inliers: inl.length, total: n };
 }
 
-interface Edge { r: number; strength: number }
+export interface Edge { r: number; strength: number }
 
 /** Bord le long d'un rayon : plus fort gradient positif (sombre vers clair) du profil de luminance lisse. */
-function rayEdge(read: PixelReader, c0: Pt, angle: number, rMin: number, rMax: number, step: number, w: number, h: number): Edge | null {
+export function rayEdge(read: PixelReader, c0: Pt, angle: number, rMin: number, rMax: number, step: number, w: number, h: number): Edge | null {
   const radii: number[] = [], lum: number[] = [];
   for (let r = rMin; r <= rMax; r += step) {
     const x = Math.round(c0.x + r * Math.cos(angle)), y = Math.round(c0.y + r * Math.sin(angle));

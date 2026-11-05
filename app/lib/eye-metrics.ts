@@ -7,6 +7,7 @@
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
 import { canthalRollDeg, fitLidMargins, fitLimbusRays, fitPupilRays } from "./eye-structures";
 import { sampleSclera } from "./eye-sclera";
+import { fitIrisEdge } from "./eye-iris-edge";
 import { fromEyeFrame, toEyeFrame, type Shift } from "./eye-learning";
 
 export const EYE_METRICS_VERSION = 1;
@@ -219,7 +220,9 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   const shifted = !manual && learned ? { c: fromEyeFrame(learned, roll, 2 * auto.r, auto.c), r: auto.r } : null;
   const fitted = manual ? { c: manual, r: auto.r } : shifted ?? auto;
   // Affinage du bord de l'iris sur l'image (limbe) : melange 50/50 avec les points de repere, seulement si l'ajustement est fiable
-  const limbus = fitLimbusRays(read, fitted.c, fitted.r, w, h);
+  // Contour complet de l'iris (secteurs caches par les paupieres ecartes) ; repli sur les seuls secteurs horizontaux
+  const lids0 = fitLidMargins(read, fitted.c, fitted.r, roll, w, h);
+  const limbus = fitIrisEdge(read, fitted.c, fitted.r, lids0, roll, w, h) ?? fitLimbusRays(read, fitted.c, fitted.r, w, h);
   const useLimbus = !!limbus && limbus.confidence >= 0.5 && Math.abs(limbus.r - fitted.r) / fitted.r < 0.15;
   const c = useLimbus && !manual && !shifted ? { x: (fitted.c.x + limbus!.cx) / 2, y: fitted.c.y } : fitted.c;
   const R = useLimbus ? (fitted.r + limbus!.r) / 2 : fitted.r;
