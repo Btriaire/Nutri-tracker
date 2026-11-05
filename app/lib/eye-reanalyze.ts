@@ -4,7 +4,7 @@
 // Ce qui depend des points de repere du visage (blanc de l'oeil, cernes, largeur de la fente) n'est pas refait :
 // il est repris du scan, sauf les hauteurs de paupieres qui sont recalculees depuis le nouveau centre.
 import { fitLimbusRays, fitPupilRays, type PixelReader, type Pt } from "./eye-structures";
-import { HVID_MM, RADIUS_MM, irisColour, ringL, type EyeSide } from "./eye-metrics";
+import { HVID_MM, RADIUS_MM, irisColour, irisZonesOf, ringL, type EyeSide } from "./eye-metrics";
 import type { Shift } from "./eye-learning";
 
 export const CROP = 320;
@@ -48,6 +48,7 @@ export function recenterEye(read: PixelReader, side: EyeSide, tap: Pt): EyeSide 
     } : {}),
     ...(lim ? { limbusConfidence: round(lim.confidence) } : {}),
     ...(colour.irisLab ? colour : {}),
+    ...(irisZonesOf(read, tap, R, pupilR, CROP, CROP) ?? {}),
     arcus: Number.isFinite(outer) && Number.isFinite(mid) ? round(outer - mid, 1) : side.arcus,
     limbalRing: Number.isFinite(edge) && Number.isFinite(inside) ? round(inside - edge, 1) : side.limbalRing,
     catchlight: side.catchlight ? { dxMm: round(side.catchlight.dxMm - off.x * mm), dyMm: round(side.catchlight.dyMm - off.y * mm) } : side.catchlight,

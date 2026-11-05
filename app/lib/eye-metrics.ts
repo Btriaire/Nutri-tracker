@@ -6,6 +6,7 @@
 
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
 import { canthalRollDeg, fitLidMargins, fitLimbusRays, fitPupilRays } from "./eye-structures";
+import { sampleSclera } from "./eye-sclera";
 import { fromEyeFrame, toEyeFrame, type Shift } from "./eye-learning";
 
 export const EYE_METRICS_VERSION = 1;
@@ -253,17 +254,8 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   const scl: [number, number, number][] = [];
   const zone: Record<"nasal" | "temporal", [number, number, number][]> = { nasal: [], temporal: [] };
   for (const [zk, corner] of [["nasal", P[e.inner]], ["temporal", P[e.outer]]] as const) {
-    const d = dist(c, corner);
-    if (d < R * 1.4) continue;
-    for (const f of [0.35, 0.55, 0.75]) {
-      const rr = R * 1.15 + (d - R * 1.35) * f;
-      const px = { x: c.x + ((corner.x - c.x) / d) * rr, y: c.y + ((corner.y - c.y) / d) * rr };
-      const rad = Math.max(1, Math.round(R * 0.12));
-      for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
-        const xi = Math.round(px.x + dx), yi = Math.round(px.y + dy);
-        if (xi >= 0 && yi >= 0 && xi < w && yi < h) { const v = rgbToLab(read(xi, yi)); scl.push(v); zone[zk].push(v); }
-      }
-    }
+    // Blanc de l'oeil entre l'iris et le coin : cils, peau et reflets ecartes
+    for (const v of sampleSclera(read, c, R, corner, w, h).lab) { scl.push(v); zone[zk].push(v); }
   }
   const white = scl.filter((v) => v[0] >= 55);
   const vessel = scl.filter((v) => v[0] >= 35);
