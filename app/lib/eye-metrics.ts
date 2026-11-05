@@ -39,6 +39,7 @@ export interface EyeSide {
   pupilConfidence?: number;      // 0-1 : confiance de la mesure de la pupille par rayons
   pupilDecentrationMm?: number;  // ecart entre le centre de la pupille et celui de l'iris
   limbusConfidence?: number;     // 0-1 : confiance de l'ajustement du bord de l'iris
+  irisZones?: { rim: number; mid: number; outer: number }; // L* du bord de la pupille, du milieu et de la peripherie de l'iris
   lidRefined?: boolean;          // vrai si les bords des paupieres ont ete confirmes par la mesure sur l'image
   irisRefined?: boolean;         // vrai si le diametre de l'iris a ete affine sur l'image
   manualCenter?: boolean;        // vrai si le centre de l'oeil a ete propose a la main pour ce scan
@@ -184,6 +185,12 @@ export function irisColour(read: PixelReader, c: Pt, R: number, pupilR: number, 
   return { irisLab: lab, irisName: irisColourName(lab) };
 }
 
+/** Luminosite de trois anneaux de l'iris : bord de la pupille, milieu, peripherie (reflets exclus par ringL). */
+export function irisZonesOf(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { irisZones: { rim: number; mid: number; outer: number } } | null {
+  const rim = ringL(read, c, Math.min(pupilR * 1.3, R * 0.6), w, h), mid = ringL(read, c, (Math.min(pupilR * 1.3, R * 0.6) + R * 0.9) / 2, w, h), outer = ringL(read, c, R * 0.9, w, h);
+  return [rim, mid, outer].every(Number.isFinite) ? { irisZones: { rim: round(rim, 1), mid: round(mid, 1), outer: round(outer, 1) } } : null;
+}
+
 /** Famille de couleur lisible, a partir de la luminosite (L*) et du jaune/bleu (b*). Grossier, par design. */
 export function irisColourName([L, , b]: [number, number, number]): string {
   if (L < 25) return "brun très foncé";
@@ -234,9 +241,10 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
 
   const pupilOld = detectPupil(read, c, R, w, h);
   // Pupille par rayons (bord sombre->clair sur 48 directions, cercle robuste) ; repli sur l'ancienne methode si peu fiable
-  const pupilFit = fitPupilRays(read, c, R, w, h);
+  const strict = fitPupilRays(read, c, R, w, h);
+  const pupilFit = strict && strict.confidence >= 0.35 ? strict : fitPupilRays(read, c, R, w, h, true) ?? strict;
   const pupil = pupilFit && pupilFit.confidence >= 0.35
-    ? { r: pupilFit.r, contrast: pupilOld?.contrast ?? 10, center: { x: pupilFit.cx, y: pupilFit.cy } }
+    ? { r: pupilFit.r, contrast: pupilFit === strict ? pupilOld?.contrast ?? 10 : Math.max(6, pupilOld?.contrast ?? 0), center: { x: pupilFit.cx, y: pupilFit.cy } }
     : pupilOld;
   const pupilMmRaw = pupil ? 2 * pupil.r * mmPerPx : null;
   const pupilOk = pupil && pupil.contrast >= 6 && pupilMmRaw! >= 1.5 && pupilMmRaw! <= 9;
@@ -321,6 +329,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     } : {}),
     ...(limbus ? { limbusConfidence: round(limbus.confidence, 2) } : {}),
     irisRefined: useLimbus,
+    ...(irisZonesOf(read, c, R, pupil ? pupil.r : R * 0.3, w, h) ?? {}),
     ...(lidRefined ? { lidRefined } : {}),
     ...(manual ? { manualCenter: true } : {}),
     ...(shifted ? { learnedCenter: true } : {}),

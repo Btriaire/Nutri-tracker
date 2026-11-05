@@ -61,6 +61,12 @@ describe("computeEyeMetrics", () => {
     expect(Math.hypot(m.A.irisCenter!.x - base.A.irisCenter!.x, m.A.irisCenter!.y - base.A.irisCenter!.y)).toBeGreaterThan(2);
     expect(m.B.learnedCenter).toBeUndefined();
   });
+  it("donne la luminosite des trois zones de l'iris : pupille sombre, peripherie plus claire avec l'arc", () => {
+    const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({ arcus: true }) })!;
+    const z = m.A.irisZones!;
+    expect(z.outer).toBeGreaterThan(z.mid);
+    expect(z.rim).toBeCloseTo(z.mid, 0);
+  });
   it("mesure la pupille en mm avec l'iris comme regle (11,7 mm) malgre le reflet de l'ecran", () => {
     const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
     expect(m.A.pupilMm!).toBeCloseTo((2 * 15 * 11.7) / 80, 0);

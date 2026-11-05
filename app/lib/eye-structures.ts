@@ -104,13 +104,15 @@ function ringContrast(read: PixelReader, cx: number, cy: number, r: number, w: n
 }
 
 /** Pupille : 48 rayons depuis c0, bords sombre->clair, cercle robuste ; null si la pupille ne se distingue pas. */
-export function fitPupilRays(read: PixelReader, c0: Pt, irisR: number, w: number, h: number): StructureFit | null {
+/** `relaxed` : seuils bas pour les iris tres fonces (pupille presque aussi sombre que l'iris) ; la confiance est alors reduite. */
+export function fitPupilRays(read: PixelReader, c0: Pt, irisR: number, w: number, h: number, relaxed = false): StructureFit | null {
+  const minStrength = relaxed ? 2 : 4, minContrast = relaxed ? 3 : 8;
   const N = 48, step = irisR / 60;
   const pts: Pt[] = [], strengths: number[] = [];
   for (let i = 0; i < N; i++) {
     const a = (i / N) * 2 * Math.PI;
     const e = rayEdge(read, c0, a, 0.12 * irisR, 0.8 * irisR, step, w, h);
-    if (!e || e.strength < 4 || e.r < 0.15 * irisR || e.r > 0.75 * irisR) continue;
+    if (!e || e.strength < minStrength || e.r < 0.15 * irisR || e.r > 0.75 * irisR) continue;
     pts.push({ x: c0.x + e.r * Math.cos(a), y: c0.y + e.r * Math.sin(a) });
     strengths.push(e.strength);
   }
@@ -118,10 +120,10 @@ export function fitPupilRays(read: PixelReader, c0: Pt, irisR: number, w: number
   const fit = fitCircleRobust(pts);
   if (!fit) return null;
   const contrast = ringContrast(read, fit.cx, fit.cy, fit.r, w, h);
-  if (contrast === null || contrast < 8) return null;
+  if (contrast === null || contrast < minContrast) return null;
   const circularity = clamp01(1 - fit.rms / fit.r), coverage = fit.inliers / N;
   const meanStrength = strengths.reduce((s, v) => s + v, 0) / strengths.length;
-  return { cx: fit.cx, cy: fit.cy, r: fit.r, circularity, coverage, confidence: clamp01(coverage * circularity * Math.min(1, meanStrength / 12)) };
+  return { cx: fit.cx, cy: fit.cy, r: fit.r, circularity, coverage, confidence: clamp01(coverage * circularity * Math.min(1, meanStrength / (relaxed ? 5 : 12))) * (relaxed ? 0.7 : 1) };
 }
 
 /** Limbe : secteurs horizontaux seulement (les paupieres cachent le haut et le bas), centre vertical fixe. */

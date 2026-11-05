@@ -118,3 +118,17 @@ describe("fitLidMargins", () => {
     expect(f.confidence).toBeLessThan(1);
   });
 });
+
+describe("fitPupilRays en mode relache (iris tres fonce)", () => {
+  const dark: PixelReader = (x, y) => {
+    const d = Math.hypot(x - 100, y - 100), j = ((x * 7 + y * 13) % 5) - 2;
+    return d > R ? [232, 232, 232] : d > PUPIL ? [38 + j, 28 + j, 22 + j] : [20 + j, 14 + j, 10 + j];
+  };
+  it("trouve la pupille la ou le mode strict echoue, avec une confiance reduite", () => {
+    expect(fitPupilRays(dark, { x: 100, y: 100 }, R, 200, 200)).toBeNull();
+    const f = fitPupilRays(dark, { x: 100, y: 100 }, R, 200, 200, true)!;
+    expect(f).not.toBeNull();
+    expect(Math.abs(f.r - PUPIL)).toBeLessThan(2);
+    expect(f.confidence).toBeLessThanOrEqual(0.7);
+  });
+});
