@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -10,6 +10,9 @@ import EyeScanCapture, { type EyeCaptureResult } from "@/app/components/EyeScanC
 import ProcedureHelp, { EYE_PROCEDURE } from "@/app/components/ProcedureHelp";
 import EyeDetailCard from "@/app/components/EyeDetailCard";
 import EyeFollowUpCard from "@/app/components/EyeFollowUpCard";
+import EyeRecenterModal from "@/app/components/EyeRecenterModal";
+import { learnedOffsets } from "@/app/lib/eye-learning";
+import { recenterEye, CROP } from "@/app/lib/eye-reanalyze";
 import { eyeIndexes, eyeSignals, eyeSideIndexes, mergeEyeMetrics, sideNotes, rednessGrade, scanValue, type EyeSideId, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
@@ -50,6 +53,10 @@ export default function EyeScanClient() {
   const [ctx, setCtx] = useState<Context | null>(null);
   const [param, setParam] = useState<EyeValueKey>("mbi");
   const [showSources, setShowSources] = useState(false);
+  const [recenter, setRecenter] = useState<EyeSideId | null>(null);
+  const [recenterBusy, setRecenterBusy] = useState(false);
+  const [recenterError, setRecenterError] = useState<string | null>(null);
+  const [photoRev, setPhotoRev] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +123,45 @@ export default function EyeScanClient() {
   };
 
   const history = scans ?? [];
+  // Ce que tes corrections passees ont appris : applique aux prochains scans
+  const learned = useMemo(() => learnedOffsets(scans ?? []), [scans]);
+
+  // Recentrage apres coup : la photo enregistree est redessinee centree sur le point touche, les mesures sont refaites dessus
+  const doRecenter = async (eye: EyeSideId, tap: { x: number; y: number }) => {
+    if (!latest) return;
+    setRecenterBusy(true); setRecenterError(null);
+    try {
+      const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=${eye}&v=${photoRev}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("photo"))));
+      const bmp = await createImageBitmap(blob);
+      const cv = document.createElement("canvas");
+      cv.width = CROP; cv.height = CROP;
+      const g = cv.getContext("2d", { willReadFrequently: true })!;
+      g.drawImage(bmp, 0, 0, CROP, CROP);
+      const px = g.getImageData(0, 0, CROP, CROP).data;
+      const read = (x: number, y: number): [number, number, number] => {
+        const i = (Math.min(CROP - 1, Math.max(0, Math.round(y))) * CROP + Math.min(CROP - 1, Math.max(0, Math.round(x)))) * 4;
+        return [px[i], px[i + 1], px[i + 2]];
+      };
+      const side = recenterEye(read, latest.metrics[eye], tap);
+      if (!side) { setRecenterError("Le point est trop loin du centre détecté : touche plus près de la pupille."); return; }
+      // Nouvelle photo : meme image, decalee pour que le point touche devienne le centre
+      g.fillStyle = "#000"; g.fillRect(0, 0, CROP, CROP);
+      g.drawImage(bmp, CROP / 2 - tap.x, CROP / 2 - tap.y, CROP, CROP);
+      const res = await fetch("/api/eye-scan", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: latest.id, eye, side, image: cv.toDataURL("image/jpeg", 0.85) }),
+      });
+      if (!res.ok) throw new Error("save");
+      const { scan } = await res.json() as { scan: EyeScanEntry };
+      setScans((s) => (s ?? []).map((x) => (x.id === scan.id ? { ...x, ...scan } : x)));
+      setPhotoRev((v) => v + 1);
+      setRecenter(null);
+    } catch {
+      setRecenterError("Impossible de ré-analyser cette photo. Réessaie.");
+    } finally {
+      setRecenterBusy(false);
+    }
+  };
   // Index et signaux memorises a l'enregistrement (sinon calcules ici pour les anciens scans)
   const idx = latest ? latest.indexes ?? eyeIndexes(latest, history) : null;
   const signals = latest ? latest.signals ?? eyeSignals(latest, history) : [];
@@ -207,9 +253,9 @@ export default function EyeScanClient() {
                 Chaque œil est isolé et mesuré séparément ; les traits montrent ce qui a été mesuré sur la photo.
               </p>
               <div className="space-y-3">
-                <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A` : null}
+                <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("A"); }}
                   indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")} />
-                <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B` : null}
+                <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("B"); }}
                   indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")} />
               </div>
             </section>
@@ -343,7 +389,11 @@ export default function EyeScanClient() {
           une paupière qui tombe ou une vision trouble apparues soudainement doivent être vues par un médecin sans attendre.
         </p>
       </div>
-      {capture && <EyeScanCapture onDone={save} onCancel={() => setCapture(null)} only={capture === "both" ? undefined : capture} />}
+      {capture && <EyeScanCapture onDone={save} onCancel={() => setCapture(null)} only={capture === "both" ? undefined : capture} learned={learned} />}
+      {recenter && latest && (
+        <EyeRecenterModal label={recenter === "A" ? "Œil droit" : "Œil gauche"} imageUrl={`/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=${recenter}&v=${photoRev}`}
+          busy={recenterBusy} error={recenterError} onCancel={() => setRecenter(null)} onConfirm={(tap) => doRecenter(recenter, tap)} />
+      )}
     </div>
   );
 }

@@ -11,8 +11,8 @@ const S = 320, C = S / 2, PX_PER_MM = S / (3 * HVID_MM);
 /** Un oeil isole : photo annotee (iris, pupille, paupieres, reflet) et toutes ses mesures. */
 const INDEX_LABEL: Record<string, string> = { ouverture: "Ouverture", paupiereBasse: "Paupière basse", cernes: "Cernes", rougeur: "Rougeur", jaune: "Jaune" };
 
-export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }: {
-  label: string; side: EyeSide; imageUrl: string | null;
+export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, onRecenter }: {
+  label: string; side: EyeSide; imageUrl: string | null; onRecenter?: () => void;
   indexes?: Record<string, number | null> | null; notes?: string[];
 }) {
   const irisR = (HVID_MM / 2) * PX_PER_MM;
@@ -29,7 +29,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
 
   const rows: [string, string][] = [
     ["Pupille", side.pupilMm == null ? "non mesurable" : `${n(side.pupilMm)} mm · ${pir} % de l'iris`],
-    ["Centre de l'œil", side.manualCenter ? "proposé à la main" : "détecté automatiquement"],
+    ["Centre de l'œil", side.manualCenter ? "proposé à la main" : side.learnedCenter ? "détecté, ajusté d'après tes corrections" : "détecté automatiquement"],
     ["Régularité du bord de la pupille", side.pupilCircularity == null ? "—" : `${Math.round(side.pupilCircularity * 100)} %`],
     ["Décentrement de la pupille", side.pupilDecentrationMm == null ? "—" : `${n(side.pupilDecentrationMm)} mm`],
     ["Paupière haute (MRD1)", `${n(side.mrd1Mm)} mm`],
@@ -65,6 +65,14 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes }:
               </g>
             )}
           </svg>
+        </div>
+      )}
+      {imageUrl && onRecenter && (
+        <div className="px-3 mb-2">
+          <button type="button" onClick={onRecenter} className="w-full rounded-lg py-2 text-[13px] font-medium"
+            style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+            Recentrer l&apos;œil et ré-analyser
+          </button>
         </div>
       )}
       {imageUrl && (

@@ -4,11 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
-import { sanitizeEyeScan, type EyeScanData, type EyeSignal, type eyeIndexesFrom, type sideIndexesFrom } from "@/app/lib/eye-metrics";
+import { pairFields, sanitizeEyeScan, type EyeScanData, type EyeSignal, type eyeIndexesFrom, type sideIndexesFrom } from "@/app/lib/eye-metrics";
 import { refreshEyeStats } from "@/app/lib/scan-stats";
 
 // Scans de l'oeil : users/${USER}/eyeScans/{id} (mesures + petite photo recadree des yeux)
 const MAX_IMAGE_CHARS = 120_000; // ~90 Ko de JPEG en base64
+
+const jpeg = (v: unknown) => (typeof v === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(v) && v.length <= MAX_IMAGE_CHARS ? v : null);
 
 export type EyeScanEntry = EyeScanData & {
   id: string; time: string;
@@ -45,7 +47,6 @@ export async function POST(req: NextRequest) {
   const date = typeof body?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : null;
   const time = typeof body?.time === "string" && /^\d{2}:\d{2}$/.test(body.time) ? body.time : null;
   const data = sanitizeEyeScan(body?.data);
-  const jpeg = (v: unknown) => (typeof v === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(v) && v.length <= MAX_IMAGE_CHARS ? v : null);
   const image = jpeg(body?.image), imageA = jpeg(body?.imageA), imageB = jpeg(body?.imageB);
   const eyes = [...(imageA ? ["A" as const] : []), ...(imageB ? ["B" as const] : [])];
   if (!date || !time || !data) return NextResponse.json({ error: "Invalid eye scan" }, { status: 400 });
@@ -69,4 +70,30 @@ export async function DELETE(req: NextRequest) {
   await db.collection(COL).doc(id).delete();
   await refreshEyeStats(db, USER).catch((e) => console.error("[eye-scan stats]", e));
   return NextResponse.json({ ok: true });
+}
+
+/** Recentrage apres coup : remplace les mesures d'un oeil (et sa photo recadree) par celles recalculees sur le client. */
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const USER = session.userId;
+  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  const id = body?.id, eye = body?.eye, side = body?.side;
+  if (typeof id !== "string" || !/^[\w-]{1,64}$/.test(id) || (eye !== "A" && eye !== "B") || !side || typeof side !== "object") {
+    return NextResponse.json({ error: "Invalid recenter" }, { status: 400 });
+  }
+  const db = getAdminFirestore();
+  const ref = db.doc(`users/${USER}/eyeScans/${id}`);
+  const snap = await ref.get();
+  if (!snap.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const cur = snap.data() as EyeScanData;
+  const metrics = { ...cur.metrics, [eye]: side } as EyeScanData["metrics"];
+  Object.assign(metrics, pairFields(metrics.A, metrics.B));
+  const data = sanitizeEyeScan({ metrics, plr: cur.plr, conjunctiva: cur.conjunctiva, mbiS: cur.mbiS });
+  if (!data) return NextResponse.json({ error: "Invalid eye scan" }, { status: 400 });
+  const image = jpeg(body?.image);
+  await ref.update({ metrics: data.metrics, ...(image ? { [eye === "A" ? "imageA" : "imageB"]: image } : {}) });
+  await refreshEyeStats(db, USER).catch((e) => console.error("[eye-scan stats]", e));
+  const saved = (await ref.get()).data() as EyeScanEntry;
+  return NextResponse.json({ scan: { id, date: saved.date, time: saved.time, metrics: saved.metrics, plr: saved.plr, conjunctiva: saved.conjunctiva, mbiS: saved.mbiS, eyes: saved.eyes, indexes: saved.indexes, signals: saved.signals, indexesEye: saved.indexesEye } });
 }

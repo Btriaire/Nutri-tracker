@@ -52,6 +52,15 @@ describe("computeEyeMetrics", () => {
     expect(m.B.manualCenter).toBeUndefined();
     expect(Math.abs(m.B.irisCenter!.x - CB.x)).toBeLessThan(2);
   });
+  it("applique le decalage appris (centre decale dans le repere de l'oeil) et le signale", () => {
+    const base = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
+    const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}), learnedOffsets: { A: { dx: 0.05, dy: 0 } } })!;
+    expect(m.A.learnedCenter).toBe(true);
+    expect(m.A.manualCenter).toBeUndefined();
+    expect(m.A.centerShift!.dx).toBeCloseTo(0.05, 2);
+    expect(Math.hypot(m.A.irisCenter!.x - base.A.irisCenter!.x, m.A.irisCenter!.y - base.A.irisCenter!.y)).toBeGreaterThan(2);
+    expect(m.B.learnedCenter).toBeUndefined();
+  });
   it("mesure la pupille en mm avec l'iris comme regle (11,7 mm) malgre le reflet de l'ecran", () => {
     const m = computeEyeMetrics({ landmarks: landmarks(), width: W, height: H, read: eyeImage({}) })!;
     expect(m.A.pupilMm!).toBeCloseTo((2 * 15 * 11.7) / 80, 0);

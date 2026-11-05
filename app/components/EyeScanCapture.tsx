@@ -1,5 +1,6 @@
 "use client";
 
+import type { Shift } from "@/app/lib/eye-learning";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconX, IconLoader2, IconArrowUp } from "@tabler/icons-react";
@@ -45,8 +46,9 @@ const LABEL: Record<EyeSideId, string> = { A: "ŒIL DROIT", B: "ŒIL GAUCHE" };
 const EYE_X: Record<EyeSideId, number> = { A: 31, B: 69 };
 
 /** Scan guide de l'oeil : oeil droit puis gauche (zoom, ouverture, qualite en direct), reflexe pupillaire, conjonctive, secheresse. */
-export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r: EyeCaptureResult) => void; onCancel: () => void; only?: EyeSideId }) {
+export default function EyeScanCapture({ onDone, onCancel, only, learned }: { onDone: (r: EyeCaptureResult) => void; onCancel: () => void; only?: EyeSideId; learned?: Partial<Record<EyeSideId, Shift>> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const learnedRef = useRef(learned);
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState("");
   const [face, setFace] = useState(false);
@@ -202,7 +204,7 @@ export default function EyeScanCapture({ onDone, onCancel, only }: { onDone: (r:
             if (blinkOf(side) < 0.3 && now - lastEval > EVAL_MS) {
               lastEval = now;
               const { reader, crop, cropEye } = read();
-              const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader, manualCenters: manualRef.current });
+              const m = computeEyeMetrics({ landmarks: pts, width: w, height: h, read: reader, manualCenters: manualRef.current, learnedOffsets: learnedRef.current });
               if (m) {
                 const center = m[side].irisCenter ?? { x: pts[IRIS[side]].x * w, y: pts[IRIS[side]].y * h };
                 const cx = center.x, cy = center.y;

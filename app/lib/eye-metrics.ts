@@ -6,6 +6,7 @@
 
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
 import { canthalRollDeg, fitLimbusRays, fitPupilRays } from "./eye-structures";
+import { fromEyeFrame, toEyeFrame, type Shift } from "./eye-learning";
 
 export const EYE_METRICS_VERSION = 1;
 export const HVID_MM = 11.7;
@@ -40,6 +41,8 @@ export interface EyeSide {
   limbusConfidence?: number;     // 0-1 : confiance de l'ajustement du bord de l'iris
   irisRefined?: boolean;         // vrai si le diametre de l'iris a ete affine sur l'image
   manualCenter?: boolean;        // vrai si le centre de l'oeil a ete propose a la main pour ce scan
+  learnedCenter?: boolean;       // vrai si le centre a ete decale par ce qu'ont appris tes corrections precedentes
+  centerShift?: { dx: number; dy: number }; // centre utilise moins centre detecte, dans le repere de l'oeil, en diametres d'iris
 }
 
 export interface EyeMetrics {
@@ -60,7 +63,7 @@ const EYES = {
   A: { iris: 468, ring: [469, 470, 471, 472], inner: 133, outer: 33, upper: 159, lower: 145, under: [111, 117, 118, 119, 120, 121], cheek: 205 },
   B: { iris: 473, ring: [474, 475, 476, 477], inner: 362, outer: 263, upper: 386, lower: 374, under: [340, 346, 347, 348, 349, 350], cheek: 425 },
 } as const;
-const RADIUS_MM = HVID_MM / 2;
+export const RADIUS_MM = HVID_MM / 2;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 const median = (xs: number[]) => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -93,7 +96,7 @@ export function fitIrisCircle(center: Pt, ring: Pt[]): { c: Pt; r: number } {
 }
 
 /** Luminosite mediane sur un cercle, angles de la moitie basse elargie (evite paupiere superieure et cils). */
-function ringL(read: PixelReader, c: Pt, r: number, w: number, h: number): number {
+export function ringL(read: PixelReader, c: Pt, r: number, w: number, h: number): number {
   const vals: number[] = [];
   for (let a = -25; a <= 205; a += 7.5) {
     const t = (a * Math.PI) / 180;
@@ -163,7 +166,7 @@ export function detectPupil(read: PixelReader, irisCenter: Pt, irisR: number, w:
 }
 
 /** Couleur de l'iris : anneau entre la pupille et le bord, reflets (tres clairs) et cils (tres sombres) exclus. */
-function irisColour(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { irisLab: [number, number, number] | null; irisName: string | null } {
+export function irisColour(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { irisLab: [number, number, number] | null; irisName: string | null } {
   const Ls: number[] = [], As: number[] = [], Bs: number[] = [];
   const rMax = R * 0.9;
   for (let dy = -rMax; dy <= rMax; dy += 1) for (let dx = -rMax; dx <= rMax; dx += 1) {
@@ -196,17 +199,20 @@ export function irisDifference(m: EyeMetrics): number | null {
   return round(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), 1);
 }
 
-function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: PixelReader, w: number, h: number, manual?: Pt): EyeSide {
+function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: PixelReader, w: number, h: number, manual?: Pt, learned?: Shift): EyeSide {
   // Ajustement géométrique précis de l'iris et du limbe
   const rawCenter = P[e.iris];
   const ringPts = e.ring.map((idx) => P[idx]);
   const auto = fitIrisCircle(rawCenter, ringPts);
   // Centre propose a la main : on garde le rayon mesure sur les points de repere, le centre est celui choisi
-  const fitted = manual ? { c: manual, r: auto.r } : auto;
+  // Sinon, decalage appris de tes corrections passees (repere de l'oeil -> repere de l'image)
+  const roll = (canthalRollDeg(P[e.inner], P[e.outer]) * Math.PI) / 180;
+  const shifted = !manual && learned ? { c: fromEyeFrame(learned, roll, 2 * auto.r, auto.c), r: auto.r } : null;
+  const fitted = manual ? { c: manual, r: auto.r } : shifted ?? auto;
   // Affinage du bord de l'iris sur l'image (limbe) : melange 50/50 avec les points de repere, seulement si l'ajustement est fiable
   const limbus = fitLimbusRays(read, fitted.c, fitted.r, w, h);
   const useLimbus = !!limbus && limbus.confidence >= 0.5 && Math.abs(limbus.r - fitted.r) / fitted.r < 0.15;
-  const c = useLimbus && !manual ? { x: (fitted.c.x + limbus!.cx) / 2, y: fitted.c.y } : fitted.c;
+  const c = useLimbus && !manual && !shifted ? { x: (fitted.c.x + limbus!.cx) / 2, y: fitted.c.y } : fitted.c;
   const R = useLimbus ? (fitted.r + limbus!.r) / 2 : fitted.r;
   const irisPx = 2 * R;
   const mmPerPx = HVID_MM / Math.max(1, irisPx);
@@ -310,17 +316,19 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     ...(limbus ? { limbusConfidence: round(limbus.confidence, 2) } : {}),
     irisRefined: useLimbus,
     ...(manual ? { manualCenter: true } : {}),
+    ...(shifted ? { learnedCenter: true } : {}),
+    ...(manual || shifted ? { centerShift: toEyeFrame(fitted.c, auto.c, roll, 2 * auto.r) } : {}),
   };
 }
 
 /** manualCenters : centre de l'iris propose a la main (pixels de l'image), prioritaire sur la detection. */
-export interface EyeInput { landmarks: { x: number; y: number }[]; width: number; height: number; read: PixelReader; manualCenters?: Partial<Record<"A" | "B", Pt>> }
+export interface EyeInput { landmarks: { x: number; y: number }[]; width: number; height: number; read: PixelReader; manualCenters?: Partial<Record<"A" | "B", Pt>>; learnedOffsets?: Partial<Record<"A" | "B", Shift>> }
 
 export function computeEyeMetrics(inp: EyeInput): EyeMetrics | null {
   if (inp.landmarks.length < 478) return null;
   const P: Pt[] = inp.landmarks.map((p) => ({ x: p.x * inp.width, y: p.y * inp.height }));
-  const A = measureSide(P, EYES.A, inp.read, inp.width, inp.height, inp.manualCenters?.A);
-  const B = measureSide(P, EYES.B, inp.read, inp.width, inp.height, inp.manualCenters?.B);
+  const A = measureSide(P, EYES.A, inp.read, inp.width, inp.height, inp.manualCenters?.A, inp.learnedOffsets?.A);
+  const B = measureSide(P, EYES.B, inp.read, inp.width, inp.height, inp.manualCenters?.B, inp.learnedOffsets?.B);
   // Inclinaison de la tete : moyenne des deux axes de coins (en degres)
   const rollDeg = round((canthalRollDeg(P[EYES.A.inner], P[EYES.A.outer]) + canthalRollDeg(P[EYES.B.inner], P[EYES.B.outer])) / 2, 1);
   const warnings: string[] = [];
