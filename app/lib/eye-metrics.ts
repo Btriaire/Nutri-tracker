@@ -5,7 +5,7 @@
 // "A" = oeil droit de la personne (a gauche sur l'image non miroir), "B" = oeil gauche.
 
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
-import { canthalRollDeg, fitLimbusRays, fitPupilRays } from "./eye-structures";
+import { canthalRollDeg, fitLidMargins, fitLimbusRays, fitPupilRays } from "./eye-structures";
 import { fromEyeFrame, toEyeFrame, type Shift } from "./eye-learning";
 
 export const EYE_METRICS_VERSION = 1;
@@ -39,6 +39,7 @@ export interface EyeSide {
   pupilConfidence?: number;      // 0-1 : confiance de la mesure de la pupille par rayons
   pupilDecentrationMm?: number;  // ecart entre le centre de la pupille et celui de l'iris
   limbusConfidence?: number;     // 0-1 : confiance de l'ajustement du bord de l'iris
+  lidRefined?: boolean;          // vrai si les bords des paupieres ont ete confirmes par la mesure sur l'image
   irisRefined?: boolean;         // vrai si le diametre de l'iris a ete affine sur l'image
   manualCenter?: boolean;        // vrai si le centre de l'oeil a ete propose a la main pour ce scan
   learnedCenter?: boolean;       // vrai si le centre a ete decale par ce qu'ont appris tes corrections precedentes
@@ -223,8 +224,13 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   let ux = -ay / n, uy = ax / n;
   if (uy > 0) { ux = -ux; uy = -uy; }                         // "haut" = y image decroissant
   const up = (p: Pt) => (p.x - c.x) * ux + (p.y - c.y) * uy;
-  const mrd1Mm = Math.max(0, up(P[e.upper])) * mmPerPx;
-  const mrd2Mm = Math.max(0, -up(P[e.lower])) * mmPerPx;
+  // Bords des paupieres : points de repere, confirmes par la mesure sur l'image quand les deux s'accordent (30 % du rayon)
+  const lids = fitLidMargins(read, c, R, roll, w, h);
+  const agree = (lm: number, img: number | null) => (img !== null && Math.abs(img - lm) <= 0.3 * R ? (lm + img) / 2 : lm);
+  const upPx = Math.max(0, up(P[e.upper])), lowPx = Math.max(0, -up(P[e.lower]));
+  const mrd1Mm = agree(upPx, lids.upperPx) * mmPerPx;
+  const mrd2Mm = agree(lowPx, lids.lowerPx) * mmPerPx;
+  const lidRefined = (lids.upperPx !== null && agree(upPx, lids.upperPx) !== upPx) || (lids.lowerPx !== null && agree(lowPx, lids.lowerPx) !== lowPx);
 
   const pupilOld = detectPupil(read, c, R, w, h);
   // Pupille par rayons (bord sombre->clair sur 48 directions, cercle robuste) ; repli sur l'ancienne methode si peu fiable
@@ -315,6 +321,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
     } : {}),
     ...(limbus ? { limbusConfidence: round(limbus.confidence, 2) } : {}),
     irisRefined: useLimbus,
+    ...(lidRefined ? { lidRefined } : {}),
     ...(manual ? { manualCenter: true } : {}),
     ...(shifted ? { learnedCenter: true } : {}),
     ...(manual || shifted ? { centerShift: toEyeFrame(fitted.c, auto.c, roll, 2 * auto.r) } : {}),

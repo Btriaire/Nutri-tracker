@@ -92,3 +92,29 @@ describe("canthalRollDeg", () => {
     expect(canthalRollDeg({ x: 100, y: 0 }, { x: 0, y: 10 })).toBeCloseTo(-5.71, 1);
   });
 });
+
+import { fitLidMargins } from "../app/lib/eye-structures";
+
+describe("fitLidMargins", () => {
+  // paupieres : peau au-dessus de y=100-up et en dessous de y=100+low, entre les deux iris et blanc
+  const eye = (up: number, low: number, noise = true): PixelReader => {
+    const base = makeEye({ noise });
+    return (x, y) => (y < 100 - up || y > 100 + low ? [200, 150, 130] : base(x, y));
+  };
+  it("mesure les deux bords sur l'image", () => {
+    const f = fitLidMargins(eye(30, 28), { x: 100, y: 100 }, R, 0, 200, 200);
+    expect(Math.abs(f.upperPx! - 30)).toBeLessThan(2);
+    expect(Math.abs(f.lowerPx! - 28)).toBeLessThan(2);
+    expect(f.confidence).toBe(1);
+  });
+  it("suit une tete inclinee", () => {
+    const roll = (10 * Math.PI) / 180, base = eye(30, 28);
+    const rot: PixelReader = (x, y) => { const dx = x - 100, dy = y - 100; return base(100 + dx * Math.cos(roll) + dy * Math.sin(roll), 100 - dx * Math.sin(roll) + dy * Math.cos(roll)); };
+    const f = fitLidMargins(rot, { x: 100, y: 100 }, R, roll, 200, 200);
+    expect(Math.abs(f.upperPx! - 30)).toBeLessThan(3);
+  });
+  it("ne renvoie rien sans paupiere visible", () => {
+    const f = fitLidMargins(makeEye({ noise: true }), { x: 100, y: 100 }, R, 0, 200, 200);
+    expect(f.confidence).toBeLessThan(1);
+  });
+});

@@ -168,3 +168,54 @@ export function canthalRollDeg(inner: Pt, outer: Pt): number {
   if (a < -90) a += 180;
   return a;
 }
+
+export interface LidFit { upperPx: number | null; lowerPx: number | null; confidence: number }
+
+const labDist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+/** Rayon du plus fort saut de couleur (iris ou blanc de l'oeil -> peau) le long d'une direction ; null si trop faible. */
+function colourStep(read: PixelReader, c0: Pt, d: Pt, rMin: number, rMax: number, w: number, h: number): number | null {
+  const radii: number[] = [], lab: number[][] = [];
+  for (let r = rMin; r <= rMax; r += 1) {
+    const x = Math.round(c0.x + r * d.x), y = Math.round(c0.y + r * d.y);
+    if (x < 0 || y < 0 || x >= w || y >= h) break;
+    const [L, a, b] = rgbToLab(read(x, y));
+    radii.push(r); lab.push([Math.min(85, L), a, b]);
+  }
+  if (lab.length < 12) return null;
+  const mean3 = (i: number, dir: 1 | -1) => [0, 1, 2].map((k) => (lab[i][k] + lab[i + dir][k] + lab[i + 2 * dir][k]) / 3);
+  let best = 0, bestR: number | null = null;
+  for (let i = 2; i < lab.length - 3; i++) {
+    const after = mean3(i + 1, 1);
+    const far = [lab[i + 2], lab[i + 3]];
+    if (Math.hypot(after[1], after[2]) < 12 || far.some((v) => Math.hypot(v[1], v[2]) < 12)) continue; // au-dela du saut il faut de la peau (saturee), pas le blanc de l'oeil
+    const s = labDist(after, mean3(i, -1));
+    if (s > best) { best = s; bestR = radii[i]; }
+  }
+  return best >= 9 ? bestR : null;
+}
+
+/**
+ * Bords des paupieres mesures sur l'image : 9 rayons verticaux (dans le repere de l'oeil, `rollRad` = inclinaison)
+ * de part et d'autre du centre, mediane des sauts de couleur. Distances au centre, en pixels.
+ */
+export function fitLidMargins(read: PixelReader, c: Pt, irisR: number, rollRad: number, w: number, h: number): LidFit {
+  const ax = { x: Math.cos(rollRad), y: Math.sin(rollRad) }, up = { x: Math.sin(rollRad), y: -Math.cos(rollRad) };
+  const side = (sign: 1 | -1) => {
+    const rs: number[] = [];
+    for (let k = -4; k <= 4; k++) {
+      const o = k * 0.15 * irisR;
+      const from = { x: c.x + ax.x * o, y: c.y + ax.y * o };
+      const d = { x: up.x * sign, y: up.y * sign };
+      const r = colourStep(read, from, d, 0.35 * irisR, 1.6 * irisR, w, h);
+      if (r !== null) rs.push(r);
+    }
+    if (rs.length < 5) return { px: null, spread: 1 };
+    const m = median(rs);
+    return { px: m, spread: median(rs.map((r) => Math.abs(r - m))) / irisR };
+  };
+  const u = side(1), l = side(-1);
+  const ok = (s: { px: number | null; spread: number }) => (s.px !== null && s.spread < 0.12 ? s.px : null);
+  const upperPx = ok(u), lowerPx = ok(l);
+  return { upperPx, lowerPx, confidence: ((upperPx !== null ? 1 : 0) + (lowerPx !== null ? 1 : 0)) / 2 };
+}
