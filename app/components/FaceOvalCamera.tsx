@@ -3,12 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
+import { getVideoLandmarker } from "@/app/lib/face-landmarker";
+import { acquisitionStats } from "@/app/lib/eye-metrics";
+import { BestShot, faceAcquisition, facePose } from "@/app/lib/face-acquisition";
 
 interface Props {
   onCapture: (file: File) => void;
   onCancel: () => void;
   onError: (message: string) => void;
 }
+
+const THRESHOLD = 70;
+const SHOTS = 5;
+const EVAL_MS = 200;
 
 /**
  * Full-screen selfie-camera capture with an oval alignment guide overlay.
@@ -20,6 +27,31 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   const streamRef = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [guided, setGuided] = useState(true);
+  const [score, setScore] = useState(0);
+  const [issue, setIssue] = useState<string | null>(null);
+  const [shots, setShots] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const prevRef = useRef<{ cx: number; cy: number } | null>(null);
+  const shotsRef = useRef(new BestShot<Blob>(THRESHOLD));
+  const busyRef = useRef(false);
+  const finishRef = useRef(false);
+  const loopRef = useRef<number | null>(null);
+
+  const stopAndClose = (after?: () => void) => {
+    if (loopRef.current) {
+      cancelAnimationFrame(loopRef.current);
+    }
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    after?.();
+  };
+
+  const finish = (blob: Blob) => {
+    if (finishRef.current) return;
+    finishRef.current = true;
+    stopAndClose(() => onCapture(new File([blob], "face.jpg", { type: "image/jpeg" })));
+  };
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
@@ -40,8 +72,111 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
+          setReady(true);
+
+          try {
+            const lm = await getVideoLandmarker();
+            const canvas = document.createElement("canvas");
+            canvasRef.current = canvas;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            if (!ctx) return;
+
+            let lastEval = 0;
+            const loop = (timestamp: number) => {
+              if (finishRef.current || cancelled) {
+                if (loopRef.current) {
+                  cancelAnimationFrame(loopRef.current);
+                }
+                return;
+              }
+
+              if (timestamp - lastEval < EVAL_MS) {
+                loopRef.current = requestAnimationFrame(loop);
+                return;
+              }
+              lastEval = timestamp;
+
+              const video = videoRef.current;
+              if (!video || !video.videoWidth) {
+                loopRef.current = requestAnimationFrame(loop);
+                return;
+              }
+
+              if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+              }
+              ctx.drawImage(video, 0, 0);
+
+              const pts = lm.detectForVideo(video, performance.now()).faceLandmarks?.[0];
+              if (!pts) {
+                setIssue("Place ton visage dans l'ovale");
+                setScore(0);
+                shotsRef.current.reset();
+                setShots(0);
+                prevRef.current = null;
+                loopRef.current = requestAnimationFrame(loop);
+                return;
+              }
+
+              const pose = facePose(pts);
+              const motion = prevRef.current ? Math.hypot(pose.cx - prevRef.current.cx, pose.cy - prevRef.current.cy) : 0;
+              prevRef.current = { cx: pose.cx, cy: pose.cy };
+
+              const w = canvas.width;
+              const h = canvas.height;
+              const cx = pose.cx * w;
+              const cy = pose.cy * h;
+              const half = 0.25 * pose.widthRatio * w;
+
+              const x0 = Math.max(0, Math.floor(cx - half));
+              const y0 = Math.max(0, Math.floor(cy - half));
+              const x1 = Math.min(w, Math.ceil(cx + half));
+              const y1 = Math.min(h, Math.ceil(cy + half));
+
+              if (x1 <= x0 || y1 <= y0) {
+                loopRef.current = requestAnimationFrame(loop);
+                return;
+              }
+
+              const imageData = ctx.getImageData(x0, y0, x1 - x0, y1 - y0);
+
+              const read = (x: number, y: number): [number, number, number] => {
+                const ix = Math.max(0, Math.min(imageData.width - 1, Math.round(x) - x0));
+                const iy = Math.max(0, Math.min(imageData.height - 1, Math.round(y) - y0));
+                const index = (iy * imageData.width + ix) * 4;
+                return [
+                  imageData.data[index],
+                  imageData.data[index + 1],
+                  imageData.data[index + 2]
+                ];
+              };
+
+              const stats = acquisitionStats(read, cx, cy, half / 1.5);
+              const a = faceAcquisition({ ...pose, motion, ...stats });
+
+              setScore(a.score);
+              setIssue(a.issue);
+
+              if (a.issue === null && a.score >= THRESHOLD) {
+                if (!busyRef.current) {
+                  busyRef.current = true;
+                  canvas.toBlob(blob => {
+                    if (blob) { shotsRef.current.offer(a.score, blob); setShots(shotsRef.current.count); if (shotsRef.current.count >= SHOTS && shotsRef.current.best) finish(shotsRef.current.best); }
+                    busyRef.current = false;
+                  }, "image/jpeg", 0.9);
+                }
+              }
+
+              loopRef.current = requestAnimationFrame(loop);
+            };
+
+            loopRef.current = requestAnimationFrame(loop);
+          } catch (e) {
+            console.warn("Landmarker failed:", e);
+            setGuided(false);
+          }
         }
-        setReady(true);
       } catch (e) {
         console.warn("Camera access failed:", e);
         onError("Accès caméra refusé ou indisponible — utilise la galerie à la place.");
@@ -50,19 +185,21 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
 
     return () => {
       cancelled = true;
+      if (loopRef.current) {
+        cancelAnimationFrame(loopRef.current);
+      }
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stopAndClose = (after?: () => void) => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    after?.();
-  };
-
   const handleCapture = () => {
+    if (shotsRef.current.best) {
+      finish(shotsRef.current.best);
+      return;
+    }
+
     const video = videoRef.current;
     if (!video || !video.videoWidth) return;
     const canvas = document.createElement("canvas");
@@ -97,7 +234,6 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
         style={{ transform: "scaleX(-1)" }}
       />
 
-      {/* Oval alignment guide */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 130" preserveAspectRatio="xMidYMid slice">
         <defs>
           <mask id="oval-mask">
@@ -106,15 +242,25 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
           </mask>
         </defs>
         <rect x="0" y="0" width="100" height="130" fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
-        <ellipse cx="50" cy="55" rx="27" ry="37" fill="none" stroke="var(--fiber)" strokeWidth="0.6" strokeDasharray="2.5 2" opacity="0.9" />
+        <ellipse cx="50" cy="55" rx="27" ry="37" fill="none" stroke={score >= THRESHOLD && issue === null ? "var(--ok)" : "var(--fiber)"} strokeWidth="0.6" strokeDasharray="2.5 2" opacity="0.9" />
       </svg>
 
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-4" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
-        <p className="text-white text-[13px] font-medium">Centre ton visage dans l&apos;ovale</p>
+        <p className="text-white text-[13px] font-medium">
+          {guided && issue ? issue : shots > 0 ? "Ne bouge plus" : "Centre ton visage dans l'ovale"}
+        </p>
         <button onClick={() => stopAndClose(onCancel)} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
           <IconX size={18} color="white" />
         </button>
       </div>
+
+      {guided && (
+        <div className="absolute top-12 inset-x-0 flex justify-center" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
+          <p className="text-white text-[13px] font-medium px-4 py-2 rounded-full" style={{ background: "rgba(0,0,0,0.55)" }} aria-live="polite">
+            Qualité {score}/100{shots > 0 ? ` · photo ${shots}/${SHOTS}` : ""}
+          </p>
+        </div>
+      )}
 
       <div className="absolute inset-x-0 flex justify-center" style={{ bottom: "calc(env(safe-area-inset-bottom) + 32px)" }}>
         <button

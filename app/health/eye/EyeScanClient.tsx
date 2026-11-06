@@ -153,10 +153,29 @@ export default function EyeScanClient() {
         g.drawImage(bmp, CROP / 2 - r.center.x * k, CROP / 2 - r.center.y * k, CROP * k, CROP * k);
         const res = await fetch("/api/eye-scan", {
           method: "PATCH", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: sc.id, eye, side: r.side, image: cv.toDataURL("image/jpeg", 0.85), defer: true }),
+          body: JSON.stringify({ id: sc.id, eye, side: r.side, image: cv.toDataURL("image/jpeg", 0.85), defer: true, backup: true }),
         });
         if (!res.ok) throw new Error("save");
       } catch { failed++; }
+      done++;
+      setRequant({ done, total, failed });
+    }
+    await fetch("/api/eye-scan", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).catch(() => null);
+    const fresh = await fetch("/api/eye-scan", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) as { scans?: EyeScanEntry[] } | null;
+    if (fresh?.scans) setScans(fresh.scans);
+    setPhotoRev((v) => v + 1);
+  };
+
+  // Annulation : retour aux mesures et photos d'origine pour tout ce qui a ete re-quantifie
+  const requantified = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.metrics[e].requantV === REQUANT_VERSION).map((eye) => ({ sc, eye })));
+  const undoRequant = async () => {
+    if (!confirm("Revenir aux mesures et photos d'origine de ces scans ?")) return;
+    const total = requantified.length;
+    let done = 0, failed = 0;
+    setRequant({ done, total, failed });
+    for (const { sc, eye } of requantified) {
+      const res = await fetch("/api/eye-scan", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: sc.id, eye, restore: true, defer: true }) }).catch(() => null);
+      if (!res?.ok) failed++;
       done++;
       setRequant({ done, total, failed });
     }
@@ -292,13 +311,20 @@ export default function EyeScanClient() {
               <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
                 Chaque œil est isolé et mesuré séparément ; les traits montrent ce qui a été mesuré sur la photo.
               </p>
-              {(pendingRequant.length > 0 || requant) && (
+              {(pendingRequant.length > 0 || requantified.length > 0 || requant) && (
                 <div className="mb-3">
                   <button type="button" onClick={runRequant} disabled={!!requant && requant.done < requant.total || pendingRequant.length === 0}
                     className="w-full rounded-lg py-2 text-[13px] font-medium disabled:opacity-60"
                     style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
                     {pendingRequant.length > 0 ? `Re-quantifier les anciens scans (${pendingRequant.length} photos)` : "Re-quantification à jour"}
                   </button>
+                  {requantified.length > 0 && (
+                    <button type="button" onClick={undoRequant} disabled={!!requant && requant.done < requant.total}
+                      className="w-full rounded-lg py-2 mt-2 text-[13px] font-medium disabled:opacity-60"
+                      style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)" }}>
+                      Annuler la re-quantification ({requantified.length} photos)
+                    </button>
+                  )}
                   {requant && (
                     <p role="status" className="text-[12px] mt-1" style={{ color: "var(--text-secondary)" }}>
                       {requant.done} / {requant.total} photos{requant.failed > 0 ? `, ${requant.failed} en échec` : ""}

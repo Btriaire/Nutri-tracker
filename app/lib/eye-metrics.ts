@@ -225,7 +225,7 @@ function measureSide(P: Pt[], e: (typeof EYES)["A"] | (typeof EYES)["B"], read: 
   const lids0 = fitLidMargins(read, fitted.c, fitted.r, roll, w, h);
   const limbus = fitIrisEdge(read, fitted.c, fitted.r, lids0, roll, w, h) ?? fitLimbusRays(read, fitted.c, fitted.r, w, h);
   const useLimbus = !!limbus && limbus.confidence >= 0.5 && Math.abs(limbus.r - fitted.r) / fitted.r < 0.15;
-  const c = useLimbus && !manual && !shifted ? { x: (fitted.c.x + limbus!.cx) / 2, y: fitted.c.y } : fitted.c;
+  const c = useLimbus && !manual && !shifted ? { x: (fitted.c.x + limbus!.cx) / 2, y: (fitted.c.y + limbus!.cy) / 2 } : fitted.c;
   const R = useLimbus ? (fitted.r + limbus!.r) / 2 : fitted.r;
   const irisPx = 2 * R;
   const mmPerPx = HVID_MM / Math.max(1, irisPx);

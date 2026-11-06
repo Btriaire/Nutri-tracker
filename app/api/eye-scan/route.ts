@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getSession } from "@/app/lib/session";
 import { getAdminFirestore } from "@/app/lib/firebase-admin";
 import { pairFields, sanitizeEyeScan, type EyeScanData, type EyeSignal, type eyeIndexesFrom, type sideIndexesFrom } from "@/app/lib/eye-metrics";
@@ -83,8 +83,9 @@ export async function PATCH(req: NextRequest) {
     await refreshEyeStats(getAdminFirestore(), USER);
     return NextResponse.json({ ok: true });
   }
-  const id = body?.id, eye = body?.eye, side = body?.side;
-  if (typeof id !== "string" || !/^[\w-]{1,64}$/.test(id) || (eye !== "A" && eye !== "B") || !side || typeof side !== "object") {
+  const id = body?.id, eye = body?.eye, restore = body?.restore === true;
+  let side = body?.side;
+  if (typeof id !== "string" || !/^[\w-]{1,64}$/.test(id) || (eye !== "A" && eye !== "B") || (!restore && (!side || typeof side !== "object"))) {
     return NextResponse.json({ error: "Invalid recenter" }, { status: 400 });
   }
   const db = getAdminFirestore();
@@ -92,12 +93,22 @@ export async function PATCH(req: NextRequest) {
   const snap = await ref.get();
   if (!snap.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const cur = snap.data() as EyeScanData;
+  // Annulation : on remet les mesures et la photo d'origine, puis la sauvegarde est retiree
+  const saved0 = restore ? snap.get(`requantBackup.${eye}`) as { side: unknown; image: string | null } | undefined : undefined;
+  if (restore) {
+    if (!saved0) return NextResponse.json({ error: "No backup" }, { status: 404 });
+    side = saved0.side;
+  }
   const metrics = { ...cur.metrics, [eye]: side } as EyeScanData["metrics"];
   Object.assign(metrics, pairFields(metrics.A, metrics.B));
   const data = sanitizeEyeScan({ metrics, plr: cur.plr, conjunctiva: cur.conjunctiva, mbiS: cur.mbiS });
   if (!data) return NextResponse.json({ error: "Invalid eye scan" }, { status: 400 });
-  const image = jpeg(body?.image);
-  await ref.update({ metrics: data.metrics, ...(image ? { [eye === "A" ? "imageA" : "imageB"]: image } : {}) });
+  const image = restore ? saved0?.image ?? null : jpeg(body?.image);
+  const imgField = eye === "A" ? "imageA" : "imageB";
+  // Sauvegarde de l'etat d'origine, une seule fois, avant la premiere re-quantification
+  const backup = body?.backup === true && !snap.get(`requantBackup.${eye}`)
+    ? { [`requantBackup.${eye}`]: { side: cur.metrics[eye], image: snap.get(imgField) ?? null } } : {};
+  await ref.update({ metrics: data.metrics, ...(image ? { [imgField]: image } : {}), ...backup, ...(restore ? { [`requantBackup.${eye}`]: FieldValue.delete() } : {}) });
   if (body?.defer !== true) await refreshEyeStats(db, USER).catch((e) => console.error("[eye-scan stats]", e));
   const saved = (await ref.get()).data() as EyeScanEntry;
   return NextResponse.json({ scan: { id, date: saved.date, time: saved.time, metrics: saved.metrics, plr: saved.plr, conjunctiva: saved.conjunctiva, mbiS: saved.mbiS, eyes: saved.eyes, indexes: saved.indexes, signals: saved.signals, indexesEye: saved.indexesEye } });
