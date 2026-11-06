@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { irisTexture, unwrapIris, fiberLabel } from "../app/lib/eye-iris-texture";
+import { irisTexture, unwrapIris, fiberLabel, textureStability, textureMaps } from "../app/lib/eye-iris-texture";
 
 type RGB = [number, number, number];
 const W = 320, H = 320, C = { x: 160, y: 160 }, R = 53, PUPIL = 16;
@@ -71,5 +71,36 @@ describe("irisTexture", () => {
 
   it("null si l'anneau est illisible (tout surexpose)", () => {
     expect(irisTexture(() => [255, 255, 255], C, R, PUPIL, W, H)).toBeNull();
+  });
+});
+
+describe("textureStability", () => {
+  const t = (relief: number, cryptPct: number, grade: "dense" | "intermediaire" | "lache", confidence = 0.8) =>
+    ({ relief, radialRatio: 0.5, cryptCount: 3, cryptPct, collaretteRatio: 0.5, grade, confidence });
+  it("mediane, ecart et accord de classe ; scans peu fiables ignores", () => {
+    const s = textureStability([t(5, 2, "intermediaire"), t(6, 3, "intermediaire"), t(5.5, 2.5, "intermediaire"), t(20, 30, "lache", 0.1), null, undefined])!;
+    expect(s.n).toBe(3);
+    expect(s.relief.median).toBe(5.5);
+    expect(s.relief.spread).toBe(0.5);
+    expect(s.agreement).toBe(1);
+  });
+  it("null avec moins de deux scans exploitables", () => {
+    expect(textureStability([t(5, 2, "dense")])).toBeNull();
+  });
+});
+
+describe("textureMaps", () => {
+  it("masque des cryptes aligne sur la grille", () => {
+    const m = textureMaps(img(() => 0), C, R, PUPIL, W, H)!;
+    expect(m.crypt.length).toBe(m.detail.length);
+    expect(m.crypt[0].length).toBe(m.detail[0].length);
+    expect(m.crypt.flat().some(Boolean)).toBe(false);
+  });
+});
+
+describe("cryptes vs sillons", () => {
+  it("un saut de luminosite en anneau (collerette) n'est pas compte comme crypte", () => {
+    const t = irisTexture(img((r, a) => (r < 28 ? 15 : 0) + 14 * Math.sin(a * 40)), C, R, PUPIL, W, H)!;
+    expect(t.cryptCount).toBe(0);
   });
 });

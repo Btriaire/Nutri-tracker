@@ -72,42 +72,68 @@ function localMean(g: number[][], k: number): number[][] {
   }));
 }
 
-/** Taches connexes (4-voisins) d'au moins `minSize` cases. */
-function blobs(mask: boolean[][], minSize: number): { count: number; cells: number } {
+/**
+ * Taches connexes (4-voisins) d'au moins `minSize` cases et d'au moins 2 cases dans chaque direction :
+ * une ligne fine le long d'un anneau (bord de la collerette, sillon) n'est pas une crypte.
+ * Renvoie le masque ne gardant que ces taches.
+ */
+function blobs(mask: boolean[][], minSize: number): { count: number; cells: number; kept: boolean[][] } {
   const nR = mask.length, nA = mask[0].length;
   const seen = mask.map((r) => r.map(() => false));
+  const kept = mask.map((r) => r.map(() => false));
   let count = 0, cells = 0;
   for (let i = 0; i < nR; i++) for (let j = 0; j < nA; j++) {
     if (!mask[i][j] || seen[i][j]) continue;
-    let size = 0;
+    const members: [number, number][] = [];
     const stack: [number, number][] = [[i, j]];
     seen[i][j] = true;
+    let i0 = i, i1 = i, j0 = j, j1 = j;
     while (stack.length) {
       const [a, b] = stack.pop()!;
-      size++;
+      members.push([a, b]);
+      i0 = Math.min(i0, a); i1 = Math.max(i1, a); j0 = Math.min(j0, b); j1 = Math.max(j1, b);
       for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
         const x = a + da, y = b + db;
         if (x >= 0 && y >= 0 && x < nR && y < nA && mask[x][y] && !seen[x][y]) { seen[x][y] = true; stack.push([x, y]); }
       }
     }
-    if (size >= minSize) { count++; cells += size; }
+    if (members.length >= minSize && i1 > i0 && j1 > j0) {
+      count++; cells += members.length;
+      for (const [a, b] of members) kept[a][b] = true;
+    }
   }
-  return { count, cells };
+  return { count, cells, kept };
 }
 
-export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): IrisTexture | null {
+/** Cartes de la bande deroulee : L* brut, detail (eclairage retire) et masque des cryptes. */
+export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { grid: number[][]; detail: number[][]; crypt: boolean[][]; cryptCount: number; cryptCells: number; r0: number; r1: number; valid: number } | null {
   const u = unwrapIris(read, c, R, pupilR, w, h);
   if (!u) return null;
   const { grid, r0, r1 } = u;
-  const nR = grid.length, nA = grid[0].length;
-  const total = nR * nA;
+  const total = grid.length * grid[0].length;
   const valid = grid.flat().filter(Number.isFinite).length;
   if (valid < Math.max(60, total * 0.4)) return null;
-
   // Eclairage retire : detail = L* - moyenne locale sur ~1/6 de la largeur de l'anneau
-  const k = Math.max(2, Math.round(nR / 6));
+  const k = Math.max(2, Math.round(grid.length / 6));
   const lm = localMean(grid, k);
   const detail = grid.map((row, i) => row.map((v, j) => (Number.isFinite(v) && Number.isFinite(lm[i][j]) ? v - lm[i][j] : NaN)));
+  // Une crypte est un creux : plus sombre que l'iris un peu plus haut ET un peu plus bas sur le rayon.
+  // Le cote sombre d'un saut de luminosite (collerette, bord d'un anneau) ne l'est que d'un cote : ecarte.
+  const d = Math.max(3, Math.round(grid.length / 4));
+  const below = (i: number, j: number, v: number) => { const u = grid[i]?.[j]; return u === undefined || !Number.isFinite(u) || u >= v + CRYPT_DL / 2; };
+  const dark = detail.map((row, i) => row.map((v, j) => Number.isFinite(v) && v < -CRYPT_DL
+    && below(i - d, j, grid[i][j]) && below(i + d, j, grid[i][j])
+    && (Number.isFinite(grid[i - d]?.[j]) || Number.isFinite(grid[i + d]?.[j]))));
+  const { count, cells, kept: crypt } = blobs(dark, Math.max(3, Math.round(total * 0.001)));
+  return { grid, detail, crypt, cryptCount: count, cryptCells: cells, r0, r1, valid };
+}
+
+export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): IrisTexture | null {
+  const maps = textureMaps(read, c, R, pupilR, w, h);
+  if (!maps) return null;
+  const { grid, detail, cryptCount, cryptCells: cells, r0, r1, valid } = maps;
+  const nR = grid.length, nA = grid[0].length;
+  const total = nR * nA;
   const flat = detail.flat().filter(Number.isFinite);
   const med = median(flat);
   const relief = 1.4826 * median(flat.map((v) => Math.abs(v - med)));
@@ -122,9 +148,7 @@ export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number,
   const mA = na ? ga / na : 0, mR = nr ? gr / nr : 0;
   const radialRatio = mA + mR > 0 ? mA / (mA + mR) : 0.5;
 
-  // Cryptes : taches sombres d'au moins ~0,1 % de l'anneau (3 cases minimum)
-  const mask = detail.map((row) => row.map((v) => Number.isFinite(v) && v < -CRYPT_DL));
-  const { count: cryptCount, cells } = blobs(mask, Math.max(3, Math.round(total * 0.001)));
+  // Cryptes : taches sombres d'au moins ~0,1 % de l'anneau (3 cases minimum), comptees dans textureMaps
   const cryptPct = (100 * cells) / Math.max(1, valid);
 
   // Collerette : plus fort saut de la luminosite moyenne par anneau, entre 15 % et 70 % de la largeur
@@ -163,4 +187,23 @@ export function fiberLabel(radialRatio: number): string {
   if (radialRatio >= 0.58) return "stries radiaires dominantes";
   if (radialRatio <= 0.42) return "anneaux / sillons dominants";
   return "mixte";
+}
+
+/**
+ * Stabilite de la texture sur les scans : la texture d'un iris adulte ne change pas, donc l'ecart entre scans
+ * mesure surtout la reproductibilite de la photo. `spread` = ecart median absolu a la mediane.
+ */
+export function textureStability(history: (IrisTexture | null | undefined)[]): { n: number; relief: { median: number; spread: number }; cryptPct: { median: number; spread: number }; radialRatio: { median: number; spread: number }; agreement: number } | null {
+  const xs = history.filter((t): t is IrisTexture => !!t && t.confidence >= 0.3);
+  if (xs.length < 2) return null;
+  const stat = (vals: number[]) => { const m = median(vals); return { median: round(m, 2), spread: round(median(vals.map((v) => Math.abs(v - m))), 2) }; };
+  const grades = xs.map((t) => t.grade);
+  const mode = (["dense", "intermediaire", "lache"] as const).reduce((a, g) => (grades.filter((x) => x === g).length > grades.filter((x) => x === a).length ? g : a), "dense" as IrisTexture["grade"]);
+  return {
+    n: xs.length,
+    relief: stat(xs.map((t) => t.relief)),
+    cryptPct: stat(xs.map((t) => t.cryptPct)),
+    radialRatio: stat(xs.map((t) => t.radialRatio)),
+    agreement: round(grades.filter((g) => g === mode).length / xs.length, 2),
+  };
 }

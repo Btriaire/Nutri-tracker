@@ -335,9 +335,11 @@ export default function EyeScanClient() {
               )}
               <div className="space-y-3">
                 <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("A"); }}
-                  indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")} />
+                  indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")}
+                  textureHistory={history.filter((sc) => sc.eyes?.includes("A")).map((sc) => sc.metrics.A.irisTexture)} />
                 <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("B"); }}
-                  indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")} />
+                  indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")}
+                  textureHistory={history.filter((sc) => sc.eyes?.includes("B")).map((sc) => sc.metrics.B.irisTexture)} />
               </div>
             </section>
 
