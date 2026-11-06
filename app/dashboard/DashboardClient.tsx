@@ -725,6 +725,16 @@ export default function DashboardClient({
           </AnimatePresence>
         </motion.div>
 
+        {/* ── Hydratation ── */}
+        <motion.div {...fade(0.06)} className="mb-4">
+          <WaterTracker
+            date={date}
+            waterMl={waterMl}
+            goalMl={goals.waterMl ?? 2000}
+            onUpdate={setWaterMl}
+          />
+        </motion.div>
+
         {/* ── Bilan du jour ── */}
         <motion.div {...fade(0.08)} className="mb-4 rounded-2xl p-4 overflow-hidden"
           style={{
@@ -1109,16 +1119,6 @@ export default function DashboardClient({
             </>
           )}
         </AnimatePresence>
-
-        {/* Water tracker */}
-        <motion.div {...fade(0.19)} className="mb-4">
-          <WaterTracker
-            date={date}
-            waterMl={waterMl}
-            goalMl={goals.waterMl ?? 2000}
-            onUpdate={setWaterMl}
-          />
-        </motion.div>
 
         {/* Streak & régularité */}
         <motion.div {...fade(0.21)} className="mb-4">

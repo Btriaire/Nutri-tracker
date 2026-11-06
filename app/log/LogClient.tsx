@@ -6,7 +6,6 @@ import { mealGlucoseResponses, mealAnchors, DEFAULT_GLUCOSE_TARGET, type MealAnc
 import MealTimeSheet from "@/app/components/MealTimeSheet";
 import OfflineMealCapture from "@/app/components/OfflineMealCapture";
 import { SYNCED_EVENT } from "@/app/lib/offline-meals";
-import QuickAddChips from "@/app/components/QuickAddChips";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -939,6 +938,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             <div className="absolute inset-0 z-10" style={{ pointerEvents: "auto", cursor: "default" }} />
           )}
 
+          {/* Hydratation : en tête du journal, action rapide la plus fréquente. */}
+          <div className="mb-5">
+            <WaterTracker
+              date={date}
+              waterMl={waterMl}
+              goalMl={goals.waterMl ?? 2000}
+              onUpdate={setWaterMl}
+            />
+          </div>
+
           {/* Complements : en haut du journal, a plat (sans carte), juste avant les repas. */}
           <SupplementLogger date={date} onIntakeLogged={fetchMicronutrients} />
 
@@ -992,10 +1001,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
             onClose={() => setMealTimeSheet(null)}
           />
 
-          {/* Suivis complémentaires — eau, suppléments, micronutriments, alcool.
+          {/* Suivis complémentaires — micronutriments, alcool.
               Regroupés et repliés par défaut : ce sont des compléments au journal
               de repas, pas l'action principale de cette page. */}
-          <QuickAddChips date={date} waterMl={waterMl} goalMl={goals.waterMl ?? 2000} onWaterUpdate={setWaterMl} />
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1013,7 +1021,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                 <div className="text-left">
                   <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>Suivis complémentaires</p>
                   <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                    Eau, micronutriments{goals.alcoholTracking ? ", alcool" : ""}
+                    Micronutriments{goals.alcoholTracking ? ", alcool" : ""}
                   </p>
                 </div>
               </div>
@@ -1031,16 +1039,6 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
                   style={{ overflow: "hidden" }}
                 >
                   <div className="pt-3 space-y-3">
-                    <div className="rounded-2xl p-4 overflow-hidden"
-                      style={{ background: "var(--layer-1)", border: "1px solid var(--border)" }}>
-                      <WaterTracker
-                        date={date}
-                        waterMl={waterMl}
-                        goalMl={goals.waterMl ?? 2000}
-                        onUpdate={setWaterMl}
-                      />
-                    </div>
-
                     <div className="rounded-2xl p-4 overflow-hidden"
                       style={{
               background: "var(--surface)",
