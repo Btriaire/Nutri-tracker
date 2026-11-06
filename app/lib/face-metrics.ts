@@ -7,9 +7,12 @@
 //   resister a l'eclairage ; les rares mesures absolues sont signalees comme telles.
 // - Aucune norme "medicale" : chaque mesure est comparee a TA propre reference (mediane de tes scans).
 
+// v3 : paupieres (hauteur de la paupiere superieure par rapport a l'iris).
 // v2 : ajout du teint dore (carotenoides) calibre sur le blanc de l'oeil. Changer la version
 // relance automatiquement la mesure de toutes les photos de l'historique.
-export const FACE_METRICS_VERSION = 2;
+import { eyelids } from "./face-eyelid";
+
+export const FACE_METRICS_VERSION = 3;
 
 export interface Pt { x: number; y: number }
 /** Lit un pixel (coordonnees image en px) -> [r, g, b] 0-255. */
@@ -45,6 +48,10 @@ export interface FaceMetrics {
    *  jaune-orangee liee aux carotenoides des fruits et legumes (Stephen et al. 2011, Whitehead et al. 2012).
    *  null si le blanc de l'oeil n'est pas assez visible. */
   carotenoides: number | null;
+  /** Paupiere superieure au-dessus du centre de l'iris, en diametres d'iris (null sans points d'iris). */
+  paupiere: number | null;
+  /** Ecart de hauteur entre les deux paupieres, en % de diametre d'iris. */
+  asymPaupiere: number | null;
   // Expressions MediaPipe (0-1), si disponibles
   plisserYeux?: number;          // eyeSquint moyen
   moue?: number;                 // mouthFrown moyen
@@ -207,6 +214,7 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
   const earA = ear(P, L.eyeA), earB = ear(P, L.eyeB);
   const ouvertureYeux = (earA + earB) / 2;
   const asymYeux = (Math.abs(earA - earB) / Math.max(1e-6, ouvertureYeux)) * 100;
+  const lids = eyelids(P);
 
   // Coins de la bouche, mesures perpendiculairement a l'axe des yeux (insensible a l'inclinaison de la tete)
   const ex = (eyeB.x - eyeA.x) / iod, ey = (eyeB.y - eyeA.y) / iod;      // axe des yeux
@@ -303,6 +311,8 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
     levres: r(levres, 2),
     luminosite: r(cheekL, 1),
     carotenoides: carotenoides === null ? null : r(carotenoides, 2),
+    paupiere: lids ? r(lids.paupiere) : null,
+    asymPaupiere: lids ? r(lids.asymPaupiere, 1) : null,
     ...(bs ? {
       plisserYeux: r(((bs.eyeSquintLeft ?? 0) + (bs.eyeSquintRight ?? 0)) / 2),
       moue: r(((bs.mouthFrownLeft ?? 0) + (bs.mouthFrownRight ?? 0)) / 2),
@@ -315,7 +325,7 @@ export function computeFaceMetrics(inp: MetricsInput): FaceMetrics | null {
 
 export type MetricKey =
   | "volumeBasVisage" | "largeurJoues" | "ratioJoues" | "ratioMachoire" | "ouvertureYeux" | "coinsBouche"
-  | "symetrie" | "cernes" | "rougeur" | "uniformite" | "levres" | "carotenoides";
+  | "symetrie" | "cernes" | "rougeur" | "uniformite" | "levres" | "carotenoides" | "paupiere" | "asymPaupiere";
 
 export interface MetricInfo {
   key: MetricKey;
@@ -334,6 +344,8 @@ export const METRICS: MetricInfo[] = [
   { key: "ratioMachoire", label: "Mâchoire / pommettes", higher: "plus large", lower: "plus dessinée", minSpread: 0.008, group: "volume" },
   { key: "cernes", label: "Cernes", higher: "plus marqués", lower: "moins marqués", minSpread: 0.8, group: "fatigue" },
   { key: "ouvertureYeux", label: "Ouverture des yeux", higher: "plus ouverts", lower: "moins ouverts", minSpread: 0.012, group: "fatigue" },
+  { key: "paupiere", label: "Hauteur des paupières", higher: "plus relevées", lower: "plus basses", minSpread: 0.03, group: "fatigue" },
+  { key: "asymPaupiere", label: "Écart entre les paupières", higher: "plus inégales", lower: "plus égales", minSpread: 3, group: "symetrie" },
   { key: "coinsBouche", label: "Coins de la bouche", higher: "plus tombants", lower: "plus relevés", minSpread: 0.6, group: "fatigue" },
   { key: "uniformite", label: "Uniformité du teint", higher: "moins uniforme", lower: "plus uniforme", minSpread: 0.5, group: "teint" },
   { key: "rougeur", label: "Rougeur des joues", higher: "plus rouges", lower: "moins rouges", minSpread: 0.8, group: "teint" },
@@ -454,6 +466,10 @@ export function sanitizeMetrics(x: unknown): FaceMetrics | null {
   for (const k of numeric) (out as unknown as Record<string, number>)[k] = m[k] as number;
   if (!(m.carotenoides === null || num(m.carotenoides))) return null;
   out.carotenoides = m.carotenoides as number | null;
+  for (const k of ["paupiere", "asymPaupiere"] as const) {
+    if (!(m[k] === null || num(m[k]))) return null;
+    out[k] = m[k] as number | null;
+  }
   if (num(m.plisserYeux)) out.plisserYeux = m.plisserYeux as number;
   if (num(m.moue)) out.moue = m.moue as number;
   return out;

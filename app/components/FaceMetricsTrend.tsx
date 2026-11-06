@@ -128,6 +128,8 @@ export default function FaceMetricsTrend({ scans }: Props) {
       <p className="text-[12px] mt-2" style={{ color: "var(--text-secondary)" }}>
         <strong style={{ color: "var(--text-primary)" }}>{info.label}</strong> : valeur haute = {info.higher}.
         {key === "carotenoides" && " Corrigé par le blanc de l'œil ; reflète surtout les fruits et légumes des dernières semaines (Stephen et al. 2011) : compare avec tes fibres."}
+        {key === "paupiere" && " Mesurée par rapport à l'iris et comparée à ta référence : c'est un suivi, pas un diagnostic. Le regard et l'expression la font varier."}
+        {key === "asymPaupiere" && " Un écart nouveau, net et persistant, ou accompagné de vision double, de maux de tête ou d'une faiblesse, justifie un avis médical rapide."}
         {overlay !== "none" && (r === null
           ? ` Pas encore assez de scans avec ${overlayLabel} le même jour pour mesurer un lien.`
           : ` Lien avec le ${overlayLabel} : r = ${r.toFixed(2).replace(".", ",")} sur ${pairs.length} scans (${Math.abs(r) < 0.3 ? "faible" : Math.abs(r) < 0.6 ? "modéré" : "fort"}). Une corrélation n'est pas une preuve de cause.`)}
