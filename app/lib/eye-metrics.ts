@@ -42,6 +42,7 @@ export interface EyeSide {
   pupilDecentrationMm?: number;  // ecart entre le centre de la pupille et celui de l'iris
   limbusConfidence?: number;     // 0-1 : confiance de l'ajustement du bord de l'iris
   irisZones?: { rim: number; mid: number; outer: number }; // L* du bord de la pupille, du milieu et de la peripherie de l'iris
+  requantV?: number;             // version de la re-quantification retrospective appliquee a ce scan
   lidRefined?: boolean;          // vrai si les bords des paupieres ont ete confirmes par la mesure sur l'image
   irisRefined?: boolean;         // vrai si le diametre de l'iris a ete affine sur l'image
   manualCenter?: boolean;        // vrai si le centre de l'oeil a ete propose a la main pour ce scan

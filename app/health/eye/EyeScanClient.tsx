@@ -12,7 +12,7 @@ import EyeDetailCard from "@/app/components/EyeDetailCard";
 import EyeFollowUpCard from "@/app/components/EyeFollowUpCard";
 import EyeRecenterModal from "@/app/components/EyeRecenterModal";
 import { learnedOffsets } from "@/app/lib/eye-learning";
-import { recenterEye, CROP } from "@/app/lib/eye-reanalyze";
+import { recenterEye, requantifyCrop, REQUANT_VERSION, CROP, CROP_IRIS_D } from "@/app/lib/eye-reanalyze";
 import { eyeIndexes, eyeSignals, eyeSideIndexes, mergeEyeMetrics, sideNotes, rednessGrade, scanValue, type EyeSideId, type EyeValueKey } from "@/app/lib/eye-metrics";
 import type { EyeScanEntry } from "@/app/api/eye-scan/route";
 
@@ -57,6 +57,7 @@ export default function EyeScanClient() {
   const [recenterBusy, setRecenterBusy] = useState(false);
   const [recenterError, setRecenterError] = useState<string | null>(null);
   const [photoRev, setPhotoRev] = useState(0);
+  const [requant, setRequant] = useState<{ done: number; total: number; failed: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +126,45 @@ export default function EyeScanClient() {
   const history = scans ?? [];
   // Ce que tes corrections passees ont appris : applique aux prochains scans
   const learned = useMemo(() => learnedOffsets(scans ?? []), [scans]);
+
+  // Re-quantification retrospective : chaque ancienne photo est remesuree sur le client, une seule fois par version
+  const pendingRequant = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.eyes?.includes(e) && sc.metrics[e].requantV !== REQUANT_VERSION).map((eye) => ({ sc, eye })));
+  const runRequant = async () => {
+    const total = pendingRequant.length;
+    let done = 0, failed = 0;
+    setRequant({ done, total, failed });
+    for (const { sc, eye } of pendingRequant) {
+      try {
+        const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(sc.id)}&eye=${eye}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("photo"))));
+        const bmp = await createImageBitmap(blob);
+        const cv = document.createElement("canvas");
+        cv.width = CROP; cv.height = CROP;
+        const g = cv.getContext("2d", { willReadFrequently: true })!;
+        g.drawImage(bmp, 0, 0, CROP, CROP);
+        const px = g.getImageData(0, 0, CROP, CROP).data;
+        const read = (x: number, y: number): [number, number, number] => {
+          const i = (Math.min(CROP - 1, Math.max(0, Math.round(y))) * CROP + Math.min(CROP - 1, Math.max(0, Math.round(x)))) * 4;
+          return [px[i], px[i + 1], px[i + 2]];
+        };
+        const r = requantifyCrop(read, sc.metrics[eye]);
+        // Photo redessinee : iris centre et toujours 3 diametres de large
+        const k = CROP_IRIS_D / (2 * r.irisR);
+        g.fillStyle = "#000"; g.fillRect(0, 0, CROP, CROP);
+        g.drawImage(bmp, CROP / 2 - r.center.x * k, CROP / 2 - r.center.y * k, CROP * k, CROP * k);
+        const res = await fetch("/api/eye-scan", {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: sc.id, eye, side: r.side, image: cv.toDataURL("image/jpeg", 0.85), defer: true }),
+        });
+        if (!res.ok) throw new Error("save");
+      } catch { failed++; }
+      done++;
+      setRequant({ done, total, failed });
+    }
+    await fetch("/api/eye-scan", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).catch(() => null);
+    const fresh = await fetch("/api/eye-scan", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) as { scans?: EyeScanEntry[] } | null;
+    if (fresh?.scans) setScans(fresh.scans);
+    setPhotoRev((v) => v + 1);
+  };
 
   // Recentrage apres coup : la photo enregistree est redessinee centree sur le point touche, les mesures sont refaites dessus
   const doRecenter = async (eye: EyeSideId, tap: { x: number; y: number }) => {
@@ -252,6 +292,20 @@ export default function EyeScanClient() {
               <p className="text-[12px] mb-3" style={{ color: "var(--text-secondary)" }}>
                 Chaque œil est isolé et mesuré séparément ; les traits montrent ce qui a été mesuré sur la photo.
               </p>
+              {(pendingRequant.length > 0 || requant) && (
+                <div className="mb-3">
+                  <button type="button" onClick={runRequant} disabled={!!requant && requant.done < requant.total || pendingRequant.length === 0}
+                    className="w-full rounded-lg py-2 text-[13px] font-medium disabled:opacity-60"
+                    style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
+                    {pendingRequant.length > 0 ? `Re-quantifier les anciens scans (${pendingRequant.length} photos)` : "Re-quantification à jour"}
+                  </button>
+                  {requant && (
+                    <p role="status" className="text-[12px] mt-1" style={{ color: "var(--text-secondary)" }}>
+                      {requant.done} / {requant.total} photos{requant.failed > 0 ? `, ${requant.failed} en échec` : ""}
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="space-y-3">
                 <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("A"); }}
                   indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")} />

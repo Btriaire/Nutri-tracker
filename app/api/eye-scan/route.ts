@@ -78,6 +78,11 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const USER = session.userId;
   const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  // Fin d'une re-quantification en serie : les index ne sont recalcules qu'une fois
+  if (body?.refresh === true) {
+    await refreshEyeStats(getAdminFirestore(), USER);
+    return NextResponse.json({ ok: true });
+  }
   const id = body?.id, eye = body?.eye, side = body?.side;
   if (typeof id !== "string" || !/^[\w-]{1,64}$/.test(id) || (eye !== "A" && eye !== "B") || !side || typeof side !== "object") {
     return NextResponse.json({ error: "Invalid recenter" }, { status: 400 });
@@ -93,7 +98,7 @@ export async function PATCH(req: NextRequest) {
   if (!data) return NextResponse.json({ error: "Invalid eye scan" }, { status: 400 });
   const image = jpeg(body?.image);
   await ref.update({ metrics: data.metrics, ...(image ? { [eye === "A" ? "imageA" : "imageB"]: image } : {}) });
-  await refreshEyeStats(db, USER).catch((e) => console.error("[eye-scan stats]", e));
+  if (body?.defer !== true) await refreshEyeStats(db, USER).catch((e) => console.error("[eye-scan stats]", e));
   const saved = (await ref.get()).data() as EyeScanEntry;
   return NextResponse.json({ scan: { id, date: saved.date, time: saved.time, metrics: saved.metrics, plr: saved.plr, conjunctiva: saved.conjunctiva, mbiS: saved.mbiS, eyes: saved.eyes, indexes: saved.indexes, signals: saved.signals, indexesEye: saved.indexesEye } });
 }

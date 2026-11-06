@@ -1,5 +1,7 @@
 "use client";
 
+import EyeStructureMasks from "@/app/components/EyeStructureMasks";
+import { eyeAreas } from "@/app/lib/eye-areas";
 import { HVID_MM, rednessGrade, type EyeSide } from "@/app/lib/eye-metrics";
 
 const n = (v: number | null | undefined, d = 1) => (v == null ? "—" : (Math.round(v * 10 ** d) / 10 ** d).toString().replace(".", ","));
@@ -27,8 +29,12 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
   const cl = side.catchlight;
   const pir = side.pupilMm != null ? Math.round((side.pupilMm / HVID_MM) * 100) : null;
 
+  const areas = eyeAreas(side);
   const rows: [string, string][] = [
     ["Pupille", side.pupilMm == null ? "non mesurable" : `${n(side.pupilMm)} mm · ${pir} % de l'iris`],
+    ["Surface de la pupille", areas.pupilMm2 == null ? "—" : `${n(areas.pupilMm2)} mm² · ${n(areas.pupilIrisAreaPct, 0)} % de l'iris`],
+    ["Iris visible", `${n(areas.irisExposedMm2)} mm² · ${n(areas.irisCoveredPct, 0)} % caché par les paupières`],
+    ["Ouverture de la fente / blanc visible", `${n(areas.apertureMm2)} / ${n(areas.scleraExposedMm2)} mm²`],
     ["Centre de l'œil", side.manualCenter ? "proposé à la main" : side.learnedCenter ? "détecté, ajusté d'après tes corrections" : "détecté automatiquement"],
     ["Régularité du bord de la pupille", side.pupilCircularity == null ? "—" : `${Math.round(side.pupilCircularity * 100)} %`],
     ["Décentrement de la pupille", side.pupilDecentrationMm == null ? "—" : `${n(side.pupilDecentrationMm)} mm`],
@@ -54,6 +60,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={imageUrl} alt={`${label} isolé`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
           <svg viewBox={`0 0 ${S} ${S}`} className="absolute inset-0 w-full h-full" aria-hidden>
+            <EyeStructureMasks side={side} />
             <circle cx={C} cy={C} r={irisR} fill="none" stroke="#818cf8" strokeWidth={2} />
             {pupilR && <circle cx={pupilCx} cy={pupilCy} r={pupilR} fill="none" stroke="#fbbf24" strokeWidth={2} />}
             <line x1={C - irisR * 1.6} x2={C + irisR * 1.6} y1={upperY} y2={upperY} stroke="#34d399" strokeWidth={2} strokeDasharray="6 4" />
@@ -99,6 +106,9 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           {notes.length ? notes.map((t) => <li key={t}>• {t}</li>) : <li>Dans ton habitude sur toutes les mesures.</li>}
         </ul>
       )}
+      <p className="px-3 pb-1 text-[12px]" style={{ color: "var(--text-muted)" }}>
+        Échelle : iris supposé de 11,7 mm (moyenne adulte, écart de 5 % environ). Les suivis dans le temps sont plus fiables que la valeur absolue.
+      </p>
       <dl className="px-3 pb-2.5 text-[12px]">
         {rows.map(([k, v]) => (
           <div key={k} className="flex justify-between gap-2 py-1" style={{ borderTop: "1px solid var(--border)" }}>

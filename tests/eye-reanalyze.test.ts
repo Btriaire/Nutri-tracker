@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recenterEye, CROP, CROP_IRIS_D } from "../app/lib/eye-reanalyze";
+import { recenterEye, requantifyCrop, CROP, CROP_IRIS_D } from "../app/lib/eye-reanalyze";
 import type { EyeSide } from "../app/lib/eye-metrics";
 
 const R = CROP_IRIS_D / 2, PUPIL = 17;
@@ -39,5 +39,32 @@ describe("recenterEye", () => {
     expect(recenterEye(photo(160, 160), side(), { x: 160 + 0.4 * CROP_IRIS_D, y: 160 })).toBeNull();
     expect(recenterEye(photo(160, 160), side(), { x: NaN, y: 160 })).toBeNull();
     expect(CROP).toBe(320);
+  });
+});
+
+describe("requantifyCrop", () => {
+  const eye = (cx: number, cy: number, r: number, pupil: number) => (x: number, y: number): [number, number, number] => {
+    const d = Math.hypot(x - cx, y - cy);
+    return d > r ? [232, 232, 232] : d > pupil ? [110, 80, 50] : [12, 12, 12];
+  };
+  it("corrige l'echelle quand l'iris reel est plus petit que suppose, et le centre", () => {
+    const r = 48;                                                 // 10 % de moins que 53,3
+    const q = requantifyCrop(eye(163, 158, r, 16), side({ pupilMm: 2, fissureWidthMm: 30 }));
+    expect(Math.abs(q.irisR - r)).toBeLessThan(1.5);
+    expect(Math.hypot(q.center.x - 163, q.center.y - 158)).toBeLessThan(1.5);
+    expect(q.side.pupilMm!).toBeCloseTo((16 / r) * 11.7, 0);
+    expect(q.side.irisPx).toBeLessThan(80);
+    expect(q.side.fissureWidthMm!).toBeGreaterThan(30);
+    expect(q.side.requantV).toBe(2);
+  });
+  it("ne deplace jamais un centre choisi a la main", () => {
+    const q = requantifyCrop(eye(165, 160, CROP_IRIS_D / 2, 16), side({ manualCenter: true }));
+    expect(q.center).toEqual({ x: 160, y: 160 });
+  });
+  it("sans bord d'iris lisible, garde l'echelle et les valeurs", () => {
+    const q = requantifyCrop(() => [120, 120, 120], side());
+    expect(q.irisR).toBeCloseTo(CROP_IRIS_D / 2, 5);
+    expect(q.side.pupilMm).toBe(4.1);
+    expect(q.side.mrd1Mm).toBeCloseTo(5, 1);
   });
 });
