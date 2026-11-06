@@ -3,6 +3,8 @@
 import EyeStructureMasks from "@/app/components/EyeStructureMasks";
 import { eyeAreas } from "@/app/lib/eye-areas";
 import { HVID_MM, rednessGrade, type EyeSide } from "@/app/lib/eye-metrics";
+import IrisTextureMap from "@/app/components/IrisTextureMap";
+import { TEXTURE_LABEL, fiberLabel, textureStability, type IrisTexture } from "@/app/lib/eye-iris-texture";
 
 const n = (v: number | null | undefined, d = 1) => (v == null ? "—" : (Math.round(v * 10 ** d) / 10 ** d).toString().replace(".", ","));
 
@@ -13,9 +15,10 @@ const S = 320, C = S / 2, PX_PER_MM = S / (3 * HVID_MM);
 /** Un oeil isole : photo annotee (iris, pupille, paupieres, reflet) et toutes ses mesures. */
 const INDEX_LABEL: Record<string, string> = { ouverture: "Ouverture", paupiereBasse: "Paupière basse", cernes: "Cernes", rougeur: "Rougeur", jaune: "Jaune" };
 
-export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, onRecenter }: {
+export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, onRecenter, textureHistory }: {
   label: string; side: EyeSide; imageUrl: string | null; onRecenter?: () => void;
   indexes?: Record<string, number | null> | null; notes?: string[];
+  textureHistory?: (IrisTexture | null | undefined)[];
 }) {
   const irisR = (HVID_MM / 2) * PX_PER_MM;
   const pupilR = side.pupilMm != null ? (side.pupilMm / 2) * PX_PER_MM : null;
@@ -62,6 +65,9 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           <svg viewBox={`0 0 ${S} ${S}`} className="absolute inset-0 w-full h-full" aria-hidden>
             <EyeStructureMasks side={side} />
             <circle cx={C} cy={C} r={irisR} fill="none" stroke="#818cf8" strokeWidth={2} />
+            {side.irisTexture?.collaretteRatio != null && (
+              <circle cx={C} cy={C} r={irisR * side.irisTexture.collaretteRatio} fill="none" stroke="#c084fc" strokeWidth={1.5} strokeDasharray="3 4" />
+            )}
             {pupilR && <circle cx={pupilCx} cy={pupilCy} r={pupilR} fill="none" stroke="#fbbf24" strokeWidth={2} />}
             <line x1={C - irisR * 1.6} x2={C + irisR * 1.6} y1={upperY} y2={upperY} stroke="#34d399" strokeWidth={2} strokeDasharray="6 4" />
             <line x1={C - irisR * 1.6} x2={C + irisR * 1.6} y1={lowerY} y2={lowerY} stroke="#34d399" strokeWidth={2} strokeDasharray="6 4" />
@@ -89,6 +95,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           <span><span style={{ color: "#fbbf24" }}>●</span> pupille</span>
           <span><span style={{ color: "#34d399" }}>●</span> paupières</span>
           <span><span style={{ color: "#f87171" }}>●</span> reflet</span>
+          {side.irisTexture?.collaretteRatio != null && <span><span style={{ color: "#c084fc" }}>●</span> collerette</span>}
         </p>
       )}
       {indexes && (
@@ -106,6 +113,7 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           {notes.length ? notes.map((t) => <li key={t}>• {t}</li>) : <li>Dans ton habitude sur toutes les mesures.</li>}
         </ul>
       )}
+      <IrisTextureBlock side={side} imageUrl={imageUrl} history={textureHistory} />
       <p className="px-3 pb-1 text-[12px]" style={{ color: "var(--text-muted)" }}>
         Échelle : iris supposé de 11,7 mm (moyenne adulte, écart de 5 % environ). Les suivis dans le temps sont plus fiables que la valeur absolue.
       </p>
@@ -117,6 +125,62 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+/** Texture de l'iris : classe descriptive et quatre mesures, avec leur limite. */
+function IrisTextureBlock({ side, imageUrl, history }: { side: EyeSide; imageUrl: string | null; history?: (IrisTexture | null | undefined)[] }) {
+  const t = side.irisTexture;
+  const stab = history ? textureStability(history) : null;
+  if (t === undefined) return null;   // scan analyse avant la texture : la re-quantification l'ajoute
+  const stats: [string, string, string][] = t ? [
+    ["Relief", n(t.relief), "L*"],
+    ["Fibres radiaires", `${Math.round(t.radialRatio * 100)}`, "%"],
+    ["Cryptes", `${t.cryptCount}`, `· ${n(t.cryptPct)} %`],
+    ["Collerette", t.collaretteRatio == null ? "—" : `${Math.round(t.collaretteRatio * 100)}`, t.collaretteRatio == null ? "" : "% du rayon"],
+  ] : [];
+  return (
+    <div className="mx-3 mb-2 rounded-lg p-2.5" style={{ background: "var(--layer-2)" }}>
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Texture de l&apos;iris</p>
+        {t && (
+          <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(192,132,252,0.15)", color: "#c084fc" }}>
+            {TEXTURE_LABEL[t.grade]}
+          </span>
+        )}
+      </div>
+      {!t ? (
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Non lisible sur cette photo (iris trop petit, flou ou trop caché).</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-4 gap-1">
+            {stats.map(([k, v, u]) => (
+              <div key={k} className="text-center rounded-md py-1" style={{ background: "var(--layer-1)" }}>
+                <p className="text-[10px] leading-tight" style={{ color: "var(--text-secondary)" }}>{k}</p>
+                <p className="text-[14px] font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{v}</p>
+                <p className="text-[10px] tabular-nums" style={{ color: "var(--text-muted)" }}>{u}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
+            Fibres : {fiberLabel(t.radialRatio)} · fiabilité {Math.round(t.confidence * 100)} %
+          </p>
+          {imageUrl && <IrisTextureMap imageUrl={imageUrl} pupilMm={side.pupilMm} />}
+          {stab && (
+            <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
+              Sur {stab.n} scans : relief {n(stab.relief.median)} ± {n(stab.relief.spread)}, cryptes {n(stab.cryptPct.median)} ± {n(stab.cryptPct.spread)} %,
+              même classe {Math.round(stab.agreement * 100)} % du temps
+              {stab.agreement >= 0.75 && stab.relief.spread <= 1.5 ? " — mesure reproductible." : " — photos encore inégales (netteté, lumière) : la valeur médiane est la plus sûre."}
+            </p>
+          )}
+          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+            Description de l&apos;aspect de l&apos;iris, un trait propre à chacun et stable à l&apos;âge adulte.
+            Elle ne dit rien de l&apos;état des organes (l&apos;iridologie n&apos;a pas de base scientifique) ; d&apos;un scan
+            à l&apos;autre, les écarts viennent surtout de la netteté, de la lumière et de la taille de la pupille.
+          </p>
+        </>
+      )}
     </div>
   );
 }

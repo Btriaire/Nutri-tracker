@@ -167,7 +167,8 @@ export default function EyeScanClient() {
   };
 
   // Annulation : retour aux mesures et photos d'origine pour tout ce qui a ete re-quantifie
-  const requantified = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.metrics[e].requantV === REQUANT_VERSION).map((eye) => ({ sc, eye })));
+  // Toute version re-quantifiee garde sa sauvegarde d'origine : annulable quelle que soit la version
+  const requantified = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.metrics[e].requantV != null).map((eye) => ({ sc, eye })));
   const undoRequant = async () => {
     if (!confirm("Revenir aux mesures et photos d'origine de ces scans ?")) return;
     const total = requantified.length;
@@ -316,7 +317,7 @@ export default function EyeScanClient() {
                   <button type="button" onClick={runRequant} disabled={!!requant && requant.done < requant.total || pendingRequant.length === 0}
                     className="w-full rounded-lg py-2 text-[13px] font-medium disabled:opacity-60"
                     style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
-                    {pendingRequant.length > 0 ? `Re-quantifier les anciens scans (${pendingRequant.length} photos)` : "Re-quantification à jour"}
+                    {pendingRequant.length > 0 ? `Re-quantifier les anciens scans, texture de l'iris incluse (${pendingRequant.length} photos)` : "Re-quantification à jour"}
                   </button>
                   {requantified.length > 0 && (
                     <button type="button" onClick={undoRequant} disabled={!!requant && requant.done < requant.total}
@@ -334,9 +335,11 @@ export default function EyeScanClient() {
               )}
               <div className="space-y-3">
                 <EyeDetailCard label="Œil droit" side={m.A} imageUrl={latest.eyes?.includes("A") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=A&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("A"); }}
-                  indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")} />
+                  indexes={latest.indexesEye?.A ?? eyeSideIndexes(latest, history, "A")} notes={sideNotes(latest, history, "A")}
+                  textureHistory={history.filter((sc) => sc.eyes?.includes("A")).map((sc) => sc.metrics.A.irisTexture)} />
                 <EyeDetailCard label="Œil gauche" side={m.B} imageUrl={latest.eyes?.includes("B") ? `/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=B&v=${photoRev}` : null} onRecenter={() => { setRecenterError(null); setRecenter("B"); }}
-                  indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")} />
+                  indexes={latest.indexesEye?.B ?? eyeSideIndexes(latest, history, "B")} notes={sideNotes(latest, history, "B")}
+                  textureHistory={history.filter((sc) => sc.eyes?.includes("B")).map((sc) => sc.metrics.B.irisTexture)} />
               </div>
             </section>
 

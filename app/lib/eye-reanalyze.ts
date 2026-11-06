@@ -6,6 +6,7 @@
 import { fitLidMargins, fitLimbusRays, fitPupilRays, type PixelReader, type Pt } from "./eye-structures";
 import { HVID_MM, RADIUS_MM, irisColour, irisZonesOf, ringL, type EyeSide } from "./eye-metrics";
 import { fitIrisEdge } from "./eye-iris-edge";
+import { irisTexture } from "./eye-iris-texture";
 import type { Shift } from "./eye-learning";
 
 export const CROP = 320;
@@ -50,6 +51,7 @@ export function recenterEye(read: PixelReader, side: EyeSide, tap: Pt): EyeSide 
     ...(lim ? { limbusConfidence: round(lim.confidence) } : {}),
     ...(colour.irisLab ? colour : {}),
     ...(irisZonesOf(read, tap, R, pupilR, CROP, CROP) ?? {}),
+    irisTexture: irisTexture(read, tap, R, pupilR, CROP, CROP),
     arcus: Number.isFinite(outer) && Number.isFinite(mid) ? round(outer - mid, 1) : side.arcus,
     limbalRing: Number.isFinite(edge) && Number.isFinite(inside) ? round(inside - edge, 1) : side.limbalRing,
     catchlight: side.catchlight ? { dxMm: round(side.catchlight.dxMm - off.x * mm), dyMm: round(side.catchlight.dyMm - off.y * mm) } : side.catchlight,
@@ -60,11 +62,11 @@ export function recenterEye(read: PixelReader, side: EyeSide, tap: Pt): EyeSide 
   };
 }
 
-export const REQUANT_VERSION = 2;
+export const REQUANT_VERSION = 3; // v3 : texture de l'iris
 
 /**
  * Re-quantification d'un ancien scan a partir de sa photo : bord de l'iris remesure (donc echelle mm corrigee),
- * pupille, paupieres, zones et couleur de l'iris refaits. Le blanc de l'oeil et les cernes ne sont pas sur la photo de facon fiable : repris tels quels.
+ * pupille, paupieres, zones, couleur et texture de l'iris refaits. Le blanc de l'oeil et les cernes ne sont pas sur la photo de facon fiable : repris tels quels.
  * `center` et `irisR` servent a redessiner la photo pour qu'elle garde sa geometrie (iris centre, 3 diametres de large).
  */
 export function requantifyCrop(read: PixelReader, side: EyeSide): { side: EyeSide; center: Pt; irisR: number } {
@@ -109,6 +111,7 @@ export function requantifyCrop(read: PixelReader, side: EyeSide): { side: EyeSid
       irisRefined: good,
       ...(colour.irisLab ? colour : {}),
       ...(irisZonesOf(read, c, R, pupilR, CROP, CROP) ?? {}),
+      irisTexture: irisTexture(read, c, R, pupilR, CROP, CROP),
       arcus: Number.isFinite(outer) && Number.isFinite(mid) ? round(outer - mid, 1) : side.arcus,
       limbalRing: Number.isFinite(edgeL) && Number.isFinite(inside) ? round(inside - edgeL, 1) : side.limbalRing,
       catchlight: side.catchlight ? { dxMm: round(side.catchlight.dxMm * ratio - (c.x - c0.x) * mm), dyMm: round(side.catchlight.dyMm * ratio - (c.y - c0.y) * mm) } : side.catchlight,
