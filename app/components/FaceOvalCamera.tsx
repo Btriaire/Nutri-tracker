@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
 import { acquisitionStats } from "@/app/lib/eye-metrics";
-import { BestShot, faceAcquisition, facePose } from "@/app/lib/face-acquisition";
+import { BestShot, faceAcquisition, facePose, faceFraming, ovalGeometry } from "@/app/lib/face-acquisition";
 
 interface Props {
   onCapture: (file: File) => void;
@@ -37,6 +37,8 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   const busyRef = useRef(false);
   const finishRef = useRef(false);
   const loopRef = useRef<number | null>(null);
+  const [view, setView] = useState({ w: 0, h: 0 });
+  const viewRef = useRef({ w: 0, h: 0 });
 
   const stopAndClose = (after?: () => void) => {
     if (loopRef.current) {
@@ -55,6 +57,21 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newView = { w: window.innerWidth, h: window.innerHeight };
+      setView(newView);
+      viewRef.current = newView;
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,10 +142,11 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
 
               const w = canvas.width;
               const h = canvas.height;
+              const framing = faceFraming(pts, {w:canvas.width,h:canvas.height}, viewRef.current);
+              const half = 0.25 * Math.hypot(pts[454].x-pts[234].x, pts[454].y-pts[234].y) * w;
+
               const cx = pose.cx * w;
               const cy = pose.cy * h;
-              const half = 0.25 * pose.widthRatio * w;
-
               const x0 = Math.max(0, Math.floor(cx - half));
               const y0 = Math.max(0, Math.floor(cy - half));
               const x1 = Math.min(w, Math.ceil(cx + half));
@@ -153,7 +171,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
               };
 
               const stats = acquisitionStats(read, cx, cy, half / 1.5);
-              const a = faceAcquisition({ ...pose, motion, ...stats });
+              const a = faceAcquisition({ fill: framing.fill, dx: framing.dx, dy: framing.dy, inFrame: framing.inFrame, yawDeg: pose.yawDeg, rollDeg: pose.rollDeg, motion, ...stats });
 
               setScore(a.score);
               setIssue(a.issue);
@@ -166,6 +184,9 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
                     busyRef.current = false;
                   }, "image/jpeg", 0.9);
                 }
+              } else if (a.issue !== null) {
+                shotsRef.current.reset();
+                setShots(0);
               }
 
               loopRef.current = requestAnimationFrame(loop);
@@ -223,6 +244,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   // on it were silently swallowed by the nav instead. Same fix as
   // BodyMeasurementsTab/PhotoMealAnalyzer earlier this session.
   if (!mounted) return null;
+  const oval = ovalGeometry(view.w, view.h);
   return createPortal(
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
       <video
@@ -234,16 +256,19 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
         style={{ transform: "scaleX(-1)" }}
       />
 
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 130" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <mask id="oval-mask">
-            <rect x="0" y="0" width="100" height="130" fill="white" />
-            <ellipse cx="50" cy="55" rx="27" ry="37" fill="black" />
-          </mask>
-        </defs>
-        <rect x="0" y="0" width="100" height="130" fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
-        <ellipse cx="50" cy="55" rx="27" ry="37" fill="none" stroke={score >= THRESHOLD && issue === null ? "var(--ok)" : "var(--fiber)"} strokeWidth="0.6" strokeDasharray="2.5 2" opacity="0.9" />
-      </svg>
+      {/* Oval alignment guide */}
+      {view.w > 0 && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" width={view.w} height={view.h}>
+          <defs>
+            <mask id="oval-mask">
+              <rect x="0" y="0" width={view.w} height={view.h} fill="white" />
+              <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="black" />
+            </mask>
+          </defs>
+          <rect x="0" y="0" width={view.w} height={view.h} fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
+          <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="none" stroke={score >= THRESHOLD && issue === null ? "var(--ok)" : "var(--fiber)"} strokeWidth="2" strokeDasharray="10 8" opacity="0.9" />
+        </svg>
+      )}
 
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-4" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
         <p className="text-white text-[13px] font-medium">
