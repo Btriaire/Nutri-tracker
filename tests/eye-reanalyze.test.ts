@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recenterEye, requantifyCrop, CROP, CROP_IRIS_D } from "../app/lib/eye-reanalyze";
+import { recenterEye, requantifyCrop, CROP, CROP_IRIS_D, REQUANT_VERSION } from "../app/lib/eye-reanalyze";
 import type { EyeSide } from "../app/lib/eye-metrics";
 
 const R = CROP_IRIS_D / 2, PUPIL = 17;
@@ -55,7 +55,7 @@ describe("requantifyCrop", () => {
     expect(q.side.pupilMm!).toBeCloseTo((16 / r) * 11.7, 0);
     expect(q.side.irisPx).toBeLessThan(80);
     expect(q.side.fissureWidthMm!).toBeGreaterThan(30);
-    expect(q.side.requantV).toBe(2);
+    expect(q.side.requantV).toBe(REQUANT_VERSION);
   });
   it("ne deplace jamais un centre choisi a la main", () => {
     const q = requantifyCrop(eye(165, 160, CROP_IRIS_D / 2, 16), side({ manualCenter: true }));

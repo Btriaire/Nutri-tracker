@@ -167,7 +167,8 @@ export default function EyeScanClient() {
   };
 
   // Annulation : retour aux mesures et photos d'origine pour tout ce qui a ete re-quantifie
-  const requantified = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.metrics[e].requantV === REQUANT_VERSION).map((eye) => ({ sc, eye })));
+  // Toute version re-quantifiee garde sa sauvegarde d'origine : annulable quelle que soit la version
+  const requantified = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.metrics[e].requantV != null).map((eye) => ({ sc, eye })));
   const undoRequant = async () => {
     if (!confirm("Revenir aux mesures et photos d'origine de ces scans ?")) return;
     const total = requantified.length;
@@ -316,7 +317,7 @@ export default function EyeScanClient() {
                   <button type="button" onClick={runRequant} disabled={!!requant && requant.done < requant.total || pendingRequant.length === 0}
                     className="w-full rounded-lg py-2 text-[13px] font-medium disabled:opacity-60"
                     style={{ background: "var(--layer-2)", color: "var(--text-primary)", border: "1px solid var(--border)" }}>
-                    {pendingRequant.length > 0 ? `Re-quantifier les anciens scans (${pendingRequant.length} photos)` : "Re-quantification à jour"}
+                    {pendingRequant.length > 0 ? `Re-quantifier les anciens scans, texture de l'iris incluse (${pendingRequant.length} photos)` : "Re-quantification à jour"}
                   </button>
                   {requantified.length > 0 && (
                     <button type="button" onClick={undoRequant} disabled={!!requant && requant.done < requant.total}
