@@ -3,7 +3,7 @@
 import EyeStructureMasks from "@/app/components/EyeStructureMasks";
 import { eyeAreas } from "@/app/lib/eye-areas";
 import { HVID_MM, rednessGrade, type EyeSide } from "@/app/lib/eye-metrics";
-import IrisTextureMap from "@/app/components/IrisTextureMap";
+import IrisTextureMap, { useIrisPhoto } from "@/app/components/IrisTextureMap";
 import { TEXTURE_LABEL, fiberLabel, textureStability, type IrisTexture } from "@/app/lib/eye-iris-texture";
 
 const n = (v: number | null | undefined, d = 1) => (v == null ? "—" : (Math.round(v * 10 ** d) / 10 ** d).toString().replace(".", ","));
@@ -131,9 +131,12 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
 
 /** Texture de l'iris : classe descriptive et quatre mesures, avec leur limite. */
 function IrisTextureBlock({ side, imageUrl, history }: { side: EyeSide; imageUrl: string | null; history?: (IrisTexture | null | undefined)[] }) {
-  const t = side.irisTexture;
+  // Lue sur la photo a l'affichage : rien a lancer. La valeur enregistree (scan, recentrage, re-quantification) prime.
+  const photo = useIrisPhoto(imageUrl, side.pupilMm);
+  const live = side.irisTexture === undefined;
+  const t = live ? photo.texture : side.irisTexture ?? null;
   const stab = history ? textureStability(history) : null;
-  if (t === undefined) return null;   // scan analyse avant la texture : la re-quantification l'ajoute
+  if (live && !imageUrl) return null;
   const stats: [string, string, string][] = t ? [
     ["Relief", n(t.relief), "L*"],
     ["Fibres radiaires", `${Math.round(t.radialRatio * 100)}`, "%"],
@@ -150,7 +153,9 @@ function IrisTextureBlock({ side, imageUrl, history }: { side: EyeSide; imageUrl
           </span>
         )}
       </div>
-      {!t ? (
+      {live && photo.status === "loading" ? (
+        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Analyse de la photo…</p>
+      ) : !t ? (
         <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Non lisible sur cette photo (iris trop petit, flou ou trop caché).</p>
       ) : (
         <>
@@ -166,7 +171,12 @@ function IrisTextureBlock({ side, imageUrl, history }: { side: EyeSide; imageUrl
           <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
             Fibres : {fiberLabel(t.radialRatio)} · fiabilité {Math.round(t.confidence * 100)} %
           </p>
-          {imageUrl && <IrisTextureMap imageUrl={imageUrl} pupilMm={side.pupilMm} />}
+          {photo.maps && <IrisTextureMap maps={photo.maps} />}
+          {live && (
+            <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+              Lue sur la photo de ce scan. Pour l&apos;ajouter à l&apos;historique des anciens scans : « Re-quantifier » plus haut.
+            </p>
+          )}
           {stab && (
             <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
               Sur {stab.n} scans : relief {n(stab.relief.median)} ± {n(stab.relief.spread)}, cryptes {n(stab.cryptPct.median)} ± {n(stab.cryptPct.spread)} %,

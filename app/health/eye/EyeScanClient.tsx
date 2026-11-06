@@ -57,7 +57,7 @@ export default function EyeScanClient() {
   const [recenterBusy, setRecenterBusy] = useState(false);
   const [recenterError, setRecenterError] = useState<string | null>(null);
   const [photoRev, setPhotoRev] = useState(0);
-  const [requant, setRequant] = useState<{ done: number; total: number; failed: number } | null>(null);
+  const [requant, setRequant] = useState<{ done: number; total: number; failed: number; error?: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,11 +131,11 @@ export default function EyeScanClient() {
   const pendingRequant = history.flatMap((sc) => (["A", "B"] as const).filter((e) => sc.eyes?.includes(e) && sc.metrics[e].requantV !== REQUANT_VERSION).map((eye) => ({ sc, eye })));
   const runRequant = async () => {
     const total = pendingRequant.length;
-    let done = 0, failed = 0;
+    let done = 0, failed = 0, lastError: string | undefined;
     setRequant({ done, total, failed });
     for (const { sc, eye } of pendingRequant) {
       try {
-        const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(sc.id)}&eye=${eye}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("photo"))));
+        const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(sc.id)}&eye=${eye}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`photo introuvable (${r.status})`))));
         const bmp = await createImageBitmap(blob);
         const cv = document.createElement("canvas");
         cv.width = CROP; cv.height = CROP;
@@ -155,10 +155,17 @@ export default function EyeScanClient() {
           method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: sc.id, eye, side: r.side, image: cv.toDataURL("image/jpeg", 0.85), defer: true, backup: true }),
         });
-        if (!res.ok) throw new Error("save");
-      } catch { failed++; }
+        if (!res.ok) {
+          const msg = await res.json().then((j: { error?: string }) => j.error).catch(() => null);
+          throw new Error(`enregistrement refusé (${res.status}${msg ? ` : ${msg}` : ""})`);
+        }
+      } catch (e) {
+        failed++;
+        lastError = e instanceof Error ? e.message : "erreur inconnue";
+        console.error("[eye requant]", e);
+      }
       done++;
-      setRequant({ done, total, failed });
+      setRequant({ done, total, failed, error: lastError });
     }
     await fetch("/api/eye-scan", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).catch(() => null);
     const fresh = await fetch("/api/eye-scan", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) as { scans?: EyeScanEntry[] } | null;
@@ -191,7 +198,7 @@ export default function EyeScanClient() {
     if (!latest) return;
     setRecenterBusy(true); setRecenterError(null);
     try {
-      const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=${eye}&v=${photoRev}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("photo"))));
+      const blob = await fetch(`/api/eye-scan/image?id=${encodeURIComponent(latest.id)}&eye=${eye}&v=${photoRev}`, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`photo introuvable (${r.status})`))));
       const bmp = await createImageBitmap(blob);
       const cv = document.createElement("canvas");
       cv.width = CROP; cv.height = CROP;
@@ -211,13 +218,17 @@ export default function EyeScanClient() {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: latest.id, eye, side, image: cv.toDataURL("image/jpeg", 0.85) }),
       });
-      if (!res.ok) throw new Error("save");
+      if (!res.ok) {
+        const msg = await res.json().then((j: { error?: string }) => j.error).catch(() => null);
+        throw new Error(`enregistrement refusé (${res.status}${msg ? ` : ${msg}` : ""})`);
+      }
       const { scan } = await res.json() as { scan: EyeScanEntry };
       setScans((s) => (s ?? []).map((x) => (x.id === scan.id ? { ...x, ...scan } : x)));
       setPhotoRev((v) => v + 1);
       setRecenter(null);
-    } catch {
-      setRecenterError("Impossible de ré-analyser cette photo. Réessaie.");
+    } catch (e) {
+      console.error("[eye recenter]", e);
+      setRecenterError(`Impossible de ré-analyser cette photo : ${e instanceof Error ? e.message : "erreur inconnue"}. Réessaie.`);
     } finally {
       setRecenterBusy(false);
     }
@@ -329,6 +340,7 @@ export default function EyeScanClient() {
                   {requant && (
                     <p role="status" className="text-[12px] mt-1" style={{ color: "var(--text-secondary)" }}>
                       {requant.done} / {requant.total} photos{requant.failed > 0 ? `, ${requant.failed} en échec` : ""}
+                      {requant.error && <span className="block" style={{ color: "var(--danger)" }}>Dernière erreur : {requant.error}</span>}
                     </p>
                   )}
                 </div>
