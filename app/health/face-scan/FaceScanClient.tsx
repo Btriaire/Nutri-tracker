@@ -13,6 +13,7 @@ import type { FaceScanEntry, FaceScanConfidence, FaceScanScorecard } from "@/app
 import FaceZoneDiagram from "@/app/components/FaceZoneDiagram";
 import FaceScanTrendChart from "@/app/components/FaceScanTrendChart";
 import FaceOvalCamera from "@/app/components/FaceOvalCamera";
+import FaceLifestyleCard from "@/app/components/FaceLifestyleCard";
 import SkinTexturePanel from "@/app/components/SkinTexturePanel";
 import FaceIndexPanel from "@/app/components/FaceIndexPanel";
 import FaceMetricsTrend from "@/app/components/FaceMetricsTrend";
@@ -459,6 +460,7 @@ export default function FaceScanClient() {
                 dateLabel={format(new Date(latest.date + "T00:00:00"), "d MMMM yyyy", { locale: fr })} />
               <FaceMetricsTrend scans={measured} />
               <FaceCompare scans={measured} />
+              <FaceLifestyleCard />
               <SkinTexturePanel />
             </>
           );
