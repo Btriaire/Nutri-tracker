@@ -209,7 +209,7 @@ function IrisTextureDetails({ side, imageUrl, history }: { side: EyeSide; imageU
           </details>
         </article>
       ))}
-      {photo.maps && <IrisTextureMap maps={photo.maps} />}
+      {photo.maps && <IrisTextureMap maps={photo.maps} imageUrl={imageUrl} />}
       <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
         Ces études portent sur des photos de lampe à fente, souvent sur des yeux asiatiques. Cette mesure par téléphone n&apos;a pas été validée face à elles : elle décrit ton iris et n&apos;évalue aucun risque. Elle ne dit rien de l&apos;état des organes : l&apos;iridologie n&apos;est pas validée (<a href={IRIS_IRIDOLOGY.url} target="_blank" rel="noreferrer" style={{ color: "var(--indigo)", textDecoration: "underline" }}>{IRIS_IRIDOLOGY.label}</a>).
       </p>

@@ -13,7 +13,7 @@ export interface IrisTexture {
   furrowExtent?: number;      // % de la surface analysee couverte par ces sillons
 }
 
-const A0 = -25, A1 = 205;               // degres, moitie basse elargie
+export const A0 = -25, A1 = 205;               // degres, moitie basse elargie
 const CRYPT_DL = 6;                     // L* sous la moyenne locale pour compter comme crypte
 const MIN_R_PX = 14;                    // en dessous, l'image est trop petite pour lire une texture
 
@@ -129,7 +129,7 @@ function elongated(mask: boolean[][]): { count: number; covered: boolean[]; kept
 }
 
 /** Cartes de la bande deroulee : L* brut, detail (eclairage retire) et masque des cryptes. */
-export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { grid: number[][]; detail: number[][]; crypt: boolean[][]; cryptCount: number; cryptCells: number; furrowCount: number; furrowCols: number; nA: number; r0: number; r1: number; valid: number } | null {
+export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { grid: number[][]; detail: number[][]; crypt: boolean[][]; furrow: boolean[][]; cryptCount: number; cryptCells: number; furrowCount: number; furrowCols: number; nA: number; r0: number; r1: number; valid: number } | null {
   const u = unwrapIris(read, c, R, pupilR, w, h);
   if (!u) return null;
   const { grid, r0, r1 } = u;
@@ -150,7 +150,7 @@ export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number,
   const { count: furrowCount, covered: furrowCols, kept: furrows } = elongated(dark);
   for (let i = 0; i < dark.length; i++) for (let j = 0; j < dark[0].length; j++) dark[i][j] &&= !furrows[i][j];
   const { count, cells, kept: crypt } = blobs(dark, Math.max(3, Math.round(total * 0.001)));
-  return { grid, detail, crypt, cryptCount: count, cryptCells: cells, furrowCount, furrowCols: furrowCols.filter(Boolean).length, nA: grid[0].length, r0, r1, valid };
+  return { grid, detail, crypt, furrow: furrows, cryptCount: count, cryptCells: cells, furrowCount, furrowCols: furrowCols.filter(Boolean).length, nA: grid[0].length, r0, r1, valid };
 }
 
 export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): IrisTexture | null {
