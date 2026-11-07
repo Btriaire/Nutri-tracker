@@ -3,6 +3,7 @@
 // Detection des 478 points du visage dans le navigateur (MediaPipe Face Landmarker, WASM).
 // Les mesures sont calculees sur le telephone : la photo ne part vers aucun service tiers pour ca.
 
+import { analyzeSkin, type SkinResult } from "./skin-texture";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { computeFaceMetrics, type FaceMetrics } from "./face-metrics";
 
@@ -54,6 +55,26 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error("image"));
     img.src = src;
   });
+}
+
+/** Analyse de peau sur la photo originale, avant toute compression (plus grand cote limite a 2400 px). */
+export async function analyzeSkinPhoto(file: Blob): Promise<SkinResult> {
+  const url = URL.createObjectURL(file);
+  try {
+    const [landmarker, img] = await Promise.all([getLandmarker(), loadImage(url)]);
+    const k = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+    ctx.drawImage(img, 0, 0, w, h);
+    const lm = landmarker.detect(canvas).faceLandmarks?.[0];
+    if (!lm) return { ok: false, reason: "visage" };
+    const { data } = ctx.getImageData(0, 0, w, h);
+    return analyzeSkin(lm, w, h, (x, y) => { const i = (y * w + x) * 4; return [data[i], data[i + 1], data[i + 2]]; });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 export type FaceMeasureResult = { ok: true; metrics: FaceMetrics } | { ok: false; reason: "no-face" | "error" };
