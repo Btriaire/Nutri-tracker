@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { IconX } from "@tabler/icons-react";
 import { getVideoLandmarker } from "@/app/lib/face-landmarker";
 import { acquisitionStats } from "@/app/lib/eye-metrics";
-import { BestShot, faceAcquisition, facePose, faceFraming, ovalGeometry } from "@/app/lib/face-acquisition";
+import { BestShot, faceAcquisition, facePose, faceFraming, ovalGeometry, fitStage } from "@/app/lib/face-acquisition";
 
 interface Props {
   onCapture: (file: File) => void;
@@ -39,6 +39,7 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   const loopRef = useRef<number | null>(null);
   const [view, setView] = useState({ w: 0, h: 0 });
   const viewRef = useRef({ w: 0, h: 0 });
+  const videoSizeRef = useRef({ w: 720, h: 960 });
 
   const stopAndClose = (after?: () => void) => {
     if (loopRef.current) {
@@ -55,14 +56,18 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
     stopAndClose(() => onCapture(new File([blob], "face.jpg", { type: "image/jpeg" })));
   };
 
+  const updateStage = () => {
+    const s = fitStage(videoSizeRef.current, { w: window.innerWidth, h: window.innerHeight });
+    setView(s);
+    viewRef.current = s;
+  };
+
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const handleResize = () => {
-      const newView = { w: window.innerWidth, h: window.innerHeight };
-      setView(newView);
-      viewRef.current = newView;
+      updateStage();
     };
 
     handleResize();
@@ -247,28 +252,31 @@ export default function FaceOvalCamera({ onCapture, onCancel, onError }: Props) 
   const oval = ovalGeometry(view.w, view.h);
   return createPortal(
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ transform: "scaleX(-1)" }}
-      />
+      <div className="relative overflow-hidden" style={{ width: view.w || "100%", height: view.h || "100%" }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: "scaleX(-1)" }}
+          onLoadedMetadata={(e) => { videoSizeRef.current = { w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight }; updateStage(); }}
+        />
 
-      {/* Oval alignment guide */}
-      {view.w > 0 && (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" width={view.w} height={view.h}>
-          <defs>
-            <mask id="oval-mask">
-              <rect x="0" y="0" width={view.w} height={view.h} fill="white" />
-              <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="black" />
-            </mask>
-          </defs>
-          <rect x="0" y="0" width={view.w} height={view.h} fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
-          <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="none" stroke={score >= THRESHOLD && issue === null ? "var(--ok)" : "var(--fiber)"} strokeWidth="2" strokeDasharray="10 8" opacity="0.9" />
-        </svg>
-      )}
+        {/* Oval alignment guide */}
+        {view.w > 0 && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" width={view.w} height={view.h}>
+            <defs>
+              <mask id="oval-mask">
+                <rect x="0" y="0" width={view.w} height={view.h} fill="white" />
+                <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="black" />
+              </mask>
+            </defs>
+            <rect x="0" y="0" width={view.w} height={view.h} fill="rgba(0,0,0,0.45)" mask="url(#oval-mask)" />
+            <ellipse cx={oval.cx} cy={oval.cy} rx={oval.rx} ry={oval.ry} fill="none" stroke={score >= THRESHOLD && issue === null ? "var(--ok)" : "var(--fiber)"} strokeWidth="2" strokeDasharray="10 8" opacity="0.9" />
+          </svg>
+        )}
+      </div>
 
       <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-4" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
         <p className="text-white text-[13px] font-medium">

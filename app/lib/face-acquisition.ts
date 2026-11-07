@@ -1,10 +1,16 @@
 type Point = { x: number; y: number };
 
+/** Rectangle affiche quand la video entiere tient dans l'ecran : ce qu'on voit est ce qui est photographie. */
+export function fitStage(video: { w: number; h: number }, screen: { w: number; h: number }): { w: number; h: number } {
+  const k = Math.min(screen.w / video.w, screen.h / video.h);
+  return { w: Math.round(video.w * k), h: Math.round(video.h * k) };
+}
+
 export function ovalGeometry(viewW: number, viewH: number): { cx: number, cy: number, rx: number, ry: number } {
-  const ry = Math.min(viewH * 0.62, viewW * 0.86 * 1.35, viewH * 0.8) / 2;
+  const ry = Math.min(viewH * 0.82, viewW * 0.9 * 1.35) / 2;
   const rx = ry / 1.35;
   const cx = viewW / 2;
-  const cy = Math.min(Math.max(ry, viewH * 0.44), viewH - ry);
+  const cy = Math.min(Math.max(ry, viewH * 0.47), viewH - ry);
   return { cx, cy, rx, ry };
 }
 

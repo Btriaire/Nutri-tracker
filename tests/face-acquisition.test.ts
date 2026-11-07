@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { faceAcquisition, facePose, faceFraming, ovalGeometry, BestShot } from "@/app/lib/face-acquisition";
+import { faceAcquisition, facePose, faceFraming, ovalGeometry, fitStage, BestShot } from "@/app/lib/face-acquisition";
 
 const VIDEO = { w: 720, h: 960 }, PHONE = { w: 390, h: 844 };
 // Construit des points video normalises a partir d'une tete voulue a l'ecran (object-cover).
@@ -96,5 +96,22 @@ describe("facePose et BestShot", () => {
     const b = new BestShot<string>(70);
     b.offer(60, "a"); b.offer(80, "b"); b.offer(75, "c");
     expect(b.best).toBe("b"); expect(b.count).toBe(2);
+  });
+});
+
+describe("fitStage : plus besoin de reculer", () => {
+  it("la video entiere tient dans l'ecran", () => {
+    expect(fitStage(VIDEO, PHONE)).toEqual({ w: 390, h: 520 });
+    expect(fitStage({ w: 1280, h: 720 }, { w: 1280, h: 800 })).toEqual({ w: 1280, h: 720 });
+  });
+  it("visage occupant 60 % de la largeur de la photo, a bout de bras : accepte sans message", () => {
+    const stage = fitStage(VIDEO, PHONE), o = ovalGeometry(stage.w, stage.h);
+    // Tete de 0,84 x hauteur / largeur : helper head() -> demi-largeur = 0,36 x hauteur de tete
+    const hh = (0.6 * stage.w) / 0.72;
+    const f = faceFraming(head(stage, o.cx, o.cy - hh / 2, o.cy + hh / 2), VIDEO, stage);
+    expect(f.inFrame).toBe(true);
+    const a = faceAcquisition({ ...f, yawDeg: 0, rollDeg: 0, motion: 0, sharp: 13, light: 130 });
+    expect(a.issue).toBeNull();
+    expect(a.score).toBeGreaterThanOrEqual(90);
   });
 });
