@@ -62,7 +62,7 @@ export function recenterEye(read: PixelReader, side: EyeSide, tap: Pt): EyeSide 
   };
 }
 
-export const REQUANT_VERSION = 3; // v3 : texture de l'iris
+export const REQUANT_VERSION = 4; // v3 : texture de l'iris ; v4 : sillons et nettete de l'iris
 
 /**
  * Re-quantification d'un ancien scan a partir de sa photo : bord de l'iris remesure (donc echelle mm corrigee),

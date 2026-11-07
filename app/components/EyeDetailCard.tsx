@@ -1,10 +1,12 @@
 "use client";
+import { useState } from "react";
 
 import EyeStructureMasks from "@/app/components/EyeStructureMasks";
 import { eyeAreas } from "@/app/lib/eye-areas";
 import { HVID_MM, rednessGrade, type EyeSide } from "@/app/lib/eye-metrics";
 import IrisTextureMap, { useIrisPhoto } from "@/app/components/IrisTextureMap";
-import { TEXTURE_LABEL, fiberLabel, textureStability, type IrisTexture } from "@/app/lib/eye-iris-texture";
+import { irisProfile, type IrisTexture } from "@/app/lib/eye-iris-texture";
+import { IRIS_INFO, IRIS_IRIDOLOGY } from "@/app/lib/eye-iris-info";
 
 const n = (v: number | null | undefined, d = 1) => (v == null ? "—" : (Math.round(v * 10 ** d) / 10 ** d).toString().replace(".", ","));
 
@@ -129,68 +131,88 @@ export default function EyeDetailCard({ label, side, imageUrl, indexes, notes, o
   );
 }
 
-/** Texture de l'iris : classe descriptive et quatre mesures, avec leur limite. */
+/** Texture de l'iris en option : rien n'est decode tant que le bloc reste ferme. */
 function IrisTextureBlock({ side, imageUrl, history }: { side: EyeSide; imageUrl: string | null; history?: (IrisTexture | null | undefined)[] }) {
-  // Lue sur la photo a l'affichage : rien a lancer. La valeur enregistree (scan, recentrage, re-quantification) prime.
+  const [open, setOpen] = useState(false);
+  if (side.irisTexture === undefined && !imageUrl) return null;
+
+  return (
+    <div className="mx-3 mb-2 rounded-lg p-2.5" style={{ background: "var(--layer-2)" }}>
+      <button
+        className="w-full min-h-[44px] flex items-center justify-between gap-2 mb-1.5"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <div>
+          <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Analyse de texture de l&apos;iris (option)</p>
+          <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>Cryptes, sillons, relief, fibres, avec les publications</p>
+        </div>
+        <svg className={`w-5 h-5 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && <IrisTextureDetails side={side} imageUrl={imageUrl} history={history} />}
+    </div>
+  );
+}
+
+function IrisTextureDetails({ side, imageUrl, history }: { side: EyeSide; imageUrl: string | null; history?: (IrisTexture | null | undefined)[] }) {
   const photo = useIrisPhoto(imageUrl, side.pupilMm);
   const live = side.irisTexture === undefined;
   const t = live ? photo.texture : side.irisTexture ?? null;
-  const stab = history ? textureStability(history) : null;
-  if (live && !imageUrl) return null;
-  const stats: [string, string, string][] = t ? [
-    ["Relief", n(t.relief), "L*"],
-    ["Fibres radiaires", `${Math.round(t.radialRatio * 100)}`, "%"],
-    ["Cryptes", `${t.cryptCount}`, `· ${n(t.cryptPct)} %`],
-    ["Collerette", t.collaretteRatio == null ? "—" : `${Math.round(t.collaretteRatio * 100)}`, t.collaretteRatio == null ? "" : "% du rayon"],
-  ] : [];
+  const profile = history ? irisProfile(history) : null;
+
+  if (live && photo.status === "loading") {
+    return <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Analyse de la photo…</p>;
+  }
+
+  if (!t && !profile) {
+    return <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Non lisible sur cette photo (iris trop petit, flou ou trop caché).</p>;
+  }
+
   return (
-    <div className="mx-3 mb-2 rounded-lg p-2.5" style={{ background: "var(--layer-2)" }}>
-      <div className="flex items-center justify-between gap-2 mb-1.5">
-        <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>Texture de l&apos;iris</p>
-        {t && (
-          <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: "rgba(192,132,252,0.15)", color: "#c084fc" }}>
-            {TEXTURE_LABEL[t.grade]}
-          </span>
-        )}
-      </div>
-      {live && photo.status === "loading" ? (
-        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Analyse de la photo…</p>
-      ) : !t ? (
-        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Non lisible sur cette photo (iris trop petit, flou ou trop caché).</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-4 gap-1">
-            {stats.map(([k, v, u]) => (
-              <div key={k} className="text-center rounded-md py-1" style={{ background: "var(--layer-1)" }}>
-                <p className="text-[10px] leading-tight" style={{ color: "var(--text-secondary)" }}>{k}</p>
-                <p className="text-[14px] font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{v}</p>
-                <p className="text-[10px] tabular-nums" style={{ color: "var(--text-muted)" }}>{u}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
-            Fibres : {fiberLabel(t.radialRatio)} · fiabilité {Math.round(t.confidence * 100)} %
+    <>
+      <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
+        Ton iris change très peu à l&apos;âge adulte. Une valeur qui varie d&apos;un scan à l&apos;autre vient donc surtout de la photo : on retient seulement tes photos les plus nettes.
+      </p>
+      <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+        {profile ? `Profil de cet œil : ${profile.used} photos les plus nettes sur ${profile.total}.` : "Profil disponible après 3 scans lisibles : utilise « Re-quantifier » plus haut pour les anciens scans."}
+      </p>
+      {IRIS_INFO.map((info) => (
+        <article key={info.key} className="mt-2">
+          <p className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>{info.label}</p>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+            {(() => {
+              const v = profile ? profile.params[info.key].median : t?.[info.key];
+              if (typeof v !== "number") return "—";
+              return info.key === "radialRatio" ? Math.round(v * 100) : n(v);
+            })()} {info.unit}
+            {profile && (
+              <span className="ml-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: "var(--layer-1)", color: "var(--text-primary)" }}>
+                {profile.params[info.key].reliability === 'stable' ? 'mesure stable' : profile.params[info.key].reliability === 'moyenne' ? 'mesure assez stable' : 'mesure instable : à ne pas interpréter'}
+              </span>
+            )}
           </p>
-          {photo.maps && <IrisTextureMap maps={photo.maps} />}
-          {live && (
-            <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
-              Lue sur la photo de ce scan. Pour l&apos;ajouter à l&apos;historique des anciens scans : « Re-quantifier » plus haut.
-            </p>
-          )}
-          {stab && (
-            <p className="text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
-              Sur {stab.n} scans : relief {n(stab.relief.median)} ± {n(stab.relief.spread)}, cryptes {n(stab.cryptPct.median)} ± {n(stab.cryptPct.spread)} %,
-              même classe {Math.round(stab.agreement * 100)} % du temps
-              {stab.agreement >= 0.75 && stab.relief.spread <= 1.5 ? " — mesure reproductible." : " — photos encore inégales (netteté, lumière) : la valeur médiane est la plus sûre."}
-            </p>
-          )}
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
-            Description de l&apos;aspect de l&apos;iris, un trait propre à chacun et stable à l&apos;âge adulte.
-            Elle ne dit rien de l&apos;état des organes (l&apos;iridologie n&apos;a pas de base scientifique) ; d&apos;un scan
-            à l&apos;autre, les écarts viennent surtout de la netteté, de la lumière et de la taille de la pupille.
-          </p>
-        </>
-      )}
-    </div>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>{info.meaning}</p>
+          <details className="mt-1">
+            <summary className="text-[12px] cursor-pointer" style={{ color: "var(--indigo)" }}>Ce que disent les études</summary>
+            <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>{info.science}</p>
+            {info.refs.length > 0 && (
+              <ul className="list-none mt-1">
+                {info.refs.map((link) => (
+                  <li key={link.url} className="text-[12px] mt-0.5">
+                    <a href={link.url} target="_blank" rel="noreferrer" style={{ color: "var(--indigo)", textDecoration: "underline" }}>{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </details>
+        </article>
+      ))}
+      {photo.maps && <IrisTextureMap maps={photo.maps} />}
+      <p className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
+        Ces études portent sur des photos de lampe à fente, souvent sur des yeux asiatiques. Cette mesure par téléphone n&apos;a pas été validée face à elles : elle décrit ton iris et n&apos;évalue aucun risque. Elle ne dit rien de l&apos;état des organes : l&apos;iridologie n&apos;est pas validée (<a href={IRIS_IRIDOLOGY.url} target="_blank" rel="noreferrer" style={{ color: "var(--indigo)", textDecoration: "underline" }}>{IRIS_IRIDOLOGY.label}</a>).
+      </p>
+    </>
   );
 }

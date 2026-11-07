@@ -1,17 +1,3 @@
-// Texture de l'iris a partir des pixels : relief, orientation des fibres, cryptes, collerette. Module pur (tests/eye-iris-texture.test.ts).
-//
-// Methode : l'anneau de l'iris (entre la pupille et le bord) est deroule en coordonnees polaires sur la moitie
-// basse elargie (-25..205 degres, la paupiere haute et les cils sont evites), a pas egal en pixels dans les deux
-// directions. L'eclairage est retire (moyenne locale soustraite), puis :
-//   - relief      : ecart-type robuste du detail restant (L*), plus il est fort plus l'iris est structure ;
-//   - fibres      : part des variations le long du cercle (stries radiaires) face a celles le long du rayon (anneaux) ;
-//   - cryptes     : taches nettement plus sombres que leur voisinage (zones ou le stroma est mince) ;
-//   - collerette  : rayon du plus fort changement de luminosite moyenne entre zone pupillaire et zone ciliaire.
-//
-// C'est une description de l'aspect de l'iris, un trait individuel tres stable chez l'adulte (Larsson et al.).
-// Elle ne renseigne pas sur l'etat de sante des organes (l'iridologie n'a pas de validite) : d'un scan a l'autre,
-// les ecarts viennent surtout de la nettete, de la lumiere et de la taille de la pupille.
-
 import { rgbToLab, type PixelReader, type Pt } from "./face-metrics";
 
 export interface IrisTexture {
@@ -22,6 +8,9 @@ export interface IrisTexture {
   collaretteRatio: number | null; // position de la collerette : rayon / rayon de l'iris (null si non vue)
   grade: "dense" | "intermediaire" | "lache";
   confidence: number;          // 0-1 : resolution de l'iris et part de l'anneau lisible
+  sharp?: number;             // nettete de l'iris : ecart-type robuste des differences voisines
+  furrowCount?: number;       // nombre de sillons sombres le long du cercle
+  furrowExtent?: number;      // % de la surface analysee couverte par ces sillons
 }
 
 const A0 = -25, A1 = 205;               // degres, moitie basse elargie
@@ -74,7 +63,7 @@ function localMean(g: number[][], k: number): number[][] {
 
 /**
  * Taches connexes (4-voisins) d'au moins `minSize` cases et d'au moins 2 cases dans chaque direction :
- * une ligne fine le long d'un anneau (bord de la collerette, sillon) n'est pas une crypte.
+ * une ligne fine leong le long d'un anneau (bord de la collerette, sillon) n'est pas une crypte.
  * Renvoie le masque ne gardant que ces taches.
  */
 function blobs(mask: boolean[][], minSize: number): { count: number; cells: number; kept: boolean[][] } {
@@ -105,8 +94,42 @@ function blobs(mask: boolean[][], minSize: number): { count: number; cells: numb
   return { count, cells, kept };
 }
 
+/**
+ * Composantes connexes (4-voisins) de cellules voisines le long du cercle (colonnes) avec une etendue angulaire
+ * au moins 4 fois plus grande que l'etendue radiale et au moins 8% de la largeur de l'anneau.
+ * Renvoie le masque ne gardant que ces composantes.
+ */
+function elongated(mask: boolean[][]): { count: number; covered: boolean[]; kept: boolean[][] } {
+  const nR = mask.length, nA = mask[0].length;
+  const seen = mask.map((r) => r.map(() => false));
+  const kept = mask.map((r) => r.map(() => false));
+  const covered = new Array(nA).fill(false);
+  let count = 0;
+  for (let i = 0; i < nR; i++) for (let j = 0; j < nA; j++) {
+    if (!mask[i][j] || seen[i][j]) continue;
+    const members: [number, number][] = [];
+    const stack: [number, number][] = [[i, j]];
+    seen[i][j] = true;
+    let i0 = i, i1 = i, j0 = j, j1 = j;
+    while (stack.length) {
+      const [a, b] = stack.pop()!;
+      members.push([a, b]);
+      i0 = Math.min(i0, a); i1 = Math.max(i1, a); j0 = Math.min(j0, b); j1 = Math.max(j1, b);
+      for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const x = a + da, y = b + db;
+        if (x >= 0 && y >= 0 && x < nR && y < nA && mask[x][y] && !seen[x][y]) { seen[x][y] = true; stack.push([x, y]); }
+      }
+    }
+    if ((j1 - j0 + 1) >= 4 * (i1 - i0 + 1) && (j1 - j0 + 1) >= Math.max(3, Math.round(nA * 0.08))) {
+      count++;
+      for (const [a, b] of members) { kept[a][b] = true; covered[b] = true; }
+    }
+  }
+  return { count, covered, kept };
+}
+
 /** Cartes de la bande deroulee : L* brut, detail (eclairage retire) et masque des cryptes. */
-export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { grid: number[][]; detail: number[][]; crypt: boolean[][]; cryptCount: number; cryptCells: number; r0: number; r1: number; valid: number } | null {
+export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): { grid: number[][]; detail: number[][]; crypt: boolean[][]; cryptCount: number; cryptCells: number; furrowCount: number; furrowCols: number; nA: number; r0: number; r1: number; valid: number } | null {
   const u = unwrapIris(read, c, R, pupilR, w, h);
   if (!u) return null;
   const { grid, r0, r1 } = u;
@@ -124,15 +147,17 @@ export function textureMaps(read: PixelReader, c: Pt, R: number, pupilR: number,
   const dark = detail.map((row, i) => row.map((v, j) => Number.isFinite(v) && v < -CRYPT_DL
     && below(i - d, j, grid[i][j]) && below(i + d, j, grid[i][j])
     && (Number.isFinite(grid[i - d]?.[j]) || Number.isFinite(grid[i + d]?.[j]))));
+  const { count: furrowCount, covered: furrowCols, kept: furrows } = elongated(dark);
+  for (let i = 0; i < dark.length; i++) for (let j = 0; j < dark[0].length; j++) dark[i][j] &&= !furrows[i][j];
   const { count, cells, kept: crypt } = blobs(dark, Math.max(3, Math.round(total * 0.001)));
-  return { grid, detail, crypt, cryptCount: count, cryptCells: cells, r0, r1, valid };
+  return { grid, detail, crypt, cryptCount: count, cryptCells: cells, furrowCount, furrowCols: furrowCols.filter(Boolean).length, nA: grid[0].length, r0, r1, valid };
 }
 
 export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number, w: number, h: number): IrisTexture | null {
   const maps = textureMaps(read, c, R, pupilR, w, h);
   if (!maps) return null;
-  const { grid, detail, cryptCount, cryptCells: cells, r0, r1, valid } = maps;
-  const nR = grid.length, nA = grid[0].length;
+  const { grid, detail, cryptCount, cryptCells: cells, furrowCount, furrowCols, nA, r0, r1, valid } = maps;
+  const nR = grid.length;
   const total = nR * nA;
   const flat = detail.flat().filter(Number.isFinite);
   const med = median(flat);
@@ -165,6 +190,14 @@ export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number,
   const grade: IrisTexture["grade"] = loose >= 1.5 ? "lache" : loose >= 0.5 ? "intermediaire" : "dense";
 
   const confidence = clamp01(Math.min(1, (R - MIN_R_PX) / 36) * (valid / total) * 1.15);
+
+  // Nettete : ecart-type robuste des differences voisines
+  const diffs = flat.map((v, i) => i + 1 < flat.length ? Math.abs(flat[i + 1] - v) : 0).filter((v) => v > 0);
+  const sharp = 1.4826 * median(diffs.sort((a, b) => a - b));
+
+  // Sillons : nombre et etendue
+  const furrowExtent = round(100 * furrowCols / nA, 1);
+
   return {
     relief: round(relief, 1),
     radialRatio: round(radialRatio, 2),
@@ -173,6 +206,9 @@ export function irisTexture(read: PixelReader, c: Pt, R: number, pupilR: number,
     collaretteRatio,
     grade,
     confidence: round(confidence, 2),
+    sharp: round(sharp, 2),
+    furrowCount,
+    furrowExtent,
   };
 }
 
@@ -205,5 +241,34 @@ export function textureStability(history: (IrisTexture | null | undefined)[]): {
     cryptPct: stat(xs.map((t) => t.cryptPct)),
     radialRatio: stat(xs.map((t) => t.radialRatio)),
     agreement: round(grades.filter((g) => g === mode).length / xs.length, 2),
+  };
+}
+
+export function irisProfile(history: (IrisTexture | null | undefined)[]): { total: number; used: number; params: Record<"cryptPct" | "furrowExtent" | "relief" | "radialRatio", { median: number; spread: number; reliability: "stable" | "moyenne" | "instable" }> } | null {
+  const xs = history.filter((t): t is IrisTexture => !!t && t.confidence >= 0.3 && typeof t.sharp === "number" && typeof t.furrowExtent === "number");
+  if (xs.length < 3) return null;
+  if (history.some((t) => t && t.confidence >= 0.3 && (typeof t.sharp !== "number" || typeof t.furrowExtent !== "number"))) return null;
+  const sharpThreshold = median(xs.map((t) => t.sharp!));
+  const kept = xs.filter((t) => t.sharp! >= sharpThreshold);
+  if (kept.length < 3) {
+    const sorted = [...xs].sort((a, b) => b.sharp! - a.sharp!);
+    kept.push(...sorted.slice(0, 3 - kept.length));
+  }
+  const stat = (vals: number[], floor: number) => {
+    const m = median(vals);
+    const spread = median(vals.map((v) => Math.abs(v - m)));
+    const ratio = spread * 1.4826 / Math.max(Math.abs(m), floor);
+    const reliability: "stable" | "moyenne" | "instable" = ratio < 0.25 ? "stable" : ratio < 0.5 ? "moyenne" : "instable";
+    return { median: round(m, 2), spread: round(spread, 2), reliability };
+  };
+  return {
+    total: xs.length,
+    used: kept.length,
+    params: {
+      cryptPct: stat(kept.map((t) => t.cryptPct), 1),
+      furrowExtent: stat(kept.map((t) => t.furrowExtent!), 5),
+      relief: stat(kept.map((t) => t.relief), 0.5),
+      radialRatio: stat(kept.map((t) => t.radialRatio), 0.05),
+    },
   };
 }
