@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import VoiceMealModal from "@/app/components/VoiceMealModal";
+import DayTemplateModal from "@/app/components/DayTemplateModal";
 import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
@@ -37,7 +38,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp, IconHeartHandshake } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconCalendarPlus, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp, IconHeartHandshake } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -223,6 +224,7 @@ interface Props {
 export default function LogClient({ date, initialLog, goals, lang = "fr", trackedNutrients, dietProgram, morningSnack = false, eggProgram = null }: Props) {
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
+  const [showTemplate, setShowTemplate] = useState(false);
   // Changements de vie ou de comportement (dictee) : notes du jour + reprise des etats persistants
   const [showLife,      setShowLife]      = useState(false);
   const [lifeNotes,     setLifeNotes]     = useState<LifeNote[]>([]);
@@ -617,7 +619,29 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <IconHeartHandshake size={17} stroke={1.8} />
           </button>
-          {/* Aliments Alternatifs — calorie-matched food substitution tool */}
+          {/* Journee type : rattraper un jour non saisi */}
+          <button
+            onClick={() => setShowTemplate(true)}
+            aria-label="Journée type : rattraper un jour non saisi"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
+          >
+            <IconCalendarPlus size={17} stroke={1.8} />
+          </button>
+          {/* Journee type : estimation pour un jour non saisi (pas d'extraction de micronutriments par l'IA) */}
+      {showTemplate && (
+        <DayTemplateModal date={date} hasEntries={entries.length > 0} onClose={() => setShowTemplate(false)}
+          onAdded={async () => {
+            setShowTemplate(false);
+            try {
+              const res = await fetch(`/api/log?date=${date}`);
+              if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
+            } catch { /* la page se recharge ci-dessous */ }
+            router.refresh();
+          }} />
+      )}
+
+      {/* Aliments Alternatifs — calorie-matched food substitution tool */}
           <button
             onClick={() => setShowAlternatives(true)}
             aria-label="Aliments Alternatifs"
