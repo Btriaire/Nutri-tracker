@@ -325,6 +325,8 @@ export interface UserProfile {
   dietProgram?: DietProgramPrefs;
   /** Repas optionnels proposés dans le journal. */
   mealSlots?: { morningSnack?: boolean };
+  /** Repartition des calories entre les repas (pourcentages entiers, total 100), voir lib/meal-shares.ts. */
+  mealShares?: import("./meal-shares").MealShares;
   /** Regime aux oeufs : programme court qui remplit une journee de repas (voir lib/egg-diet.ts). */
   eggProgram?: import("./egg-diet").EggProgramPrefs | null;
 }

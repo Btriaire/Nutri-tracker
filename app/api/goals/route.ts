@@ -5,6 +5,7 @@ import { defaultGoals } from "@/app/lib/nutrition";
 import type { NutritionGoals, UserProfile, ChartPrefs, DietProgramPrefs } from "@/app/lib/types";
 import { Timestamp } from "firebase-admin/firestore";
 import type { EggProgramPrefs } from "@/app/lib/egg-diet";
+import { sanitizeMealShares, DEFAULT_MEAL_SHARES } from "@/app/lib/meal-shares";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function GET() {
   const doc = await db.doc(`users/${session.userId}`).get();
 
   if (!doc.exists) {
-    return NextResponse.json({ goals: defaultGoals(), isOwner: session.userId === "owner" });
+    return NextResponse.json({ goals: defaultGoals(), mealShares: DEFAULT_MEAL_SHARES, isOwner: session.userId === "owner" });
   }
 
   const profile = doc.data() as UserProfile;
@@ -28,6 +29,7 @@ export async function GET() {
     dietProgram: profile.dietProgram ?? null,
     mealSlots:   profile.mealSlots   ?? null,
     eggProgram:  profile.eggProgram  ?? null,
+    mealShares:  profile.mealShares ?? DEFAULT_MEAL_SHARES,
     isOwner:     session.userId === "owner",
   });
 }
@@ -37,7 +39,14 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string; dietProgram?: DietProgramPrefs; mealSlots?: { morningSnack?: boolean }; eggProgram?: EggProgramPrefs | null };
+  const body = await req.json() as { chartPrefs?: ChartPrefs; goals?: Partial<NutritionGoals>; photoUrl?: string; dietProgram?: DietProgramPrefs; mealSlots?: { morningSnack?: boolean }; eggProgram?: EggProgramPrefs | null; mealShares?: unknown };
+
+  if ("mealShares" in body) {
+    const ms = sanitizeMealShares(body.mealShares);
+    if (!ms) return NextResponse.json({ error: "Répartition invalide : pourcentages entiers dont le total fait 100." }, { status: 400 });
+    body.mealShares = ms;
+  }
+
   const db = getAdminFirestore();
   await db.doc(`users/${session.userId}`).set(body, { merge: true });
   return NextResponse.json({ ok: true });

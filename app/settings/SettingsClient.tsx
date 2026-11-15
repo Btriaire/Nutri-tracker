@@ -22,6 +22,7 @@ import GlycemiePanel from "./panels/GlycemiePanel";
 import ChartPrefsPanel from "./panels/ChartPrefsPanel";
 import TrackedNutrientsPanel from "./panels/TrackedNutrientsPanel";
 import DietProgramPanel from "./panels/DietProgramPanel";
+import MealSharesPanel from "./panels/MealSharesPanel";
 import ExportPanel from "./panels/ExportPanel";
 import ResetPanel from "./panels/ResetPanel";
 import FastingPanel from "./panels/FastingPanel";
@@ -600,6 +601,7 @@ export default function SettingsClient({ fitConnected: initialFit, withingsConne
 
         {/* Programme diététique prescrit */}
         <DietProgramPanel />
+        <MealSharesPanel />
 
         {/* Export data */}
         <ExportPanel />

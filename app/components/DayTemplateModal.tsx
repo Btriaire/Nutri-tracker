@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sheet from "@/app/components/Sheet";
 import { dayTemplate, type DayQuality } from "@/app/lib/day-template";
+import { DEFAULT_MEAL_SHARES, sanitizeMealShares, type MealShares } from "@/app/lib/meal-shares";
 
 export default function DayTemplateModal({
   date,
@@ -19,6 +20,19 @@ export default function DayTemplateModal({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [customKcal, setCustomKcal] = useState("");
+  const [shares, setShares] = useState<MealShares>(DEFAULT_MEAL_SHARES);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/goals")
+      .then(r => r.json())
+      .then(d => {
+        const s = sanitizeMealShares(d?.mealShares);
+        if (s && !cancelled) setShares(s);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const handleKcalChange = (value: number) => {
     setKcal(value);
@@ -47,7 +61,7 @@ export default function DayTemplateModal({
         },
         body: JSON.stringify({
           date,
-          entries: dayTemplate(kcal, quality),
+          entries: dayTemplate(kcal, quality, shares),
         }),
       });
 
@@ -75,7 +89,7 @@ export default function DayTemplateModal({
         {!error ? (
           <>
             <p className="text-sm text-[var(--text-secondary)]">
-              Pour rattraper un jour non saisi : une estimation moyenne répartie sur le petit-déjeuner, le déjeuner, une collation et le dîner. Elle sera marquée comme estimation.
+              Pour rattraper un jour non saisi : une estimation moyenne répartie sur tes repas selon ta répartition (Réglages). Elle sera marquée comme estimation.
             </p>
             <div>
               <h3 className="text-sm font-semibold">Calories</h3>
