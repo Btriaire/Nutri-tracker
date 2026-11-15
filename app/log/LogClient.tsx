@@ -15,6 +15,9 @@ import MealSection from "@/app/components/MealSection";
 import DateNav from "@/app/components/DateNav";
 import VoiceMealModal from "@/app/components/VoiceMealModal";
 import DayTemplateModal from "@/app/components/DayTemplateModal";
+import LogCalendar from "@/app/components/LogCalendar";
+import PeriodModal from "@/app/components/PeriodModal";
+import EstimatedDayBanner from "@/app/components/EstimatedDayBanner";
 import WaterTracker from "@/app/components/WaterTracker";
 import FastingTimer from "@/app/components/FastingTimer";
 import AlcoolTracker from "@/app/components/AlcoolTracker";
@@ -38,7 +41,7 @@ import HungerTimeline from "@/app/components/HungerTimeline";
 type MealPhotos = Partial<Record<MealType, string>>;
 import type { AddedInfo } from "@/app/components/FoodSearchModal";
 import { pct } from "@/app/lib/nutrition";
-import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconCalendarPlus, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp, IconHeartHandshake } from "@tabler/icons-react";
+import { IconCheck, IconLock, IconLockOpen, IconX, IconMicrophone, IconCamera, IconSalt, IconCandy, IconAvocado, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconArrowsExchange, IconCalendarPlus, IconCalendarMonth, IconStethoscope, IconTarget, IconLoader2, IconDroplet, IconChevronDown, IconChevronUp, IconHeartHandshake } from "@tabler/icons-react";
 import AIInsightBox from "@/app/components/AIInsightBox";
 import DayPhotos from "@/app/components/DayPhotos";
 import DayTypeSelector from "@/app/components/DayTypeSelector";
@@ -225,6 +228,9 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
   const router = useRouter();
   const [showVoice,    setShowVoice]    = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [period, setPeriod] = useState<{ from: string; to: string } | null>(null);
+  const [calendarKey, setCalendarKey] = useState(0);
   // Changements de vie ou de comportement (dictee) : notes du jour + reprise des etats persistants
   const [showLife,      setShowLife]      = useState(false);
   const [lifeNotes,     setLifeNotes]     = useState<LifeNote[]>([]);
@@ -619,6 +625,15 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <IconHeartHandshake size={17} stroke={1.8} />
           </button>
+          {/* Calendrier : jours vides, partiels, estimes ; remplir une periode */}
+          <button
+            onClick={() => setShowCalendar(true)}
+            aria-label="Calendrier du journal et périodes à remplir"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
+          >
+            <IconCalendarMonth size={17} stroke={1.8} />
+          </button>
           {/* Journee type : rattraper un jour non saisi */}
           <button
             onClick={() => setShowTemplate(true)}
@@ -628,7 +643,21 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           >
             <IconCalendarPlus size={17} stroke={1.8} />
           </button>
-          {/* Journee type : estimation pour un jour non saisi (pas d'extraction de micronutriments par l'IA) */}
+          <LogCalendar date={date} open={showCalendar} refreshKey={calendarKey} onClose={() => setShowCalendar(false)}
+        onSelectRange={(from, to) => { setShowCalendar(false); setPeriod({ from, to }); }} />
+      {period && (
+        <PeriodModal key={`${period.from}-${period.to}`} from={period.from} to={period.to} open onClose={() => setPeriod(null)}
+          onSaved={async () => {
+              setPeriod(null); setCalendarKey((k) => k + 1);
+              try {
+                const res = await fetch(`/api/log?date=${date}`);
+                if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
+              } catch { /* la page se recharge ci-dessous */ }
+              router.refresh();
+            }} />
+      )}
+
+      {/* Journee type : estimation pour un jour non saisi (pas d'extraction de micronutriments par l'IA) */}
       {showTemplate && (
         <DayTemplateModal date={date} hasEntries={entries.length > 0} onClose={() => setShowTemplate(false)}
           onAdded={async () => {
@@ -652,6 +681,13 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           </button>
         </motion.div>
 
+        <EstimatedDayBanner date={date} onChanged={async () => {
+              try {
+                const res = await fetch(`/api/log?date=${date}`);
+                if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
+              } catch { /* la page se recharge ci-dessous */ }
+              router.refresh();
+            }} />
         <EggDietBanner date={date} eggProgram={eggProgram} morningSnack={morningSnack} />
         {/* Changements de vie ou de comportement du jour (compact) : - / + sur chaque item, repris de la veille */}
         {lifeNotes.length > 0 && (
