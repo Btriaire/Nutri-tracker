@@ -6,12 +6,13 @@ import type { LifestyleLink } from "@/app/lib/face-lifestyle";
 export default function FaceLifestyleCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [data, setData] = useState<{ tested: number; links: LifestyleLink[]; photos: number } | null>(null);
+  const [excludeEstimated, setExcludeEstimated] = useState(false);
+  const [data, setData] = useState<{ tested: number; links: LifestyleLink[]; photos: number; estimatedDays: number; excludeEstimated: boolean } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/face-scan/lifestyle", { cache: "no-store" })
+    fetch(`/api/face-scan/lifestyle${excludeEstimated ? "?excludeEstimated=1" : ""}`, { cache: "no-store" })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -20,7 +21,7 @@ export default function FaceLifestyleCard() {
       })
       .then((data) => {
         if (!cancelled) {
-          setData(data);
+          setData({ ...data, key: String(excludeEstimated) });
           setLoading(false);
         }
       })
@@ -34,7 +35,7 @@ export default function FaceLifestyleCard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [excludeEstimated]);
 
   const confirmed = data?.links.filter((link) => link.status === "confirmé") || [];
   const watch = data?.links.filter((link) => link.status === "à surveiller") || [];
@@ -50,6 +51,9 @@ export default function FaceLifestyleCard() {
       {data && (
         <>
           <p>{`${data.tested} liens testés sur ${data.photos} photos.`}</p>
+          {!excludeEstimated && data.estimatedDays > 0 && (
+            <p>{`dont ${data.estimatedDays} jours estimés et confirmés (alcool déclaré seulement).`}</p>
+          )}
           {confirmed.length > 0 ? (
             <>
               <h3 style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", marginTop: "12px" }}>Liens confirmés</h3>
@@ -75,6 +79,13 @@ export default function FaceLifestyleCard() {
           )}
         </>
       )}
+      <button
+        className="min-h-[44px]"
+        aria-pressed={excludeEstimated}
+        onClick={() => setExcludeEstimated(!excludeEstimated)}
+      >
+        {excludeEstimated ? "Avec les jours estimés" : "Sans les jours estimés"}
+      </button>
       <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>
         Un lien n&apos;est pas une cause : un autre facteur peut expliquer les deux. Les mesures et les comparaisons sont recalculées à chaque ouverture.
       </p>
