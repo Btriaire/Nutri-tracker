@@ -593,16 +593,16 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-5 flex items-center gap-2"
+          className="mb-5 flex flex-col gap-3"
         >
-          <div className="flex-1 min-w-0">
-            <DateNav date={date} />
-          </div>
+          <DateNav date={date} />
+          {/* Outils du jour : une rangee a part pour laisser toute la place aux fleches de date */}
+          <div className="flex items-center justify-between gap-2" role="toolbar" aria-label="Outils du journal">
           {/* Face & eye scan — Nutri-IA wellness photo analysis */}
           <Link
             href="/health/face-scan"
             aria-label="Scan visage"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconCamera size={17} stroke={1.8} />
@@ -611,7 +611,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <button
             onClick={() => setShowVoice(true)}
             aria-label="Dicter mon repas"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconMicrophone size={17} stroke={1.8} />
@@ -620,7 +620,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <button
             onClick={() => setShowLife(true)}
             aria-label="Changement de vie ou de comportement"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconHeartHandshake size={17} stroke={1.8} />
@@ -629,7 +629,7 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <button
             onClick={() => setShowCalendar(true)}
             aria-label="Calendrier du journal et périodes à remplir"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconCalendarMonth size={17} stroke={1.8} />
@@ -638,47 +638,21 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           <button
             onClick={() => setShowTemplate(true)}
             aria-label="Journée type : rattraper un jour non saisi"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconCalendarPlus size={17} stroke={1.8} />
           </button>
-          <LogCalendar date={date} open={showCalendar} refreshKey={calendarKey} onClose={() => setShowCalendar(false)}
-        onSelectRange={(from, to) => { setShowCalendar(false); setPeriod({ from, to }); }} />
-      {period && (
-        <PeriodModal key={`${period.from}-${period.to}`} from={period.from} to={period.to} open onClose={() => setPeriod(null)}
-          onSaved={async () => {
-              setPeriod(null); setCalendarKey((k) => k + 1);
-              try {
-                const res = await fetch(`/api/log?date=${date}`);
-                if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
-              } catch { /* la page se recharge ci-dessous */ }
-              router.refresh();
-            }} />
-      )}
-
-      {/* Journee type : estimation pour un jour non saisi (pas d'extraction de micronutriments par l'IA) */}
-      {showTemplate && (
-        <DayTemplateModal date={date} hasEntries={entries.length > 0} onClose={() => setShowTemplate(false)}
-          onAdded={async () => {
-            setShowTemplate(false);
-            try {
-              const res = await fetch(`/api/log?date=${date}`);
-              if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
-            } catch { /* la page se recharge ci-dessous */ }
-            router.refresh();
-          }} />
-      )}
-
-      {/* Aliments Alternatifs — calorie-matched food substitution tool */}
+          {/* Aliments Alternatifs — calorie-matched food substitution tool */}
           <button
             onClick={() => setShowAlternatives(true)}
             aria-label="Aliments Alternatifs"
-            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background: "var(--surface)", border: "1px solid var(--border-strong)", color: "var(--text-secondary)" }}
           >
             <IconArrowsExchange size={17} stroke={1.8} />
           </button>
+          </div>
         </motion.div>
 
         <EstimatedDayBanner date={date} onChanged={async () => {
@@ -1223,6 +1197,33 @@ export default function LogClient({ date, initialLog, goals, lang = "fr", tracke
           />
         )}
       </AnimatePresence>
+
+      <LogCalendar date={date} open={showCalendar} refreshKey={calendarKey} onClose={() => setShowCalendar(false)}
+        onSelectRange={(from, to) => { setShowCalendar(false); setPeriod({ from, to }); }} />
+      {period && (
+        <PeriodModal key={`${period.from}-${period.to}`} from={period.from} to={period.to} open onClose={() => setPeriod(null)}
+          onSaved={async () => {
+              setPeriod(null); setCalendarKey((k) => k + 1);
+              try {
+                const res = await fetch(`/api/log?date=${date}`);
+                if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
+              } catch { /* la page se recharge ci-dessous */ }
+              router.refresh();
+            }} />
+      )}
+
+      {/* Journee type : estimation pour un jour non saisi (pas d'extraction de micronutriments par l'IA) */}
+      {showTemplate && (
+        <DayTemplateModal date={date} hasEntries={entries.length > 0} onClose={() => setShowTemplate(false)}
+          onAdded={async () => {
+            setShowTemplate(false);
+            try {
+              const res = await fetch(`/api/log?date=${date}`);
+              if (res.ok) setEntries(((await res.json()) as { dayLog: { entries?: FoodEntry[] } | null }).dayLog?.entries ?? []);
+            } catch { /* la page se recharge ci-dessous */ }
+            router.refresh();
+          }} />
+      )}
 
       {/* Aliments Alternatifs — calorie-matched food substitution tool */}
       {showAlternatives && (
