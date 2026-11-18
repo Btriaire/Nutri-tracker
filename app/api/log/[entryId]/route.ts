@@ -20,7 +20,22 @@ export async function PATCH(
   const { entryId } = await params;
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") ?? "";
-  const updates = await req.json();
+
+  if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
+
+  const updates = await req.json().catch(() => null);
+  if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+    return NextResponse.json({ error: "Invalid updates" }, { status: 400 });
+  }
+
+  if ("meal" in updates && !["breakfast", "morning_snack", "lunch", "snacks", "dinner"].includes(updates.meal)) {
+    return NextResponse.json({ error: "Invalid meal" }, { status: 400 });
+  }
+
+  delete updates.id;
+  delete updates.loggedAt;
 
   const db = getAdminFirestore();
   const ref = db.doc(`users/${session.userId}/foodLog/${date}`);

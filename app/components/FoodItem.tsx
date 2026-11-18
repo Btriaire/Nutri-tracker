@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import MoveMealSelect from "@/app/components/MoveMealSelect";
 import { IconTrash, IconX, IconLoader2, IconCheck, IconPencil, IconCamera, IconFlask, IconExclamationCircle, IconRosetteDiscountCheckFilled } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FoodEntry } from "@/app/lib/types";
@@ -430,6 +431,8 @@ export default function FoodItem({ entry, date, onDelete, onUpdate, dietViolatio
                   );
                 })}
               </div>
+              {/* Deplacer l'aliment vers un autre repas (ex. du midi vers le soir) */}
+              <MoveMealSelect entry={entry} date={date} onMoved={(meal) => { setEditing(false); onUpdate?.(entry.id, { ...entry, meal }); }} />
             </div>
           </motion.div>
         )}
